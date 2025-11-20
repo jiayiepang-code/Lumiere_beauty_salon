@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumière Beauty Salon – Home</title>
+    <link rel="stylesheet" href="home.css" />
+</head>
+
+<body>
+
+    <!-- ========== PAGE WRAPPER ========== -->
+    <div class="page-wrapper">
+
+        <!-- ========== HEADER ========== -->
+        <header class="main-header">
+
+            <!-- LOGO -->
+            <div class="logo-area">
+                <img src="../images/2.jpg" alt="Lumière Beauty Salon Logo" class="header-logo">
+            </div>
+
+            <!-- NAVIGATION -->
+            <nav class="main-nav">
+                <a href="#" class="nav-link active">Home</a>
+                <a href="#services" class="nav-link">Services</a>
+
+                <!-- DROPDOWN MENU -->
+                <div class="nav-dropdown">
+                    <button class="nav-link dropdown-toggle">
+                        Meet The Team ▾
+                    </button>
+
+                    <div class="dropdown-menu">
+                        <a href="team-hair.html">Hair Stylists</a>
+                        <a href="team-beauty.html">Beauticians</a>
+                        <a href="team-massage.html">Massage Therapists</a>
+                        <a href="team-nail.html">Manicurists</a>
+                    </div>
+                </div>
+
+                <a href="#booking" class="nav-link">Booking</a>
+            </nav>
+
+            <!-- BOOK NOW BUTTON -->
+            <button class="book-btn">Book Now</button>
+
+            <!-- PROFILE ICON -->
+            <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+                <div class="profile-icon">
+                    <span class="profile-circle"></span>
+                    <span class="profile-circle-sm"></span>
+                </div>
+            </button>
+        </header>
+
+        <!-- ========== PROFILE SIDEBAR ========== -->
+        <aside class="profile-panel" id="profilePanel">
+            <button class="panel-close" id="panelClose">✕</button>
+            <div class="panel-content">
+                <h2>Profile</h2>
+                <ul class="panel-menu">
+                    <li><a href="#profile">Profile</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact Us</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- ========== HERO SECTION ========== -->
+        <section class="hero">
+            <div class="hero-overlay"></div>
+
+            <div class="hero-content">
+                <h1 class="hero-title">Where your beauty shines.</h1>
+                <button class="hero-btn" id="exploreBtn">Explore More</button>
+            </div>
+        </section>
+
+        <!-- ========== TOP SERVICES SECTION ========== -->
+        <section class="top-services-section" id="services">
+            <h2 class="section-title">Top Services</h2>
+
+            <div class="services-slider">
+                <button class="slider-arrow left" id="prevService">‹</button>
+
+                <div class="service-card">
+                    <div class="service-image">
+                        <span class="service-sticker"></span>
+                    </div>
+                    <div class="service-info">
+                        <h3 id="serviceTitle">Facial Time!</h3>
+                        <p id="serviceDesc">Deep cleansing & glow facial to refresh your skin.</p>
+                    </div>
+                </div>
+
+                <button class="slider-arrow right" id="nextService">›</button>
+            </div>
+
+            <div class="slider-dots" id="serviceDots"></div>
+        </section>
+
+        <!-- ========== FEEDBACK SECTION ========== -->
+        <section class="feedback-section">
+            <h2 class="section-title">Customer's Feedback</h2>
+
+            <div class="feedback-grid">
+                <article class="feedback-card">
+                    <div class="feedback-header">
+                        <div class="avatar-circle"></div>
+                        <div class="feedback-name">Alicia</div>
+                    </div>
+                    <p class="feedback-text">“My skin feels so soft after the facial!”</p>
+                </article>
+
+                <article class="feedback-card">
+                    <div class="feedback-header">
+                        <div class="avatar-circle"></div>
+                        <div class="feedback-name">Mei Ling</div>
+                    </div>
+                    <p class="feedback-text">“Staff are gentle and the vibe is so aesthetic!”</p>
+                </article>
+
+                <article class="feedback-card">
+                    <div class="feedback-header">
+                        <div class="avatar-circle"></div>
+                        <div class="feedback-name">Hana</div>
+                    </div>
+                    <p class="feedback-text">“Booking system is so easy to use!”</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- BOOKING ANCHOR -->
+        <section id="booking"></section>
+
+        <!-- ========== FOOTER ========== -->
+        <footer class="main-footer">
+            <div class="footer-column">
+                <img src="images/logo.png" class="footer-logo">
+                <p class="footer-sign">✧ start your clean journey ✧</p>
+            </div>
+
+            <div class="footer-column">
+                <h4>Contact Us</h4>
+                <p>Address: 123 Lumière Street, Kota Kinabalu</p>
+                <p>Phone: +60 12-345 6789</p>
+                <p>Email: hello@lumiere.com</p>
+            </div>
+
+            <div class="footer-column">
+                <h4>Connect</h4>
+                <div class="social-icons">
+                    <a href="#" class="social-circle">IG</a>
+                    <a href="#" class="social-circle">FB</a>
+                    <a href="#" class="social-circle">TT</a>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <script src="home.js"></script>
+</body>
+</html>
