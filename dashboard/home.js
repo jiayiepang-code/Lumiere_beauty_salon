@@ -26,6 +26,8 @@ document.addEventListener("click", (e) => {
 // ==================================
 // TOP SERVICES SLIDER
 // ==================================
+let currentServiceIndex = 0; // Separate index for services
+
 const services = [
     {
         title: "Facial Time!",
@@ -41,42 +43,40 @@ const services = [
     }
 ];
 
-let currentIndex = 0;
-
 const serviceTitle = document.getElementById("serviceTitle");
 const serviceDesc = document.getElementById("serviceDesc");
-const prevBtn = document.getElementById("prevService");
-const nextBtn = document.getElementById("nextService");
+const prevServiceBtn = document.getElementById("prevService");
+const nextServiceBtn = document.getElementById("nextService");
 const dotsContainer = document.getElementById("serviceDots");
 
 function renderDots() {
     dotsContainer.innerHTML = "";
     services.forEach((_, idx) => {
         const dot = document.createElement("span");
-        dot.className = "slider-dot" + (idx === currentIndex ? " active" : "");
+        dot.className = "slider-dot" + (idx === currentServiceIndex ? " active" : "");
         dotsContainer.appendChild(dot);
     });
 }
 
 function renderService() {
-    const s = services[currentIndex];
+    const s = services[currentServiceIndex];
     serviceTitle.textContent = s.title;
     serviceDesc.textContent = s.desc;
     renderDots();
 }
 
-prevBtn.addEventListener("click", () => {
-    currentIndex = (currentIndex - 1 + services.length) % services.length;
+prevServiceBtn.addEventListener("click", () => {
+    currentServiceIndex = (currentServiceIndex - 1 + services.length) % services.length;
     renderService();
 });
 
-nextBtn.addEventListener("click", () => {
-    currentIndex = (currentIndex + 1) % services.length;
+nextServiceBtn.addEventListener("click", () => {
+    currentServiceIndex = (currentServiceIndex + 1) % services.length;
     renderService();
 });
 
-// initial service load
-renderService();
+renderService(); // initial service load
+
 
 // ==================================
 // HERO TEXT TYPING ANIMATION
@@ -170,6 +170,67 @@ teamButtons.forEach(btn => {
     });
 });
 
-// default load
+// ============================
+// INTRODUCING AWARD SECTION
+// ============================
 loadProfiles("hair");
 document.querySelector('[data-category="hair"]').classList.add("active");
+
+// DRAG TO SCROLL for facility slider
+const facilitySlider = document.getElementById("facilitySlider");
+
+let isDownFacility = false;
+let startXFacility;
+let scrollLeftFacility;
+
+facilitySlider.addEventListener("mousedown", (e) => {
+    e.preventDefault(); // <--- 新增: 阻止默认行为（如图片拖放）
+    isDownFacility = true;
+    startXFacility = e.pageX - facilitySlider.offsetLeft;
+    scrollLeftFacility = facilitySlider.scrollLeft;
+});
+
+facilitySlider.addEventListener("mouseleave", () => {
+    isDownFacility = false;
+});
+
+facilitySlider.addEventListener("mouseup", () => {
+    isDownFacility = false;
+});
+
+facilitySlider.addEventListener("mousemove", (e) => {
+    if (!isDownFacility) return;
+    e.preventDefault();
+    const x = e.pageX - facilitySlider.offsetLeft;
+    const walk = (x - startXFacility) * 1.5;
+    facilitySlider.scrollLeft = scrollLeftFacility - walk;
+});
+
+// ============================
+// COMMENT SECTION
+// ============================
+let currentFeedbackIndex = 0; // Separate index for customer feedback
+
+const fbPrevBtn = document.getElementById('fbPrev');
+const fbNextBtn = document.getElementById('fbNext');
+const feedbackCardsContainer = document.getElementById('feedbackCardsContainer');
+
+// Get the total number of feedback cards
+const totalFeedbackCards = document.querySelectorAll('.feedback-card').length;
+
+// The number of visible feedback cards at once (this is set to 3 in this case)
+const cardsPerSlide = 3;
+
+fbNextBtn.addEventListener('click', () => {
+    if (currentFeedbackIndex < totalFeedbackCards - cardsPerSlide) {
+        currentFeedbackIndex++;
+        feedbackCardsContainer.style.transform = `translateX(-${currentFeedbackIndex * (100 / cardsPerSlide)}%)`;
+    }
+});
+
+fbPrevBtn.addEventListener('click', () => {
+    if (currentFeedbackIndex > 0) {
+        currentFeedbackIndex--;
+        feedbackCardsContainer.style.transform = `translateX(-${currentFeedbackIndex * (100 / cardsPerSlide)}%)`;
+    }
+});

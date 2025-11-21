@@ -252,6 +252,14 @@ body {
     border-color: #c29076;
 }
 
+.hero {
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 40px -20px rgba(0,0,0,0.08);
+}
+
+
+
 /* simple character placeholders */
 .character {
     width: 80px;
@@ -300,9 +308,12 @@ body {
 
 /* ========== SECTIONS SHARED ========== */
 .section-title {
-    font-size: 22px;
+    font-size: 32px;
+    font-weight: 600;
     color: #c29076;
-    margin-bottom: 20px;
+    text-align: left;
+    margin-bottom: 8px;
+    margin-left: 12px;
 }
 
 .team-section {
@@ -389,169 +400,318 @@ body {
 
 /* ========== TOP SERVICES ========== */
 .top-services-section {
-    margin-bottom: 36px;
+    padding: 30px 30px;   /* 原本 40px → 缩短一些 */
+    margin-top: 10px;     /* 原本 20px → 更短 */
+    margin-bottom: 10px;  /* 原本 20px → 更短 */
 }
 
-.services-slider {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 18px;
-}
-
-.slider-arrow {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 1px solid #e1c7ba;
-    background: #fff;
+.section-title {
+    font-size: 32px;
+    font-weight: 700;
     color: #c29076;
-    font-size: 18px;
-    cursor: pointer;
+    margin-bottom: 8px;
+    margin-left: 8px;
 }
 
-.slider-arrow:hover {
-    background: #f7e4dc;
+.section-subtitle {
+    text-align: left;
+    margin-left: 8px;
+    font-size: 16px;
+    color: #aa8b7d;
+    margin-bottom: 22px;
 }
 
-.service-card {
-    background: #fffaf7;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgba(200, 150, 130, 0.18);
-    padding: 18px 20px;
-    display: flex;
-    align-items: center;
-    gap: 18px;
+.service-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
 }
 
-.service-image {
-    width: 120px;
-    height: 80px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #fbe6da, #f3d6c7);
+/* Each service box */
+.service-box {
     position: relative;
     overflow: hidden;
+    border-radius: 14px;
+    cursor: pointer;
+    height: 210px; /* smaller, more elegant */
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
 }
 
-.service-sticker {
+/* service image */
+.service-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+}
+
+/* hover effect */
+.service-box:hover .service-img {
+    transform: scale(1.05);
+}
+
+/* overlay text */
+.service-overlay {
     position: absolute;
-    width: 40px;
-    height: 60px;
-    border-radius: 20px;
-    border: 2px solid #c29076;
-    background: rgba(255, 255, 255, 0.6);
+    bottom: 15px;
     left: 18px;
-    top: 10px;
+    font-size: 24px;
+    color: white;
+    font-weight: 300;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
 }
 
-.service-info h3 {
-    color: #8b6a60;
-    margin-bottom: 4px;
+/* AWARD SECTION */
+.award-section {
+    padding: 25px 30px;   /* 原本 40px → 缩短 */
+    margin-top: 10px;     /* 原本 20px */
+    margin-bottom: 0px;   /* 减少与下面 facility 的空隙 */
 }
 
-.service-info p {
-    font-size: 13px;
-    color: #9e867d;
-}
 
-.slider-dots {
-    display: flex;
-    justify-content: center;
-    margin-top: 12px;
-    gap: 6px;
-}
-
-.slider-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #e3cec4;
-}
-
-.slider-dot.active {
-    background: #c29076;
-}
-
-/* ========== FEEDBACK ========== */
-.feedback-section {
-    margin-bottom: 26px;
-}
-
-.feedback-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 18px;
-}
-
-.feedback-card {
-    background: #fffaf7;
-    border-radius: 16px;
-    padding: 16px 18px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.04);
-}
-
-.feedback-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-}
-
-.avatar-circle {
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    border: 2px solid #c79c85;
-    background: #f7e3d8;
-}
-
-.feedback-name {
-    font-size: 14px;
-    font-weight: 600;
-    color: #7b6560;
-}
-
-.feedback-text {
-    font-size: 13px;
-    color: #9b837a;
-    line-height: 1.4;
-}
-
-/* dummy booking anchor (for scroll) */
-.booking-anchor {
-    height: 10px;
-}
-
-/* ========== FOOTER ========== */
-.main-footer {
-    display: grid;
-    grid-template-columns: 1.2fr 1.4fr 1.1fr;
-    gap: 32px;
-    margin-top: 16px;
-    padding-top: 18px;
-    border-top: 1px solid #f0ddd4;
-    font-size: 13px;
-    color: #8f7b73;
-}
-
-.footer-logo {
-    margin-bottom: 4px;
-}
-
-.footer-sign {
-    font-size: 12px;
-    color: #b09385;
-}
-
-.main-footer h4 {
-    font-size: 14px;
+.award-title {
+    font-size: 32px;
+    font-weight: 700;
     color: #c29076;
+    text-align: center;
     margin-bottom: 6px;
 }
 
-.copyright {
-    margin-top: 8px;
-    font-size: 12px;
+.award-subtitle {
+    text-align: center;
+    color: #9e857a;
+    font-size: 16px;
+    margin-bottom: 24px;
 }
 
+/*facilities*/
+.facility-showcase {
+    padding: 25px 30px;   /* 原本 40px */
+    margin-top: 20px;     /* 从 50px 减少 */
+}
+
+
+/* Category Title inside the scroll row */
+.facility-tag {
+    font-size: 20px;
+    font-weight: 600;
+    color: #c29076;
+    margin-right: 14px;
+    align-self: center;
+    /* 移除 margin-right: 14px; 这一行可以保留，或者 */
+    /* 如果需要更精确的控制，可以调整或移除 margin-right, 确保不被挤压 */
+    min-width: fit-content; /* 确保文本不会被压缩 */
+}
+
+.facility-slider {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding: 10px 0 18px 0;
+    margin-bottom: 10px;
+}
+
+.facility-slider::-webkit-scrollbar {
+    height: 8px;
+}
+.facility-slider::-webkit-scrollbar-thumb {
+    background: #d3c0b7;
+    border-radius: 6px;
+}
+
+/* Image boxes */
+.facility-card {
+    min-width: 320px;
+    height: 220px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    scroll-snap-align: start;
+    cursor: grab;
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+}
+
+.facility-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease, filter .3s ease;
+}
+
+/* Hover Reveal Label */
+.facility-card:hover img {
+    transform: scale(1.07);
+    filter: brightness(0.6);
+}
+
+.facility-label {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    color: white;
+    font-size: 20px;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all .3s ease;
+}
+
+.facility-card:hover .facility-label {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* ========== FEEDBACK COMMENT ========== */
+.feedback-section {
+    padding: 30px 80px; 
+    background: #f5ece8;
+    margin-top: 20px; 
+}
+
+.feedback-title {
+    font-size: 32px;
+    color: #c29076; 
+    margin-bottom: 20px;
+    font-weight: 700;
+    text-align: left;
+    margin-left: 0; 
+}
+
+/* Feedback Cards Wrapper */
+.feedback-wrapper {
+    display: flex;
+    justify-content: space-between; 
+    gap: 30px; 
+    padding: 0; 
+}
+
+/* Each Feedback Card */
+.feedback-card {
+    min-width: 250px; 
+    flex-grow: 1; 
+    background: white;
+    padding: 25px 25px;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: auto; /* <--- 关键调整: 让高度适应内容 */
+}
+
+/* Hover Effect on Cards */
+.feedback-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); /* Larger shadow on hover */
+}
+
+/* Stars Rating */
+.stars {
+    color: #ff8c00; /* Orange stars */
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+/* Name Styling */
+.feedback-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #5c4e4b; /* Darker color for the name */
+    margin-bottom: 8px;
+}
+
+/* Feedback Text Styling */
+.feedback-text {
+    font-size: 14px;
+    color: #7c6a65; /* Softer text color */
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+/* ========== ADS COMMENT ========== */
+.additional-text {
+    text-align: center;
+    margin-top: 40px;  /* adjust for space between feedback and new text */
+    margin-bottom: 40px;
+    font-size: 24px;
+    color: #ab8b79;
+    cursor: pointer;
+}
+
+.underline-link:hover {
+    color: #6b5043; 
+}
+
+/* ========== FOOTER ========== */
+.custom-footer {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 40px;
+    padding: 50px 80px;
+    background: #f5ece8;
+    margin-top: 40px;
+    border-top: 1px solid #e2cfc6;
+}
+
+/* LEFT */
+.footer-big-logo {
+    width: 180px;
+    margin-bottom: 10px;
+}
+
+.footer-brand-name {
+    font-size: 22px;
+    font-weight: 600;
+    color: #b68a76;
+    letter-spacing: 1px;
+}
+
+/* HEADERS */
+.custom-footer h4 {
+    font-size: 16px;
+    color: #c29076;
+    margin-bottom: 10px;
+}
+
+/* TEXT */
+.custom-footer p {
+    font-size: 16px;
+    color: #8f7b73;
+    margin-bottom: 10px;
+    margin-bottom: 0px;
+}
+
+.footer-copyright {
+    font-size: 12px;
+    color: #9e857a;
+    margin-top: 30px;
+}
+
+/* ========== SOCIAL ICONS ========== */
+.footer-social-icons {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.footer-social-circle {
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: 1px solid #d5bdb1;
+    border-radius: 50%;
+    font-size: 12px;
+    color: #c29076;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    transition: 0.2s ease;
+}
+
+.footer-social-circle:hover {
+    background: #c29076;
+    color: white;
+    border-color: #c29076;
+}
 

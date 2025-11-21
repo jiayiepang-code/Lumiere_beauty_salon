@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumière Beauty Salon – Services</title>
+    <link rel="stylesheet" href="home.css" /> <!-- Reusing header/footer styles -->
+    <link rel="stylesheet" href="services.css" />
+</head>
+<body>
+
+<!-- ========== HEADER (Same as Homepage) ========== -->
+<header class="main-header">
+    <div class="logo-area">
+        <img src="../images/16.png" alt="Lumière Logo" class="header-logo">
+    </div>
+
+    <nav class="main-nav">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="services.html" class="nav-link active">Services</a>
+
+        <div class="nav-dropdown">
+            <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+            <div class="dropdown-menu">
+                <a href="team-hair.html">Hair Stylists</a>
+                <a href="team-beauty.html">Beauticians</a>
+                <a href="team-massage.html">Massage Therapists</a>
+                <a href="team-nail.html">Nail Technicians</a>
+            </div>
+        </div>
+
+        <a href="booking.html" class="nav-link">Booking</a>
+    </nav>
+
+    <button class="book-btn" onclick="location.href='booking.html'">Book Now</button>
+</header>
+
+<!-- ========== SERVICES HEADER ========== -->
+<section class="services-header">
+    <h1 class="services-title">Our Services</h1>
+    <p class="services-subtitle">Explore our full range of beauty treatments</p>
+</section>
+
+<!-- ========== CATEGORY TABS ========== -->
+<div class="service-category-buttons">
+    <button class="service-cat" onclick="selectCategory('haircut')">Haircut</button>
+    <button class="service-cat" onclick="selectCategory('facial')">Facial</button>
+    <button class="service-cat" onclick="selectCategory('manicure')">Manicure</button>
+    <button class="service-cat" onclick="selectCategory('massage')">Massage</button>
+</div>
+
+<!-- ========== SERVICE DETAILS ========== -->
+<section id="serviceDetails">
+    <!-- Image on the left -->
+    <img src="../images/15.png" class="service-img" alt="Haircut">
+
+    <!-- Text Content (Title, Description, and Price List) -->
+    <div class="service-detail">
+        <h2>Haircut</h2>
+        <p>Maintain a polished and sophisticated look by getting your regular quality haircut service from our salon or let our skilled hair stylists create the hairstyle that complements your personality.</p>
+        </div>
+    </section>
+
+        <!-- Price List Below Description -->
+    <section class="price-list-section">
+    <h3 class="pricelist-title">Pricelist</h3>
+
+    <div class="service-prices custom-layout">
+        <p class="price-item">Men Cut <span class="price-value">RM30</span></p>
+        <p class="price-item">Female Cut <span class="price-value">RM40</span></p>
+    </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="custom-footer">
+
+    <div class="footer-left">
+        <img src="../images/16.png" class="footer-big-logo">
+        <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
+        <p class="footer-copyright">© 2025 Lumière beauty salon. All rights reserved.</p>
+    </div>
+
+    <div class="footer-center">
+        <h4>Contact Us</h4>
+        <p>Address: Lumière Beauty Salon, Hilltop, Kota Kinabalu</p>
+        <p>Phone: +60 12-345 6789</p>
+        <p>Email: hello@lumiere.com</p>
+    </div>
+
+    <div class="footer-right">
+        <h4>Operating Hours</h4>
+        <p>Daily: 10:00 AM – 10:00 PM</p>
+
+        <h4 style="margin-top:18px;">Follow Us</h4>
+        <div class="footer-social-icons">
+            <a href="#" class="footer-social-circle">IG</a>
+            <a href="#" class="footer-social-circle">FB</a>
+            <a href="#" class="footer-social-circle">TT</a>
+        </div>
+    </div>
+
+</footer>
+
+<script src="services.js"></script>
+</body>
+</html>

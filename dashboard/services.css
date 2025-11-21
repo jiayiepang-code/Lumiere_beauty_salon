@@ -1,0 +1,91 @@
+/* Service Detail Section */
+#serviceDetails {
+    padding: 30px;
+    background-color: #fbf5f1;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+.service-category-buttons {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.service-cat {
+    padding: 10px 20px;
+    border-radius: 30px;
+    background: #ffffff;
+    color: #c29076;
+    border: 1px solid #c29076;
+    margin: 5px;
+    cursor: pointer;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+.service-cat:hover, .service-cat.active {
+    background: #c29076;
+    color: #ffffff;
+}
+
+.service-detail {
+    text-align: right;
+    flex: 1; 
+    max-width: 50%;
+}
+
+.service-detail img {
+    width: 100%;
+    max-width: 400px;  /* Set the image max width */
+    height: auto;
+    object-fit: cover;
+    margin-bottom: 20px;  /* Add spacing between image and text */
+    border-radius: 10px;
+}
+
+.service-detail h2 {
+    font-size: 36px;
+    color: #c29076;
+    margin: 10px 0;
+}
+
+.service-detail p {
+    font-size: 16px;
+    color: #6d5b54;
+    margin-bottom: 20px;  
+    margin: 8px 0;
+}
+
+/* Price List Section Styling */
+.price-list-section {
+    max-width: 700px; /* Constrain price list width */
+    margin: 50px auto 0; /* Center it below the main section */
+    padding: 0 30px; 
+}
+
+.pricelist-title {
+    font-size: 20px;
+    color: #c29076;
+    font-weight: 600;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #a78d84; /* Underline effect */
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+/* Custom layout for the price items */
+.service-prices.custom-layout {
+    font-size: 18px;
+    color: #6d5b54;
+}
+
+.price-item {
+    display: flex;
+    justify-content: space-between; /* Pushes the name and price to opposite sides */
+    margin: 10px 0;
+    padding-right: 150px; /* Add some space on the right side */
+}
+
+.price-value {
+    font-weight: bold;
+    color: #6d5b54; 
+}
