@@ -1,0 +1,172 @@
+.contact-header {
+    text-align: center;
+    margin-top: 120px;
+    margin-bottom: 30px;
+}
+
+.contact-header h1 {
+    font-size: 40px;
+    color: #c29076;
+}
+
+.contact-header p {
+    color: #7a6a63;
+}
+
+.contact-container {
+    display: flex;
+    gap: 40px;
+    width: 90%;
+    max-width: 1300px;
+    margin: 40px auto;
+    padding: 30px;
+}
+
+.contact-left {
+    flex: 1;
+}
+
+.contact-left h2 {
+    font-size: 32px;
+    color: #8d8f27;
+    margin-bottom: 15px;
+}
+
+.contact-left h4 {
+    margin-top: 20px;
+    font-size: 20px;
+    color: #7a6a63;
+}
+
+.contact-left p {
+    margin-top: 8px;
+    font-size: 16px;
+}
+
+.contact-buttons {
+    display: flex;
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.contact-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    background: #d1e0ff;
+    text-decoration: none;
+    color: #333;
+}
+
+.contact-btn.green {
+    background: #b9e8c8;
+}
+
+.social-row {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.social-row a {
+    font-size: 20px;
+    text-decoration: none;
+    color: #555;
+}
+
+.contact-right iframe {
+    width: 100%;
+    height: 500px;
+    border: none;
+    border-radius: 12px;
+}
+
+/* CONTACT PAGE LAYOUT */
+.contact-wrapper {
+    display: flex;
+    gap: 40px;
+    align-items: center;
+    justify-content: center;
+    width: 90%;
+    max-width: 1200px;
+    margin: 60px auto;
+    background: #fbf5f1;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+
+/* LEFT IMAGE */
+.contact-image-box {
+    flex: 1;
+}
+
+.contact-shop-image {
+    width: 100%;
+    border-radius: 20px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.1);
+    object-fit: cover;
+}
+
+/* RIGHT DETAILS */
+.contact-info-box {
+    flex: 1;
+}
+
+.contact-title {
+    font-size: 38px;
+    color: #c29076;
+    margin-bottom: 10px;
+}
+
+.contact-address,
+.contact-phone,
+.contact-hours {
+    font-size: 18px;
+    color: #6d5b54;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.contact-hours-title {
+    font-size: 20px;
+    color: #c29076;
+    margin-top: 10px;
+}
+
+/* BUTTONS */
+.contact-buttons {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+}
+
+.contact-btn {
+    background: #c29076;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.contact-btn:hover {
+    background: #ad7c65;
+}
+
+.contact-btn-outline {
+    background: transparent;
+    border: 2px solid #c29076;
+    color: #c29076;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.contact-btn-outline:hover {
+    background: #c29076;
+    color: #fff;
+}
