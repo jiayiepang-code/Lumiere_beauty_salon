@@ -1,0 +1,324 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumière Beauty Salon – Home</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="login.html">
+</head>
+
+<body data-new-gr-c-s-check-loaded="14.1264.0" data-gr-ext-installed="" data-new-gr-c-s-loaded="14.1264.0">
+
+    <!-- ========== PAGE WRAPPER ========== -->
+    <div class="page-wrapper">
+
+        <!-- ========== HEADER ========== -->
+        <header class="main-header">
+
+            <!-- LOGO -->
+            <div class="logo-area">
+                <img src="../images/16.png" alt="Lumière Beauty Salon Logo" class="header-logo">
+            </div>
+
+            <!-- NAVIGATION -->
+            <nav class="main-nav">
+              <a href="home.html" class="nav-link">Home</a>
+              <a href="services.html" class="nav-link">Services</a>
+
+            <!-- Dropdown -->
+            <div class="nav-dropdown">
+               <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+               <div class="dropdown-menu">
+                   <a href="team-hair.html">Hair Stylists</a>
+                   <a href="team-beauty.html">Beauticians</a>
+                   <a href="team-massage.html">Massage Therapists</a>
+                   <a href="team-nail.html">Nail Technicians</a>
+                </div>
+             </div>
+
+            <!-- ⭐ Add Contact Us here -->
+            <a href="contact.html" class="nav-link">Contact Us</a>
+        </nav>
+
+            <!-- BOOK NOW BUTTON -->
+            <button class="book-btn" onclick="window.location.href='booking-service.html'">Book Now</button>
+
+            <!-- PROFILE ICON -->
+            <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+            <img src="../images/60.png" class="header-profile-img" alt="Profile">
+        </button>
+        </header>
+
+        <!-- ========== PROFILE SIDEBAR ========== -->
+        <aside class="profile-panel" id="profilePanel">
+    <button class="panel-close" id="panelClose">✕</button>
+    
+    <div class="panel-content">
+        <div class="panel-header">
+            <div id="dynamicAvatar" class="avatar-circle">WO</div>
+            
+            <div class="user-details">
+                <h3 id="panelUserName">Wong Yi</h3>
+                <span class="user-role-badge">Customer</span>
+            </div>
+        </div>
+
+        <ul class="panel-menu">
+            <li><a href="profile.html">My Profile</a></li>
+            <li><a href="history.html">Booking History</a></li>
+            <li><a href="favourites.html">Favourites Staff</a></li>
+            <li><a href="settings.html">Settings</a></li>
+            <li><a href="about.html">About Us</a></li>
+        </ul>
+
+        <div class="panel-divider"></div>
+
+        <a href="#" class="panel-logout" onclick="handleLogout()">
+            <img src="../images/59.png" class="logout-img" alt="Logout">
+            Logout
+        </a>
+    </div>
+</aside>
+
+        <!-- ========== HERO SECTION ========== -->
+        <section class="hero">
+            <div class="hero-overlay"></div>
+
+            <div class="hero-content">
+                <h1 class="hero-title">Where your beauty shines.</h1>
+                <button class="hero-btn" id="exploreBtn">Explore More</button>
+            </div>
+        </section>
+
+        <!-- ========== TOP SERVICES SECTION ========== -->
+        <section class="top-services-section" id="services">
+        <h2 class="section-title">Top Services</h2>
+        <p class="section-subtitle">Choose from our most popular services</p>
+
+        <div class="service-grid">
+
+        <!-- Haircut -->
+        <div class="service-box" onclick="window.location.href='services.html?category=haircut'">
+        <img src="../images/14.png" class="service-img" alt="Haircut">
+        <div class="service-overlay">haircut</div>
+        </div>
+
+        <!-- Facial -->
+        <div class="service-box" onclick="window.location.href='services.html?category=facial'">
+        <img src="../images/11.png" class="service-img" alt="Facial">
+        <div class="service-overlay">facial</div>
+        </div>
+
+        <!-- Manicure -->
+        <div class="service-box" onclick="window.location.href='services.html?category=manicure'">
+        <img src="../images/8.png" class="service-img" alt="Manicure">
+        <div class="service-overlay">manicure</div>
+        </div>
+
+        <!-- Massage -->
+        <div class="service-box" onclick="window.location.href='services.html?category=massage'">
+        <img src="../images/5.png" class="service-img" alt="Massage">
+        <div class="service-overlay">massage</div>
+        </div>
+
+        </div>
+        </section>
+
+        <!-- ========== FACILITY SHOWCASE SECTION ========== -->
+<section class="facility-showcase">
+
+    <h2 class="award-title">
+        Kota Kinabalu’s Award-Winning Beauty Salon
+    </h2>
+    <p class="award-subtitle">
+        Explore our premium treatment rooms &amp; workstation areas
+    </p>
+
+    <div class="facility-slider" id="facilitySlider">
+
+        <!-- ===== HAIRCUT AREA ===== -->
+        <div class="facility-tag">Haircut Area</div>
+
+        <div class="facility-card">
+            <img src="../images/18.png" alt="">
+            <div class="facility-label">Haircut Area</div>
+        </div>
+
+        <div class="facility-card">
+            <img src="../images/20.png" alt="">
+            <div class="facility-label">Haircut Area</div>
+        </div>
+
+        <!-- ===== FACIAL AREA ===== -->
+        <div class="facility-tag">Facial Room</div>
+
+        <div class="facility-card">
+            <img src="../images/17.png" alt="">
+            <div class="facility-label">Facial Room</div>
+        </div>
+
+         <div class="facility-card">
+            <img src="../images/22.png" alt="">
+            <div class="facility-label">Facial Room</div>
+        </div>
+
+        <!-- ===== NAIL STUDIO ===== -->
+        <div class="facility-tag">Nail Studio</div>
+
+        <div class="facility-card">
+            <img src="../images/19.png" alt="">
+            <div class="facility-label">Nail Studio</div>
+        </div>
+
+        <div class="facility-card">
+            <img src="../images/21.png" alt="">
+            <div class="facility-label">Nail Studio</div>
+        </div>
+
+        <!-- ===== MASSAGE AREA ===== -->
+        <div class="facility-tag">Massage Area</div>
+
+        <div class="facility-card">
+            <img src="../images/24.png" alt="">
+            <div class="facility-label">Massage Area</div>
+        </div>
+
+        <div class="facility-card">
+            <img src="../images/25.png" alt="">
+            <div class="facility-label">Massage Area</div>
+        </div>
+
+    </div>
+</section>
+
+        <!-- ========== FEEDBACK SECTION ========== -->
+<section class="feedback-section">
+            <h2 class="feedback-title">Customer's Feedback</h2>
+            <div class="feedback-wrapper">
+                <div class="feedback-card">
+                    <div class="stars">★★★★★</div>
+                    <div class="feedback-name">Aisha Rahman</div>
+                    <p class="feedback-text">
+                        "Love my new nails color! The color is perfect, and the attention to detail was amazing. Highly recommend the Sophie nail technician!"
+                    </p>
+                </div>
+
+                <div class="feedback-card">
+                    <div class="stars">★★★★★</div>
+                    <div class="feedback-name">Serena Lim</div>
+                    <p class="feedback-text">
+                        "My haircut looks fantastic! The stylist really understood what I wanted and gave me great advice. Such a professional service!"
+                    </p>
+                </div>
+
+                <div class="feedback-card">
+                    <div class="stars">★★★★★</div>
+                    <div class="feedback-name">Priya Sharma</div>
+                    <p class="feedback-text">
+                        "My skin is glowing after the facial! The skincare specialist was gentle and very knowledgeable. I feel refreshed and pampered. Will be booking again soon!"
+                    </p>
+                </div>
+
+                <div class="feedback-card">
+                    <div class="stars">★★★★★</div>
+                    <div class="feedback-name">Chloe Ong</div>
+                    <p class="feedback-text">
+                        "The massage was incredibly relaxing. I felt all the tension melting away, and the room was so cozy and tranquil. Definitely will come again!"
+                    </p>
+                </div>
+            </div>
+        </section>
+            
+                <!-- BOOKING ANCHOR -->
+        <section id="booking"></section>
+
+        <!-- ADS COMMENT -->
+        <div class="additional-text">
+        <p>
+        Schedule a Booking Online 
+        <a href="booking.html"><span class="underline-link">Now!</span></a>
+        </p>
+
+        <p>For special pricing, check out our associate services!</p>
+        </div>
+
+        <!-- ========== FOOTER ========== -->
+        <footer class="custom-footer">
+
+    <!-- Left: Logo + Brand Name -->
+    <div class="footer-left">
+        <img src="../images/16.png" class="footer-big-logo">
+        <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
+        <br><br>
+        <p class="footer-copyright">© 2025 Lumière beauty salon. All rights reserved.</p>
+    </div>
+
+    <!-- Middle: Contact Details -->
+    <div class="footer-center">
+        <h4>Contact Us</h4>
+        <p><b>Address:</b> Lumiere beauty salon, Ground Floor Block B,<br>
+            Phase 2, Jln Lintas, Kolam Centre,<br>
+            88300 Kota Kinabalu, Sabah.</p>
+        <br>
+        <p><b>Tel:</b>+6012-345 6789<br>
+           <b>Office:</b>+6088-978 8977
+        <br><br>   
+        </p><p><b>Email:</b> Lumiere@gmail.com</p>
+    </div>
+
+    <!-- Right: Operating Hours + Social -->
+    <div class="footer-right">
+        <h4>Operating Hours</h4>
+        <p>Mon - Sun</p>
+        <p>10:00 AM – 10:00 PM</p>
+        <br><br> 
+
+        <h4 style="margin-top:18px;">Follow Us</h4>
+        <div class="footer-social-icons">
+            <a href="#" class="footer-social-circle">IG</a>
+            <a href="#" class="footer-social-circle">FB</a>
+            <a href="#" class="footer-social-circle">TT</a>
+        </div>
+    </div>
+
+</footer>
+
+
+    <script src="home.js"></script>
+<!-- Code injected by live-server -->
+<script>
+	// <![CDATA[  <-- For SVG support
+	if ('WebSocket' in window) {
+		(function () {
+			function refreshCSS() {
+				var sheets = [].slice.call(document.getElementsByTagName("link"));
+				var head = document.getElementsByTagName("head")[0];
+				for (var i = 0; i < sheets.length; ++i) {
+					var elem = sheets[i];
+					var parent = elem.parentElement || head;
+					parent.removeChild(elem);
+					var rel = elem.rel;
+					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
+						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
+						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
+					}
+					parent.appendChild(elem);
+				}
+			}
+			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
+			var address = protocol + window.location.host + window.location.pathname + '/ws';
+			var socket = new WebSocket(address);
+			socket.onmessage = function (msg) {
+				if (msg.data == 'reload') window.location.reload();
+				else if (msg.data == 'refreshcss') refreshCSS();
+			};
+			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
+				console.log('Live reload enabled.');
+				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
+			}
+		})();
+	}
+	else {
+		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
+	}
+	// ]]>
+</script>

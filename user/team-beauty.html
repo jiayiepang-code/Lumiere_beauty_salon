@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumière Beauty Salon – Home</title>
+    <link rel="stylesheet" href="home.css" />
+    <link rel="stylesheet" href="team-beauty.css">
+</head>
+
+<body>
+
+    <!-- ========== PAGE WRAPPER ========== -->
+    <div class="page-wrapper">
+
+        <!-- ========== HEADER ========== -->
+        <header class="main-header">
+
+            <!-- LOGO -->
+            <div class="logo-area">
+                <img src="../images/16.png" alt="Lumière Beauty Salon Logo" class="header-logo">
+            </div>
+
+            <!-- NAVIGATION -->
+            <nav class="main-nav">
+              <a href="home.html" class="nav-link">Home</a>
+              <a href="services.html" class="nav-link">Services</a>
+
+            <!-- Dropdown -->
+            <div class="nav-dropdown">
+               <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+               <div class="dropdown-menu">
+                   <a href="team-hair.html">Hair Stylists</a>
+                   <a href="team-beauty.html">Beauticians</a>
+                   <a href="team-massage.html">Massage Therapists</a>
+                   <a href="team-nail.html">Nail Technicians</a>
+                </div>
+             </div>
+
+            <!-- ⭐ Add Contact Us here -->
+            <a href="contact.html" class="nav-link">Contact Us</a>
+        </nav>
+
+            <!-- BOOK NOW BUTTON -->
+            <button class="book-btn" onclick="window.location.href='booking.html'">Book Now</button>
+
+            <!-- PROFILE ICON -->
+            <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+                <div class="profile-icon">
+                    <span class="profile-circle"></span>
+                    <span class="profile-circle-sm"></span>
+                </div>
+            </button>
+        </header>
+
+        <!-- ========== PROFILE SIDEBAR ========== -->
+        <aside class="profile-panel" id="profilePanel">
+            <button class="panel-close" id="panelClose">✕</button>
+            <div class="panel-content">
+                <h2>Profile</h2>
+                <ul class="panel-menu">
+                    <li><a href="#profile">Profile</a></li>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#contact">Contact Us</a></li>
+                </ul>
+            </div>
+        </aside>
+
+
+<!-- ⭐ START OF BEAUTICIAN CONTENT -->
+<section class="beau-section">
+
+    <h1 class="beau-title">Our Beauticians</h1>
+
+    <div class="beau-container">
+
+        <!-- Beautician 1 -->
+        <div class="beau-card">
+            <img src="../images/62.png" class="beau-photo">
+            <h3 class="beau-name">Chloe</h3>
+            <p class="beau-primary"><strong>Primary Services:</strong> Anti-Aging & Brightening</p>
+            <p class="beau-info">   
+            <br>Senior Aesthetician. Combines advanced lifting methods with brightening peels 
+            to deliver a total skin transformation for mature skin types.</br>
+            </p>
+            <button class="beaufav-btn">Add to Favourites</button>
+        </div>
+
+        <!-- Beautician 2 -->
+        <div class="beau-card">
+            <img src="../images/65.png" class="beau-photo">
+            <h3 class="beau-name">Sarah</h3>
+            <p class="beau-primary"><strong>Primary Services:</strong> Deep Cleansing & Hydrating</p>
+            <p class="beau-info">
+            <br>Skin Balance Specialist. Focuses on maintaining healthy skin barriers. Perfect for clients 
+            needing a deep clean without drying out their skin.
+            </p>
+            <button class="beaufav-btn">Add to Favourites</button>
+        </div>
+
+</section>
+<!-- ⭐ END OF HAIR STYLIST CONTENT -->
+
+
+<!-- ========== FOOTER ========== -->
+  <footer class="custom-footer">
+
+    <!-- Left: Logo + Brand Name -->
+    <div class="footer-left">
+        <img src="../images/16.png" class="footer-big-logo">
+        <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
+        <br><br>
+        <p class="footer-copyright">© 2025 Lumière beauty salon. All rights reserved.</p>
+    </div>
+
+    <!-- Middle: Contact Details -->
+    <div class="footer-center">
+        <h4>Contact Us</h4>
+        <p><b>Address:</b> Lumiere beauty salon, Ground Floor Block B,<br>
+            Phase 2, Jln Lintas, Kolam Centre,<br>
+            88300 Kota Kinabalu, Sabah.</p>
+        <br>
+        <p><b>Tel:</b> 012-345 6789<br>
+           <b>Office:</b> 088-978 8977
+        <br><br>   
+        <p><b>Email:</b> Lumiere@gmail.com</p>
+    </div>
+
+    <!-- Right: Operating Hours + Social -->
+    <div class="footer-right">
+        <h4>Operating Hours</h4>
+        <p>Daily: 10:00 AM – 10:00 PM</p>
+        <br><br> 
+
+        <h4 style="margin-top:18px;">Follow Us</h4>
+        <div class="footer-social-icons">
+            <a href="#" class="footer-social-circle">IG</a>
+            <a href="#" class="footer-social-circle">FB</a>
+            <a href="#" class="footer-social-circle">TT</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

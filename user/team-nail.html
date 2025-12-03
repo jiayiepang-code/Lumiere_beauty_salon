@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumière Beauty Salon – Home</title>
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="team-nail.css">
+</head>
+
+<body>
+
+    <!-- ========== PAGE WRAPPER ========== -->
+    <div class="page-wrapper">
+
+        <!-- ========== HEADER ========== -->
+        <header class="main-header">
+
+            <!-- LOGO -->
+            <div class="logo-area">
+                <img src="../images/16.png" alt="Lumière Beauty Salon Logo" class="header-logo">
+            </div>
+
+            <!-- NAVIGATION -->
+            <nav class="main-nav">
+              <a href="home.html" class="nav-link">Home</a>
+              <a href="services.html" class="nav-link">Services</a>
+
+            <!-- Dropdown -->
+            <div class="nav-dropdown">
+               <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+               <div class="dropdown-menu">
+                   <a href="team-hair.html">Hair Stylists</a>
+                   <a href="team-beauty.html">Beauticians</a>
+                   <a href="team-massage.html">Massage Therapists</a>
+                   <a href="team-nail.html">Nail Technicians</a>
+                </div>
+             </div>
+
+            <!-- ⭐ Add Contact Us here -->
+            <a href="contact.html" class="nav-link">Contact Us</a>
+        </nav>
+
+            <!-- BOOK NOW BUTTON -->
+            <button class="book-btn" onclick="window.location.href='booking.html'">Book Now</button>
+
+            <!-- PROFILE ICON -->
+            <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+            <img src="../images/60.png" class="header-profile-img" alt="Profile">
+        </button>
+        </header>
+
+        <!-- ========== PROFILE SIDEBAR ========== -->
+        <aside class="profile-panel" id="profilePanel">
+    <button class="panel-close" id="panelClose">✕</button>
+    <div class="panel-content">
+        <div class="panel-header">
+            <img src="https://ui-avatars.com/api/?name=User&background=c29076&color=fff" class="panel-avatar">
+            <div>
+                <h2>My Profile</h2>
+                <span class="user-role-badge">Member</span>
+            </div>
+        </div>
+
+        <ul class="panel-menu">
+            <li><a href="profile.html">Profile</a></li>
+            <li><a href="history.html">Booking History</a></li>
+            <li><a href="favourites.html">Favourites Staff</a></li>
+            <li><a href="settings.html">Settings</a></li>
+            <li><a href="about.html">About Us</a></li>
+        </ul>
+
+        <div class="panel-divider"></div>
+
+        <a href="login.html" class="panel-logout">
+    <img src="../images/59.png" class="logout-img" alt="Logout">
+    Logout
+</a>
+    </div>
+</aside>
+
+
+<!-- ⭐ START OF NAIL TECHNICIAN CONTENT -->
+<section class="nail-section">
+
+    <h1 class="nail-title">Our Nail Technicians</h1>
+
+    <div class="nail-container">
+
+        <!-- Nail Technician 1 -->
+        <div class="nail-card">
+            <img src="../images/71.png" class="nail-photo">
+            <h3 class="nail-name">Yuna</h3>
+            <p class="nail-primary"><strong>Primary Services:</strong> Nail Art Design & Gelish</p>
+            <p class="nail-info">   
+            <br>The Creative Artist. Specializes in intricate designs, from 3D Art to Chrome and Cat Eyes. 
+            If you want a trendy, Instagram-worthy gel manicure, Yuna is the expert.</br>
+            </p>
+            <button class="nailfav-btn">Add to Favourites</button>
+        </div>
+
+        <!-- Stylist 2 -->
+        <div class="nail-card">
+            <img src="../images/69.png" class="nail-photo">
+            <h3 class="nail-name">Jessica</h3>
+            <p class="nail-primary"><strong>Primary Services:</strong> Nail Extensions & Nail Gelish</p>
+            <p class="nail-info">
+            <br>The Structure Specialist. Expert in nail architecture. She focuses on Acrylic and Tip extensions, ensuring perfect shaping and durability for clients wanting instant length.<br>
+            <button class="nailfav-btn">Add to Favourites</button>
+        </div>
+
+        <!-- Stylist 3 -->
+        <div class="nail-card">
+            <img src="../images/68.png" class="nail-photo">
+            <h3 class="nail-name">Siti</h3>
+            <p class="nail-primary"><strong>Primary Services:</strong> Classic Manicure & Add-ons</p>
+            <p class="nail-info">
+            <br>Natural Nail Health Specialist. Focuses on detailed cuticle care and relaxation. She delivers the best Classic Manicure paired with soothing Hand Scrubs and Massages.
+            </p>
+            <button class="nailfav-btn">Add to Favourites</button>
+        </div>
+</section>
+<!-- ⭐ END OF HAIR STYLIST CONTENT -->
+
+
+<!-- ========== FOOTER ========== -->
+  <footer class="custom-footer">
+
+    <!-- Left: Logo + Brand Name -->
+    <div class="footer-left">
+        <img src="../images/16.png" class="footer-big-logo">
+        <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
+        <br><br>
+        <p class="footer-copyright">© 2025 Lumière beauty salon. All rights reserved.</p>
+    </div>
+
+    <!-- Middle: Contact Details -->
+    <div class="footer-center">
+        <h4>Contact Us</h4>
+        <p><b>Address:</b> Lumiere beauty salon, Ground Floor Block B,<br>
+            Phase 2, Jln Lintas, Kolam Centre,<br>
+            88300 Kota Kinabalu, Sabah.</p>
+        <br>
+        <p><b>Tel:</b> 012-345 6789<br>
+           <b>Office:</b> 088-978 8977
+        <br><br>   
+        <p><b>Email:</b> Lumiere@gmail.com</p>
+    </div>
+
+    <!-- Right: Operating Hours + Social -->
+    <div class="footer-right">
+        <h4>Operating Hours</h4>
+        <p>Daily: 10:00 AM – 10:00 PM</p>
+        <br><br> 
+
+        <h4 style="margin-top:18px;">Follow Us</h4>
+        <div class="footer-social-icons">
+            <a href="#" class="footer-social-circle">IG</a>
+            <a href="#" class="footer-social-circle">FB</a>
+            <a href="#" class="footer-social-circle">TT</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
