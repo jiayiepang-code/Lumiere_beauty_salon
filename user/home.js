@@ -80,7 +80,7 @@ document.addEventListener("click", (e) => {
         !profileToggle.contains(e.target)) {
         
         profilePanel.classList.remove("open");
-    }
+    }   
 });
 
 // ==================================

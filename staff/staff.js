@@ -13,4 +13,4 @@ function logout() {
 }
 
 // Optional: Simulate Loading Data
-console.log("Staff Dashboard Loaded Successfully");
+console.log("Staff Dashboard Loaded Successfully"); 

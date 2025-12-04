@@ -205,7 +205,7 @@ body {
 .staff-theme h1 { color: var(--staff-color) !important; }
 .admin-theme h1 { color: var(--admin-color) !important; }
 
-/* ========== STEPPER ========== */
+/* ========== STEPPER ========== */  
 .register-stepper {
     display: flex;
     justify-content: space-between;

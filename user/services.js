@@ -30,7 +30,7 @@ const serviceData = {
     haircut: {
         title: "Haircut",
         description: "Maintain a polished and sophisticated look by getting your regular quality haircut service from our salon or let our skilled hair stylists create the hairstyle that complements your personality.",
-        image: "../images/28.png",
+        image: "../images/27.png",
         prices: [
             { name: "Men Haircut", price: "RM25++", duration: 30 },
             { name: "Women Haircut", price: "RM35++", duration: 45 },
@@ -43,7 +43,7 @@ const serviceData = {
             {
                 subtitle: "Styling",
                 description: "Professional styling service to suit your character, outfit, or special occasion.",
-                image: "../images/29.png",
+                image: "../images/28.png",
                 prices: [
                     { name: "Basic Styling", price: "RM30++", duration: 30 },
                     { name: "Rebonding (Straighten)", price: "RM200", duration: 180 },
@@ -53,7 +53,7 @@ const serviceData = {
             {
                 subtitle: "Hair Colouring",
                 description: "Transform your look with natural shades or bold new colors.",
-                image: "../images/30.png",
+                image: "../images/29.png",
                 prices: [
                     { name: "Short Hair", price: "RM150", duration: 120 },
                     { name: "Medium Hair", price: "RM180", duration: 150 },
@@ -64,7 +64,7 @@ const serviceData = {
             {
                 subtitle: "Treatment",
                 description: "Nourish and repair damaged hair with our premium hair treatments.",
-                image: "../images/31.png",
+                image: "../images/30.png",
                 prices: [
                     { name: "Scalp Treatment", price: "RM150", duration: 45 },
                     { name: "Keratin Treatment", price: "RM300", duration: 120 },
@@ -76,7 +76,7 @@ const serviceData = {
     facial: {
     title: "Anti-Aging Facial",
     description: "Reduce fine lines, improve skin firmness and boost collagen production.",
-    image: "../images/33.png",
+    image: "../images/43.png",
     prices: [
         { name: "Anti-Aging Facial", price: "RM250", duration: 90 },
     ],
@@ -85,7 +85,7 @@ const serviceData = {
         {
             subtitle: "Deep Cleansing Facial",
             description: "Intensive extraction and detox treatment suitable for congested or acne-prone skin.",
-            image: "../images/32.png",
+            image: "../images/44.png",
             prices: [
                 { name: "Deep Cleansing Facial", price: "RM200", duration: 75 },
             ],
@@ -93,7 +93,7 @@ const serviceData = {
         {
             subtitle: "Hydrating Facial",
             description: "Hydrating and soothing treatment that restores moisture using hyaluronic-rich formulas.",
-            image: "../images/34.png",
+            image: "../images/45.png",
             prices: [
                 { name: "Hydrating Facial", price: "RM150", duration: 60 },
             ]
@@ -101,7 +101,7 @@ const serviceData = {
         {
             subtitle: "Brightening Facial",
             description: "Targets dark spots and uneven tone with vitamin C and AHA peel for a glowing complexion.",
-            image: "../images/35.png",
+            image: "../images/46.png",
             prices: [
                 { name: "Brightening Facial", price: "RM150", duration: 60 },
             ]
@@ -112,7 +112,7 @@ const serviceData = {
     manicure: {
     title: "Classic Manicure",
     description: "Indulge in a luxurious manicure to keep your nails looking fresh, polished, and beautiful.",
-    image: "../images/43.png",
+    image: "../images/35.png",
     prices: [
                 { name: "Basic Manicure", price: "RM70", duration: 45 },
                 { name: "Just Colour", price: "RM40", duration: 20 },
@@ -123,7 +123,7 @@ const serviceData = {
         {
             subtitle: "Nail Gelish",
             description: "Long-lasting gel polish cured under UV light for a shiny, durable finish.",
-            image: "../images/47.png",
+            image: "../images/49.png",
             prices: [
                 { name: "Gel Manicure", price: "RM138", duration: 75 },
                 { name: "Gel Remove", price: "RM20", duration: 20 },
@@ -133,7 +133,7 @@ const serviceData = {
         {
             subtitle: "Nail Art Design (Per Nail)",
             description: "Creative and customizable designs for stylish, unique nails.",
-            image: "../images/42.png",
+            image: "../images/37.png",
             prices: [
                 { name: "Chrome", price: "RM10", duration: 10 },
                 { name: "Cat Eyes", price: "RM7", duration: 10 },
@@ -145,7 +145,7 @@ const serviceData = {
         {
             subtitle: "Nail Extensions",
             description: "Enhance nail length and shape with professional extensions.",
-            image: "../images/41.png",
+            image: "../images/36.png",
             prices: [
                 { name: "Acrylic Extensions", price: "RM150", duration: 120 },
                 { name: "Tip Extensions", price: "RM100", duration: 90 },
@@ -157,7 +157,7 @@ const serviceData = {
         {
             subtitle: "Add-ons",
             description: "Optional extra services or hand treatments that enhance the look or comfort of the manicure.",
-            image: "../images/45.png",
+            image: "../images/38.png",
             prices: [
                 { name: "Hand Scrub + Massage", price: "RM50", duration: 20 },
                 { name: "Cuticle Oil Massage", price: "RM20", duration: 10 },
@@ -179,7 +179,7 @@ const serviceData = {
         {
             subtitle: "Swedish Massage",
             description: "A gentle, relaxing full-body massage using long, smooth strokes. Perfect for stress relief.",
-            image: "../images/36.png",
+            image: "../images/41.png",
             prices: [
                 { name: "Swedish Massage (60 min)", price: "RM90", duration: 60 },
                 { name: "Swedish Massage (120 min)", price: "RM120", duration: 120 },
@@ -188,7 +188,7 @@ const serviceData = {
         {
             subtitle: "Traditional Massage",
             description: "Targets deeper muscles to relieve stiffness, tension, and chronic body aches.",
-            image: "../images/38.png",
+            image: "../images/33.png",
             prices: [
                 { name: "Borneo Massage (60 min)", price: "RM90", duration: 60 },
                 { name: "Borneo Massage (120 min)", price: "RM180", duration: 120 },
@@ -197,7 +197,7 @@ const serviceData = {
         {
             subtitle: "Aromatherapy Massage",
             description: "Relaxing massage combined with essential oils like lavender, eucalyptus, or citrus.",
-            image: "../images/37.png",
+            image: "../images/31.png",
             prices: [
                 { name: "Aromatherapy Massage (60 mins)", price: "RM120", duration: 60 },
                 { name: "Aromatherapy Massage (120 mins)", price: "RM150", duration: 120 },
@@ -206,7 +206,7 @@ const serviceData = {
         {
             subtitle: "Hot Stone Massage",
             description: "Heated stones placed on key points help melt muscle tension and improve blood flow.",
-            image: "../images/39.png",
+            image: "../images/34.png",
             prices: [
                 { name: "Hot Stone Massage (90 mins)", price: "RM228", duration: 90 },
                 { name: "Hot Stone Massage (120 mins)", price: "RM278", duration: 120 },

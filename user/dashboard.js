@@ -76,4 +76,4 @@ function filterBookings(type) {
         upcomingList.style.display = 'none';
         historyList.style.display = 'block';
     }
-}
+} 
