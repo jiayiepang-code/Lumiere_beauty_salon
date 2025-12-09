@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error Handling & Validation Test</title>
+    <link rel="stylesheet" href="css/admin-style.css" />
+    <style>
+      body {
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .test-section {
+        margin-bottom: 40px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      .test-section h2 {
+        margin-top: 0;
+        color: #a26e60;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+      }
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .btn {
+        padding: 10px 20px;
+        background: #a26e60;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .btn:hover {
+        background: #8b5a4d;
+      }
+      .test-results {
+        margin-top: 20px;
+        padding: 15px;
+        background: #f5f5f5;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Error Handling & Validation Test Page</h1>
+    <p>This page demonstrates the error handling and validation system.</p>
+
+    <!-- Test 1: Client-side Validation -->
+    <div class="test-section">
+      <h2>Test 1: Client-Side Validation</h2>
+      <p>Try submitting the form with invalid data to see validation errors.</p>
+
+      <form id="testForm1">
+        <div id="error-container"></div>
+
+        <div class="form-group">
+          <label for="service_name"
+            >Service Name <span class="required-indicator">*</span></label
+          >
+          <input type="text" id="service_name" name="service_name" />
+          <span class="field-help">Required, max 100 characters</span>
+        </div>
+
+        <div class="form-group">
+          <label for="current_price"
+            >Price <span class="required-indicator">*</span></label
+          >
+          <input
+            type="number"
+            id="current_price"
+            name="current_price"
+            step="0.01"
+          />
+          <span class="field-help">Required, must be greater than 0</span>
+        </div>
+
+        <div class="form-group">
+          <label for="current_duration_minutes"
+            >Duration (minutes) <span class="required-indicator">*</span></label
+          >
+          <input
+            type="number"
+            id="current_duration_minutes"
+            name="current_duration_minutes"
+          />
+          <span class="field-help">Required, between 15 and 480</span>
+        </div>
+
+        <div class="form-group">
+          <label for="staff_email"
+            >Email <span class="required-indicator">*</span></label
+          >
+          <input type="email" id="staff_email" name="staff_email" />
+          <span class="field-help">Required, valid email format</span>
+        </div>
+
+        <div class="form-group">
+          <label for="phone"
+            >Phone <span class="required-indicator">*</span></label
+          >
+          <input type="tel" id="phone" name="phone" />
+          <span class="field-help"
+            >Required, Malaysia format (01X-XXXXXXX or 60XXXXXXXXX)</span
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password"
+            >Password <span class="required-indicator">*</span></label
+          >
+          <input type="password" id="password" name="password" />
+          <span class="field-help"
+            >Min 8 chars, 1 uppercase, 1 number, 1 special character</span
+          >
+        </div>
+
+        <button type="submit" class="btn">Validate Form</button>
+      </form>
+
+      <div class="test-results" id="results1"></div>
+    </div>
+
+    <!-- Test 2: Individual Field Validation -->
+    <div class="test-section">
+      <h2>Test 2: Individual Field Validation</h2>
+      <p>Test individual validation functions.</p>
+
+      <div class="form-group">
+        <label for="test_email">Test Email Validation</label>
+        <input
+          type="text"
+          id="test_email"
+          name="test_email"
+          placeholder="Enter email to validate"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="test_phone">Test Phone Validation</label>
+        <input
+          type="text"
+          id="test_phone"
+          name="test_phone"
+          placeholder="Enter phone to validate"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="test_password">Test Password Validation</label>
+        <input
+          type="password"
+          id="test_password"
+          name="test_password"
+          placeholder="Enter password to validate"
+        />
+      </div>
+
+      <button type="button" class="btn" onclick="testIndividualValidation()">
+        Test Validation
+      </button>
+
+      <div class="test-results" id="results2"></div>
+    </div>
+
+    <!-- Test 3: Error Display -->
+    <div class="test-section">
+      <h2>Test 3: Error Display Styles</h2>
+      <p>Test different error display styles.</p>
+
+      <button type="button" class="btn" onclick="showTestError()">
+        Show Field Error
+      </button>
+      <button type="button" class="btn" onclick="showTestAlert('error')">
+        Show Error Alert
+      </button>
+      <button type="button" class="btn" onclick="showTestAlert('success')">
+        Show Success Alert
+      </button>
+      <button type="button" class="btn" onclick="showTestAlert('warning')">
+        Show Warning Alert
+      </button>
+      <button type="button" class="btn" onclick="clearTestErrors()">
+        Clear All Errors
+      </button>
+
+      <form id="testForm3" style="margin-top: 20px">
+        <div id="alert-container"></div>
+
+        <div class="form-group">
+          <label for="test_field">Test Field</label>
+          <input type="text" id="test_field" name="test_field" />
+        </div>
+      </form>
+    </div>
+
+    <script src="js/validation.js"></script>
+    <script>
+      // Test 1: Form Validation
+      document
+        .getElementById("testForm1")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          // Clear previous errors
+          Validation.clearAllErrors("testForm1");
+
+          // Get form data
+          const formData = {
+            service_name: document.getElementById("service_name").value,
+            current_price: document.getElementById("current_price").value,
+            current_duration_minutes: document.getElementById(
+              "current_duration_minutes"
+            ).value,
+            staff_email: document.getElementById("staff_email").value,
+            phone: document.getElementById("phone").value,
+            password: document.getElementById("password").value,
+          };
+
+          // Define validation rules
+          const rules = {
+            service_name: {
+              required: { label: "Service name" },
+              length: { min: null, max: 100, label: "Service name" },
+            },
+            current_price: {
+              required: { label: "Price" },
+              range: { min: 0.01, max: 99999999.99, label: "Price" },
+            },
+            current_duration_minutes: {
+              required: { label: "Duration" },
+              range: { min: 15, max: 480, label: "Duration" },
+            },
+            staff_email: {
+              required: { label: "Email" },
+              email: true,
+            },
+            phone: {
+              required: { label: "Phone" },
+              phone: true,
+            },
+            password: {
+              required: { label: "Password" },
+              password: true,
+            },
+          };
+
+          // Validate form
+          const validation = Validation.validateForm(formData, rules);
+
+          // Display results
+          const results = document.getElementById("results1");
+          if (validation.valid) {
+            results.textContent =
+              "Validation passed! ✓\n\nForm data:\n" +
+              JSON.stringify(formData, null, 2);
+            results.style.background = "#e8f5e9";
+            Validation.showSuccess("All fields are valid!", "testForm1");
+          } else {
+            results.textContent =
+              "Validation failed! ✗\n\nErrors:\n" +
+              JSON.stringify(validation.errors, null, 2);
+            results.style.background = "#ffebee";
+            Validation.showErrors(validation.errors);
+          }
+        });
+
+      // Test 2: Individual Validation
+      function testIndividualValidation() {
+        const email = document.getElementById("test_email").value;
+        const phone = document.getElementById("test_phone").value;
+        const password = document.getElementById("test_password").value;
+
+        const results = {
+          email: Validation.email(email) || "Valid ✓",
+          phone: Validation.phoneNumber(phone) || "Valid ✓",
+          password: Validation.passwordStrength(password) || "Valid ✓",
+        };
+
+        document.getElementById("results2").textContent =
+          "Validation Results:\n\n" +
+          "Email: " +
+          results.email +
+          "\n" +
+          "Phone: " +
+          results.phone +
+          "\n" +
+          "Password: " +
+          results.password;
+      }
+
+      // Test 3: Error Display
+      function showTestError() {
+        Validation.showError("test_field", "This is a test error message");
+      }
+
+      function showTestAlert(type) {
+        const container = document.getElementById("alert-container");
+        container.className = "alert alert-" + type;
+
+        const messages = {
+          error: "This is an error message",
+          success: "This is a success message",
+          warning: "This is a warning message",
+        };
+
+        container.textContent = messages[type];
+        container.style.display = "block";
+
+        setTimeout(() => {
+          container.style.display = "none";
+        }, 3000);
+      }
+
+      function clearTestErrors() {
+        Validation.clearError("test_field");
+        document.getElementById("alert-container").style.display = "none";
+      }
+
+      // Add real-time validation
+      Validation.addFieldValidation("test_email", (value) => {
+        return value ? Validation.email(value) : null;
+      });
+
+      Validation.addFieldValidation("test_phone", (value) => {
+        return value ? Validation.phoneNumber(value) : null;
+      });
+
+      Validation.addFieldValidation("test_password", (value) => {
+        return value ? Validation.passwordStrength(value) : null;
+      });
+    </script>
+  </body>
+</html>

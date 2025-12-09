@@ -1,0 +1,508 @@
+/* ========================================
+   MOBILE RESPONSIVE ENHANCEMENTS
+   Additional mobile-specific styles
+   ======================================== */
+
+/* ========== MOBILE UTILITY CLASSES ========== */
+@media (max-width: 768px) {
+  /* Visibility utilities */
+  .mobile-only {
+    display: block !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  /* Spacing utilities for mobile */
+  .mobile-mt-10 {
+    margin-top: 10px;
+  }
+
+  .mobile-mb-10 {
+    margin-bottom: 10px;
+  }
+
+  .mobile-p-10 {
+    padding: 10px;
+  }
+
+  /* ========== ENHANCED TOUCH TARGETS ========== */
+  /* All clickable elements should be at least 44x44px */
+  a,
+  button,
+  input[type="submit"],
+  input[type="button"],
+  .btn,
+  .nav-item {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Checkbox and radio buttons */
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin: 12px;
+  }
+
+  /* ========== MOBILE CARD LAYOUT FOR TABLES ========== */
+  /* Convert any table to card layout on mobile */
+  .mobile-card-table {
+    display: block;
+    overflow-x: visible;
+  }
+
+  .mobile-card-table thead {
+    display: none;
+  }
+
+  .mobile-card-table,
+  .mobile-card-table tbody,
+  .mobile-card-table tr,
+  .mobile-card-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .mobile-card-table tbody tr {
+    margin-bottom: 16px;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 16px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .mobile-card-table td {
+    padding: 8px 0;
+    border-bottom: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mobile-card-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #666;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 10px;
+  }
+
+  /* ========== MOBILE FORM ENHANCEMENTS ========== */
+  /* Stack form elements vertically */
+  .mobile-stack {
+    flex-direction: column !important;
+  }
+
+  /* Full width inputs on mobile */
+  .mobile-full-width {
+    width: 100% !important;
+  }
+
+  /* Larger text inputs to prevent zoom on iOS */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="date"],
+  input[type="time"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* ========== MOBILE NAVIGATION ENHANCEMENTS ========== */
+  /* Ensure sidebar overlay works properly */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+  }
+
+  /* Improve sidebar animation */
+  .sidebar {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* ========== MOBILE MODAL IMPROVEMENTS ========== */
+  /* Bottom sheet style modals */
+  .modal.mobile-bottom-sheet .modal-content {
+    border-radius: 16px 16px 0 0;
+    animation: slideUpFromBottom 0.3s ease-out;
+  }
+
+  @keyframes slideUpFromBottom {
+    from {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Modal handle for swipe gesture indication */
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    background: #ddd;
+    border-radius: 2px;
+    margin: 8px auto;
+  }
+
+  /* ========== MOBILE CALENDAR OPTIMIZATIONS ========== */
+  /* Simplified calendar for mobile */
+  .calendar-mobile-simplified .time-slot {
+    grid-template-columns: 50px 1fr;
+    gap: 8px;
+  }
+
+  .calendar-mobile-simplified .time-label {
+    font-size: 11px;
+    writing-mode: horizontal-tb;
+  }
+
+  .calendar-mobile-simplified .booking-card {
+    padding: 10px;
+    font-size: 13px;
+  }
+
+  /* ========== MOBILE TYPOGRAPHY ========== */
+  /* Adjust font sizes for better mobile readability */
+  body {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: 24px;
+    line-height: 1.3;
+  }
+
+  h2 {
+    font-size: 20px;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 18px;
+    line-height: 1.3;
+  }
+
+  h4 {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+
+  p {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  small {
+    font-size: 14px;
+  }
+
+  /* ========== MOBILE BUTTON IMPROVEMENTS ========== */
+  /* Full width buttons on mobile */
+  .btn-mobile-full {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Button groups stack vertically */
+  .button-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .button-group button,
+  .button-group a {
+    width: 100%;
+  }
+
+  /* ========== MOBILE IMAGE OPTIMIZATIONS ========== */
+  /* Responsive images */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Image galleries */
+  .image-gallery {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* ========== MOBILE SPACING ADJUSTMENTS ========== */
+  /* Reduce padding on mobile */
+  .card {
+    padding: 16px;
+  }
+
+  .section-padding {
+    padding: 20px 16px;
+  }
+
+  /* ========== MOBILE SCROLL IMPROVEMENTS ========== */
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* ========== MOBILE ACCESSIBILITY ========== */
+  /* Focus visible for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+  }
+
+  /* Skip to content link */
+  .skip-to-content {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #667eea;
+    color: white;
+    padding: 8px 16px;
+    text-decoration: none;
+    z-index: 9999;
+  }
+
+  .skip-to-content:focus {
+    top: 0;
+  }
+
+  /* ========== MOBILE PERFORMANCE ========== */
+  /* Reduce animations on mobile for better performance */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ========== MOBILE SAFE AREAS (for notched devices) ========== */
+  /* Support for iPhone X and similar devices */
+  .mobile-header {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .main-content {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* ========== MOBILE LANDSCAPE MODE ========== */
+  @media (orientation: landscape) and (max-height: 500px) {
+    .mobile-header {
+      height: 50px;
+    }
+
+    .sidebar {
+      width: 220px;
+    }
+
+    .content-body {
+      padding: 15px;
+    }
+
+    .kpi-card {
+      padding: 15px;
+    }
+  }
+
+  /* ========== MOBILE SWIPE GESTURES ========== */
+  /* Add visual feedback for swipeable elements */
+  .swipeable {
+    touch-action: pan-y;
+    user-select: none;
+  }
+
+  .swipeable::after {
+    content: "⟨ Swipe";
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    font-size: 12px;
+    opacity: 0.5;
+  }
+
+  /* ========== MOBILE LOADING STATES ========== */
+  /* Skeleton loaders for better perceived performance */
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+  }
+
+  @keyframes loading {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* ========== MOBILE ERROR STATES ========== */
+  /* Better error message display */
+  .error-banner {
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: #f44336;
+    color: white;
+    padding: 12px 16px;
+    z-index: 1001;
+    animation: slideDown 0.3s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      transform: translateY(-100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  /* ========== MOBILE PULL TO REFRESH ========== */
+  /* Visual indicator for pull to refresh */
+  .pull-to-refresh {
+    position: absolute;
+    top: -50px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: top 0.3s ease;
+  }
+
+  .pull-to-refresh.active {
+    top: 70px;
+  }
+
+  /* ========== MOBILE BOTTOM NAVIGATION ========== */
+  /* Alternative bottom navigation for mobile */
+  .mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+    padding: 8px 0;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 1000;
+  }
+
+  .mobile-bottom-nav.active {
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .mobile-bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    color: #666;
+    text-decoration: none;
+    font-size: 12px;
+    min-width: 60px;
+  }
+
+  .mobile-bottom-nav-item.active {
+    color: #667eea;
+  }
+
+  .mobile-bottom-nav-item svg {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/* ========== TABLET SPECIFIC (768px - 1023px) ========== */
+@media (min-width: 769px) and (max-width: 1023px) {
+  /* Tablet optimizations */
+  .tablet-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tablet-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Tablet sidebar */
+  .sidebar {
+    width: 220px;
+  }
+
+  .main-content {
+    margin-left: 220px;
+  }
+
+  /* Tablet forms */
+  .form-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ========== SMALL MOBILE (320px - 374px) ========== */
+@media (max-width: 374px) {
+  /* Extra small device optimizations */
+  .mobile-header h1 {
+    font-size: 16px;
+  }
+
+  .kpi-value {
+    font-size: 24px;
+  }
+
+  .btn,
+  .btn-primary {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .modal-content {
+    padding: 12px;
+  }
+}

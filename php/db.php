@@ -1,8 +1,8 @@
 <?php
 $host = "sql12.freesqldatabase.com";   // your host
-$user = "your_username";               // your DB username
-$pass = "your_password";               // your DB password
-$dbname = "your_db_name";              // your database name
+$user = "sql12810487";               // your DB username
+$pass = "bMQ7LPiA6X";               // your DB password
+$dbname = "sql12810487";              // your database name
 $port = 3306;                          // normally 3306
 
 $conn = mysqli_connect($host, $user, $pass, $dbname, $port);
