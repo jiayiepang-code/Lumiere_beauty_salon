@@ -1,0 +1,130 @@
+/* Container to center the card between header and footer */
+.success-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px 20px;
+    background-color: #FAFAF8; /* Warm light background */
+    min-height: 60vh; /* Ensures it takes up good space on screen */
+}
+
+/* The Main Card */
+.success-card {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    border: 1px solid #E0E0E0;
+}
+
+/* Checkmark Animation */
+.checkmark-wrapper {
+    margin-bottom: 20px;
+}
+
+.checkmark-circle {
+    width: 80px;
+    height: 80px;
+    background-color: #D2B48C; /* Tan/Gold color */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    color: white;
+    font-size: 40px;
+    box-shadow: 0 5px 15px rgba(210, 180, 140, 0.4);
+}
+
+/* Typography */
+.success-title {
+    color: #4A3B32; /* Dark Brown */
+    font-size: 28px;
+    margin-bottom: 10px;
+    font-family: 'Helvetica Neue', sans-serif;
+}
+
+.success-message {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+/* Booking Recap Box */
+.booking-recap {
+    background-color: #FAFAF8;
+    border: 1px dashed #D2B48C;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.booking-recap p {
+    margin: 5px 0;
+    color: #4A3B32;
+    font-size: 14px;
+}
+
+.email-note {
+    font-size: 13px;
+    color: #888;
+    margin-bottom: 30px;
+}
+
+.email-note span {
+    font-weight: bold;
+    color: #4A3B32;
+}
+
+/* Buttons */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-primary {
+    background-color: #4A3B32; /* Dark Brown */
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #352a24;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid #4A3B32;
+    color: #4A3B32;
+}
+
+.btn-secondary:hover {
+    background-color: #f0f0f0;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+    }
+}

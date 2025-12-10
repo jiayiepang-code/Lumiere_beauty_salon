@@ -1,0 +1,176 @@
+/* Background */
+body {
+    background: linear-gradient(180deg, #f5e9e4, #f8f1ed, #ffffff);
+}
+
+/* Main layout */
+.booking-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 40px 60px;
+}
+
+/* Left panel */
+.left-panel {
+    width: 60%;
+    background: #fff;
+    padding: 30px;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.page-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #c29076;
+    margin-bottom: 8px;
+}
+
+/* Steps */
+.steps {
+    font-size: 18px;
+    color: #8b6f63;
+    margin-bottom: 20px;
+}
+
+.step-link {
+    color: #c29076;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.step-link:hover {
+    border-bottom: 1px solid #c29076;
+}
+
+.current-step {
+    font-weight: 700;
+    color: #7a5f56;
+}
+
+/* Service box */
+.service-box {
+    background: #fdf8f6;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #e6d7cf;
+    margin-bottom: 25px;
+}
+
+.service-title {
+    font-size: 18px;
+    color: #8a766e;
+    margin-bottom: 6px;
+}
+
+.staff-select-btn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    border-radius: 25px;
+    background: #c29076;
+    color: #fff;
+    border: none;
+    font-size: 16px;
+}
+.staff-select-btn:hover {
+    background: #af7c63;
+}
+
+/* Continue Button */
+.continue-btn {
+    margin-top: 20px;
+    padding: 12px 24px;
+    border-radius: 25px;
+    border: none;
+    background: #c29076;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+.continue-btn:hover {
+    background: #b07b62;
+}
+
+/* Right panel */
+.right-panel {
+    width: 32%;
+    background: #fff;
+    padding: 25px;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.cart-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: #c29076;
+}
+
+.cart-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #e7dad3;
+}
+
+.assign-staff {
+    font-size: 14px;
+    color: #6d5b54;
+}
+
+/* Popup */
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    background: rgba(0,0,0,0.45);
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.popup-box {
+    width: 380px;
+    background: white;
+    padding: 22px;
+    border-radius: 16px;
+}
+
+.popup-title {
+    font-size: 22px;
+    font-weight: 600;
+    color: #b68a76;
+}
+
+.staff-option {
+    background: #f3e5df;
+    padding: 12px 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.staff-option:hover {
+    background: #e7d5cf;
+}
+
+.select-btn {
+    background: #c29076;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 18px;
+}
+
+.close-popup {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    background: #d7c4b7;
+    border-radius: 20px;
+}
+.close-popup:hover {
+    background: #c9b3a7;
+}

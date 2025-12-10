@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Settings - Lumière</title>
+    <link rel="stylesheet" href="../css/login.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+<div class="dashboard-container">
+    
+    <aside class="dash-sidebar">
+        <div class="sidebar-header">
+            <div class="avatar-circle-lg">WO</div>
+            <div class="user-meta">
+                <h3>Wong Yi</h3>
+                <span class="member-badge">Member</span>
+            </div>
+        </div>
+
+        <ul class="dash-nav">
+            <li><a href="dashboard.html"><i class="fas fa-user-circle"></i> My Profile</a></li>
+            <li><a href="dash-book.html"><i class="fas fa-calendar-check"></i> Bookings</a></li>
+            <li><a href="dash-fav.html"><i class="fas fa-heart"></i> Favourites Staff</a></li>
+            <li><a href="dash-set.html" class="active"><i class="fas fa-cog"></i> Settings</a></li>
+            <li><a href="dash-about.html"><i class="fas fa-info-circle"></i> About Us</a></li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="../home.html" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </aside>
+
+    <main class="dash-main">
+        <h1>Account Settings</h1>
+
+        <div class="profile-card">
+            <h3>Security</h3>
+            <form>
+                <div class="form-group">
+                    <label>Current Password</label>
+                    <input type="password" class="dash-input" placeholder="Enter current password">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" class="dash-input" placeholder="New password">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" class="dash-input" placeholder="Confirm new password">
+                    </div>
+                </div>
+                <button class="book-btn">Update Password</button>
+            </form>
+        </div>
+
+        <div class="profile-card" style="margin-top: 25px;">
+            <h3>Notifications</h3>
+            
+            <div class="toggle-row">
+                <div>
+                    <p class="toggle-title">Email Reminders</p>
+                    <p class="toggle-desc">Receive booking confirmations and reminders via email.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div>
+                    <p class="toggle-title">Promotional Offers</p>
+                    <p class="toggle-desc">Receive updates about sales and exclusive deals.</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+</body>
+</html>

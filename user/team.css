@@ -1,0 +1,182 @@
+/* ========== 1. HEADER SECTION ========== */
+.team-header-section {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.team-header-section h1 {
+    font-family: 'HandwritingFont', sans-serif; /* Replace with your actual font */
+    font-size: 2.5rem;
+    color: #4a3b32;
+    margin-bottom: 20px;
+}
+
+/* Filter Buttons (The Ovals from your sketch) */
+.filter-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 40px;
+}
+
+.filter-buttons .btn {
+    border: 2px solid #5C4033;
+    border-radius: 50px; /* Oval shape */
+    padding: 10px 25px;
+    background-color: white;
+    color: #5C4033;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.filter-buttons .btn:hover {
+    background-color: #fcece0;
+}
+
+.filter-buttons .btn.active {
+    background-color: #5C4033;
+    color: white;
+}
+
+/* ========== 2. GRID CONTAINER ========== */
+.team-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 30px;
+    padding: 0 50px 80px 50px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Hide elements by default for filtering */
+.filterDiv {
+  display: none;
+}
+
+/* The "show" class is added by JS to display filtered elements */
+.show {
+  display: block;
+}
+
+/* ========== 3. FLIP CARD STYLES ========== */
+.flip-card {
+    background-color: transparent;
+    width: 300px;
+    height: 420px;
+    perspective: 1000px; /* Essential for 3D effect */
+}
+
+/* This container moves the front and back side */
+.flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    border-radius: 15px;
+}
+
+/* Do the flip on hover */
+.flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+}
+
+/* Position the front and back side */
+.flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden; /* Safari */
+    backface-visibility: hidden;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+}
+
+/* --- FRONT SIDE STYLING --- */
+.flip-card-front {
+    background-color: white;
+    color: black;
+}
+
+.team-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 20px;
+    border: 3px solid #fcece0;
+}
+
+.flip-card-front h3 {
+    font-size: 1.8rem;
+    margin: 10px 0;
+    color: #4a3b32;
+    font-family: 'HandwritingFont', sans-serif; /* Use your font here */
+}
+
+.primary-service {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+.hover-hint {
+    font-size: 0.8rem;
+    color: #aaa;
+    margin-top: auto; /* Pushes it to bottom */
+    font-style: italic;
+}
+
+/* --- BACK SIDE STYLING --- */
+.flip-card-back {
+    background-color: #fdf5f0; /* Light aesthetic color */
+    color: #4a3b32;
+    transform: rotateY(180deg);
+}
+
+.flip-card-back h3 {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #c29076;
+    padding-bottom: 10px;
+    width: 80%;
+}
+
+.flip-card-back p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.fav-btn {
+    padding: 10px 20px;
+    background-color: white;
+    border: 2px solid #4a3b32;
+    border-radius: 25px;
+    color: #4a3b32;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;    
+}
+
+.custom-footer {
+    width: 100vw;       /* 100% of Viewport Width */
+    max-width: 100%;    /* Prevent horizontal scrollbar */
+    margin: 0;          /* Remove margins */
+    padding: 40px 20px; /* Keep your internal padding */
+    box-sizing: border-box; /* Include padding in width calculation */
+}

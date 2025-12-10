@@ -1,0 +1,89 @@
+
+.hair-section {
+    padding: 60px 20px;
+    margin-top: auto;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.hair-title {
+    font-size: 32px;
+    color: #c29076;
+    margin-top: auto;
+    margin-bottom: 40px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.hair-grid {
+    display: flex;
+    justify-content: center;
+    gap: 70px;
+    flex-wrap: wrap;
+}
+   
+.hair-card {
+    width: 300px;
+    text-align: center;
+    font-family: "Segoe UI";
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 520px;
+    justify-content: flex-start;
+}
+
+.hair-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.hair-photo {
+    width: 220px !important;
+    height: 220px !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    display: block;
+    margin: 0 auto 15px auto;
+    margin-bottom: 15px;
+}
+
+.hair-name {
+    font-size: 22px;
+    margin-bottom: 10px;
+    color: #897664;
+    font-weight: 700;
+}
+
+.hair-card p {
+    font-size: 15px;
+    line-height: 1.5;
+    color: #897664;
+    margin-bottom: 10px;
+}
+
+.hair-primary,
+.hair-info {
+    margin-bottom: 15px;
+    color: #444;
+    font-style: italic;
+}
+
+.hairfav-btn {
+    margin-top: auto;  /* pushes button to bottom of card */
+    background-color: #d7a48f;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.3s;
+}
+
+.hairfav-btn:hover {
+    background-color: #c38a73;
+}

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Booking - Lumière Beauty Salon</title>
+    
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="booking-confirm.css">
+</head>
+<body>
+
+<div class="page-wrapper">
+
+    <header class="main-header">
+        <div class="logo-area">
+            <img src="../images/16.png" alt="Lumière Beauty Salon Logo" class="header-logo">
+        </div>
+
+        <nav class="main-nav">
+            <a href="home.html" class="nav-link">Home</a>
+            <a href="services.html" class="nav-link">Services</a>
+
+            <div class="nav-dropdown">
+                <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+                <div class="dropdown-menu">
+                    <a href="team-hair.html">Hair Stylists</a>
+                    <a href="team-beauty.html">Beauticians</a>
+                    <a href="team-massage.html">Massage Therapists</a>
+                    <a href="team-nail.html">Nail Technicians</a>
+                </div>
+            </div>
+
+            <a href="contact.html" class="nav-link">Contact Us</a>
+        </nav>
+
+        <button class="book-btn" onclick="window.location.href='booking-services.html'">Book Now</button>
+
+        <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+            <div class="profile-icon">
+                <span class="profile-circle"></span>
+                <span class="profile-circle-sm"></span>
+            </div>
+        </button>
+    </header>
+
+    <aside class="profile-panel" id="profilePanel">
+        <button class="panel-close" id="panelClose">✕</button>
+        <div class="panel-content">
+            <div class="panel-header">
+                <img src="https://ui-avatars.com/api/?name=User&background=c29076&color=fff" class="panel-avatar">
+                <div>
+                    <h2>My Profile</h2>
+                    <span class="user-role-badge">Member</span>
+                </div>
+            </div>
+
+            <ul class="panel-menu">
+                <li><a href="profile.html">Edit Profile</a></li>
+                <li><a href="history.html">Booking History</a></li>
+                <li><a href="settings.html">Settings</a></li>
+                <li><a href="#about.html">About Us</a></li>
+            </ul>
+
+            <div class="panel-divider"></div>
+
+            <a href="login.html" class="panel-logout">
+                <img src="../images/59.png" class="logout-img" alt="Logout">
+                Logout
+            </a>
+        </div>
+    </aside>
+
+    <section class="booking-confirm-wrapper">
+
+        <div class="left-panel">
+            
+            <div id="login-alert" class="login-alert">
+                ⚠️ <b>Not Logged In:</b> Please <a href="login.html">Login</a> to save this booking to your account history.
+            </div>
+
+            <h1 class="page-title">Review & Confirm</h1>
+
+            <div class="steps">
+                <a href="booking-services.html" class="step-link">1. Services</a> >
+                <a href="booking-staff.html" class="step-link">2. Staff</a> >
+                <a href="booking-time.html" class="step-link">3. Time</a> >
+                <span class="current-step">4. Confirm</span>
+            </div>
+
+            <h3 class="section-header">Customer Details</h3>
+            <div class="details-box">
+                <div class="detail-row">
+                    <label>Name</label>
+                    <p>Natalie O.</p> </div>
+                <div class="detail-row">
+                    <label>Phone</label>
+                    <p>+60 12-345 6789</p>
+                </div>
+                <div class="detail-row">
+                    <label>Email</label>
+                    <p>natalie.o@example.com</p>
+                </div>
+            </div>
+
+            <h3 class="section-header">Payment Method</h3>
+            <div class="details-box">
+                <label class="radio-container">
+                    <input type="radio" checked="checked" name="payment">
+                    <span class="checkmark-radio"></span>
+                    <span class="radio-label">Pay at Salon (Cash / QR / Credit Card)</span>
+                </label>
+            </div>
+            
+            <div class="notes-box">
+                <label>Special Requests (Optional)</label>
+                <textarea placeholder="e.g. I have sensitive skin..."></textarea>
+            </div>
+
+        </div>
+
+        <div class="right-panel">
+            <h2 class="cart-title">Booking Summary</h2>
+
+            <div class="summary-date-box">
+                📅 <strong>Tuesday, 2 Dec 2025</strong><br>
+                🕒 <strong>11:00 AM – 2:00 PM</strong>
+            </div>
+
+            <div class="cart-list">
+                <div class="cart-item">
+                    <div>
+                        <b>Women Haircut</b><br>
+                        <span class="cart-meta">by Jay (45 mins)</span>
+                    </div>
+                    <div class="cart-price">RM 35</div>
+                </div>
+
+                <div class="cart-item">
+                    <div>
+                        <b>Deep Cleansing Facial</b><br>
+                        <span class="cart-meta">No Preference (75 mins)</span>
+                    </div>
+                    <div class="cart-price">RM 200</div>
+                </div>
+            </div>
+
+            <hr class="cart-divider">
+
+            <div class="total-section">
+                <div class="total-row">
+                    <span>Subtotal</span>
+                    <span>RM 235</span>
+                </div>
+                <div class="total-row">
+                    <span>Tax (SST 6%)</span>
+                    <span>RM 14.10</span>
+                </div>
+                <div class="grand-total">
+                    <span>Total</span>
+                    <span>RM 249.10</span>
+                </div>
+            </div>
+
+            <button class="confirm-btn" onclick="confirmBooking()">Confirm Appointment</button>
+        </div>
+
+    </section>
+
+    <footer class="custom-footer">
+        <div class="footer-left">
+            <img src="../images/16.png" class="footer-big-logo">
+            <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
+            <br><br>
+            <p class="footer-copyright">© 2025 Lumière beauty salon. All rights reserved.</p>
+        </div>
+
+        <div class="footer-center">
+            <h4>Contact Us</h4>
+            <p><b>Address:</b> Lumiere beauty salon, Ground Floor Block B,<br>
+                Phase 2, Jln Lintas, Kolam Centre,<br>
+                88300 Kota Kinabalu, Sabah.</p>
+            <br>
+            <p><b>Tel:</b>+6012-345 6789<br>
+               <b>Office:</b>+6088-978 8977</p>
+            <br>
+            <p><b>Email:</b> Lumiere@gmail.com</p>
+        </div>
+
+        <div class="footer-right">
+            <h4>Operating Hours</h4>
+            <p>Mon - Sun</p>
+            <p>10:00 AM – 10:00 PM</p>
+            <br><br> 
+
+            <h4 style="margin-top:18px;">Follow Us</h4>
+            <div class="footer-social-icons">
+                <a href="#" class="footer-social-circle">IG</a>
+                <a href="#" class="footer-social-circle">FB</a>
+                <a href="#" class="footer-social-circle">TT</a>
+            </div>
+        </div>
+    </footer>
+
+</div>
+
+<script src="home.js"></script>
+<script src="booking-confirm.js"></script>
+
+</body>
+</html>

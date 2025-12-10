@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Staff – Lumière Beauty Salon</title>
+
+    <!-- Global Header/Footer Theme -->
+    <link rel="stylesheet" href="home.css">
+
+    <!-- Step 2 Styling -->
+    <link rel="stylesheet" href="booking-staff.css">
+</head>
+
+<body>
+
+    <div class="page-wrapper">
+
+        <!-- ========== HEADER (Same as Home Page) ========== -->
+        <header class="main-header">
+
+            <div class="logo-area">
+                <img src="../images/16.png" class="header-logo">
+            </div>
+
+            <nav class="main-nav">
+                <a href="home.html" class="nav-link">Home</a>
+                <a href="services.html" class="nav-link">Services</a>
+
+                <div class="nav-dropdown">
+                    <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+                    <div class="dropdown-menu">
+                        <a href="team-hair.html">Hair Stylists</a>
+                        <a href="team-beauty.html">Beauticians</a>
+                        <a href="team-massage.html">Massage Therapists</a>
+                        <a href="team-nail.html">Nail Technicians</a>
+                    </div>
+                </div>
+
+                <a href="contact.html" class="nav-link">Contact Us</a>
+            </nav>
+
+            <button class="book-btn" onclick="window.location.href='booking-services.html'">Book Now</button>
+
+            <button class="profile-btn" id="profileToggle">
+                <div class="profile-icon"></div>
+            </button>
+        </header>
+
+        <!-- ========== CONTENT ========== -->
+        <section class="booking-wrapper">
+
+            <!-- LEFT PANEL -->
+            <div class="left-panel">
+                
+                <h1 class="page-title">Select Your Staff</h1>
+
+                <div class="steps">
+                    <a href="booking-services.html" class="step-link">1. Services</a>
+                    > <span class="current-step">2. Staff</span>
+                    > 3. Time
+                    > 4. Confirm
+                </div>
+
+                <!-- Selected Service Display -->
+                <div class="service-box">
+                    <div class="service-title">Selected Service:</div>
+                    <div id="selectedService">Women Haircut (45 mins)</div>
+
+                    <button class="staff-select-btn" onclick="openPopup()">Choose Staff</button>
+                </div>
+
+                <!-- Continue Button -->
+                <button class="continue-btn" onclick="window.location.href='booking-time.html'">Continue →</button>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div class="right-panel">
+
+                <h2 class="cart-title">Booking Details</h2>
+
+                <div id="cart-list">
+                    <div class="cart-item">
+                        <span>Haircut – Women Haircut</span>
+                        <span class="assign-staff">Staff: <b id="cartStaff">No Preference</b></span>
+                    </div>
+                </div>
+
+                <div class="summary">
+                    <p><b>Total Duration:</b> 45 mins</p>
+                    <p><b>Total Price:</b> RM 35</p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ========== STAFF POPUP ========== -->
+        <div id="popupOverlay" class="popup-overlay">
+
+            <div class="popup-box">
+                <h2 class="popup-title">Choose a Staff</h2>
+
+                <div class="staff-option" onclick="selectStaff('No Preference')">
+                    <span>No Preference</span>
+                    <button class="select-btn">Select</button>
+                </div>
+
+                <div class="staff-option" onclick="selectStaff('Jay')">
+                    <span>Jay</span>
+                    <button class="select-btn">Select</button>
+                </div>
+
+                <div class="staff-option" onclick="selectStaff('Mei')">
+                    <span>Mei</span>
+                    <button class="select-btn">Select</button>
+                </div>
+
+                <button class="close-popup" onclick="closePopup()">Close</button>
+            </div>
+
+        </div>
+
+        <!-- ========== FOOTER ========== -->
+        <footer class="custom-footer">
+            <div class="footer-left">
+                <img src="../images/16.png" class="footer-big-logo">
+                <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
+                <p class="footer-copyright">© 2025 Lumière beauty salon. All rights reserved.</p>
+            </div>
+
+            <div class="footer-center">
+                <h4>Contact Us</h4>
+                <p><b>Address:</b> Lumiere beauty salon, Ground Floor Block B,<br>
+                    Phase 2, Jln Lintas, Kolam Centre,<br>
+                    88300 Kota Kinabalu, Sabah.</p>
+                <p><b>Tel:</b> +6012-345 6789</p>
+                <p><b>Email:</b> Lumiere@gmail.com</p>
+            </div>
+
+            <div class="footer-right">
+                <h4>Operating Hours</h4>
+                <p>Mon - Sun</p>
+                <p>10:00 AM – 10:00 PM</p>
+
+                <h4>Follow Us</h4>
+                <div class="footer-social-icons">
+                    <a class="footer-social-circle">IG</a>
+                    <a class="footer-social-circle">FB</a>
+                    <a class="footer-social-circle">TT</a>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- POPUP JS -->
+    <script>
+        function openPopup() {
+            document.getElementById("popupOverlay").style.display = "flex";
+        }
+
+        function closePopup() {
+            document.getElementById("popupOverlay").style.display = "none";
+        }
+
+        function selectStaff(name) {
+            document.getElementById("cartStaff").textContent = name;
+            closePopup();
+        }
+    </script>
+
+</body>
+</html>

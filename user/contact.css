@@ -1,0 +1,140 @@
+/* ======================================================
+   1. GLOBAL SETTINGS & BACKGROUND
+====================================================== */
+html {
+    height: 100%; /* Critical for full height */
+}
+
+body {
+    font-family: "Segoe UI", "Didot", sans-serif;
+    color: #7c6a65;
+    margin: 0;
+    padding: 0;
+    
+    /* FIX: ROSE GOLD GRADIENT */
+    /* We use 'fixed' so it doesn't scroll away */
+    background: linear-gradient(180deg, #eebdb0, #faf5f2) no-repeat fixed !important;
+    min-height: 100vh;
+}
+
+/* ======================================================
+   2. CONTACT SECTION WRAPPER
+====================================================== */
+.contact-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+    
+    /* FIX: PUSH CONTENT DOWN (Prevents header from "eating" it) */
+    /* Since your header is fixed, we need a large margin */
+    margin-top: 160px; 
+    margin-bottom: 60px;
+    margin-left: auto;
+    margin-right: auto;
+    
+    max-width: 1200px;
+    
+    /* Keep the box white so text is readable against the pink background */
+    background-color: #ffffff; 
+    
+    padding: 60px 20px;
+    border-radius: 20px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+
+/* ======================================================
+   3. IMAGE & CONTENT BOXES
+====================================================== */
+.contact-image-box {
+    width: 420px;
+    height: 350px;
+    border-radius: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+}
+
+.contact-image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 14px;
+}
+
+.contact-info-box {
+    max-width: 450px;
+    font-size: 18px;
+    color: #6d5b54;
+}
+
+.contact-title {
+    font-size: 38px;
+    color: #c29076;
+    margin-bottom: 10px;
+}
+
+.contact-label {
+    margin-top: 20px;
+    font-weight: 700; /* Bold */
+    color: #c29076;
+    text-transform: uppercase;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.contact-text {
+    margin-top: 5px;
+    line-height: 1.6;
+    font-size: 18px;
+}
+
+/* ======================================================
+   4. MAP SECTION (SQUARE)
+====================================================== */
+.contact-map-section {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+    margin-bottom: 60px; /* Space before footer */
+}
+
+.map-box {
+    width: 500px;  /* SQUARE WIDTH */
+    height: 500px; /* SQUARE HEIGHT */
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    border: 5px solid #fff; 
+}
+
+.map-box iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* ======================================================
+   5. PROFILE PANEL STYLES
+====================================================== */
+/* (Keep your existing profile styles exactly as they are) */
+.profile-btn { background: none; border: none; cursor: pointer; padding: 5px; display: flex; align-items: center; }
+.header-profile-img { width: 32px; height: 32px; object-fit: contain; transition: transform 0.2s ease; filter: invert(63%) sepia(11%) saturate(1319%) hue-rotate(338deg) brightness(92%) contrast(86%); }
+.profile-btn:hover .header-profile-img { transform: scale(1.1); }
+.profile-panel { position: fixed; top: 85px; right: 60px; width: 230px; background: #fffdfb; border-radius: 18px; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12); padding: 20px 18px 18px; transform: translateY(-20px); opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 1100; }
+.profile-panel.open { transform: translateY(0); opacity: 1; visibility: visible; }
+.panel-close { border: none; background: transparent; float: right; font-size: 16px; cursor: pointer; color: #c29076; }
+.panel-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+.panel-avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #e6d9d2; }
+.user-role-badge { font-size: 12px; background: #f5ece8; color: #c29076; padding: 2px 8px; border-radius: 10px; }
+.panel-menu { list-style: none; margin-bottom: 16px; padding: 0; }
+.panel-menu li + li { margin-top: 6px; }
+.panel-menu a { text-decoration: none; color: #7c6a65; font-size: 14px; }
+.panel-menu a:hover { color: #c29076; }
+.panel-divider { height: 1px; background-color: #eee; margin: 20px 0; }
+.panel-logout { display: flex; align-items: center; text-decoration: none; font-size: 16px; font-weight: 500; color: #d9534f; padding: 10px 5px; border-radius: 8px; transition: background 0.2s ease; }
+.panel-logout:hover { background-color: #fff5f5; color: #c9302c; }
+.logout-img { width: 20px; height: 20px; margin-right: 10px; object-fit: contain; filter: invert(49%) sepia(19%) saturate(1996%) hue-rotate(314deg) brightness(91%) contrast(88%); transition: transform 0.2s ease; }
+.panel-logout:hover .logout-img { transform: translateX(-3px); }

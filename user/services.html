@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lumière Beauty Salon – Services</title>
+    <link rel="stylesheet" href="home.css" /> <!-- Reusing header/footer styles -->
+    <link rel="stylesheet" href="services.css" />
+</head>
+<body>
+
+<!-- ========== HEADER (Same as Homepage) ========== -->
+<header class="main-header">
+    <div class="logo-area">
+        <img src="../images/16.png" alt="Lumière Logo" class="header-logo">
+    </div>
+
+    <nav class="main-nav">
+        <a href="home.html" class="nav-link">Home</a>
+        <a href="services.html" class="nav-link active">Services</a>
+
+        <div class="nav-dropdown">
+            <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+            <div class="dropdown-menu">
+                <a href="team-hair.html">Hair Stylists</a>
+                <a href="team-beauty.html">Beauticians</a>
+                <a href="team-massage.html">Massage Therapists</a>
+                <a href="team-nail.html">Nail Technicians</a>
+            </div>
+        </div>
+        <!-- ⭐ Add Contact Us here -->
+            <a href="contact.html" class="nav-link">Contact Us</a>
+    </nav>
+
+    <!-- BOOK NOW BUTTON -->
+    <button class="book-btn" onclick="window.location.href='booking.html'">Book Now</button>
+
+
+            <!-- PROFILE ICON -->
+            <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+            <img src="../images/50.png" class="header-profile-img" alt="Profile">
+        </button>
+        </header>
+
+        <!-- ========== PROFILE SIDEBAR ========== -->
+        <aside class="profile-panel" id="profilePanel">
+    <button class="panel-close" id="panelClose">✕</button>
+    <div class="panel-content">
+        <div class="panel-header">
+            <img src="https://ui-avatars.com/api/?name=User&background=c29076&color=fff" class="panel-avatar">
+            <div>
+                <h2>My Profile</h2>
+                <span class="user-role-badge">Member</span>
+            </div>
+        </div>
+
+        <ul class="panel-menu">
+            <li><a href="profile.html">Profile</a></li>
+            <li><a href="history.html">Booking History</a></li>
+            <li><a href="favourites.html">Favourites Staff</a></li>
+            <li><a href="settings.html">Settings</a></li>
+            <li><a href="about.html">About Us</a></li>
+        </ul>
+
+        <div class="panel-divider"></div>
+
+        <a href="login.html" class="panel-logout">
+    <img src="../images/51.png" class="logout-img" alt="Logout">
+    Logout
+</a>
+    </div>
+</aside>
+
+<!-- ========== SERVICES HEADER ========== -->
+<section class="services-header">
+    <h1 class="services-title">Our Services</h1>
+    <p class="services-subtitle">Explore our full range of beauty treatments</p>
+</section>
+
+<!-- ========== CATEGORY TABS ========== -->
+<div class="service-category-buttons">
+    <button class="service-cat" onclick="selectCategory('haircut')">Haircut</button>
+    <button class="service-cat" onclick="selectCategory('facial')">Facial</button>
+    <button class="service-cat" onclick="selectCategory('manicure')">Manicure</button>
+    <button class="service-cat" onclick="selectCategory('massage')">Massage</button>
+</div>
+
+<!-- Dynamic Service Details Area -->
+<div id="serviceDetails"></div>
+
+<!-- ========== SERVICE DETAILS ========== -->
+<div class="service-row">
+    <div class="service-image-box">
+        <img src=" " class=" ">
+    </div>
+
+    <div class="service-text-box">
+        <h2> </h2>
+        <p> </p>
+
+        <div class="service-prices">
+            <p> </p>
+            <p> </p>
+            <p> </p>
+        </div>
+    </div>
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer class="custom-footer">
+
+     <div class="footer-left">
+        <img src="../images/16.png" class="footer-big-logo">
+        <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
+        <br><br>
+        <p class="footer-copyright">© 2025 Lumière beauty salon. All rights reserved.</p>
+    </div>
+
+    <!-- Middle: Contact Details -->
+    <div class="footer-center">
+        <h4>Contact Us</h4>
+        <p><b>Address:</b> Lumiere beauty salon, Ground Floor Block B,<br>
+            Phase 2, Jln Lintas, Kolam Centre,<br>
+            88300 Kota Kinabalu, Sabah.</p>
+        <br>
+        <p><b>Tel:</b> 012-345 6789<br>
+           <b>Office:</b> 088-978 8977
+        <br><br>   
+        <p><b>Email:</b> Lumiere@gmail.com</p>
+    </div>
+
+    <!-- Right: Operating Hours + Social -->
+    <div class="footer-right">
+        <h4>Operating Hours</h4>
+        <p>Daily: 10:00 AM – 10:00 PM</p>
+        <br><br> 
+
+        <h4 style="margin-top:18px;">Follow Us</h4>
+        <div class="footer-social-icons">
+            <a href="#" class="footer-social-circle">IG</a>
+            <a href="#" class="footer-social-circle">FB</a>
+            <a href="#" class="footer-social-circle">TT</a>
+        </div>
+    </div>
+
+</footer>
+
+<script src="services.js"></script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+/* ========== TEAM PAGE LAYOUT ========== */
+body {
+    font-family: 'Segoe UI';
+    background: #faf7f4;
+    padding: 40px;
+    overflow-x: hidden;
+}
+
+.team-section {
+    padding: 60px 40px 80px;
+}
+
+.team-title {
+    font-size: 36px;
+    color: #b4866b;
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.team-filters {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.filter-btn {
+    background: #e8d9d2;
+    border: 1px solid #c9a896;
+    padding: 8px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.filter-btn.active {
+    background: #c29076;
+    color: white;
+    font-weight: bold;
+}
+
+
+.filter-pill {
+    border: 1px solid #d7a48f;
+    border-radius: 999px;
+    padding: 6px 18px;
+    font-size: 14px;
+    background: #fff;
+    color: #8b6b57;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.filter-pill:hover {
+    background: #f7e2d8;
+}
+
+.filter-pill.active {
+    background: #c29076;
+    color: #fff;
+    border-color: #c29076;
+}
+
+/* Cards grid */
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 40px;
+    justify-items: center;
+}
+
+/* ========== CARD FLIP ========== */
+
+.team-card {
+    width: 270px;
+    height: 380px;
+    perspective: 1200px;
+}
+
+.card-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: 0.8s;
+}
+
+.team-card:hover .card-inner {
+    transform: rotateY(180deg);
+}
+
+/* FRONT SIDE */
+.card-front, .card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    padding: 20px;
+    background: white;
+}
+
+.card-front {
+    text-align: center;
+}
+
+.staff-photo {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 15px;
+}
+
+.staff-name {
+    font-size: 22px;
+    color: #8a6b55;
+    margin-bottom: 10px;
+}
+
+.staff-primary {
+    font-size: 14px;
+    color: #6d5846;
+}
+
+/* BACK SIDE */
+.card-back {
+    transform: rotateY(180deg);
+    background: #fff4ef;
+    text-align: center;
+}
+
+.staff-bio {
+    font-size: 14px;
+    color: #6c5b53;
+    margin-top: 20px;
+    line-height: 1.4;
+}
+
+.fav-btn {
+    margin-top: 25px;
+    padding: 10px 20px;
+    border: none;
+    background: #c29076;
+    color: white;
+    border-radius: 20px;
+    cursor: pointer;
+}
+
+/* Hover → flip */
+.team-card:hover .card-inner {
+    transform: rotateY(180deg);
+}
+
+/* Front & back faces */
+.card-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.08);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 22px 20px;
+}
+
+/* Front face */
+.card-front {
+    background: linear-gradient(to bottom, #f9f1ec 0%, #ffffff 40%);
+}
+
+/* Back face */
+.card-back {
+    transform: rotateY(180deg);
+    background: #ffffff;
+}
+
+/* Circle photo */
+.card-photo-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #f1e2da;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.card-photo {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Front text */
+.card-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: #7a5c4b;
+    margin-bottom: 4px;
+}
+
+.card-role {
+    font-size: 14px;
+    color: #a58872;
+    margin-bottom: 12px;
+}
+
+.card-primary {
+    font-size: 14px;
+    color: #6b584b;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.primary-label {
+    font-weight: 600;
+    color: #c29076;
+}
+
+/* Back text */
+.card-name-back {
+    font-size: 19px;
+    font-weight: 700;
+    color: #7a5c4b;
+    margin-bottom: 3px;
+}
+
+.card-role-back {
+    font-size: 13px;
+    color: #a58872;
+    margin-bottom: 12px;
+}
+
+.card-bio {
+    font-size: 14px;
+    color: #6b584b;
+    text-align: left;
+    line-height: 1.5;
+    margin-bottom: 18px;
+    overflow-y: auto;
+}
+
+/* Favourite button */
+.fav-btn {
+    margin-top: auto;
+    padding: 9px 18px;
+    border-radius: 999px;
+    border: none;
+    background: #d7a48f;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.1s ease;
+}
+
+.fav-btn:hover {
+    background: #c38a73;
+    transform: translateY(-1px);
+    
+}
+
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .team-section {
+        padding: 40px 20px 60px;
+    }
+
+    .team-card {
+        width: 90%;
+        max-width: 320px;
+    }
+}

@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Time – Lumière Beauty Salon</title>
+
+    <!-- Reuse global site styles -->
+    <link rel="stylesheet" href="home.css">
+    <!-- Step 3 specific styles -->
+    <link rel="stylesheet" href="booking-time.css">
+</head>
+
+<body>
+<div class="page-wrapper">
+
+    <!-- ========== HEADER (same as your home) ========== -->
+    <header class="main-header">
+
+        <div class="logo-area">
+            <img src="../images/16.png" alt="Lumière Beauty Salon Logo" class="header-logo">
+        </div>
+
+        <nav class="main-nav">
+            <a href="home.html" class="nav-link">Home</a>
+            <a href="services.html" class="nav-link">Services</a>
+
+            <div class="nav-dropdown">
+                <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+                <div class="dropdown-menu">
+                    <a href="team-hair.html">Hair Stylists</a>
+                    <a href="team-beauty.html">Beauticians</a>
+                    <a href="team-massage.html">Massage Therapists</a>
+                    <a href="team-nail.html">Nail Technicians</a>
+                </div>
+            </div>
+
+            <a href="contact.html" class="nav-link">Contact Us</a>
+        </nav>
+
+        <button class="book-btn" onclick="window.location.href='booking-services.html'">Book Now</button>
+
+        <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+            <div class="profile-icon">
+                <span class="profile-circle"></span>
+                <span class="profile-circle-sm"></span>
+            </div>
+        </button>
+    </header>
+
+    <!-- (Optional) same profile panel as home, if you want it on booking pages too -->
+    <aside class="profile-panel" id="profilePanel">
+        <button class="panel-close" id="panelClose">✕</button>
+        <div class="panel-content">
+            <div class="panel-header">
+                <img src="https://ui-avatars.com/api/?name=User&background=c29076&color=fff" class="panel-avatar">
+                <div>
+                    <h2>My Profile</h2>
+                    <span class="user-role-badge">Member</span>
+                </div>
+            </div>
+
+            <ul class="panel-menu">
+                <li><a href="profile.html">Edit Profile</a></li>
+                <li><a href="history.html">Booking History</a></li>
+                <li><a href="settings.html">Settings</a></li>
+                <li><a href="#about.html">About Us</a></li>
+            </ul>
+
+            <div class="panel-divider"></div>
+
+            <a href="login.html" class="panel-logout">
+                <img src="../images/59.png" class="logout-img" alt="Logout">
+                Logout
+            </a>
+        </div>
+    </aside>
+
+    <!-- ========== BOOKING TIME CONTENT ========== -->
+    <section class="booking-time-wrapper">
+
+        <!-- LEFT: Date + Time selection -->
+        <div class="left-panel">
+
+            <h1 class="page-title">Select Date & Time</h1>
+
+            <!-- Breadcrumb steps (clickable) -->
+            <div class="steps">
+                <a href="booking-services.html" class="step-link">1. Services</a> >
+                <a href="booking-staff.html" class="step-link">2. Staff</a> >
+                <span class="current-step">3. Time</span> >
+                4. Confirm
+            </div>
+
+            <!-- Selected staff (from previous step – static for now) -->
+            <div class="selection-summary">
+                <p><b>Selected Staff:</b> <span id="selectedStaff">Jay</span></p>
+                <p class="note-text">
+                    Time slots are automatically adjusted based on total service duration.
+                </p>
+            </div>
+
+            <!-- Calendar box -->
+            <div class="calendar-box">
+                <div class="calendar-header">
+                    <span class="month-label">December 2025</span>
+                </div>
+
+                <div class="date-grid" id="dateGrid">
+                    <!-- Example 7 days only (you can expand later) -->
+                    <div class="date-box selected" data-date="2025-12-01">1</div>
+                    <div class="date-box" data-date="2025-12-02">2</div>
+                    <div class="date-box" data-date="2025-12-03">3</div>
+                    <div class="date-box" data-date="2025-12-04">4</div>
+                    <div class="date-box" data-date="2025-12-05">5</div>
+                    <div class="date-box" data-date="2025-12-06">6</div>
+                    <div class="date-box" data-date="2025-12-07">7</div>
+                </div>
+            </div>
+
+            <!-- Time slots -->
+            <div class="time-slot-box">
+                <h2 class="time-title">Available Time Slots</h2>
+                <div id="timeSlotList">
+                    <!-- JS will render slots here -->
+                </div>
+
+                <p class="small-note" id="endTimeText">
+                    Estimated end time: –
+                </p>
+            </div>
+
+            <!-- Continue button -->
+            <button class="continue-btn" onclick="window.location.href='booking-confirm.html'">
+             Continue →</button>
+
+        </div>
+
+        <!-- RIGHT: Booking details summary -->
+        <div class="right-panel">
+            <h2 class="cart-title">Booking Details</h2>
+
+            <div id="serviceList">
+                <!-- Example hardcoded services; later you can load real data -->
+                <div class="cart-item">
+                    <div>
+                        <b>Women Haircut</b><br>
+                        <span class="cart-meta">Duration: 45 mins</span>
+                    </div>
+                    <div class="cart-price">RM 35</div>
+                </div>
+
+                <div class="cart-item">
+                    <div>
+                        <b>Deep Cleansing Facial</b><br>
+                        <span class="cart-meta">Duration: 75 mins</span>
+                    </div>
+                    <div class="cart-price">RM 200</div>
+                </div>
+            </div>
+
+            <hr class="cart-divider">
+
+            <p><b>Total Duration:</b> <span id="totalDurationText">120 mins</span></p>
+            <p><b>Total Price:</b> RM 235</p>
+            <p><b>Chosen Start Time:</b> <span id="chosenTimeText">–</span></p>
+        </div>
+
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="custom-footer">
+
+        <div class="footer-left">
+            <img src="../images/16.png" class="footer-big-logo">
+            <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
+            <br><br>
+            <p class="footer-copyright">© 2025 Lumière beauty salon. All rights reserved.</p>
+        </div>
+
+        <div class="footer-center">
+            <h4>Contact Us</h4>
+            <p><b>Address:</b> Lumiere beauty salon, Ground Floor Block B,<br>
+                Phase 2, Jln Lintas, Kolam Centre,<br>
+                88300 Kota Kinabalu, Sabah.</p>
+            <br>
+            <p><b>Tel:</b>+6012-345 6789<br>
+               <b>Office:</b>+6088-978 8977</p>
+            <br>
+            <p><b>Email:</b> Lumiere@gmail.com</p>
+        </div>
+
+        <div class="footer-right">
+            <h4>Operating Hours</h4>
+            <p>Mon - Sun</p>
+            <p>10:00 AM – 10:00 PM</p>
+            <br><br> 
+
+            <h4 style="margin-top:18px;">Follow Us</h4>
+            <div class="footer-social-icons">
+                <a href="#" class="footer-social-circle">IG</a>
+                <a href="#" class="footer-social-circle">FB</a>
+                <a href="#" class="footer-social-circle">TT</a>
+            </div>
+        </div>
+
+    </footer>
+
+</div>
+
+<!-- ========== SIMPLE JS FOR TIME SLOTS & DURATION ========== -->
+<script src="booking-time.js"></script>
+
+</body>
+</html>

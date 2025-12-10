@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Dashboard - Lumière</title>
+    <link rel="stylesheet" href="../css/test.css">
+    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <div class="dashboard-container">
+        
+        <aside class="dash-sidebar">
+    
+    <a href="../user/home.html" class="back-link">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+
+    <div class="sidebar-header">
+        <div class="avatar-circle-lg" id="dashAvatar">US</div>
+        <div class="user-meta">
+            <p>Welcome back,</p>
+            <h3 id="dashUserName">Loading...</h3>
+            <span class="member-badge">Customer</span>
+        </div>
+    </div>
+
+            <ul class="dash-nav">
+            <li><a href="dashboard.html" class="active">My Profile</a></li>
+            <li><a href="dash-book.html">My Bookings</a></li>
+            <li><a href="dash-fav.html">Favourites Staff</a></li>
+            <li><a href="dash-set.html">Settings</a></li>
+            <li><a href="dash-about.html">About Us</a></li>
+        </ul>
+
+            <div class="sidebar-footer">
+                <a href="../user/home.html" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </aside>
+
+        <main class="dash-main">
+        <h1>My Profile</h1>
+        <div class="profile-card">
+            <label>First Name</label> <input type="text" value="Wong" readonly>
+            <label>Last Name</label> <input type="text" value="Yi" readonly>
+            <button class="edit-btn">Edit Details</button>
+        </div>
+    </main>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
