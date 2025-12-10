@@ -1,14 +1,14 @@
 <?php
 /**
- * Admin Login API Endpoint
+ * Admin Login API Endpoint - UPDATED VERSION
  * File: api/admin/auth/login.php
  * 
- * Handles admin authentication for the Lumière Beauty Salon system
+ * Matches your original session structure with $_SESSION['admin']
  */
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Disable error display (errors will be logged, not printed)
+error_reporting(0);
+ini_set('display_errors', 0);
 
 // Start session
 session_start();
@@ -17,8 +17,8 @@ session_start();
 header('Content-Type: application/json');
 
 // Include required files
-require_once '../../../config/config.php';
-require_once '../../../config/utils.php';
+require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../../config/utils.php';
 
 // Only allow POST requests
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -112,11 +112,11 @@ try {
     }
     
     // Get admin data
-    $admin = $result->fetch_assoc();
+    $admin_data = $result->fetch_assoc();
     $stmt->close();
     
     // Check if account is active
-    if ($admin['is_active'] != 1) {
+    if ($admin_data['is_active'] != 1) {
         http_response_code(403);
         echo json_encode([
             'success' => false,
@@ -127,7 +127,7 @@ try {
     }
     
     // Verify password
-    if (!password_verify($password, $admin['password'])) {
+    if (!password_verify($password, $admin_data['password'])) {
         // Log failed attempt
         logAuthAttempt($phone, false);
         
@@ -150,17 +150,27 @@ try {
     if ($tableCheck->num_rows > 0) {
         $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         $logStmt = $conn->prepare("INSERT INTO Admin_Login_Log (admin_email, login_time, ip_address) VALUES (?, NOW(), ?)");
-        $logStmt->bind_param("ss", $admin['staff_email'], $ip_address);
+        $logStmt->bind_param("ss", $admin_data['staff_email'], $ip_address);
         $logStmt->execute();
         $logStmt->close();
     }
     
-    // Set session variables
-    $_SESSION['admin_logged_in'] = true;
-    $_SESSION['admin_email'] = $admin['staff_email'];
-    $_SESSION['admin_phone'] = $admin['phone'];
-    $_SESSION['admin_name'] = $admin['first_name'] . ' ' . $admin['last_name'];
-    $_SESSION['admin_role'] = $admin['role'];
+    // Generate CSRF token
+    $csrf_token = bin2hex(random_bytes(32));
+    
+    // Set session variables in YOUR ORIGINAL FORMAT
+    $_SESSION['admin'] = [
+        'email' => $admin_data['staff_email'],
+        'phone' => $admin_data['phone'],
+        'first_name' => $admin_data['first_name'],
+        'last_name' => $admin_data['last_name'],
+        'name' => $admin_data['first_name'] . ' ' . $admin_data['last_name'],
+        'role' => $admin_data['role'],
+        'csrf_token' => $csrf_token
+    ];
+    
+    // Set additional session security variables
+    $_SESSION['last_activity'] = time();
     $_SESSION['login_time'] = time();
     
     // Regenerate session ID for security
@@ -174,10 +184,11 @@ try {
         'success' => true,
         'message' => 'Login successful',
         'data' => [
-            'name' => $admin['first_name'],
-            'email' => $admin['staff_email'],
-            'redirect' => '/admin/index.php'
-        ]
+            'name' => $admin_data['first_name'],
+            'email' => $admin_data['staff_email'],
+            'redirect' => '/Lumiere-beauty-salon/admin/index.php'
+        ],
+        'csrf_token' => $csrf_token
     ]);
     
 } catch (Exception $e) {
@@ -187,6 +198,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'message' => 'An error occurred. Please try again later.'
+        'message' => 'An error occurred. Please try again later.',
+        'debug' => $e->getMessage() // Remove this in production!
     ]);
 }

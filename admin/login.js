@@ -125,7 +125,9 @@ async function validateAdminLogin() {
       }
       showSuccess("Login successful! Redirecting...");
       setTimeout(() => {
-        window.location.href = data.redirect || "index.php";
+        const redirectUrl = data.data?.redirect || data.redirect || "/Lumiere-beauty-salon/admin/index.php";
+        console.log("Redirecting to:", redirectUrl);
+        window.location.href = redirectUrl;
       }, 1000);
     } else {
       const errorMessage =

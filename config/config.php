@@ -1,7 +1,7 @@
-//configuration file to store sensitive connection details
-//replace placeholder values with actual credentials
-
 <?php
+// Configuration file to store sensitive connection details
+// Replace placeholder values with actual credentials
+
 // config.php - Configuration Details
 
 // --- MySQL Database Configuration ---
@@ -31,19 +31,16 @@ define('SMTP_PORT', 587); // TSL port
 define('SMTP_SENDER_EMAIL', 'lumierebeautysalon2022@gmail.com');
 define('SMTP_SENDER_NAME', 'Lumiere Beauty Salon');
 
-// Include PHPMailer classes
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-require 'PHPMailer/src/Exception.php';
-
 // Helper function to connect to DB
 function getDBConnection() {
     $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
     if ($conn->connect_error) {
-        // Log error instead of dying in production, but for demo:
+        // Return JSON error instead of dying
+        if (headers_sent() === false && isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'api') !== false) {
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'error' => 'Database connection failed']);
+            exit;
+        }
         die("Connection failed: " . $conn->connect_error);
     }
     return $conn;

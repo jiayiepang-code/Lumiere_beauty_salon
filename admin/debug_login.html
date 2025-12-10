@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Login Response</title>
+</head>
+<body>
+    <h2>Debug Admin Login API Response</h2>
+    <button onclick="testLogin()">Test Login API</button>
+    <pre id="result" style="background:#f5f5f5;padding:15px;border:1px solid #ddd;"></pre>
+
+    <script>
+        async function testLogin() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.textContent = 'Testing login API...';
+            
+            try {
+                const response = await fetch('../api/admin/auth/login.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        phone: '60123456789',
+                        password: 'Admin@123'
+                    })
+                });
+                
+                const text = await response.text();
+                resultDiv.textContent = 'Status: ' + response.status + '\n\nRaw Response:\n' + text;
+                
+                try {
+                    const json = JSON.parse(text);
+                    resultDiv.textContent = 'Status: ' + response.status + '\n\nParsed JSON:\n' + JSON.stringify(json, null, 2);
+                    
+                    if (json.success) {
+                        resultDiv.textContent += '\n\n✓ Login successful!';
+                        resultDiv.textContent += '\nRedirect path: ' + (json.data?.redirect || json.redirect || 'NOT FOUND');
+                    }
+                } catch (e) {
+                    resultDiv.textContent += '\n\nJSON Parse Error: ' + e.message;
+                }
+            } catch (error) {
+                resultDiv.textContent = 'Fetch Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

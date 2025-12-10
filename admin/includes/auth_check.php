@@ -1,61 +1,25 @@
 <?php
-// Session configuration with security settings
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
-ini_set('session.use_strict_mode', 1);
-session_start();
+/**
+ * Admin Authentication Check
+ * File: admin/includes/auth_check.php
+ * 
+ * This file is included at the top of all admin pages to verify login status
+ */
 
-// Session timeout (30 minutes of inactivity)
-$session_timeout = 1800; // 30 minutes in seconds
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 /**
  * Check if admin is authenticated
+ * 
+ * @return bool - True if authenticated
  */
-function isAdminAuthenticated() {
-    return isset($_SESSION['admin']) && isset($_SESSION['admin']['email']);
-}
-
-/**
- * Check session timeout
- */
-function checkSessionTimeout() {
-    global $session_timeout;
-    
-    if (isset($_SESSION['last_activity'])) {
-        $elapsed_time = time() - $_SESSION['last_activity'];
-        
-        if ($elapsed_time > $session_timeout) {
-            // Session expired
-            session_unset();
-            session_destroy();
-            return false;
-        }
-    }
-    
-    // Update last activity time
-    $_SESSION['last_activity'] = time();
-    return true;
-}
-
-/**
- * Validate CSRF token
- */
-function validateCSRFToken($token) {
-    if (!isset($_SESSION['admin']['csrf_token'])) {
-        return false;
-    }
-    
-    return hash_equals($_SESSION['admin']['csrf_token'], $token);
-}
-
-/**
- * Get CSRF token
- */
-function getCSRFToken() {
-    if (isset($_SESSION['admin']['csrf_token'])) {
-        return $_SESSION['admin']['csrf_token'];
-    }
-    return null;
+function isAdminLoggedIn() {
+    return isset($_SESSION['admin']) 
+           && is_array($_SESSION['admin'])
+           && isset($_SESSION['admin']['email']);
 }
 
 /**
@@ -63,26 +27,51 @@ function getCSRFToken() {
  * Redirects to login page if not authenticated
  */
 function requireAdminAuth() {
-    if (!isAdminAuthenticated()) {
-        header('Location: login.html');
+    if (!isAdminLoggedIn()) {
+        // Store the attempted URL for redirect after login
+        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+        
+        // Redirect to login page
+        header('Location: /Lumiere-beauty-salon/admin/login.html');
         exit;
     }
     
-    if (!checkSessionTimeout()) {
-        header('Location: login.html?timeout=1');
-        exit;
+    // Check session timeout (optional: 30 minutes)
+    if (isset($_SESSION['last_activity'])) {
+        $timeout = 30 * 60; // 30 minutes in seconds
+        if (time() - $_SESSION['last_activity'] > $timeout) {
+            // Session expired
+            session_destroy();
+            header('Location: /Lumiere-beauty-salon/admin/login.html?timeout=1');
+            exit;
+        }
     }
+    
+    // Update last activity time
+    $_SESSION['last_activity'] = time();
 }
 
 /**
  * Get current admin data
+ * 
+ * @return array|null - Admin data or null if not logged in
  */
 function getCurrentAdmin() {
-    if (isAdminAuthenticated()) {
-        return $_SESSION['admin'];
+    if (!isAdminLoggedIn()) {
+        return null;
     }
-    return null;
+    
+    return $_SESSION['admin'];
 }
 
-// Automatically check authentication for admin pages
-// This can be included at the top of any admin page
+/**
+ * Legacy function for compatibility
+ */
+function getAdminData() {
+    return getCurrentAdmin();
+}
+
+// Make admin data available globally for pages that include this file
+if (isAdminLoggedIn()) {
+    $admin = getCurrentAdmin();
+}
