@@ -13,440 +13,669 @@ $base_path = '../..';
 include '../includes/header.php';
 ?>
 
-<style>
-.page-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    gap: 16px;
-    flex-wrap: wrap;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo $page_title; ?></title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../admin/css/admin-style.css">
+    <style>
+        :root {
+            --primary-color: #D4AF37;
+            --secondary-color: #333333;
+            --dark-bg: #1a1a2e;
+            --light-gray: #F8F9FA;
+            --text-dark: #333333;
+            --text-gray: #6C757D;
+            --border-light: #E9ECEF;
+        }
 
-.search-filter-group {
-    display: flex;
-    gap: 12px;
-    flex: 1;
-    min-width: 300px;
-}
+        body {
+            background-color: #F8F9FA;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
 
-.search-box {
-    flex: 1;
-    position: relative;
-}
+        .staff-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 0;
+        }
 
-.search-box input {
-    width: 100%;
-    padding: 10px 40px 10px 16px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-}
+        .staff-header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
 
-.search-box svg {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #999;
-}
+        .staff-header .subtitle {
+            color: var(--text-gray);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
 
-.filter-select {
-    padding: 10px 16px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    background: white;
-    cursor: pointer;
-}
+        .btn-add {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+        }
 
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
+        .btn-add:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(212, 175, 55, 0.3);
+            color: white;
+        }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
+        .filters-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+        }
 
-.staff-table {
-    background: white;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
+        .search-input {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
 
-.table-container {
-    overflow-x: auto;
-}
+        .search-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(178, 58, 72, 0.1);
+            outline: none;
+        }
 
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+        .filter-select {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-thead {
-    background: #f8f9fa;
-}
+        .filter-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            outline: none;
+        }
 
-th {
-    padding: 16px;
-    text-align: left;
-    font-weight: 600;
-    color: #333;
-    font-size: 14px;
-    border-bottom: 2px solid #e9ecef;
-}
+        .table-wrapper {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
 
-td {
-    padding: 16px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 14px;
-}
+        .table {
+            margin-bottom: 0;
+        }
 
-tr:hover {
-    background: #f8f9fa;
-}
+        .table thead {
+            background-color: #F8F9FA;
+            border-bottom: 2px solid var(--border-light);
+        }
 
-.staff-profile {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
+        .table thead th {
+            color: var(--text-gray);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.8px;
+            padding: 1.25rem;
+            border: none;
+        }
 
-.staff-image {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
-}
+        .table tbody tr {
+            border-bottom: 1px solid var(--border-light);
+            transition: background-color 0.15s ease;
+        }
 
-.staff-image-placeholder {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 600;
-    font-size: 18px;
-}
+        .table tbody tr:hover {
+            background-color: #FDF6E3;
+        }
 
-.staff-info {
-    flex: 1;
-}
+        .table tbody td {
+            padding: 1.25rem;
+            vertical-align: middle;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
 
-.staff-name {
-    font-weight: 500;
-    color: #333;
-}
+        .staff-cell {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
 
-.staff-email {
-    color: #666;
-    font-size: 13px;
-}
+        .staff-avatar {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+        }
 
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-}
+        .staff-info {
+            flex: 1;
+        }
 
-.status-active {
-    background: #d4edda;
-    color: #155724;
-}
+        .staff-name {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
 
-.status-inactive {
-    background: #f8d7da;
-    color: #721c24;
-}
+        .staff-bio {
+            font-size: 0.85rem;
+            color: var(--text-gray);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 400px;
+        }
 
-.role-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-    background: #e7f3ff;
-    color: #0066cc;
-}
+        .contact-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-.action-buttons {
-    display: flex;
-    gap: 8px;
-}
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+        }
 
-.btn-icon {
-    padding: 6px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: background 0.2s;
-}
+        .contact-item svg {
+            width: 16px;
+            height: 16px;
+            color: var(--border-light);
+        }
 
-.btn-icon:hover {
-    background: #f0f0f0;
-}
+        .role-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
 
-.btn-icon svg {
-    display: block;
-}
+        .role-stylist {
+            background-color: #FDF6E3;
+            color: #D4AF37;
+        }
 
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 24px;
-}
+        .role-receptionist {
+            background-color: #E6F4F1;
+            color: #2A9D8F;
+        }
 
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
+        .role-manager {
+            background-color: #EBF5FB;
+            color: #264653;
+        }
 
-.toggle-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 24px;
-}
+        .role-admin {
+            background-color: #F5E6E0;
+            color: #E76F51;
+        }
 
-.toggle-slider:before {
-    position: absolute;
-    content: "";
-    height: 18px;
-    width: 18px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
 
-input:checked + .toggle-slider {
-    background-color: #4CAF50;
-}
+        .status-badge.active {
+            background-color: #E6F4F1;
+            color: #2A9D8F;
+        }
 
-input:checked + .toggle-slider:before {
-    transform: translateX(20px);
-}
+        .status-badge.inactive {
+            background-color: #FFF0EB;
+            color: #6C757D;
+        }
 
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #999;
-}
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+        }
 
-.empty-state svg {
-    margin: 0 auto 16px;
-    opacity: 0.5;
-}
+        .status-badge.active .status-dot {
+            background-color: #2A9D8F;
+        }
 
-.loading {
-    text-align: center;
-    padding: 40px;
-    color: #999;
-}
+        .status-badge.inactive .status-dot {
+            background-color: #9CA3AF;
+        }
 
-/* Mobile responsive */
-@media (max-width: 768px) {
-    .page-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .search-filter-group {
-        flex-direction: column;
-        min-width: 100%;
-    }
-    
-    .table-container {
-        overflow-x: scroll;
-    }
-    
-    table {
-        min-width: 900px;
-    }
-}
-</style>
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
 
-<div class="page-actions">
-    <div class="search-filter-group">
-        <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Search staff...">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-gray);
+        }
+
+        .btn-icon:hover {
+            background-color: var(--light-gray);
+        }
+
+        .btn-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn-view {
+            color: var(--primary-color);
+        }
+
+        .btn-view:hover {
+            background-color: rgba(212, 175, 55, 0.1);
+        }
+
+        .btn-edit {
+            color: #264653;
+        }
+
+        .btn-edit:hover {
+            background-color: rgba(38, 70, 83, 0.1);
+        }
+
+        .btn-delete {
+            color: #E76F51;
+        }
+
+        .btn-delete:hover {
+            background-color: rgba(231, 111, 81, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-gray);
+        }
+
+        .empty-state svg {
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-gray);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+        }
+
+        .modal-header .btn-close {
+            filter: invert(1);
+        }
+
+        .form-control, .form-select {
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .staff-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .staff-header h1 {
+                font-size: 1.75rem;
+            }
+
+            .staff-bio {
+                display: none;
+            }
+
+            .table {
+                font-size: 0.85rem;
+            }
+
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .action-buttons {
+                gap: 0.25rem;
+            }
+
+            .btn-icon {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            padding: 1rem 1.5rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 9999;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        .toast.success {
+            border-left: 4px solid #b23a48;
+            color: #66101f;
+        }
+
+        .toast.error {
+            border-left: 4px solid #a02d3a;
+            color: #4a1a26;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="staff-header mb-4">
+        <div>
+            <h1>Staff</h1>
+            <p class="subtitle">Manage your team members and roles</p>
+        </div>
+        <button class="btn btn-add" onclick="openCreateModal()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 8px;">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-        </div>
-        <select id="roleFilter" class="filter-select">
-            <option value="">All Roles</option>
-            <option value="staff">Staff</option>
-            <option value="admin">Admin</option>
-        </select>
-        <label style="display: flex; align-items: center; gap: 8px; white-space: nowrap;">
-            <input type="checkbox" id="activeOnlyFilter">
-            <span>Active Only</span>
-        </label>
+            Add Staff
+        </button>
     </div>
-    <button class="btn-primary" onclick="openCreateModal()">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-        Add Staff
-    </button>
-</div>
 
-<div class="staff-table">
-    <div class="table-container">
-        <div id="loadingState" class="loading">
-            Loading staff...
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <div class="position-relative">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-gray); pointer-events: none;">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" class="form-control search-input ps-5" id="searchInput" placeholder="Search staff by name or email...">
+                </div>
+            </div>
+            <div class="col-md-6">
+                <select class="form-select filter-select" id="roleFilter">
+                    <option value="">All Roles</option>
+                    <option value="stylist">Stylist</option>
+                    <option value="receptionist">Receptionist</option>
+                    <option value="manager">Manager</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
         </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-wrapper">
+        <div id="loadingState" class="loading">
+            <div class="spinner-border" role="status" style="color: var(--primary-color);">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Loading staff...</p>
+        </div>
+
         <div id="emptyState" class="empty-state" style="display: none;">
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="12" y1="8" x2="12" y2="12"></line>
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             <p>No staff members found</p>
         </div>
-        <table id="staffTable" style="display: none;">
-            <thead>
-                <tr>
-                    <th>Staff Member</th>
-                    <th>Phone</th>
-                    <th>Role</th>
-                    <th>Status</th>
-                    <th>Active</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="staffTableBody">
-            </tbody>
-        </table>
+
+        <div class="table-responsive" id="tableContainer" style="display: none;">
+            <table class="table" id="staffTable">
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Contact</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="staffTableBody"></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Staff Form Modal (Create/Edit) -->
-<div id="staffModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 600px;">
-        <div class="modal-header">
-            <h3 id="modalTitle">Add Staff</h3>
-            <button class="modal-close" onclick="closeStaffModal()">&times;</button>
+<div class="modal fade" id="staffModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Add Staff</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="closeStaffModal()"></button>
+            </div>
+            <div class="modal-body">
+                <form id="staffForm">
+                    <input type="hidden" id="isEdit" name="is_edit" value="0">
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="staffEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="staffEmail" name="staff_email" required maxlength="100">
+                            <div class="text-danger small mt-1" id="error-staff_email"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required placeholder="e.g., 0123456789">
+                            <div class="text-danger small mt-1" id="error-phone"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="firstName" name="first_name" required maxlength="50" placeholder="e.g., John">
+                            <div class="text-danger small mt-1" id="error-first_name"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="lastName" name="last_name" required maxlength="50" placeholder="e.g., Doe">
+                            <div class="text-danger small mt-1" id="error-last_name"></div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password <span id="passwordRequired" class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" minlength="8" placeholder="Enter strong password">
+                            <small class="text-muted d-block mt-1" id="passwordHint">Min 8 chars, 1 uppercase, 1 number, 1 special character</small>
+                            <div class="text-danger small mt-1" id="error-password"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="staff">Staff</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="bio" class="form-label">Bio</label>
+                        <textarea class="form-control" id="bio" name="bio" rows="3" placeholder="Brief introduction about the staff member..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="staffImage" class="form-label">Profile Image</label>
+                        <input type="file" class="form-control" id="staffImage" name="staff_image" accept="image/*">
+                        <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
+                            <img id="imagePreview" src="" alt="Preview" style="max-width: 100px; max-height: 100px; border-radius: 50%; object-fit: cover;">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeStaffModal()">Cancel</button>
+                        <button type="submit" class="btn btn-add">Save Staff</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <form id="staffForm">
-            <input type="hidden" id="isEdit" name="is_edit" value="0">
-            
-            <div class="form-group">
-                <label for="staffEmail">Email *</label>
-                <input type="email" id="staffEmail" name="staff_email" required maxlength="100">
-                <span class="error-message" id="error-staff_email"></span>
-            </div>
-            
-            <div class="form-group">
-                <label for="phone">Phone *</label>
-                <input type="tel" id="phone" name="phone" required placeholder="01X-XXXXXXX or 60XXXXXXXXX">
-                <span class="error-message" id="error-phone"></span>
-            </div>
-            
-            <div class="form-group" id="passwordGroup">
-                <label for="password">Password *</label>
-                <input type="password" id="password" name="password" minlength="8">
-                <small style="color: #666;">Min 8 chars, 1 uppercase, 1 number, 1 special character</small>
-                <span class="error-message" id="error-password"></span>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="firstName">First Name *</label>
-                    <input type="text" id="firstName" name="first_name" required maxlength="50">
-                    <span class="error-message" id="error-first_name"></span>
-                </div>
-                
-                <div class="form-group">
-                    <label for="lastName">Last Name *</label>
-                    <input type="text" id="lastName" name="last_name" required maxlength="50">
-                    <span class="error-message" id="error-last_name"></span>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="role">Role *</label>
-                <select id="role" name="role" required>
-                    <option value="">Select Role</option>
-                    <option value="staff">Staff</option>
-                    <option value="admin">Admin</option>
-                </select>
-                <span class="error-message" id="error-role"></span>
-            </div>
-            
-            <div class="form-group">
-                <label for="bio">Bio</label>
-                <textarea id="bio" name="bio" rows="4" maxlength="500"></textarea>
-                <span class="error-message" id="error-bio"></span>
-            </div>
-            
-            <div class="form-group">
-                <label for="staffImage">Image URL</label>
-                <input type="text" id="staffImage" name="staff_image" maxlength="255">
-                <small style="color: #666;">Enter image filename or URL</small>
-            </div>
-            
-            <div class="modal-actions">
-                <button type="button" class="btn-secondary" onclick="closeStaffModal()">Cancel</button>
-                <button type="submit" class="btn-primary" id="submitBtn">Save Staff</button>
-            </div>
-        </form>
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="modal" style="display: none;">
-    <div class="modal-content" style="max-width: 400px;">
-        <div class="modal-header">
-            <h3>Confirm Delete</h3>
-            <button class="modal-close" onclick="closeDeleteModal()">&times;</button>
-        </div>
-        <div style="padding: 20px;">
-            <p id="deleteMessage">Are you sure you want to delete this staff member?</p>
-            <p id="deleteWarning" style="color: #d32f2f; margin-top: 12px; display: none;">
-                <strong>Warning:</strong> This staff member has future bookings.
-            </p>
-        </div>
-        <div class="modal-actions">
-            <button type="button" class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
-            <button type="button" class="btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">Delete</button>
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-body text-center pt-4">
+                <div style="width: 60px; height: 60px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2">
+                        <path d="M3 6h18"></path>
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                    </svg>
+                </div>
+                <h5 class="mb-2">Delete Staff Member?</h5>
+                <p class="text-muted mb-4">Are you sure you want to delete <strong id="deleteStaffName"></strong>? This action cannot be undone.</p>
+                
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Delete Staff</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// CSRF Token from PHP
+const CSRF_TOKEN = '<?php echo htmlspecialchars($csrf_token ?? ''); ?>';
+</script>
 <script src="list.js"></script>
+
+</body>
+</html>
 
 <?php
 // Include footer
 include '../includes/footer.php';
 ?>
+
+    <div class="staff-table-card">
+        <div id="loadingState" class="loading">Loading staff...</div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>No staff members found</p>
+        </div>
+
+        <div class="table-responsive">
+            <table id="staffTable" class="staff-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Contact</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="staffTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+

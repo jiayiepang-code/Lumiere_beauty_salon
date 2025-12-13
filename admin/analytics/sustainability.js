@@ -100,7 +100,7 @@ async function loadSustainabilityData() {
 
   try {
     // Build API URL
-    let url = "/api/admin/analytics/idle_hours.php?period=" + currentPeriod;
+    let url = "../../api/admin/analytics/idle_hours.php?period=" + currentPeriod;
 
     if (currentStartDate && currentEndDate) {
       url += "&start_date=" + currentStartDate + "&end_date=" + currentEndDate;

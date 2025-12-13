@@ -1,8 +1,8 @@
 <?php
-$servername = "sql12.freesqldatabase.com";
-$username = "sql12810487";
-$password = "bMQ7LPiA6X"; // XAMPP default is empty
-$dbname = "sql12810487";
+$servername = "localhost";
+$username = "root";
+$password = ""; // XAMPP default is empty
+$dbname = "salon";
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);

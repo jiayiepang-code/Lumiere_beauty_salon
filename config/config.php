@@ -5,10 +5,10 @@
 // config.php - Configuration Details
 
 // --- MySQL Database Configuration ---
-define('DB_SERVER', 'sql12.freesqldatabase.com');
-define('DB_USERNAME', 'sql12810487'); // e.g., 'root'
-define('DB_PASSWORD', 'bMQ7LPiA6X'); // e.g., 'mysql'
-define('DB_NAME', 'sql12810487');
+define('DB_SERVER', 'localhost');
+define('DB_USERNAME', 'root'); // e.g., 'root'
+define('DB_PASSWORD', ''); // e.g., 'mysql'
+define('DB_NAME', 'salon');
 
 // --- PHPMailer SMTP Configuration (Using a free service like Gmail for this example) ---
 // Note: Using a standard Gmail account requires setting up an "App Password" for security.

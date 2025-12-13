@@ -1,353 +1,209 @@
 <?php
-// Start session with secure configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
-ini_set('session.use_strict_mode', 1);
-session_start();
-
-// Include authentication check
+require_once '../../config/config.php';
 require_once '../includes/auth_check.php';
+requireAdminAuth();
 
-// Check if user is authenticated
-if (!isAdminAuthenticated()) {
-    header('Location: ../login.html');
-    exit;
-}
-
-// Check session timeout
-if (!checkSessionTimeout()) {
-    session_destroy();
-    header('Location: ../login.html');
-    exit;
-}
-
-// Update last activity time
-$_SESSION['last_activity'] = time();
+$pageTitle = "Sustainability Analytics";
+require_once '../includes/header.php';
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sustainability Analytics - Lumière Beauty Salon Admin</title>
-    <link rel="stylesheet" href="../css/admin-style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <style>
-        .analytics-container {
-            padding: 20px;
-        }
-        
-        .analytics-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .analytics-header h1 {
-            margin: 0;
-            color: #333;
-        }
-        
-        .period-selector {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .period-btn {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            background: white;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-        
-        .period-btn.active {
-            background: #8B4789;
-            color: white;
-            border-color: #8B4789;
-        }
-        
-        .period-btn:hover:not(.active) {
-            background: #f5f5f5;
-        }
-        
-        .date-range-picker {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        .date-range-picker input {
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        
-        .date-range-picker button {
-            padding: 8px 16px;
-            background: #8B4789;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        
-        .date-range-picker button:hover {
-            background: #6d3669;
-        }
-        
-        .export-btn {
-            padding: 8px 16px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-        
-        .export-btn:hover {
-            background: #45a049;
-        }
-        
-        .kpi-cards {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .kpi-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .kpi-card h3 {
-            margin: 0 0 10px 0;
-            color: #666;
-            font-size: 14px;
-            font-weight: normal;
-        }
-        
-        .kpi-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: #333;
-            margin: 0;
-        }
-        
-        .kpi-card.idle .kpi-value {
-            color: #FF9800;
-        }
-        
-        .kpi-card.utilization .kpi-value {
-            color: #4CAF50;
-        }
-        
-        .chart-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-        
-        .chart-card h2 {
-            margin: 0 0 20px 0;
-            color: #333;
-            font-size: 18px;
-        }
-        
-        .chart-wrapper {
-            position: relative;
-            height: 300px;
-        }
-        
-        .staff-breakdown {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .staff-breakdown h2 {
-            margin: 0 0 20px 0;
-            color: #333;
-            font-size: 18px;
-        }
-        
-        .staff-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .staff-table th,
-        .staff-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .staff-table th {
-            background: #f5f5f5;
-            font-weight: 600;
-            color: #333;
-        }
-        
-        .staff-table tr:hover {
-            background: #f9f9f9;
-        }
-        
-        .utilization-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        
-        .utilization-high {
-            background: #c8e6c9;
-            color: #2e7d32;
-        }
-        
-        .utilization-medium {
-            background: #fff9c4;
-            color: #f57f17;
-        }
-        
-        .utilization-low {
-            background: #ffccbc;
-            color: #d84315;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-        }
-        
-        .error-message {
-            background: #ffebee;
-            color: #c62828;
-            padding: 15px;
-            border-radius: 4px;
-            margin: 20px 0;
-        }
-        
-        @media (max-width: 768px) {
-            .analytics-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .period-selector {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .date-range-picker {
-                flex-direction: column;
-                width: 100%;
-            }
-            
-            .date-range-picker input,
-            .date-range-picker button {
-                width: 100%;
-            }
-            
-            .staff-table {
-                font-size: 14px;
-            }
-            
-            .staff-table th,
-            .staff-table td {
-                padding: 8px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <?php include '../includes/header.php'; ?>
+
+<div class="admin-container">
+    <?php require_once '../includes/sidebar.php'; ?>
     
-    <div class="admin-layout">
-        <?php include '../includes/sidebar.php'; ?>
-        
-        <main class="main-content">
-            <div class="analytics-container">
-                <div class="analytics-header">
-                    <h1>Sustainability Analytics</h1>
-                    <div class="period-selector">
-                        <button class="period-btn" data-period="daily">Daily</button>
-                        <button class="period-btn" data-period="weekly">Weekly</button>
-                        <button class="period-btn active" data-period="monthly">Monthly</button>
-                        <div class="date-range-picker">
-                            <input type="date" id="start-date" placeholder="Start Date">
-                            <input type="date" id="end-date" placeholder="End Date">
-                            <button id="apply-range">Apply</button>
-                        </div>
-                        <button class="export-btn" id="export-pdf">Export ESG Report</button>
+    <main class="main-content">
+        <div class="page-header">
+            <div class="header-title">
+                <h1>Sustainability Analytics</h1>
+                <p class="subtitle">Monitor resource utilization and idle hours</p>
+            </div>
+            <div class="header-actions">
+                <button id="export-pdf" class="btn btn-outline">
+                    <i class="fas fa-download"></i> Export Report
+                </button>
+                <div class="date-filter-group">
+                    <div class="btn-group">
+                        <button class="btn btn-outline period-btn active" data-period="monthly">Monthly</button>
+                        <button class="btn btn-outline period-btn" data-period="weekly">Weekly</button>
+                        <button class="btn btn-outline period-btn" data-period="daily">Daily</button>
+                    </div>
+                    <div class="date-range-picker">
+                        <input type="date" id="start-date" class="form-control" placeholder="Start Date">
+                        <span class="separator">to</span>
+                        <input type="date" id="end-date" class="form-control" placeholder="End Date">
+                        <button id="apply-range" class="btn btn-primary">Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading sustainability data...</p>
+        </div>
+
+        <div id="error-container"></div>
+
+        <div id="analytics-content" style="display: none;">
+            <!-- KPI Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: rgba(33, 150, 243, 0.1); color: #2196F3;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Scheduled Hours</h3>
+                        <p class="stat-value" id="scheduled-hours">0 hrs</p>
+                        <p class="stat-label">Total staff capacity</p>
                     </div>
                 </div>
                 
-                <div id="loading" class="loading">Loading sustainability data...</div>
-                <div id="error-container"></div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: rgba(76, 175, 80, 0.1); color: #4CAF50;">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Booked Hours</h3>
+                        <p class="stat-value" id="booked-hours">0 hrs</p>
+                        <p class="stat-label">Actual service time</p>
+                    </div>
+                </div>
                 
-                <div id="analytics-content" style="display: none;">
-                    <div class="kpi-cards">
-                        <div class="kpi-card">
-                            <h3>Total Scheduled Hours</h3>
-                            <p class="kpi-value" id="scheduled-hours">0</p>
-                        </div>
-                        <div class="kpi-card">
-                            <h3>Total Booked Hours</h3>
-                            <p class="kpi-value" id="booked-hours">0</p>
-                        </div>
-                        <div class="kpi-card idle">
-                            <h3>Total Idle Hours</h3>
-                            <p class="kpi-value" id="idle-hours">0</p>
-                        </div>
-                        <div class="kpi-card utilization">
-                            <h3>Utilization Rate</h3>
-                            <p class="kpi-value" id="utilization-rate">0%</p>
-                        </div>
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: rgba(255, 152, 0, 0.1); color: #FF9800;">
+                        <i class="fas fa-hourglass-half"></i>
                     </div>
-                    
-                    <div class="chart-card">
-                        <h2>Idle Hours Trend</h2>
-                        <div class="chart-wrapper">
-                            <canvas id="idle-hours-chart"></canvas>
-                        </div>
+                    <div class="stat-info">
+                        <h3>Idle Hours</h3>
+                        <p class="stat-value" id="idle-hours">0 hrs</p>
+                        <p class="stat-label">Unutilized capacity</p>
                     </div>
-                    
-                    <div class="staff-breakdown">
-                        <h2>Staff Idle Hours Breakdown</h2>
-                        <table class="staff-table">
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="background-color: rgba(139, 71, 137, 0.1); color: #8B4789;">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Utilization Rate</h3>
+                        <p class="stat-value" id="utilization-rate">0%</p>
+                        <p class="stat-label">Efficiency score</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Idle Hours Trend</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 350px;">
+                        <canvas id="idle-hours-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Breakdown Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Staff Utilization Breakdown</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Staff Name</th>
+                                    <th>Staff Member</th>
                                     <th>Scheduled Hours</th>
                                     <th>Booked Hours</th>
                                     <th>Idle Hours</th>
-                                    <th>Utilization Rate</th>
+                                    <th>Utilization</th>
                                 </tr>
                             </thead>
                             <tbody id="staff-breakdown-body">
+                                <!-- Populated by JS -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
-    
-    <script src="sustainability.js"></script>
-</body>
-</html>
+        </div>
+    </main>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Page Specific JS -->
+<script src="sustainability.js"></script>
+
+<style>
+.date-filter-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-group {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.btn-group .btn {
+    border: none;
+    border-radius: 0;
+    border-right: 1px solid #ddd;
+    padding: 8px 16px;
+}
+
+.btn-group .btn:last-child {
+    border-right: none;
+}
+
+.btn-group .btn.active {
+    background-color: #8B4789;
+    color: white;
+}
+
+.date-range-picker {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: white;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.date-range-picker input {
+    border: 1px solid #eee;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.utilization-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.utilization-high {
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #4CAF50;
+}
+
+.utilization-medium {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: #FF9800;
+}
+
+.utilization-low {
+    background-color: rgba(244, 67, 54, 0.1);
+    color: #F44336;
+}
+</style>
+
+<?php require_once '../includes/footer.php'; ?>

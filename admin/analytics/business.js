@@ -85,7 +85,7 @@ async function loadAnalyticsData() {
 
   try {
     // Build API URL
-    let url = "/api/admin/analytics/booking_trends.php?period=" + currentPeriod;
+    let url = "../../api/admin/analytics/booking_trends.php?period=" + currentPeriod;
 
     if (currentStartDate && currentEndDate) {
       url += "&start_date=" + currentStartDate + "&end_date=" + currentEndDate;

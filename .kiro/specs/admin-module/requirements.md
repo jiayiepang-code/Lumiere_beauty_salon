@@ -25,7 +25,7 @@ The Admin Module is a web-based administrative interface for Lumière Beauty Sal
 
 #### Acceptance Criteria
 
-1.1 WHEN an administrator navigates to the admin login page, THE Admin Portal SHALL display a login form requesting email and password credentials.
+1.1 WHEN an administrator navigates to the admin login page, THE Admin Portal SHALL display a login form requesting phone number and password credentials.
 
 1.2 WHEN an administrator submits valid credentials, THE Admin Portal SHALL authenticate the user and grant access to the administrative interface within 3 seconds under normal internet connection.
 

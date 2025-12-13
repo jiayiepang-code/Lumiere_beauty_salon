@@ -1,3 +1,123 @@
+// Master Calendar Logic: drag-and-drop rescheduling, conflict checks, and modal details
+// Minimal scaffolding to enable interactions; integrates with future API endpoints.
+
+document.addEventListener('DOMContentLoaded', () => {
+  initCalendarInteractions();
+});
+
+function initCalendarInteractions() {
+  const events = document.querySelectorAll('.calendar-event');
+  events.forEach(ev => {
+    ev.setAttribute('draggable', 'true');
+    ev.addEventListener('dragstart', onDragStart);
+  });
+
+  const slots = document.querySelectorAll('.calendar-slot');
+  slots.forEach(slot => {
+    slot.addEventListener('dragover', (e) => e.preventDefault());
+    slot.addEventListener('drop', onDropReschedule);
+  });
+
+  // Click to open booking details
+  document.querySelectorAll('.calendar-event').forEach(ev => {
+    ev.addEventListener('click', () => openBookingDetails(ev.dataset.bookingId));
+  });
+}
+
+let dragData = null;
+function onDragStart(e) {
+  const el = e.target;
+  dragData = {
+    bookingId: el.dataset.bookingId,
+    staffEmail: el.dataset.staffEmail,
+    originalSlot: el.dataset.slot,
+  };
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+async function onDropReschedule(e) {
+  e.preventDefault();
+  if (!dragData) return;
+  const targetSlot = e.currentTarget.dataset.slot;
+  const staffEmail = e.currentTarget.dataset.staffEmail || dragData.staffEmail;
+
+  // Basic client-side conflict check: avoid same slot double-booking
+  const occupied = !!document.querySelector(
+    `.calendar-event[data-staff-email="${CSS.escape(staffEmail)}"][data-slot="${CSS.escape(targetSlot)}"]`
+  );
+  if (occupied) {
+    toast('Slot already occupied for staff', 'error');
+    return;
+  }
+
+  try {
+    // Call reschedule API (to be implemented server-side)
+    const resp = await fetch('../../api/admin/bookings/reschedule.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        booking_id: dragData.bookingId,
+        staff_email: staffEmail,
+        target_slot: targetSlot,
+      }),
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.success) throw new Error(data.error?.message || 'Reschedule failed');
+    // Update UI: move element
+    const draggedEl = document.querySelector(`.calendar-event[data-booking-id="${CSS.escape(dragData.bookingId)}"]`);
+    if (draggedEl) {
+      draggedEl.dataset.slot = targetSlot;
+      e.currentTarget.appendChild(draggedEl);
+    }
+    toast('Booking rescheduled', 'success');
+  } catch (err) {
+    toast(err.message, 'error');
+  } finally {
+    dragData = null;
+  }
+}
+
+async function openBookingDetails(bookingId) {
+  try {
+    const resp = await fetch(`../../api/admin/bookings/details.php?booking_id=${encodeURIComponent(bookingId)}`);
+    const data = await resp.json();
+    if (!resp.ok || !data.success) throw new Error(data.error?.message || 'Failed to load details');
+    renderBookingModal(data.booking);
+  } catch (err) {
+    toast(err.message, 'error');
+  }
+}
+
+function renderBookingModal(booking) {
+  const modal = document.getElementById('bookingModal');
+  const body = modal?.querySelector('.modal-body');
+  if (!modal || !body) return;
+  body.innerHTML = `
+    <div class="detail-grid">
+      <div><strong>Customer:</strong> ${escapeHtml(booking.customer_name)} (${escapeHtml(booking.customer_phone)})</div>
+      <div><strong>Staff:</strong> ${escapeHtml(booking.staff_name)}</div>
+      <div><strong>Service(s):</strong> ${booking.services.map(s => escapeHtml(s.name)).join(', ')}</div>
+      <div><strong>Time:</strong> ${escapeHtml(booking.start_time)} - ${escapeHtml(booking.end_time)}</div>
+      <div><strong>Status:</strong> ${escapeHtml(booking.status)}</div>
+      <div><strong>Price:</strong> RM ${Number(booking.total_price || 0).toFixed(2)}</div>
+      <div><strong>Notes:</strong> ${escapeHtml(booking.notes || '-')}</div>
+    </div>
+  `;
+  modal.classList.add('active');
+}
+
+function toast(message, kind='success') {
+  console.log(`[${kind}]`, message);
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 // Calendar state
 let currentView = "day";
 let currentDate = new Date();

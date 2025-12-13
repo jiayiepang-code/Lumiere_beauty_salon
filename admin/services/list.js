@@ -38,6 +38,12 @@ function setupEventListeners() {
     activeOnlyFilter.addEventListener("change", filterServices);
   }
 
+  // Service form submit
+  const serviceForm = document.getElementById("serviceForm");
+  if (serviceForm) {
+    serviceForm.addEventListener("submit", handleServiceSubmit);
+  }
+
   // Close modal on outside click
   const serviceModal = document.getElementById("serviceModal");
   if (serviceModal) {
@@ -71,25 +77,35 @@ function setupMobileMenu() {
   }
 }
 
-// Logout handler
-function handleLogout() {
-  if (confirm("Are you sure you want to logout?")) {
-    fetch("../../api/admin/auth/logout.php", {
+// Logout handler (SweetAlert2)
+async function handleLogout() {
+  const result = await Swal.fire({
+    title: "Logout?",
+    text: "Are you sure you want to logout?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: "#D4AF37",
+    cancelButtonColor: "#6C757D",
+    confirmButtonText: "Yes, logout",
+    cancelButtonText: "Cancel",
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const response = await fetch("../../api/admin/auth/logout.php", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.success) {
-          window.location.href = "../login.html";
-        }
-      })
-      .catch((error) => {
-        console.error("Logout error:", error);
-        window.location.href = "../login.html";
-      });
+    });
+    const data = await response.json();
+    if (data.success) {
+      window.location.href = "../login.html";
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
+    window.location.href = "../login.html";
   }
 }
 
@@ -217,36 +233,33 @@ function renderServices(services) {
     .map(
       (service) => `
         <tr>
-            <td data-label="Image">
-                <div class="service-image">
-                    ${
-                      service.service_image
-                        ? `<img src="../../images/${service.service_image}" alt="${service.service_name}" onerror="this.parentElement.innerHTML='No Image'">`
-                        : "No Image"
-                    }
-                </div>
+            <td data-label="Category">
+                <span class="service-category-badge">${escapeHtml(
+                  service.service_category
+                )}</span>
             </td>
-            <td data-label="Service">
-                <div class="service-name">${escapeHtml(
+            <td data-label="Service Name">
+                <div class="service-name-cell">${escapeHtml(
                   service.service_name
                 )}</div>
                 ${
                   service.sub_category
-                    ? `<div class="service-category">${escapeHtml(
+                    ? `<div class="service-subcategory" style="font-size: 12px; color: var(--text-lighter); margin-top: 2px;">${escapeHtml(
                         service.sub_category
                       )}</div>`
                     : ""
                 }
             </td>
-            <td data-label="Category">${escapeHtml(
-              service.service_category
-            )}</td>
-            <td data-label="Duration">${
-              service.current_duration_minutes
-            } min</td>
-            <td data-label="Price">RM ${parseFloat(
-              service.current_price
-            ).toFixed(2)}</td>
+            <td data-label="Duration">
+                <span class="service-duration">${
+                  service.current_duration_minutes
+                } min</span>
+            </td>
+            <td data-label="Price">
+                <span class="service-price">RM ${parseFloat(
+                  service.current_price
+                ).toFixed(2)}</span>
+            </td>
             <td data-label="Status">
                 <span class="status-badge ${
                   service.is_active ? "active" : "inactive"
@@ -255,33 +268,33 @@ function renderServices(services) {
                     ${service.is_active ? "Active" : "Inactive"}
                 </span>
             </td>
+            <td data-label="Created">
+                <span class="service-created">${formatDate(
+                  service.created_at
+                )}</span>
+            </td>
             <td data-label="Actions">
                 <div class="action-buttons">
-                    <button class="btn-icon edit" onclick="openEditModal(${
+                    <button class="btn-icon btn-view" onclick="viewService(${
+                      service.service_id
+                    })" title="View Details" aria-label="View service details">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                    <button class="btn-icon btn-edit" onclick="openEditModal(${
                       service.service_id
                     })" title="Edit" aria-label="Edit service">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                     </button>
-                    <button class="btn-icon toggle" onclick="toggleServiceStatus(${
-                      service.service_id
-                    })" title="${
-        service.is_active ? "Deactivate" : "Activate"
-      }" aria-label="${service.is_active ? "Deactivate" : "Activate"} service">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            ${
-                              service.is_active
-                                ? '<path d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>'
-                                : '<path d="M8 5v14l11-7z"></path>'
-                            }
-                        </svg>
-                    </button>
-                    <button class="btn-icon delete" onclick="openDeleteModal(${
+                    <button class="btn-icon btn-delete" onclick="openDeleteModal(${
                       service.service_id
                     })" title="Delete" aria-label="Delete service">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
@@ -292,6 +305,23 @@ function renderServices(services) {
     `
     )
     .join("");
+}
+
+// Format date helper
+function formatDate(dateString) {
+  if (!dateString) return "N/A";
+  const date = new Date(dateString);
+  const options = { year: "numeric", month: "short", day: "numeric" };
+  return date.toLocaleDateString("en-US", options);
+}
+
+// View service details (placeholder function)
+function viewService(serviceId) {
+  const service = allServices.find((s) => s.service_id === serviceId);
+  if (!service) return;
+
+  // For now, just open the edit modal - can be enhanced to show read-only view
+  openEditModal(serviceId);
 }
 
 // Show loading state
@@ -348,6 +378,9 @@ function openEditModal(serviceId) {
     service.default_cleanup_minutes;
   document.getElementById("description").value = service.description || "";
   document.getElementById("serviceImage").value = service.service_image || "";
+  document.getElementById("isActive").checked = service.is_active
+    ? true
+    : false;
 
   // Show image preview if exists
   if (service.service_image) {
@@ -387,9 +420,7 @@ async function handleServiceSubmit(event) {
   });
 
   const isEdit = !!data.service_id;
-  const url = isEdit
-    ? "../../api/admin/services/update.php"
-    : "../../api/admin/services/create.php";
+  const url = "../../api/admin/services/crud.php";
   const method = isEdit ? "PUT" : "POST";
 
   // Show loading state
@@ -407,41 +438,69 @@ async function handleServiceSubmit(event) {
     const result = await response.json();
 
     if (result.success) {
-      showToast(
-        result.message ||
-          (isEdit
-            ? "Service updated successfully"
-            : "Service created successfully"),
-        "success"
-      );
       closeServiceModal();
+
+      // Show success with SweetAlert2
+      Swal.fire({
+        title: isEdit ? "Updated!" : "Created!",
+        text:
+          result.message ||
+          (isEdit
+            ? "Service updated successfully!"
+            : "Service created successfully!"),
+        icon: "success",
+        confirmButtonColor: "#D4AF37",
+        timer: 2000,
+        timerProgressBar: true,
+      });
+
       loadServices();
     } else {
-      if (result.error && result.error.details) {
-        displayFormErrors(result.error.details);
-      }
-      showToast(result.error?.message || "An error occurred", "error");
+      Swal.fire({
+        title: "Error!",
+        text: result.message || "An error occurred",
+        icon: "error",
+        confirmButtonColor: "#D4AF37",
+      });
     }
   } catch (error) {
     console.error("Error submitting form:", error);
-    showToast("An error occurred while saving the service", "error");
+    Swal.fire({
+      title: "Error!",
+      text: "An error occurred while saving the service",
+      icon: "error",
+      confirmButtonColor: "#D4AF37",
+    });
   } finally {
     setSubmitButtonLoading(false);
   }
 }
 
-// Toggle service active status
+// Toggle service active status (SweetAlert2)
 async function toggleServiceStatus(serviceId) {
   const service = allServices.find((s) => s.service_id === serviceId);
   if (!service) return;
 
   const action = service.is_active ? "deactivate" : "activate";
-  const confirmMsg = `Are you sure you want to ${action} "${service.service_name}"?`;
+  const actionColor = service.is_active ? "#E76F51" : "#2A9D8F";
 
-  if (!confirm(confirmMsg)) return;
+  const result = await Swal.fire({
+    title: `${action.charAt(0).toUpperCase() + action.slice(1)} Service?`,
+    html: `Are you sure you want to ${action} <strong>"${escapeHtml(
+      service.service_name
+    )}"</strong>?`,
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonColor: actionColor,
+    cancelButtonColor: "#6C757D",
+    confirmButtonText: `Yes, ${action} it!`,
+    cancelButtonText: "Cancel",
+  });
+
+  if (!result.isConfirmed) return;
 
   try {
-    const response = await fetch("../../api/admin/services/toggle_active.php", {
+    const response = await fetch("../../api/admin/services/toggle_status.php", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -452,13 +511,13 @@ async function toggleServiceStatus(serviceId) {
       }),
     });
 
-    const result = await response.json();
+    const data = await response.json();
 
-    if (result.success) {
-      showToast(result.message, "success");
+    if (data.success) {
+      showToast(data.message || "Status updated successfully", "success");
       loadServices();
     } else {
-      showToast(result.error?.message || "An error occurred", "error");
+      showToast(data.message || "An error occurred", "error");
     }
   } catch (error) {
     console.error("Error toggling service status:", error);
@@ -466,22 +525,38 @@ async function toggleServiceStatus(serviceId) {
   }
 }
 
-// Open delete modal
+// Open delete modal (SweetAlert2)
 function openDeleteModal(serviceId) {
   const service = allServices.find((s) => s.service_id === serviceId);
   if (!service) return;
 
   currentDeleteService = service;
-  document.getElementById(
-    "deleteMessage"
-  ).textContent = `Are you sure you want to delete "${service.service_name}"?`;
-  document.getElementById("deleteWarning").style.display = "none";
+
+  Swal.fire({
+    title: "Delete Service?",
+    html: `Are you sure you want to permanently delete <strong>"${escapeHtml(
+      service.service_name
+    )}"</strong>?<br><br><span style="color:#E76F51;">This action cannot be undone.</span>`,
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#E76F51",
+    cancelButtonColor: "#6C757D",
+    confirmButtonText: "Yes, delete it!",
+    cancelButtonText: "Cancel",
+    reverseButtons: true,
+  }).then((result) => {
+    if (result.isConfirmed) {
+      confirmDelete();
+    }
+  });
+}
+  }
+
   document.getElementById("deleteModal").classList.add("active");
 }
 
 // Close delete modal
 function closeDeleteModal() {
-  document.getElementById("deleteModal").classList.remove("active");
   currentDeleteService = null;
 }
 
@@ -489,41 +564,65 @@ function closeDeleteModal() {
 async function confirmDelete() {
   if (!currentDeleteService) return;
 
-  setDeleteButtonLoading(true);
+  // Show loading
+  Swal.fire({
+    title: "Deleting...",
+    text: "Please wait while we delete the service.",
+    allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
+    didOpen: () => {
+      Swal.showLoading();
+    },
+  });
 
   try {
-    const response = await fetch("../../api/admin/services/delete.php", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        service_id: currentDeleteService.service_id,
-        action: "delete",
-        csrf_token: CSRF_TOKEN,
-      }),
-    });
+    const response = await fetch(
+      `../../api/admin/services/crud.php?id=${currentDeleteService.service_id}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     const result = await response.json();
 
     if (result.success) {
-      showToast(result.message || "Service deleted successfully", "success");
+      Swal.fire({
+        title: "Deleted!",
+        text: result.message || "Service has been deleted successfully.",
+        icon: "success",
+        confirmButtonColor: "#D4AF37",
+      });
       closeDeleteModal();
       loadServices();
     } else {
-      if (result.error?.code === "HAS_FUTURE_BOOKINGS") {
-        document.getElementById("deleteWarning").textContent =
-          result.error.message;
-        document.getElementById("deleteWarning").style.display = "block";
+      if (result.has_bookings) {
+        Swal.fire({
+          title: "Cannot Delete",
+          text: result.message,
+          icon: "error",
+          confirmButtonColor: "#D4AF37",
+        });
       } else {
-        showToast(result.error?.message || "An error occurred", "error");
+        Swal.fire({
+          title: "Error!",
+          text: result.message || "An error occurred",
+          icon: "error",
+          confirmButtonColor: "#D4AF37",
+        });
       }
     }
   } catch (error) {
     console.error("Error deleting service:", error);
-    showToast("An error occurred while deleting the service", "error");
-  } finally {
-    setDeleteButtonLoading(false);
+    Swal.fire({
+      title: "Error!",
+      text: "An error occurred while deleting the service",
+      icon: "error",
+      confirmButtonColor: "#D4AF37",
+    });
   }
 }
 
@@ -647,17 +746,32 @@ function setDeleteButtonLoading(loading) {
     deleteBtnSpinner.style.display = loading ? "inline-block" : "none";
 }
 
-// Show toast notification
+// Show toast notification (SweetAlert2)
 function showToast(message, type = "info") {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
+  // Map type to SweetAlert2 icon
+  const iconMap = {
+    success: "success",
+    error: "error",
+    warning: "warning",
+    info: "info",
+  };
 
-  toast.textContent = message;
-  toast.className = `toast ${type} show`;
+  const Toast = Swal.mixin({
+    toast: true,
+    position: "top-end",
+    showConfirmButton: false,
+    timer: 3000,
+    timerProgressBar: true,
+    didOpen: (toast) => {
+      toast.onmouseenter = Swal.stopTimer;
+      toast.onmouseleave = Swal.resumeTimer;
+    },
+  });
 
-  setTimeout(() => {
-    toast.classList.remove("show");
-  }, 3000);
+  Toast.fire({
+    icon: iconMap[type] || "info",
+    title: message,
+  });
 }
 
 // Escape HTML to prevent XSS

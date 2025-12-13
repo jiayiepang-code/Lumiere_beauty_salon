@@ -125,10 +125,20 @@ async function validateAdminLogin() {
       }
       showSuccess("Login successful! Redirecting...");
       setTimeout(() => {
-        const redirectUrl = data.data?.redirect || data.redirect || "/Lumiere-beauty-salon/admin/index.php";
+        // Try multiple possible redirect locations
+        let redirectUrl = data.redirect || data.data?.redirect;
+        
+        // If no redirect URL provided, use relative path
+        if (!redirectUrl) {
+          redirectUrl = "index.php";
+        }
+        
         console.log("Redirecting to:", redirectUrl);
-        window.location.href = redirectUrl;
-      }, 1000);
+        console.log("Full response data:", data);
+        
+        // Use window.location.replace to prevent back button issues
+        window.location.replace(redirectUrl);
+      }, 500); // Reduced timeout for faster redirect
     } else {
       const errorMessage =
         data.error?.message || "Login failed. Please try again.";

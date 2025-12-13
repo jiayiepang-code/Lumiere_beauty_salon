@@ -10,6 +10,10 @@
 error_reporting(0);
 ini_set('display_errors', 0);
 
+// Configure secure session BEFORE starting
+require_once __DIR__ . '/../../../admin/includes/security_utils.php';
+configureSecureSession();
+
 // Start session
 session_start();
 
@@ -176,7 +180,14 @@ try {
     // Regenerate session ID for security
     session_regenerate_id(true);
     
+    // Ensure session is written (but don't close it - let it persist)
+    // The session will automatically be saved when the script ends
+    
     $conn->close();
+    
+    // Determine redirect URL (use relative path for better compatibility)
+    $base_path = '/Lumiere-beauty-salon';
+    $redirect_url = $base_path . '/admin/index.php';
     
     // Return success response
     http_response_code(200);
@@ -186,8 +197,9 @@ try {
         'data' => [
             'name' => $admin_data['first_name'],
             'email' => $admin_data['staff_email'],
-            'redirect' => '/Lumiere-beauty-salon/admin/index.php'
+            'redirect' => $redirect_url
         ],
+        'redirect' => $redirect_url, // Also include at top level for compatibility
         'csrf_token' => $csrf_token
     ]);
     
