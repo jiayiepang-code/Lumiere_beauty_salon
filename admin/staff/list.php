@@ -24,7 +24,7 @@ include '../includes/header.php';
     <link rel="stylesheet" href="../../admin/css/admin-style.css">
     <style>
         :root {
-            --primary-color: #D4AF37;
+            --primary-color: #c29076; /* Brown Primary */
             --secondary-color: #333333;
             --dark-bg: #1a1a2e;
             --light-gray: #F8F9FA;
@@ -60,19 +60,19 @@ include '../includes/header.php';
         }
 
         .btn-add {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            background: linear-gradient(135deg, var(--primary-color), var(--admin-color-end));
             color: white;
             border: none;
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+            box-shadow: 0 4px 12px rgba(194, 144, 118, 0.2);  /* Brown primary */
         }
 
         .btn-add:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 6px 16px rgba(194, 144, 118, 0.3);  /* Brown primary */
             color: white;
         }
 
@@ -110,7 +110,7 @@ include '../includes/header.php';
 
         .filter-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 0 3px rgba(194, 144, 118, 0.1);  /* Brown primary */
             outline: none;
         }
 
@@ -227,7 +227,7 @@ include '../includes/header.php';
 
         .role-stylist {
             background-color: #FDF6E3;
-            color: #D4AF37;
+            color: #c29076; /* Brown Primary */
         }
 
         .role-receptionist {
@@ -314,7 +314,7 @@ include '../includes/header.php';
         }
 
         .btn-view:hover {
-            background-color: rgba(212, 175, 55, 0.1);
+            background-color: rgba(194, 144, 118, 0.1);  /* Brown primary */
         }
 
         .btn-edit {
@@ -347,7 +347,12 @@ include '../includes/header.php';
         .loading {
             text-align: center;
             padding: 2rem;
-            color: var(--text-gray);
+            color: #5c4e4b !important; /* Dark Brown/Charcoal */
+        }
+        
+        .spinner-border {
+            color: #c29076 !important; /* Brown Primary */
+            border-color: #c29076 !important;
         }
 
         .modal-header {
@@ -368,7 +373,7 @@ include '../includes/header.php';
 
         .form-control:focus, .form-select:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+            box-shadow: 0 0 0 3px rgba(194, 144, 118, 0.1);  /* Brown primary */
         }
 
         .form-label {
@@ -499,10 +504,10 @@ include '../includes/header.php';
     <!-- Table Section -->
     <div class="table-wrapper">
         <div id="loadingState" class="loading">
-            <div class="spinner-border" role="status" style="color: var(--primary-color);">
+            <div class="spinner-border" role="status" style="color: #c29076 !important;">
                 <span class="visually-hidden">Loading...</span>
             </div>
-            <p class="mt-2">Loading staff...</p>
+            <p class="mt-2" style="color: #5c4e4b;">Loading staff...</p>
         </div>
 
         <div id="emptyState" class="empty-state" style="display: none;">

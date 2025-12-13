@@ -84,7 +84,7 @@ async function handleLogout() {
     text: "Are you sure you want to logout?",
     icon: "question",
     showCancelButton: true,
-    confirmButtonColor: "#D4AF37",
+    confirmButtonColor: "#c29076",  /* Brown Primary */
     cancelButtonColor: "#6C757D",
     confirmButtonText: "Yes, logout",
     cancelButtonText: "Cancel",
@@ -449,7 +449,7 @@ async function handleServiceSubmit(event) {
             ? "Service updated successfully!"
             : "Service created successfully!"),
         icon: "success",
-        confirmButtonColor: "#D4AF37",
+        confirmButtonColor: "#c29076",  /* Brown Primary */
         timer: 2000,
         timerProgressBar: true,
       });
@@ -460,7 +460,7 @@ async function handleServiceSubmit(event) {
         title: "Error!",
         text: result.message || "An error occurred",
         icon: "error",
-        confirmButtonColor: "#D4AF37",
+        confirmButtonColor: "#c29076",  /* Brown Primary */
       });
     }
   } catch (error) {
@@ -469,7 +469,7 @@ async function handleServiceSubmit(event) {
       title: "Error!",
       text: "An error occurred while saving the service",
       icon: "error",
-      confirmButtonColor: "#D4AF37",
+      confirmButtonColor: "#c29076",  /* Brown Primary */
     });
   } finally {
     setSubmitButtonLoading(false);
@@ -594,7 +594,7 @@ async function confirmDelete() {
         title: "Deleted!",
         text: result.message || "Service has been deleted successfully.",
         icon: "success",
-        confirmButtonColor: "#D4AF37",
+        confirmButtonColor: "#c29076",  /* Brown Primary */
       });
       closeDeleteModal();
       loadServices();
@@ -604,14 +604,14 @@ async function confirmDelete() {
           title: "Cannot Delete",
           text: result.message,
           icon: "error",
-          confirmButtonColor: "#D4AF37",
+          confirmButtonColor: "#c29076",  /* Brown Primary */
         });
       } else {
         Swal.fire({
           title: "Error!",
           text: result.message || "An error occurred",
           icon: "error",
-          confirmButtonColor: "#D4AF37",
+          confirmButtonColor: "#c29076",  /* Brown Primary */
         });
       }
     }
@@ -621,7 +621,7 @@ async function confirmDelete() {
       title: "Error!",
       text: "An error occurred while deleting the service",
       icon: "error",
-      confirmButtonColor: "#D4AF37",
+      confirmButtonColor: "#c29076",  /* Brown Primary */
     });
   }
 }

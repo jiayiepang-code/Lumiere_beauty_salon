@@ -6,14 +6,7 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <div class="sidebar-brand">
-            <div class="brand-logo">
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="32" height="32" rx="8" fill="#D4AF37"/>
-                    <path d="M16 8L12 14H20L16 8Z" fill="white"/>
-                    <circle cx="16" cy="20" r="4" fill="white"/>
-                </svg>
-            </div>
-            <span class="brand-text">Lumière</span>
+            <img src="<?php echo isset($base_path) ? $base_path : '..'; ?>/images/2.jpg" alt="Lumière Beauty Salon" class="brand-logo" style="width: 32px; height: 32px; object-fit: contain;">
         </div>
     </div>
     
@@ -44,10 +37,9 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
         
         <a href="<?php echo isset($base_path) ? $base_path : '..'; ?>/admin/services/list.php" class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], '/services/') !== false) ? 'active' : ''; ?>">
             <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 7h-9M14 17H5M17 12H3"></path>
-                <circle cx="17" cy="7" r="3"></circle>
-                <circle cx="7" cy="17" r="3"></circle>
-                <circle cx="20" cy="12" r="3"></circle>
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
             </svg>
             <span>Service Management</span>
         </a>

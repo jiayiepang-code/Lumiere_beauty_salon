@@ -1,22 +1,28 @@
 <?php
-require_once '../../config/config.php';
+// Include authentication check
 require_once '../includes/auth_check.php';
+
+// Require admin authentication
 requireAdminAuth();
 
-$pageTitle = "Settings";
-require_once '../includes/header.php';
+// Set page title
+$page_title = 'Settings';
+$base_path = '../..';
+
+// Include header
+include '../includes/header.php';
 ?>
 
-<div class="admin-container">
-    <?php require_once '../includes/sidebar.php'; ?>
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
 
-    <main class="main-content">
-        <div class="page-header">
-            <div class="header-title">
-                <h1>Settings</h1>
-                <p class="subtitle">Manage branding, timezone, and access control</p>
-            </div>
+<div class="settings-page">
+    <div class="settings-header">
+        <div>
+            <h1 class="settings-title">Settings</h1>
+            <p class="settings-subtitle">Manage branding, timezone, and access control</p>
         </div>
+    </div>
 
         <div class="grid-2-col">
             <div class="card">
@@ -101,7 +107,7 @@ require_once '../includes/header.php';
                 <button type="button" class="btn btn-outline" id="configure-rbac">Configure</button>
             </div>
         </div>
-    </main>
+    </div>
 </div>
 
 <script>

@@ -1,22 +1,28 @@
 <?php
-require_once '../../config/config.php';
+// Include authentication check
 require_once '../includes/auth_check.php';
+
+// Require admin authentication
 requireAdminAuth();
 
-$pageTitle = "Business Analytics";
-require_once '../includes/header.php';
+// Set page title
+$page_title = 'Business Analytics';
+$base_path = '../..';
+
+// Include header
+include '../includes/header.php';
 ?>
 
-<div class="admin-container">
-    <?php require_once '../includes/sidebar.php'; ?>
-    
-    <main class="main-content">
-        <div class="page-header">
-            <div class="header-title">
-                <h1>Business Analytics</h1>
-                <p class="subtitle">Monitor booking trends and revenue performance</p>
-            </div>
-            <div class="header-actions">
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<div class="analytics-page">
+    <div class="analytics-header">
+        <div>
+            <h1 class="analytics-title">Business Analytics</h1>
+            <p class="analytics-subtitle">Monitor booking trends and revenue performance</p>
+        </div>
+        <div class="header-actions">
                 <div class="date-filter-group">
                     <div class="btn-group">
                         <button class="btn btn-outline period-btn active" data-period="daily">Daily</button>
@@ -132,7 +138,7 @@ require_once '../includes/header.php';
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 </div>
 
 <!-- Chart.js -->
