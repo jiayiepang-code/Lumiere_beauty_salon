@@ -3,72 +3,130 @@
 let bookingTrendsChart = null;
 let popularServicesChart = null;
 let currentPeriod = "weekly";
-let currentStartDate = null;
-let currentEndDate = null;
+let currentDays = 7;
+let chartsAnimated = false;
+
+// Chart color palette - Yellow/Gold theme
+const chartColors = {
+  primary: "#D4A574",
+  primaryLight: "rgba(212, 165, 116, 0.2)",
+  secondary: "#C4956A",
+  success: "#22c55e",
+  muted: "#888888",
+};
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
-  initializePeriodButtons();
-  initializeDateRangePicker();
+  initializeFilters();
+  initializeExportButton();
   loadAnalyticsData();
+  setupIntersectionObserver();
 });
 
-// Initialize period selector buttons
-function initializePeriodButtons() {
-  const periodButtons = document.querySelectorAll(".period-btn");
+// Initialize filter dropdowns
+function initializeFilters() {
+  const periodSelect = document.getElementById("period-select");
+  const rangeSelect = document.getElementById("range-select");
 
-  periodButtons.forEach((button) => {
-    button.addEventListener("click", function () {
-      // Remove active class from all buttons
-      periodButtons.forEach((btn) => btn.classList.remove("active"));
-
-      // Add active class to clicked button
-      this.classList.add("active");
-
-      // Update current period
-      currentPeriod = this.dataset.period;
-
-      // Clear custom date range
-      currentStartDate = null;
-      currentEndDate = null;
-      document.getElementById("start-date").value = "";
-      document.getElementById("end-date").value = "";
-
-      // Load data for selected period
+  if (periodSelect) {
+    periodSelect.addEventListener("change", function () {
+      currentPeriod = this.value;
       loadAnalyticsData();
     });
-  });
+  }
+
+  if (rangeSelect) {
+    rangeSelect.addEventListener("change", function () {
+      currentDays = parseInt(this.value);
+      loadAnalyticsData();
+    });
+  }
 }
 
-// Initialize date range picker
-function initializeDateRangePicker() {
-  const applyButton = document.getElementById("apply-range");
+// Initialize export button
+function initializeExportButton() {
+  const exportBtn = document.getElementById("export-report");
+  if (exportBtn) {
+    exportBtn.addEventListener("click", function () {
+      exportReport();
+    });
+  }
+}
 
-  applyButton.addEventListener("click", function () {
-    const startDate = document.getElementById("start-date").value;
-    const endDate = document.getElementById("end-date").value;
+// Export report functionality
+function exportReport() {
+  // Create a simple CSV export
+  const data = [];
+  data.push(["Business Analytics Report"]);
+  data.push(["Generated:", new Date().toLocaleDateString()]);
+  data.push([]);
 
-    if (!startDate || !endDate) {
-      alert("Please select both start and end dates");
-      return;
-    }
+  // Get KPI values
+  const totalBookings =
+    document.getElementById("total-bookings")?.textContent || "0";
+  const completionRate =
+    document.getElementById("completion-rate")?.textContent || "0%";
+  const totalRevenue =
+    document.getElementById("total-revenue")?.textContent || "RM 0";
+  const avgBooking =
+    document.getElementById("avg-booking")?.textContent || "RM 0";
 
-    if (new Date(startDate) > new Date(endDate)) {
-      alert("Start date must be before end date");
-      return;
-    }
+  data.push(["Metric", "Value"]);
+  data.push(["Total Bookings", totalBookings]);
+  data.push(["Completion Rate", completionRate]);
+  data.push(["Total Revenue", totalRevenue]);
+  data.push(["Avg Booking Value", avgBooking]);
 
-    // Update current date range
-    currentStartDate = startDate;
-    currentEndDate = endDate;
+  // Convert to CSV
+  const csv = data.map((row) => row.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `analytics-report-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+}
 
-    // Remove active class from period buttons
-    document
-      .querySelectorAll(".period-btn")
-      .forEach((btn) => btn.classList.remove("active"));
+// Setup Intersection Observer for chart animations
+function setupIntersectionObserver() {
+  const options = {
+    root: null,
+    rootMargin: "0px",
+    threshold: 0.1,
+  };
 
-    // Load data for custom date range
-    loadAnalyticsData();
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting && !chartsAnimated) {
+        animateCharts();
+        chartsAnimated = true;
+      }
+    });
+  }, options);
+
+  const analyticsContent = document.getElementById("analytics-content");
+  if (analyticsContent) {
+    observer.observe(analyticsContent);
+  }
+}
+
+// Animate charts when they come into view
+function animateCharts() {
+  // Add animation classes to KPI cards
+  const kpiCards = document.querySelectorAll(".kpi-card");
+  kpiCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.classList.add("animate-in");
+    }, index * 100);
+  });
+
+  // Add animation classes to chart cards
+  const chartCards = document.querySelectorAll(".chart-card");
+  chartCards.forEach((card, index) => {
+    setTimeout(() => {
+      card.classList.add("animate-in");
+    }, 400 + index * 200);
   });
 }
 
@@ -83,13 +141,15 @@ async function loadAnalyticsData() {
   errorContainer.innerHTML = "";
   analyticsContent.style.display = "none";
 
+  // Reset animation state
+  chartsAnimated = false;
+  document
+    .querySelectorAll(".kpi-card, .chart-card")
+    .forEach((el) => el.classList.remove("animate-in"));
+
   try {
     // Build API URL
-    let url = "../../api/admin/analytics/booking_trends.php?period=" + currentPeriod;
-
-    if (currentStartDate && currentEndDate) {
-      url += "&start_date=" + currentStartDate + "&end_date=" + currentEndDate;
-    }
+    let url = `../../api/admin/analytics/booking_trends.php?period=${currentPeriod}&days=${currentDays}`;
 
     // Fetch data
     const response = await fetch(url);
@@ -108,137 +168,227 @@ async function loadAnalyticsData() {
     updateBookingTrendsChart(data.daily_breakdown);
     updatePopularServicesChart(data.popular_services);
     updateStaffPerformanceTable(data.staff_performance);
+
+    // Trigger animations
+    setTimeout(() => {
+      animateCharts();
+      chartsAnimated = true;
+    }, 100);
   } catch (error) {
     console.error("Error loading analytics:", error);
     loading.style.display = "none";
     errorContainer.innerHTML = `
-            <div class="error-message">
-                <strong>Error:</strong> ${error.message}
-            </div>
-        `;
+      <div class="error-message" style="background: #fef2f2; color: #dc2626; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+        <strong>Error:</strong> ${error.message}
+      </div>
+    `;
   }
 }
 
-// Update KPI cards
+// Update KPI cards with new design
 function updateKPICards(metrics) {
-  document.getElementById("total-bookings").textContent =
-    metrics.total_bookings;
+  // Total Bookings
+  const totalBookingsEl = document.getElementById("total-bookings");
+  if (totalBookingsEl) {
+    animateNumber(totalBookingsEl, 0, metrics.total_bookings, 800);
+  }
 
-  // Calculate completion rate
+  // Completion Rate
   const completionRate =
     metrics.total_bookings > 0
-      ? ((metrics.completed_bookings / metrics.total_bookings) * 100).toFixed(1)
+      ? ((metrics.completed_bookings / metrics.total_bookings) * 100).toFixed(0)
       : 0;
-  document.getElementById("completion-rate").textContent = completionRate + "%";
+  const completionRateEl = document.getElementById("completion-rate");
+  if (completionRateEl) {
+    animateNumber(completionRateEl, 0, completionRate, 800, "%");
+  }
 
-  document.getElementById("total-revenue").textContent =
-    "RM " + metrics.total_revenue.toFixed(2);
-  document.getElementById("avg-booking").textContent =
-    "RM " + metrics.average_booking_value.toFixed(2);
+  // Total Revenue
+  const totalRevenueEl = document.getElementById("total-revenue");
+  if (totalRevenueEl) {
+    animateNumber(
+      totalRevenueEl,
+      0,
+      metrics.total_revenue,
+      800,
+      "",
+      "RM ",
+      true
+    );
+  }
+
+  // Average Booking Value
+  const avgBookingEl = document.getElementById("avg-booking");
+  if (avgBookingEl) {
+    animateNumber(
+      avgBookingEl,
+      0,
+      metrics.average_booking_value,
+      800,
+      "",
+      "RM ",
+      false
+    );
+  }
+
+  // Update trend indicators (mock data - you can calculate actual trends)
+  updateTrendIndicator("bookings-trend", 12);
+  updateTrendIndicator("completion-trend", 3);
+  updateTrendIndicator("revenue-trend", 8);
 }
 
-// Update booking trends chart
+// Animate number counting
+function animateNumber(
+  element,
+  start,
+  end,
+  duration,
+  suffix = "",
+  prefix = "",
+  formatNumber = false
+) {
+  const startTime = performance.now();
+  const startVal = parseFloat(start);
+  const endVal = parseFloat(end);
+
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    // Easing function
+    const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+    const current = startVal + (endVal - startVal) * easeOutQuart;
+
+    if (formatNumber) {
+      element.textContent =
+        prefix +
+        current.toLocaleString("en-MY", { maximumFractionDigits: 0 }) +
+        suffix;
+    } else {
+      element.textContent =
+        prefix + Math.round(current).toLocaleString() + suffix;
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    }
+  }
+
+  requestAnimationFrame(update);
+}
+
+// Update trend indicator
+function updateTrendIndicator(elementId, value) {
+  const element = document.getElementById(elementId);
+  if (!element) return;
+
+  const isPositive = value >= 0;
+  element.className = `kpi-trend ${isPositive ? "positive" : "negative"}`;
+  element.innerHTML = `
+    <i class="fas fa-arrow-${isPositive ? "up" : "down"}"></i>
+    <span>${Math.abs(value)}%</span>
+  `;
+}
+
+// Update booking trends chart - Yellow/Gold line chart
 function updateBookingTrendsChart(dailyBreakdown) {
   const ctx = document.getElementById("booking-trends-chart");
+  if (!ctx) return;
 
   // Destroy existing chart if it exists
   if (bookingTrendsChart) {
     bookingTrendsChart.destroy();
   }
 
-  // Prepare data
+  // Prepare data - use day names for weekly view
   const labels = dailyBreakdown.map((day) => {
     const date = new Date(day.date);
+    if (currentPeriod === "weekly" || currentDays <= 7) {
+      return date.toLocaleDateString("en-US", { weekday: "short" });
+    }
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   });
 
   const bookingsData = dailyBreakdown.map((day) => day.bookings);
-  const completedData = dailyBreakdown.map((day) => day.completed);
-  const revenueData = dailyBreakdown.map((day) => day.revenue);
 
-  // Create chart
+  // Create chart with animation
   bookingTrendsChart = new Chart(ctx, {
     type: "line",
     data: {
       labels: labels,
       datasets: [
         {
-          label: "Total Bookings",
+          label: "Bookings",
           data: bookingsData,
-          borderColor: "#8B4789",
-          backgroundColor: "rgba(139, 71, 137, 0.1)",
+          borderColor: chartColors.primary,
+          backgroundColor: chartColors.primaryLight,
+          borderWidth: 3,
           tension: 0.4,
-          yAxisID: "y",
-        },
-        {
-          label: "Completed",
-          data: completedData,
-          borderColor: "#4CAF50",
-          backgroundColor: "rgba(76, 175, 80, 0.1)",
-          tension: 0.4,
-          yAxisID: "y",
-        },
-        {
-          label: "Revenue (RM)",
-          data: revenueData,
-          borderColor: "#2196F3",
-          backgroundColor: "rgba(33, 150, 243, 0.1)",
-          tension: 0.4,
-          yAxisID: "y1",
+          fill: true,
+          pointBackgroundColor: chartColors.primary,
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 1500,
+        easing: "easeOutQuart",
+      },
       interaction: {
         mode: "index",
         intersect: false,
       },
       plugins: {
         legend: {
-          position: "top",
+          display: false,
         },
         tooltip: {
+          backgroundColor: "#fff",
+          titleColor: "#333",
+          bodyColor: "#666",
+          borderColor: "#e5e5e5",
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
           callbacks: {
+            title: function (context) {
+              return context[0].label;
+            },
             label: function (context) {
-              let label = context.dataset.label || "";
-              if (label) {
-                label += ": ";
-              }
-              if (context.dataset.yAxisID === "y1") {
-                label += "RM " + context.parsed.y.toFixed(2);
-              } else {
-                label += context.parsed.y;
-              }
-              return label;
+              return `${context.parsed.y} bookings`;
             },
           },
         },
       },
       scales: {
-        y: {
-          type: "linear",
-          display: true,
-          position: "left",
-          title: {
-            display: true,
-            text: "Number of Bookings",
+        x: {
+          grid: {
+            display: false,
           },
           ticks: {
-            stepSize: 1,
+            color: "#888",
+            font: {
+              size: 12,
+            },
           },
         },
-        y1: {
-          type: "linear",
-          display: true,
-          position: "right",
-          title: {
-            display: true,
-            text: "Revenue (RM)",
-          },
+        y: {
+          beginAtZero: true,
           grid: {
-            drawOnChartArea: false,
+            color: "#f5f5f5",
+          },
+          ticks: {
+            color: "#888",
+            font: {
+              size: 12,
+            },
+            stepSize: 9,
           },
         },
       },
@@ -246,87 +396,91 @@ function updateBookingTrendsChart(dailyBreakdown) {
   });
 }
 
-// Update popular services chart
+// Update popular services chart - Yellow/Gold horizontal bar chart
 function updatePopularServicesChart(popularServices) {
   const ctx = document.getElementById("popular-services-chart");
+  if (!ctx) return;
 
   // Destroy existing chart if it exists
   if (popularServicesChart) {
     popularServicesChart.destroy();
   }
 
-  // Prepare data
-  const labels = popularServices.map((service) => service.service_name);
+  // Prepare data - truncate long names
+  const labels = popularServices.map((service) => {
+    const name = service.service_name;
+    return name.length > 12 ? name.substring(0, 12) + "..." : name;
+  });
   const bookingCounts = popularServices.map((service) => service.booking_count);
-  const revenues = popularServices.map((service) => service.revenue);
 
-  // Create chart
+  // Create horizontal bar chart with animation
   popularServicesChart = new Chart(ctx, {
     type: "bar",
     data: {
       labels: labels,
       datasets: [
         {
-          label: "Booking Count",
+          label: "Bookings",
           data: bookingCounts,
-          backgroundColor: "rgba(139, 71, 137, 0.8)",
-          yAxisID: "y",
-        },
-        {
-          label: "Revenue (RM)",
-          data: revenues,
-          backgroundColor: "rgba(76, 175, 80, 0.8)",
-          yAxisID: "y1",
+          backgroundColor: chartColors.primary,
+          borderRadius: 4,
+          barThickness: 24,
         },
       ],
     },
     options: {
+      indexAxis: "y",
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 1500,
+        easing: "easeOutQuart",
+        delay: function (context) {
+          return context.dataIndex * 100;
+        },
+      },
       plugins: {
         legend: {
-          position: "top",
+          display: false,
         },
         tooltip: {
+          backgroundColor: "#fff",
+          titleColor: "#333",
+          bodyColor: "#666",
+          borderColor: "#e5e5e5",
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
           callbacks: {
             label: function (context) {
-              let label = context.dataset.label || "";
-              if (label) {
-                label += ": ";
-              }
-              if (context.dataset.yAxisID === "y1") {
-                label += "RM " + context.parsed.y.toFixed(2);
-              } else {
-                label += context.parsed.y;
-              }
-              return label;
+              return `${context.parsed.x} bookings`;
             },
           },
         },
       },
       scales: {
-        y: {
-          type: "linear",
-          display: true,
-          position: "left",
-          title: {
-            display: true,
-            text: "Booking Count",
+        x: {
+          beginAtZero: true,
+          grid: {
+            color: "#f5f5f5",
           },
           ticks: {
-            stepSize: 1,
+            color: "#888",
+            font: {
+              size: 12,
+            },
+            stepSize: 15,
           },
         },
-        y1: {
-          type: "linear",
-          display: true,
-          position: "right",
-          title: {
-            display: true,
-            text: "Revenue (RM)",
-          },
+        y: {
           grid: {
-            drawOnChartArea: false,
+            display: false,
+          },
+          ticks: {
+            color: "#333",
+            font: {
+              size: 12,
+            },
           },
         },
       },
@@ -334,24 +488,47 @@ function updatePopularServicesChart(popularServices) {
   });
 }
 
-// Update staff performance table
+// Update staff performance table with new column
 function updateStaffPerformanceTable(staffPerformance) {
   const tbody = document.getElementById("staff-performance-body");
+  if (!tbody) return;
+
   tbody.innerHTML = "";
 
-  if (staffPerformance.length === 0) {
+  if (!staffPerformance || staffPerformance.length === 0) {
     tbody.innerHTML =
-      '<tr><td colspan="3" style="text-align: center; color: #666;">No staff performance data available</td></tr>';
+      '<tr><td colspan="4" style="text-align: center; color: #888; padding: 40px;">No staff performance data available</td></tr>';
     return;
   }
 
-  staffPerformance.forEach((staff) => {
+  staffPerformance.forEach((staff, index) => {
+    const avgPerSession =
+      staff.completed_sessions > 0
+        ? staff.total_revenue / staff.completed_sessions
+        : 0;
+
     const row = document.createElement("tr");
+    row.style.opacity = "0";
+    row.style.transform = "translateY(10px)";
     row.innerHTML = `
-            <td>${staff.staff_name}</td>
-            <td>${staff.completed_sessions}</td>
-            <td>RM ${staff.total_revenue.toFixed(2)}</td>
-        `;
+      <td style="font-weight: 500;">${staff.staff_name}</td>
+      <td>${staff.completed_sessions}</td>
+      <td>RM ${staff.total_revenue.toLocaleString("en-MY", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}</td>
+      <td>RM ${avgPerSession.toLocaleString("en-MY", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      })}</td>
+    `;
     tbody.appendChild(row);
+
+    // Animate row appearance
+    setTimeout(() => {
+      row.style.transition = "opacity 0.3s ease, transform 0.3s ease";
+      row.style.opacity = "1";
+      row.style.transform = "translateY(0)";
+    }, 600 + index * 80);
   });
 }

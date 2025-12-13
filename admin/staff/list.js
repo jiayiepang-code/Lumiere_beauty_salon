@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function () {
         deleteModal = new bootstrap.Modal(deleteModalElement);
     }
 
-    // Set up event listeners
+  // Set up event listeners
     const searchInput = document.getElementById("searchInput");
     const roleFilter = document.getElementById("roleFilter");
     
@@ -87,16 +87,51 @@ function openCreateModal() {
         return;
     }
 
-    document.getElementById("modalTitle").textContent = "Add Staff";
-    document.getElementById("isEdit").value = "0";
-    document.getElementById("staffForm").reset();
-    document.getElementById("staffEmail").readOnly = false;
-    document.getElementById("password").required = true;
-    document.getElementById("passwordRequired").textContent = "*";
-    document.getElementById("passwordHint").textContent = "Min 8 chars, 1 uppercase, 1 number, 1 special character";
-    document.getElementById("imagePreviewContainer").style.display = "none";
-    clearErrors();
-    staffModal.show();
+    document.getElementById("modalTitle").textContent = "Add Staff Member";
+    const modalDesc = document.getElementById("modalDescription");
+    if (modalDesc) {
+        modalDesc.textContent = "Fill in the details to add a new team member";
+    }
+  document.getElementById("isEdit").value = "0";
+  document.getElementById("staffForm").reset();
+  document.getElementById("staffEmail").readOnly = false;
+  document.getElementById("password").required = true;
+  document.getElementById("passwordRequired").textContent = "*";
+  document.getElementById("passwordHint").textContent = "Min 8 chars, 1 uppercase, 1 number, 1 special character";
+    
+    // Reset image upload area
+    const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+    const imageUploadArea = document.getElementById("imageUploadArea");
+    const staffImageInput = document.getElementById("staffImage");
+    const previewFileName = document.getElementById("previewFileName");
+    
+    if (imagePreviewContainer) {
+        imagePreviewContainer.style.display = "none";
+    }
+    if (imageUploadArea) {
+        imageUploadArea.style.display = "flex";
+    }
+    if (staffImageInput) {
+        staffImageInput.value = "";
+    }
+    if (previewFileName) {
+        previewFileName.textContent = "";
+    }
+    
+    // Reset active toggle
+    const activeToggle = document.getElementById("isActiveToggle");
+    if (activeToggle) {
+        activeToggle.checked = true;
+    }
+    
+    // Update submit button text
+    const submitButton = document.getElementById("submitButton");
+    if (submitButton) {
+        submitButton.textContent = "Add Staff Member";
+    }
+    
+  clearErrors();
+  staffModal.show();
 }
 
 /**
@@ -117,43 +152,100 @@ async function openEditModal(staffEmail) {
         // Fetch staff details
         const response = await fetch(`../../api/admin/staff/details.php?email=${encodeURIComponent(staffEmail)}`, {
             method: 'GET',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
+
+        // Check if response is ok before parsing JSON
+        if (!response.ok) {
+            if (response.status === 401) {
+                Swal.fire({
+                    title: 'Authentication Required',
+                    text: 'Your session has expired. Please login again.',
+                    icon: 'error',
+                    confirmButtonColor: '#c29076'
+                }).then(() => {
+                    window.location.href = '/Lumiere-beauty-salon/admin/login.html';
+                });
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
         const data = await response.json();
 
         if (data.success && data.staff) {
             const member = data.staff;
             
-            document.getElementById("modalTitle").textContent = "Edit Staff";
-            document.getElementById("isEdit").value = "1";
-            document.getElementById("staffEmail").value = member.staff_email;
-            document.getElementById("staffEmail").readOnly = true;
-            document.getElementById("phone").value = member.phone;
-            document.getElementById("firstName").value = member.first_name;
-            document.getElementById("lastName").value = member.last_name;
-            document.getElementById("role").value = member.role;
-            document.getElementById("bio").value = member.bio || "";
+            document.getElementById("modalTitle").textContent = "Edit Staff Member";
+            const modalDesc = document.getElementById("modalDescription");
+            if (modalDesc) {
+                modalDesc.textContent = "Update the staff member details";
+            }
+  document.getElementById("isEdit").value = "1";
+  document.getElementById("staffEmail").value = member.staff_email;
+  document.getElementById("staffEmail").readOnly = true;
+  document.getElementById("phone").value = member.phone;
+  document.getElementById("firstName").value = member.first_name;
+  document.getElementById("lastName").value = member.last_name;
+  document.getElementById("role").value = member.role;
+  document.getElementById("bio").value = member.bio || "";
 
-            // Make password optional for edit
-            document.getElementById("password").required = false;
-            document.getElementById("password").value = "";
-            document.getElementById("password").placeholder = "Leave blank to keep current password";
-            document.getElementById("passwordRequired").textContent = "";
-            document.getElementById("passwordHint").textContent = "Leave blank to keep current password, or enter new password (min 8 chars)";
+  // Make password optional for edit
+  document.getElementById("password").required = false;
+  document.getElementById("password").value = "";
+  document.getElementById("password").placeholder = "Leave blank to keep current password";
+  document.getElementById("passwordRequired").textContent = "";
+  document.getElementById("passwordHint").textContent = "Leave blank to keep current password, or enter new password (min 8 chars)";
 
             // Show existing image if available
+            const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+            const imageUploadArea = document.getElementById("imageUploadArea");
+            const previewFileName = document.getElementById("previewFileName");
             if (member.staff_image) {
-                document.getElementById("imagePreview").src = member.staff_image;
-                document.getElementById("imagePreviewContainer").style.display = "block";
+                const imagePreview = document.getElementById("imagePreview");
+                if (imagePreview) {
+                    imagePreview.src = member.staff_image;
+                }
+                if (previewFileName) {
+                    // Extract filename from path
+                    const fileName = member.staff_image.split('/').pop() || 'Image selected';
+                    previewFileName.textContent = fileName;
+                }
+                if (imagePreviewContainer) {
+                    imagePreviewContainer.style.display = "block";
+                }
+                if (imageUploadArea) {
+                    imageUploadArea.style.display = "none";
+                }
             } else {
-                document.getElementById("imagePreviewContainer").style.display = "none";
+                if (imagePreviewContainer) {
+                    imagePreviewContainer.style.display = "none";
+                }
+                if (imageUploadArea) {
+                    imageUploadArea.style.display = "flex";
+                }
+                if (previewFileName) {
+                    previewFileName.textContent = "";
+                }
+            }
+            
+            // Set active toggle
+            const activeToggle = document.getElementById("isActiveToggle");
+            if (activeToggle) {
+                activeToggle.checked = member.is_active === true || member.is_active === 1;
+            }
+            
+            // Update submit button text
+            const submitButton = document.getElementById("submitButton");
+            if (submitButton) {
+                submitButton.textContent = "Update Staff Member";
             }
 
-            clearErrors();
-            staffModal.show();
+  clearErrors();
+  staffModal.show();
         } else {
             Swal.fire({
                 title: 'Error',
@@ -185,10 +277,29 @@ function viewStaff(staffEmail) {
  */
 function closeStaffModal() {
     if (staffModal) {
-        staffModal.hide();
+  staffModal.hide();
     }
-    document.getElementById("staffForm").reset();
-    document.getElementById("imagePreviewContainer").style.display = "none";
+  document.getElementById("staffForm").reset();
+    
+    // Reset image upload area
+    const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+    const imageUploadArea = document.getElementById("imageUploadArea");
+    const staffImageInput = document.getElementById("staffImage");
+    const previewFileName = document.getElementById("previewFileName");
+    
+    if (imagePreviewContainer) {
+        imagePreviewContainer.style.display = "none";
+    }
+    if (imageUploadArea) {
+        imageUploadArea.style.display = "flex";
+    }
+    if (staffImageInput) {
+        staffImageInput.value = "";
+    }
+    if (previewFileName) {
+        previewFileName.textContent = "";
+    }
+    
     clearErrors();
 }
 
@@ -196,10 +307,10 @@ function closeStaffModal() {
  * Handle form submission
  */
 async function handleFormSubmit(e) {
-    e.preventDefault();
-    clearErrors();
+  e.preventDefault();
+  clearErrors();
 
-    const isEdit = document.getElementById("isEdit").value === "1";
+  const isEdit = document.getElementById("isEdit").value === "1";
     const formData = new FormData();
     
     formData.append('csrf_token', CSRF_TOKEN);
@@ -210,61 +321,68 @@ async function handleFormSubmit(e) {
     formData.append('role', document.getElementById("role").value);
     formData.append('bio', document.getElementById("bio").value.trim());
 
-    // Add password if provided
-    const password = document.getElementById("password").value;
-    if (password) {
+  // Add password if provided
+  const password = document.getElementById("password").value;
+  if (password) {
         formData.append('password', password);
+    }
+    
+    // Add is_active status
+    const activeToggle = document.getElementById("isActiveToggle");
+    if (activeToggle) {
+        formData.append('is_active', activeToggle.checked ? '1' : '0');
     }
 
     // Add image if selected
     const imageFile = document.getElementById("staffImage").files[0];
     if (imageFile) {
         formData.append('staff_image', imageFile);
-    }
+  }
 
-    const url = isEdit
-        ? "../../api/admin/staff/update.php"
-        : "../../api/admin/staff/create.php";
+  const url = isEdit
+    ? "../../api/admin/staff/update.php"
+    : "../../api/admin/staff/create.php";
 
-    try {
-        const response = await fetch(url, {
+  try {
+    const response = await fetch(url, {
             method: isEdit ? "PUT" : "POST",
+            credentials: 'include',
             body: formData
-        });
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (data.success) {
+    if (data.success) {
             Swal.fire({
                 title: 'Success!',
                 text: data.message || 'Staff saved successfully',
                 icon: 'success',
                 confirmButtonColor: '#c29076'
             }).then(() => {
-                closeStaffModal();
+      closeStaffModal();
                 location.reload(); // Reload to show updated data
             });
-        } else {
-            if (data.error?.details) {
-                displayErrors(data.error.details);
-            } else {
+    } else {
+      if (data.error?.details) {
+        displayErrors(data.error.details);
+      } else {
                 Swal.fire({
                     title: 'Error',
                     text: data.error?.message || "Failed to save staff",
                     icon: 'error',
                     confirmButtonColor: '#c29076'
                 });
-            }
-        }
-    } catch (error) {
-        console.error("Error saving staff:", error);
+      }
+    }
+  } catch (error) {
+    console.error("Error saving staff:", error);
         Swal.fire({
             title: 'Error',
             text: 'Failed to save staff. Please try again.',
             icon: 'error',
             confirmButtonColor: '#c29076'
         });
-    }
+  }
 }
 
 /**
@@ -275,12 +393,82 @@ function handleImagePreview(e) {
     if (file) {
         const reader = new FileReader();
         reader.onload = function(event) {
-            document.getElementById("imagePreview").src = event.target.result;
-            document.getElementById("imagePreviewContainer").style.display = "block";
+            const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+            const imageUploadArea = document.getElementById("imageUploadArea");
+            const imagePreview = document.getElementById("imagePreview");
+            const previewFileName = document.getElementById("previewFileName");
+            
+            if (imagePreview) {
+                imagePreview.src = event.target.result;
+            }
+            if (previewFileName) {
+                previewFileName.textContent = file.name;
+            }
+            if (imagePreviewContainer) {
+                imagePreviewContainer.style.display = "block";
+            }
+            if (imageUploadArea) {
+                imageUploadArea.style.display = "none";
+            }
         };
         reader.readAsDataURL(file);
+    } else {
+        const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+        const imageUploadArea = document.getElementById("imageUploadArea");
+        if (imagePreviewContainer) {
+            imagePreviewContainer.style.display = "none";
+        }
+        if (imageUploadArea) {
+            imageUploadArea.style.display = "flex";
+        }
     }
 }
+
+/**
+ * Remove selected image and show upload area again
+ */
+function removeImage() {
+    const imagePreviewContainer = document.getElementById("imagePreviewContainer");
+    const imageUploadArea = document.getElementById("imageUploadArea");
+    const staffImageInput = document.getElementById("staffImage");
+    const previewFileName = document.getElementById("previewFileName");
+    
+    if (imagePreviewContainer) {
+        imagePreviewContainer.style.display = "none";
+    }
+    if (imageUploadArea) {
+        imageUploadArea.style.display = "flex";
+    }
+    if (staffImageInput) {
+        staffImageInput.value = "";
+    }
+    if (previewFileName) {
+        previewFileName.textContent = "";
+    }
+}
+
+// Update image input change handler
+document.addEventListener("DOMContentLoaded", function () {
+    const imageInput = document.getElementById("staffImage");
+    if (imageInput) {
+        imageInput.addEventListener("change", handleImagePreview);
+    }
+    
+    // Click handler for image upload area
+    const imageUploadArea = document.getElementById("imageUploadArea");
+    if (imageUploadArea) {
+        imageUploadArea.addEventListener("click", function(e) {
+            // Don't trigger if clicking the button directly
+            if (e.target.closest('.btn')) {
+                return;
+            }
+            const fileInput = document.getElementById("staffImage");
+            if (fileInput) {
+                fileInput.click();
+            }
+        });
+    }
+});
 
 /**
  * Open delete confirmation modal
@@ -320,23 +508,24 @@ function openDeleteModal(staffEmail) {
  * Confirm delete
  */
 async function confirmDelete() {
-    if (!currentStaffEmail) return;
+  if (!currentStaffEmail) return;
 
-    try {
-        const response = await fetch("../../api/admin/staff/delete.php", {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
+  try {
+    const response = await fetch("../../api/admin/staff/delete.php", {
+      method: "DELETE",
+      credentials: 'include',
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
                 csrf_token: CSRF_TOKEN,
-                staff_email: currentStaffEmail,
-            }),
-        });
+        staff_email: currentStaffEmail,
+      }),
+    });
 
-        const data = await response.json();
+    const data = await response.json();
 
-        if (data.success) {
+    if (data.success) {
             Swal.fire({
                 title: 'Deleted!',
                 text: data.message || 'Staff member has been deleted.',
@@ -345,36 +534,36 @@ async function confirmDelete() {
             }).then(() => {
                 location.reload(); // Reload to show updated data
             });
-        } else {
+    } else {
             Swal.fire({
                 title: 'Error',
                 text: data.error?.message || "Failed to delete staff",
                 icon: 'error',
                 confirmButtonColor: '#c29076'
             });
-        }
-    } catch (error) {
-        console.error("Error deleting staff:", error);
+    }
+  } catch (error) {
+    console.error("Error deleting staff:", error);
         Swal.fire({
             title: 'Error',
             text: 'Failed to delete staff. Please try again.',
             icon: 'error',
             confirmButtonColor: '#c29076'
         });
-    }
+  }
 }
 
 /**
  * Display validation errors
  */
 function displayErrors(errors) {
-    for (const [field, message] of Object.entries(errors)) {
-        const errorElement = document.getElementById(`error-${field}`);
-        if (errorElement) {
-            errorElement.textContent = message;
-            errorElement.style.display = "block";
-        }
+  for (const [field, message] of Object.entries(errors)) {
+    const errorElement = document.getElementById(`error-${field}`);
+    if (errorElement) {
+      errorElement.textContent = message;
+      errorElement.style.display = "block";
     }
+  }
 }
 
 /**
@@ -382,17 +571,17 @@ function displayErrors(errors) {
  */
 function clearErrors() {
     const errorElements = document.querySelectorAll("[id^='error-']");
-    errorElements.forEach((el) => {
-        el.textContent = "";
-        el.style.display = "none";
-    });
+  errorElements.forEach((el) => {
+    el.textContent = "";
+    el.style.display = "none";
+  });
 }
 
 /**
  * Escape HTML to prevent XSS
  */
 function escapeHtml(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
 }

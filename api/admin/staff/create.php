@@ -4,15 +4,10 @@
  * Handles staff account creation with image upload support
  */
 
-// Start session with secure configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0);
-ini_set('session.use_strict_mode', 1);
-session_start();
-
 header('Content-Type: application/json');
 
 // Include required files
+// Note: auth_check.php handles session start with proper secure configuration
 require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 require_once '../../../admin/includes/error_handler.php';
@@ -157,16 +152,27 @@ try {
         $staff_image = '/images/staff/' . basename($upload_result['file_path']);
     }
     
+    // Get is_active status (default to 1 if not provided)
+    $is_active = 1; // Default to active
+    if (isset($input['is_active'])) {
+        $is_active = filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($is_active === null) {
+            $is_active = 1; // Default if invalid
+        } else {
+            $is_active = $is_active ? 1 : 0;
+        }
+    }
+    
     // Hash password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     
     // Insert new staff account
     $sql = "INSERT INTO staff (staff_email, phone, password, first_name, last_name, 
                                bio, role, staff_image, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssssss", 
+    $stmt->bind_param("ssssssssi", 
         $staff_email,
         $phone,
         $hashed_password,
@@ -174,7 +180,8 @@ try {
         $last_name,
         $bio,
         $role,
-        $staff_image
+        $staff_image,
+        $is_active
     );
     
     if ($stmt->execute()) {

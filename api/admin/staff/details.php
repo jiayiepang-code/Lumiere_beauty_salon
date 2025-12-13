@@ -4,15 +4,10 @@
  * Returns details of a single staff member
  */
 
-// Start session with secure configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0);
-ini_set('session.use_strict_mode', 1);
-session_start();
-
 header('Content-Type: application/json');
 
 // Include required files
+// Note: auth_check.php handles session start with proper secure configuration
 require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 require_once '../../../admin/includes/error_handler.php';

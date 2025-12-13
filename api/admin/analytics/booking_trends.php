@@ -1,13 +1,8 @@
 <?php
-// Start session with secure configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
-ini_set('session.use_strict_mode', 1);
-session_start();
-
 header('Content-Type: application/json');
 
-// Include database connection
+// Include database connection and auth check
+// Note: auth_check.php handles session start with proper configuration
 require_once '../../../php/connection.php';
 require_once '../../../admin/includes/auth_check.php';
 

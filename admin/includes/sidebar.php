@@ -6,7 +6,7 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
         <div class="sidebar-brand">
-            <img src="<?php echo isset($base_path) ? $base_path : '..'; ?>/images/2.jpg" alt="Lumière Beauty Salon" class="brand-logo" style="width: 32px; height: 32px; object-fit: contain;">
+            <img src="<?php echo isset($base_path) ? $base_path : '..'; ?>/images/16.png" alt="Lumière Beauty Salon" class="brand-logo" style="width: 96px; height: 96px; object-fit: contain;">
         </div>
     </div>
     

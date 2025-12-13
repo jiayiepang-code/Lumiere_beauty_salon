@@ -50,136 +50,160 @@ $csrf_token = getCSRFToken();
 include '../includes/header.php';
 ?>
 
-<style>
-    :root {
+    <style>
+        :root {
         --primary-color: #c29076;
-        --secondary-color: #333333;
+            --secondary-color: #333333;
         --text-dark: #5c4e4b;
-        --text-gray: #6C757D;
-        --border-light: #E9ECEF;
+            --text-gray: #6C757D;
+            --border-light: #E9ECEF;
         --light-gray: #F8F9FA;
     }
 
-    .staff-header {
+    /* Constrain container width for better readability */
+    .container-fluid {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+        }
+
+        .staff-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding: 0;
+        }
+
+        .staff-header h1 {
+        font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .staff-header .subtitle {
+            color: var(--text-gray);
+            font-size: 0.95rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-add {
+        background: linear-gradient(135deg, var(--primary-color), #9e7364);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+        font-size: 0.95rem;
+            transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(194, 144, 118, 0.2);
+        cursor: pointer;
+        }
+
+        .btn-add:hover {
+            transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(194, 144, 118, 0.3);
+            color: white;
+        }
+
+        .filters-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+        margin-bottom: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+        }
+
+    .filters-section .row {
         display: flex;
-        justify-content: space-between;
         align-items: center;
-        margin-bottom: 2.5rem;
-        padding: 0;
+        gap: 1rem;
     }
 
-    .staff-header h1 {
-        font-size: 3rem;
-        font-weight: 700;
-        color: var(--text-dark);
+    .filters-section .col-md-6 {
+        flex: 1;
         margin: 0;
     }
 
-    .staff-header .subtitle {
-        color: var(--text-gray);
-        font-size: 1.1rem;
-        margin-top: 0.75rem;
-    }
-
-    .btn-add {
-        background: linear-gradient(135deg, var(--primary-color), #9e7364);
-        color: white;
-        border: none;
-        padding: 1rem 2rem;
-        border-radius: 10px;
-        font-weight: 600;
-        font-size: 1.05rem;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(194, 144, 118, 0.2);
-        cursor: pointer;
-    }
-
-    .btn-add:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(194, 144, 118, 0.3);
-        color: white;
-    }
-
-    .filters-section {
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        border: 1px solid var(--border-light);
-    }
-
     .search-input, .filter-select {
-        border: 1px solid var(--border-light);
-        border-radius: 10px;
-        padding: 1rem 1.25rem;
-        font-size: 1rem;
-        transition: all 0.2s ease;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        height: 43px; /* Fixed height to match exactly */
+    }
+
+    .search-input {
+        padding-left: 2.5rem; /* Space for search icon */
     }
 
     .search-input:focus, .filter-select:focus {
-        border-color: var(--primary-color);
+            border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(194, 144, 118, 0.1);
-        outline: none;
-    }
+            outline: none;
+        }
 
-    .table-wrapper {
-        background: white;
+        .table-wrapper {
+            background: white;
         border-radius: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        border: 1px solid var(--border-light);
-        overflow: hidden;
-    }
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+            overflow: hidden;
+        }
 
-    .table thead {
-        background-color: #F8F9FA;
-        border-bottom: 2px solid var(--border-light);
-    }
+        .table thead {
+            background-color: #F8F9FA;
+            border-bottom: 2px solid var(--border-light);
+        }
 
-    .table thead th {
-        color: var(--text-gray);
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 0.85rem;
-        letter-spacing: 0.8px;
-        padding: 1.5rem;
-        border: none;
-    }
+        .table thead th {
+            color: var(--text-gray);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+            border: none;
+        }
 
-    .table tbody tr {
-        border-bottom: 1px solid var(--border-light);
-        transition: background-color 0.15s ease;
-    }
+        .table tbody tr {
+            border-bottom: 1px solid var(--border-light);
+            transition: background-color 0.15s ease;
+        }
 
-    .table tbody tr:hover {
-        background-color: #FDF6E3;
-    }
+        .table tbody tr:hover {
+            background-color: #FDF6E3;
+        }
 
-    .table tbody td {
-        padding: 1.5rem;
-        vertical-align: middle;
-        color: var(--text-dark);
-        font-size: 1rem;
-    }
+        .table tbody td {
+        padding: 1rem;
+            vertical-align: middle;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+        }
 
-    .staff-cell {
-        display: flex;
-        align-items: center;
-        gap: 1.25rem;
-    }
+        .staff-cell {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
 
-    .staff-avatar {
-        width: 64px;
-        height: 64px;
-        min-width: 64px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 700;
-        font-size: 1.25rem;
+        .staff-avatar {
+            width: 48px;
+            height: 48px;
+            min-width: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
         overflow: hidden;
         flex-shrink: 0;
     }
@@ -188,172 +212,172 @@ include '../includes/header.php';
         width: 100%;
         height: 100%;
         object-fit: cover;
-    }
+        }
 
-    .staff-info {
-        flex: 1;
+        .staff-info {
+            flex: 1;
         min-width: 0;
-    }
+        }
 
-    .staff-name {
-        font-weight: 600;
-        color: var(--text-dark);
-        font-size: 1.1rem;
-        margin-bottom: 0.5rem;
-    }
+        .staff-name {
+            font-weight: 600;
+            color: var(--text-dark);
+        font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
 
-    .staff-bio {
-        font-size: 0.95rem;
-        color: var(--text-gray);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 400px;
-    }
+        .staff-bio {
+        font-size: 0.875rem;
+            color: var(--text-gray);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        max-width: 300px;
+        }
 
-    .contact-info {
-        display: flex;
-        flex-direction: column;
+        .contact-info {
+            display: flex;
+            flex-direction: column;
         gap: 0.75rem;
-    }
+        }
 
-    .contact-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        color: var(--text-gray);
-        font-size: 0.95rem;
-    }
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-gray);
+        font-size: 0.875rem;
+        }
 
-    .contact-item svg {
-        width: 18px;
-        height: 18px;
-        color: var(--border-light);
+        .contact-item svg {
+            width: 16px;
+            height: 16px;
+        color: #6C757D; /* Dark grey for better visibility on hover */
         flex-shrink: 0;
-    }
+        }
 
-    .role-badge {
-        display: inline-block;
-        padding: 0.5rem 1.25rem;
-        border-radius: 25px;
-        font-size: 0.9rem;
-        font-weight: 600;
-        white-space: nowrap;
-    }
+        .role-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
 
     .role-staff {
-        background-color: #FDF6E3;
+            background-color: #FDF6E3;
         color: var(--primary-color);
-    }
+        }
 
-    .role-admin {
-        background-color: #F5E6E0;
-        color: #E76F51;
-    }
+        .role-admin {
+            background-color: #F5E6E0;
+            color: #E76F51;
+        }
 
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem 1.25rem;
-        border-radius: 25px;
-        font-size: 0.9rem;
-        font-weight: 600;
-    }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
 
-    .status-badge.active {
-        background-color: #E6F4F1;
-        color: #2A9D8F;
-    }
+        .status-badge.active {
+            background-color: #E6F4F1;
+            color: #2A9D8F;
+        }
 
-    .status-badge.inactive {
-        background-color: #FFF0EB;
-        color: #6C757D;
-    }
+        .status-badge.inactive {
+            background-color: #FFF0EB;
+            color: #6C757D;
+        }
 
-    .status-dot {
+        .status-dot {
         width: 8px;
         height: 8px;
-        border-radius: 50%;
-        display: inline-block;
+            border-radius: 50%;
+            display: inline-block;
         flex-shrink: 0;
-    }
+        }
 
-    .status-badge.active .status-dot {
-        background-color: #2A9D8F;
-    }
+        .status-badge.active .status-dot {
+            background-color: #2A9D8F;
+        }
 
-    .status-badge.inactive .status-dot {
-        background-color: #9CA3AF;
-    }
+        .status-badge.inactive .status-dot {
+            background-color: #9CA3AF;
+        }
 
-    .action-buttons {
-        display: flex;
-        gap: 0.75rem;
-        align-items: center;
-    }
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
 
-    .btn-icon {
-        width: 42px;
-        height: 42px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 8px;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        color: var(--text-gray);
-    }
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-gray);
+        }
 
-    .btn-icon:hover {
-        background-color: var(--light-gray);
-    }
+        .btn-icon:hover {
+            background-color: var(--light-gray);
+        }
 
-    .btn-icon svg {
-        width: 20px;
-        height: 20px;
-    }
+        .btn-icon svg {
+        width: 18px;
+        height: 18px;
+        }
 
-    .btn-view {
-        color: var(--primary-color);
-    }
+        .btn-view {
+            color: var(--primary-color);
+        }
 
-    .btn-view:hover {
+        .btn-view:hover {
         background-color: rgba(194, 144, 118, 0.1);
-    }
+        }
 
-    .btn-edit {
-        color: #264653;
-    }
+        .btn-edit {
+            color: #264653;
+        }
 
-    .btn-edit:hover {
-        background-color: rgba(38, 70, 83, 0.1);
-    }
+        .btn-edit:hover {
+            background-color: rgba(38, 70, 83, 0.1);
+        }
 
-    .btn-delete {
-        color: #E76F51;
-    }
+        .btn-delete {
+            color: #E76F51;
+        }
 
-    .btn-delete:hover {
-        background-color: rgba(231, 111, 81, 0.1);
-    }
+        .btn-delete:hover {
+            background-color: rgba(231, 111, 81, 0.1);
+        }
 
-    .empty-state {
-        text-align: center;
+        .empty-state {
+            text-align: center;
         padding: 4rem 1rem;
-        color: var(--text-gray);
-    }
+            color: var(--text-gray);
+        }
 
-    .empty-state svg {
+        .empty-state svg {
         margin-bottom: 1.5rem;
-        opacity: 0.5;
-    }
+            opacity: 0.5;
+        }
 
     .error-state {
-        text-align: center;
-        padding: 2rem;
+            text-align: center;
+            padding: 2rem;
         color: #E76F51;
         background: #FFF0EB;
         border-radius: 10px;
@@ -361,39 +385,399 @@ include '../includes/header.php';
     }
 
     @media (max-width: 768px) {
-        .staff-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 1rem;
+        .container-fluid {
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
 
-        .staff-header h1 {
-            font-size: 2rem;
-        }
+            .staff-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
 
-        .staff-bio {
-            display: none;
-        }
+            .staff-header h1 {
+                font-size: 1.75rem;
+            }
 
-        .table {
-            font-size: 0.9rem;
-        }
+            .staff-bio {
+                display: none;
+            }
 
-        .table thead th,
-        .table tbody td {
-            padding: 1rem 0.75rem;
-        }
+            .table {
+            font-size: 0.875rem;
+            }
 
-        .action-buttons {
-            gap: 0.5rem;
-        }
+            .table thead th,
+            .table tbody td {
+                padding: 0.75rem 0.5rem;
+            }
 
-        .btn-icon {
-            width: 36px;
-            height: 36px;
+            .action-buttons {
+                gap: 0.25rem;
+            }
+
+            .btn-icon {
+                width: 32px;
+                height: 32px;
+            }
+
+        .btn-icon svg {
+            width: 16px;
+            height: 16px;
         }
     }
-</style>
+
+    /* Additional responsive adjustments for better accessibility */
+    @media (min-width: 1400px) {
+        .container-fluid {
+            max-width: 1200px; /* Prevent content from becoming too wide on large screens */
+        }
+    }
+
+    /* Modal Styling - Center on page */
+    #staffModal.modal {
+        display: none;
+            position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        overflow-y: auto;
+        padding: 2rem 1rem;
+    }
+
+    #staffModal.modal.show {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #staffModal .modal-dialog {
+        margin: auto;
+        max-width: 700px;
+        width: 100%;
+        position: relative;
+        display: flex;
+        align-items: center;
+        min-height: calc(100% - 4rem);
+    }
+
+    #staffModal .modal-content {
+            background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        overflow: hidden;
+        width: 100%;
+        margin: auto;
+    }
+
+    #staffModal .modal-header {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, var(--primary-color), #9e7364);
+        color: white;
+        border: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    #staffModal .modal-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    
+    /* Close button - Cross icon */
+    .btn-close-custom {
+        background: none;
+        border: none;
+        padding: 0.5rem;
+        cursor: pointer;
+        color: white;
+        opacity: 0.9;
+        transition: opacity 0.2s ease, background-color 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+        flex-shrink: 0;
+    }
+    
+    .btn-close-custom:hover {
+        opacity: 1;
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .btn-close-custom svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    #staffModal .modal-body {
+        padding: 1.5rem 2rem;
+        max-height: calc(100vh - 220px);
+        overflow-y: auto;
+    }
+    
+    /* Optimize form spacing to fit all fields */
+    #staffModal .modal-body .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+    
+    #staffModal .form-label {
+        font-size: 0.875rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    #staffModal .form-control,
+    #staffModal .form-select {
+        padding: 0.65rem 0.9rem;
+        font-size: 0.9rem;
+        height: auto;
+    }
+    
+    #staffModal .form-control:focus,
+    #staffModal .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(194, 144, 118, 0.1);
+    }
+    
+    #staffModal textarea.form-control {
+        min-height: 60px;
+    }
+    
+    #staffModal .text-muted {
+        font-size: 0.8rem;
+    }
+
+    #staffModal .modal-footer {
+        padding: 1.5rem 2rem;
+        border-top: 1px solid var(--border-light);
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        background-color: #fafafa;
+    }
+
+    /* Form control styling */
+    #staffModal .form-control, 
+    #staffModal .form-select {
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+    }
+
+    #staffModal .form-control:focus, 
+    #staffModal .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(194, 144, 118, 0.1);
+        outline: none;
+    }
+
+    #staffModal .form-label {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* Image upload area styling - Clean design */
+    .image-upload-wrapper {
+        position: relative;
+    }
+    
+    .image-upload-area {
+        border: 2px dashed #c29076;
+        border-radius: 8px;
+        padding: 1.5rem;
+        background-color: #fafafa;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 180px;
+        gap: 1rem;
+    }
+    
+    .image-upload-area:hover {
+        background-color: #f5f5f5;
+        border-color: var(--primary-color);
+    }
+    
+    .upload-icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.6;
+    }
+    
+    .upload-icon-container svg {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .upload-button-area {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        justify-content: center;
+    }
+    
+    .upload-button-area .btn {
+        border: 1px solid #333;
+        color: #333;
+        background: white;
+        padding: 0.4rem 1rem;
+        font-size: 0.875rem;
+        border-radius: 4px;
+        cursor: pointer;
+        pointer-events: auto;
+    }
+    
+    .upload-button-area .btn:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .upload-button-area .btn:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(194, 144, 118, 0.3);
+    }
+    
+    .file-name-display {
+        color: #999;
+        font-size: 0.875rem;
+    }
+    
+    .upload-hint {
+        color: #999;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+    
+    .image-preview-container {
+        border: 2px dashed #c29076;
+        border-radius: 8px;
+        padding: 1.5rem;
+        background-color: #fafafa;
+        text-align: center;
+        position: relative;
+    }
+    
+    .preview-wrapper {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 0.75rem;
+    }
+    
+    .preview-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 2px solid var(--border-light);
+        display: block;
+    }
+    
+    .preview-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+    }
+    
+    .preview-wrapper:hover .preview-overlay {
+        opacity: 1;
+        pointer-events: auto;
+    }
+    
+    .btn-preview-action {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-replace {
+        background-color: white;
+        color: #333;
+    }
+    
+    .btn-replace:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .btn-remove {
+        background-color: #dc2626;
+        color: white;
+    }
+    
+    .btn-remove:hover {
+        background-color: #b91c1c;
+    }
+    
+    .preview-filename {
+        color: #666;
+        font-size: 0.875rem;
+        margin: 0;
+        word-break: break-all;
+        text-align: center;
+    }
+
+    /* Toggle switch styling */
+    #staffModal .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    #staffModal .form-check-input {
+        width: 3rem;
+        height: 1.5rem;
+        cursor: pointer;
+    }
+
+    /* Make modal responsive */
+    @media (max-width: 768px) {
+        #staffModal.modal {
+            padding: 1rem;
+        }
+
+        #staffModal .modal-dialog {
+            max-width: 100%;
+            min-height: calc(100% - 2rem);
+        }
+
+        #staffModal .modal-header,
+        #staffModal .modal-body,
+        #staffModal .modal-footer {
+            padding: 1.5rem;
+            }
+        }
+    </style>
 
 <div class="container-fluid py-4">
     <!-- Header Section -->
@@ -420,7 +804,7 @@ include '../includes/header.php';
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
-                    <input type="text" class="form-control search-input ps-5" id="searchInput" placeholder="Search staff by name or email...">
+                    <input type="text" class="form-control search-input" id="searchInput" placeholder="Search staff...">
                 </div>
             </div>
             <div class="col-md-6">
@@ -493,14 +877,14 @@ include '../includes/header.php';
                         <td>
                             <div class="contact-info">
                                 <div class="contact-item">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6C757D" stroke-width="2">
                                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                                         <polyline points="22,6 12,13 2,6"></polyline>
                                     </svg>
                                     <?php echo htmlspecialchars($member['staff_email']); ?>
                                 </div>
                                 <div class="contact-item">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6C757D" stroke-width="2">
                                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                                     </svg>
                                     <?php echo htmlspecialchars($member['phone']); ?>
@@ -549,12 +933,20 @@ include '../includes/header.php';
 </div>
 
 <!-- Staff Form Modal (Create/Edit) -->
-<div class="modal fade" id="staffModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+<div class="modal fade" id="staffModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), #9e7364); color: white; border: none;">
-                <h5 class="modal-title" id="modalTitle">Add Staff</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="closeStaffModal()"></button>
+                <div>
+                    <h5 class="modal-title" id="modalTitle">Add Staff Member</h5>
+                    <p class="mb-0" style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.25rem;" id="modalDescription">Fill in the details to add a new team member</p>
+                </div>
+                <button type="button" class="btn-close-custom" data-bs-dismiss="modal" onclick="closeStaffModal()" aria-label="Close">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="staffForm">
@@ -562,71 +954,149 @@ include '../includes/header.php';
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="staffEmail" class="form-label">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="staffEmail" name="staff_email" required maxlength="100">
-                            <div class="text-danger small mt-1" id="error-staff_email" style="display: none;"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
-                            <input type="tel" class="form-control" id="phone" name="phone" required placeholder="e.g., 0123456789">
-                            <div class="text-danger small mt-1" id="error-phone" style="display: none;"></div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
                             <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="firstName" name="first_name" required maxlength="50" placeholder="e.g., John">
+                            <input type="text" class="form-control" id="firstName" name="first_name" required maxlength="50" placeholder="First name">
                             <div class="text-danger small mt-1" id="error-first_name" style="display: none;"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="lastName" name="last_name" required maxlength="50" placeholder="e.g., Doe">
+                            <input type="text" class="form-control" id="lastName" name="last_name" required maxlength="50" placeholder="Last name">
                             <div class="text-danger small mt-1" id="error-last_name" style="display: none;"></div>
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="password" class="form-label">Password <span id="passwordRequired" class="text-danger">*</span></label>
-                            <input type="password" class="form-control" id="password" name="password" minlength="8" placeholder="Enter strong password">
-                            <small class="text-muted d-block mt-1" id="passwordHint">Min 8 chars, 1 uppercase, 1 number, 1 special character</small>
-                            <div class="text-danger small mt-1" id="error-password" style="display: none;"></div>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
-                            <select class="form-select" id="role" name="role" required>
-                                <option value="staff">Staff</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                        </div>
+                    <div class="mb-3">
+                        <label for="staffEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control" id="staffEmail" name="staff_email" required maxlength="100" placeholder="email@lumiere.my">
+                        <div class="text-danger small mt-1" id="error-staff_email" style="display: none;"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                        <input type="tel" class="form-control" id="phone" name="phone" required placeholder="+60 12 345 6789">
+                        <div class="text-danger small mt-1" id="error-phone" style="display: none;"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password <span id="passwordRequired" class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password" name="password" minlength="8" placeholder="Minimum 8 characters">
+                        <small class="text-muted d-block mt-1" id="passwordHint">Min 8 chars, 1 uppercase, 1 number, 1 special character</small>
+                        <div class="text-danger small mt-1" id="error-password" style="display: none;"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="">Select role</option>
+                            <option value="staff">Staff</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <div class="text-danger small mt-1" id="error-role" style="display: none;"></div>
                     </div>
 
                     <div class="mb-3">
                         <label for="bio" class="form-label">Bio</label>
-                        <textarea class="form-control" id="bio" name="bio" rows="3" placeholder="Brief introduction about the staff member..." maxlength="500"></textarea>
+                        <textarea class="form-control" id="bio" name="bio" rows="2" placeholder="Brief description..." maxlength="500" style="resize: vertical;"></textarea>
+                        <small class="text-muted">Brief introduction about the staff member</small>
                         <div class="text-danger small mt-1" id="error-bio" style="display: none;"></div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="staffImage" class="form-label">Profile Image</label>
-                        <input type="file" class="form-control" id="staffImage" name="staff_image" accept="image/*">
-                        <small class="text-muted d-block mt-1">Max 2MB. Allowed: JPEG, PNG, GIF, WebP</small>
-                        <div id="imagePreviewContainer" style="margin-top: 10px; display: none;">
-                            <img id="imagePreview" src="" alt="Preview" style="max-width: 150px; max-height: 150px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-light);">
+                        <label class="form-label">Profile Photo</label>
+                        <div class="image-upload-wrapper">
+                            <div class="image-upload-area" id="imageUploadArea">
+                                <div id="uploadIconContainer" class="upload-icon-container">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <div class="upload-button-area">
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('staffImage').click();">Choose File</button>
+                                    <span class="file-name-display" id="fileNameDisplay">No file chosen</span>
+                                </div>
+                                <p class="upload-hint">Click to upload</p>
+                            </div>
+                            <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
+                                <div class="preview-wrapper">
+                                    <img id="imagePreview" src="" alt="Preview" class="preview-image">
+                                    <div class="preview-overlay">
+                                        <button type="button" class="btn-preview-action btn-replace" onclick="document.getElementById('staffImage').click();" title="Replace">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                                <polyline points="17 8 12 3 7 8"></polyline>
+                                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                                            </svg>
+                                            Replace
+                                        </button>
+                                        <button type="button" class="btn-preview-action btn-remove" onclick="removeImage()" title="Remove">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                                            </svg>
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="preview-filename" id="previewFileName"></p>
+                            </div>
                         </div>
+                        <small class="text-muted d-block mt-2">Max 2MB. Allowed: JPEG, PNG, GIF, WebP</small>
                         <div class="text-danger small mt-1" id="error-staff_image" style="display: none;"></div>
                     </div>
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeStaffModal()">Cancel</button>
-                        <button type="submit" class="btn btn-add">Save Staff</button>
+                    <div class="d-flex align-items-center justify-content-between">
+                        <label class="form-label mb-0" for="isActiveToggle">Active</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch" id="isActiveToggle" checked>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer" style="border-top: 1px solid var(--border-light); padding-top: 1.5rem; margin-top: 1rem;">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeStaffModal()" style="padding: 0.75rem 1.5rem;">Cancel</button>
+                        <button type="submit" class="btn btn-add" id="submitButton" style="padding: 0.75rem 1.5rem;">Add Staff Member</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+    /* Image upload area hover effect */
+    .image-upload-area:hover {
+        background-color: #f5f5f5 !important;
+        border-color: var(--primary-color) !important;
+    }
+
+    /* Form control styling */
+    .form-control, .form-select {
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(194, 144, 118, 0.1);
+        outline: none;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    /* Toggle switch styling */
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+</style>
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

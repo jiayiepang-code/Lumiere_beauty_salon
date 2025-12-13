@@ -128,13 +128,24 @@ let staffList = [];
 // Initialize calendar on page load
 document.addEventListener("DOMContentLoaded", function () {
   initializeCalendar();
+  
+  // Add event listeners to filter dropdowns
+  const staffFilter = document.getElementById("staffFilter");
+  const statusFilter = document.getElementById("statusFilter");
+  
+  if (staffFilter) {
+    staffFilter.addEventListener("change", applyFilters);
+  }
+  
+  if (statusFilter) {
+    statusFilter.addEventListener("change", applyFilters);
+  }
 });
 
 // Initialize calendar
 async function initializeCalendar() {
-  // Set initial date filter to today
-  const today = new Date().toISOString().split("T")[0];
-  document.getElementById("dateFilter").value = today;
+  // Set initial date to today
+  currentDate = new Date();
 
   // Load staff list for filter
   await loadStaffList();
@@ -184,12 +195,24 @@ async function loadCalendarData() {
     // Build query parameters
     const params = new URLSearchParams();
 
-    const dateFilter = document.getElementById("dateFilter").value;
     const staffFilter = document.getElementById("staffFilter").value;
     const statusFilter = document.getElementById("statusFilter").value;
 
-    if (dateFilter) {
-      params.append("date", dateFilter);
+    // Format date based on current view
+    if (currentView === "day") {
+      params.append("date", currentDate.toISOString().split("T")[0]);
+    } else if (currentView === "week") {
+      const startOfWeek = new Date(currentDate);
+      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      params.append("start_date", startOfWeek.toISOString().split("T")[0]);
+      params.append("end_date", endOfWeek.toISOString().split("T")[0]);
+    } else if (currentView === "month") {
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      params.append("start_date", startOfMonth.toISOString().split("T")[0]);
+      params.append("end_date", endOfMonth.toISOString().split("T")[0]);
     }
 
     if (staffFilter) {
@@ -210,7 +233,13 @@ async function loadCalendarData() {
     }
 
     if (data.success) {
-      bookingsData = data.bookings || [];
+      // Normalize customer names
+      bookingsData = (data.bookings || []).map(booking => {
+        if (!booking.customer_name && booking.customer_first_name) {
+          booking.customer_name = `${booking.customer_first_name} ${booking.customer_last_name || ''}`;
+        }
+        return booking;
+      });
       staffSchedulesData = data.staff_schedules || [];
 
       loadingState.style.display = "none";
@@ -228,7 +257,8 @@ async function loadCalendarData() {
   } catch (error) {
     console.error("Error loading calendar data:", error);
     loadingState.style.display = "none";
-    showNotification("Error loading calendar data", "error");
+    emptyState.style.display = "block";
+    emptyState.innerHTML = `<p style="color: #F44336;">Error loading calendar: ${error.message}</p>`;
   }
 }
 
@@ -245,53 +275,147 @@ function renderCalendar() {
   }
 }
 
-// Render day view
+// Render day view - Vertical timeline 9 AM - 8 PM
 function renderDayView() {
   const calendarView = document.getElementById("calendarView");
 
-  // Generate time slots from 10:00 AM to 10:00 PM
+  // Generate time slots from 9:00 AM to 8:00 PM (20:00)
   const timeSlots = [];
-  for (let hour = 10; hour <= 22; hour++) {
+  for (let hour = 9; hour <= 20; hour++) {
     timeSlots.push(`${hour.toString().padStart(2, "0")}:00`);
   }
 
-  let html = '<div class="calendar-day-view">';
+  let html = '<div class="calendar-day-timeline">';
 
   timeSlots.forEach((time) => {
-    // Find bookings for this time slot
+    // Find all bookings that overlap with this hour
     const slotBookings = bookingsData.filter((booking) => {
-      const bookingTime = booking.start_time.substring(0, 5);
-      return bookingTime === time;
+      const bookingHour = parseInt(booking.start_time.substring(0, 2));
+      const timeHour = parseInt(time.substring(0, 2));
+      const endHour = parseInt(booking.expected_finish_time.substring(0, 2));
+      return bookingHour <= timeHour && endHour > timeHour;
     });
 
     html += `
-            <div class="time-slot">
-                <div class="time-label">${formatTime(time)}</div>
-                <div class="slot-bookings">
-        `;
+      <div class="timeline-row">
+        <div class="timeline-time">${formatTime(time)}</div>
+        <div class="timeline-slots">`;
 
     if (slotBookings.length > 0) {
       slotBookings.forEach((booking) => {
-        html += renderBookingCard(booking);
+        const statusColor = getStatusColor(booking.status);
+        const customer = escapeHtml(booking.customer_name || (booking.customer_first_name + ' ' + booking.customer_last_name));
+        const services = booking.services || [];
+        const serviceName = services.length > 0 ? escapeHtml(services[0].service_name) : 'Service';
+        
+        html += `
+          <div class="booking-block" 
+               style="border-left: 4px solid ${statusColor};"
+               onclick="viewBookingDetails('${booking.booking_id}')">
+            <div class="booking-block-customer">${customer}</div>
+            <div class="booking-block-time">${formatTime(booking.start_time)} - ${formatTime(booking.expected_finish_time)}</div>
+            <div class="booking-block-service">${serviceName}</div>
+          </div>`;
       });
-    } else {
-      html +=
-        '<div style="color: #ccc; font-size: 13px; padding: 8px;">No bookings</div>';
     }
 
     html += `
-                </div>
-            </div>
-        `;
+        </div>
+      </div>`;
   });
 
   html += "</div>";
   calendarView.innerHTML = html;
 }
 
-// Render week view (simplified - shows all bookings grouped by day)
+// Render week view - Horizontal table with days as columns, time as rows
 function renderWeekView() {
   const calendarView = document.getElementById("calendarView");
+
+  // Get week start (Sunday) and generate 7 days
+  const weekStart = new Date(currentDate);
+  weekStart.setDate(currentDate.getDate() - currentDate.getDay());
+  
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(weekStart);
+    day.setDate(weekStart.getDate() + i);
+    weekDays.push(day);
+  }
+
+  // Group bookings by date and time
+  const bookingsByDateTime = {};
+  bookingsData.forEach((booking) => {
+    const hour = booking.start_time.substring(0, 2);
+    const key = `${booking.booking_date}_${hour}`;
+    if (!bookingsByDateTime[key]) {
+      bookingsByDateTime[key] = [];
+    }
+    bookingsByDateTime[key].push(booking);
+  });
+
+  // Generate time slots (9 AM - 8 PM)
+  const timeSlots = [];
+  for (let hour = 9; hour <= 20; hour++) {
+    timeSlots.push(hour);
+  }
+
+  let html = '<div class="calendar-week-grid"><table class="week-table">';
+  
+  // Header row with day names and dates
+  html += '<thead><tr><th class="time-col">Time</th>';
+  weekDays.forEach(day => {
+    const dayName = day.toLocaleDateString('en-US', { weekday: 'short' });
+    const dayDate = day.getDate();
+    const isToday = day.toDateString() === new Date().toDateString();
+    html += `<th class="day-col ${isToday ? 'today' : ''}">
+      <div>${dayName}</div>
+      <div class="day-date">${dayDate}</div>
+    </th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  // Time rows
+  timeSlots.forEach(hour => {
+    html += `<tr><td class="time-cell">${formatTime(hour.toString().padStart(2, '0') + ':00')}</td>`;
+    
+    weekDays.forEach(day => {
+      const dateStr = day.toISOString().split('T')[0];
+      const key = `${dateStr}_${hour.toString().padStart(2, '0')}`;
+      const bookings = bookingsByDateTime[key] || [];
+      
+      html += '<td class="booking-cell">';
+      bookings.forEach(booking => {
+        const statusColor = getStatusColor(booking.status);
+        const customer = escapeHtml(booking.customer_name || (booking.customer_first_name + ' ' + booking.customer_last_name));
+        html += `
+          <div class="week-booking-pill" 
+               style="background: ${statusColor};"
+               onclick="viewBookingDetails('${booking.booking_id}')">
+            ${customer}
+          </div>`;
+      });
+      html += '</td>';
+    });
+    
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  calendarView.innerHTML = html;
+}
+
+// Render month view - Calendar grid with booking pills
+function renderMonthView() {
+  const calendarView = document.getElementById("calendarView");
+
+  // Get first and last day of the month
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  const daysInMonth = lastDay.getDate();
+  const startDay = firstDay.getDay(); // 0 = Sunday
 
   // Group bookings by date
   const bookingsByDate = {};
@@ -302,90 +426,55 @@ function renderWeekView() {
     bookingsByDate[booking.booking_date].push(booking);
   });
 
-  let html =
-    '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">';
-
-  Object.keys(bookingsByDate)
-    .sort()
-    .forEach((date) => {
-      html += `
-            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px;">
-                <h4 style="margin-bottom: 12px; color: #333;">${formatDate(
-                  date
-                )}</h4>
-                <div style="display: flex; flex-direction: column; gap: 8px;">
-        `;
-
-      bookingsByDate[date].forEach((booking) => {
-        html += renderBookingCard(booking);
-      });
-
-      html += `
-                </div>
-            </div>
-        `;
-    });
-
-  html += "</div>";
-  calendarView.innerHTML = html;
-}
-
-// Render month view (simplified - shows booking count per day)
-function renderMonthView() {
-  const calendarView = document.getElementById("calendarView");
-
-  // Group bookings by date and count
-  const bookingsByDate = {};
-  bookingsData.forEach((booking) => {
-    if (!bookingsByDate[booking.booking_date]) {
-      bookingsByDate[booking.booking_date] = {
-        count: 0,
-        confirmed: 0,
-        completed: 0,
-        cancelled: 0,
-      };
-    }
-    bookingsByDate[booking.booking_date].count++;
-
-    if (booking.status === "confirmed")
-      bookingsByDate[booking.booking_date].confirmed++;
-    if (booking.status === "completed")
-      bookingsByDate[booking.booking_date].completed++;
-    if (booking.status === "cancelled" || booking.status === "no-show") {
-      bookingsByDate[booking.booking_date].cancelled++;
-    }
+  let html = '<div class="calendar-month-grid">';
+  
+  // Day headers
+  html += '<div class="month-header">';
+  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+    html += `<div class="month-day-name">${day}</div>`;
   });
+  html += '</div>';
 
-  let html =
-    '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px;">';
+  html += '<div class="month-days">';
+  
+  // Empty cells for days before month starts
+  for (let i = 0; i < startDay; i++) {
+    html += '<div class="month-day empty"></div>';
+  }
 
-  Object.keys(bookingsByDate)
-    .sort()
-    .forEach((date) => {
-      const stats = bookingsByDate[date];
+  // Days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const date = new Date(year, month, day);
+    const dateStr = date.toISOString().split('T')[0];
+    const bookings = bookingsByDate[dateStr] || [];
+    const isToday = date.toDateString() === new Date().toDateString();
+    
+    html += `<div class="month-day ${isToday ? 'today' : ''}" onclick="filterByDate('${dateStr}')">`;
+    html += `<div class="month-day-number">${day}</div>`;
+    html += '<div class="month-day-bookings">';
+    
+    // Show up to 3 booking pills
+    bookings.slice(0, 3).forEach(booking => {
+      const statusColor = getStatusColor(booking.status);
+      const customer = escapeHtml(booking.customer_name || (booking.customer_first_name + ' ' + booking.customer_last_name));
+      const time = formatTime(booking.start_time);
       html += `
-            <div style="background: #f8f9fa; padding: 16px; border-radius: 8px; cursor: pointer;" 
-                 onclick="filterByDate('${date}')">
-                <div style="font-weight: 600; margin-bottom: 8px; color: #333;">${formatDate(
-                  date
-                )}</div>
-                <div style="font-size: 24px; font-weight: 700; color: #667eea; margin-bottom: 8px;">
-                    ${stats.count}
-                </div>
-                <div style="font-size: 12px; color: #666;">
-                    <div>✓ ${stats.confirmed} confirmed</div>
-                    <div>✓ ${stats.completed} completed</div>
-                    ${
-                      stats.cancelled > 0
-                        ? `<div>✗ ${stats.cancelled} cancelled</div>`
-                        : ""
-                    }
-                </div>
-            </div>
-        `;
+        <div class="month-booking-pill" 
+             style="background: ${statusColor};"
+             onclick="event.stopPropagation(); viewBookingDetails('${booking.booking_id}')">
+          <span class="pill-time">${time}</span> ${customer}
+        </div>`;
     });
+    
+    // Show "+ more" if there are more bookings
+    if (bookings.length > 3) {
+      html += `<div class="month-booking-more">+${bookings.length - 3} more</div>`;
+    }
+    
+    html += '</div></div>';
+  }
 
-  html += "</div>";
+  html += '</div></div>';
   calendarView.innerHTML = html;
 }
 
@@ -638,67 +727,96 @@ function closeBookingModal() {
 function switchView(view) {
   currentView = view;
 
-  // Update active button
-  document.querySelectorAll(".view-btn").forEach((btn) => {
-    btn.classList.remove("active");
-    if (btn.dataset.view === view) {
-      btn.classList.add("active");
+  // Update button styles
+  document.getElementById("viewDay").classList.toggle("active", view === "day");
+  document.getElementById("viewWeek").classList.toggle("active", view === "week");
+  document.getElementById("viewMonth").classList.toggle("active", view === "month");
+
+  // Update buttons background
+  ["viewDay", "viewWeek", "viewMonth"].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn.classList.contains("active")) {
+      btn.style.background = "white";
+      btn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+    } else {
+      btn.style.background = "transparent";
+      btn.style.boxShadow = "none";
     }
   });
 
-  // Re-render calendar
-  if (bookingsData.length > 0) {
-    renderCalendar();
-  }
+  // Reload calendar with new view
+  loadCalendarData();
+  updateDateDisplay();
 }
 
 // Navigate date
-function navigateDate(direction) {
-  const dateFilter = document.getElementById("dateFilter");
-  let date = dateFilter.value ? new Date(dateFilter.value) : new Date();
-
-  if (direction === "prev") {
-    date.setDate(date.getDate() - 1);
-  } else if (direction === "next") {
-    date.setDate(date.getDate() + 1);
-  } else if (direction === "today") {
-    date = new Date();
+function changeDate(direction) {
+  if (currentView === "day") {
+    currentDate.setDate(currentDate.getDate() + direction);
+  } else if (currentView === "week") {
+    currentDate.setDate(currentDate.getDate() + (direction * 7));
+  } else if (currentView === "month") {
+    currentDate.setMonth(currentDate.getMonth() + direction);
   }
 
-  dateFilter.value = date.toISOString().split("T")[0];
-  currentDate = date;
+  loadCalendarData();
   updateDateDisplay();
-  applyFilters();
+}
+
+// Go to today
+function goToToday() {
+  currentDate = new Date();
+  loadCalendarData();
+  updateDateDisplay();
 }
 
 // Update date display
 function updateDateDisplay() {
-  const dateFilter = document.getElementById("dateFilter").value;
-  const date = dateFilter ? new Date(dateFilter) : new Date();
+  const display = document.getElementById("currentDateDisplay");
+  const options = { year: "numeric", month: "long", day: "numeric" };
 
-  const options = {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  };
-  document.getElementById("currentDate").textContent = date.toLocaleDateString(
-    "en-US",
-    options
-  );
+  if (currentView === "day") {
+    display.textContent = currentDate.toLocaleDateString("en-US", options);
+  } else if (currentView === "week") {
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    display.textContent = `${startOfWeek.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endOfWeek.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+  } else if (currentView === "month") {
+    display.textContent = currentDate.toLocaleDateString("en-US", { year: "numeric", month: "long" });
+  }
 }
 
 // Apply filters
 function applyFilters() {
-  updateDateDisplay();
   loadCalendarData();
 }
 
 // Filter by specific date (from month view)
 function filterByDate(date) {
-  document.getElementById("dateFilter").value = date;
-  switchView("day");
-  applyFilters();
+  currentDate = new Date(date + 'T12:00:00'); // Add time to avoid timezone issues
+  currentView = "day";
+  
+  // Update view buttons
+  document.getElementById("viewDay").classList.add("active");
+  document.getElementById("viewWeek").classList.remove("active");
+  document.getElementById("viewMonth").classList.remove("active");
+  
+  // Update button styles
+  ["viewDay", "viewWeek", "viewMonth"].forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn.classList.contains("active")) {
+      btn.style.background = "white";
+      btn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
+    } else {
+      btn.style.background = "transparent";
+      btn.style.boxShadow = "none";
+    }
+  });
+  
+  updateDateDisplay();
+  loadCalendarData();
 }
 
 // Utility functions
@@ -722,6 +840,16 @@ function escapeHtml(text) {
   const div = document.createElement("div");
   div.textContent = text;
   return div.innerHTML;
+}
+
+function getStatusColor(status) {
+  const colors = {
+    'confirmed': '#4CAF50',
+    'completed': '#2196F3',
+    'cancelled': '#F44336',
+    'no-show': '#F44336'
+  };
+  return colors[status] || '#9E9E9E';
 }
 
 function showNotification(message, type = "info") {

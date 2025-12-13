@@ -4,15 +4,10 @@
  * Handles staff account updates with image upload support
  */
 
-// Start session with secure configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0);
-ini_set('session.use_strict_mode', 1);
-session_start();
-
 header('Content-Type: application/json');
 
 // Include required files
+// Note: auth_check.php handles session start with proper secure configuration
 require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 require_once '../../../admin/includes/error_handler.php';
@@ -178,6 +173,16 @@ try {
         $update_fields[] = "password = ?";
         $update_values[] = $hashed_password;
         $update_types .= "s";
+    }
+    
+    // Update is_active if provided
+    if (isset($input['is_active'])) {
+        $is_active = filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($is_active !== null) {
+            $update_fields[] = "is_active = ?";
+            $update_values[] = $is_active ? 1 : 0;
+            $update_types .= "i";
+        }
     }
     
     // Handle image upload if provided
