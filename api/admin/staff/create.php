@@ -1,17 +1,24 @@
 <?php
+/**
+ * Staff CREATE API Endpoint
+ * Handles staff account creation with image upload support
+ */
+
 // Start session with secure configuration
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
+ini_set('session.cookie_secure', 0);
 ini_set('session.use_strict_mode', 1);
 session_start();
 
 header('Content-Type: application/json');
 
 // Include required files
-require_once '../../../php/connection.php';
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 require_once '../../../admin/includes/error_handler.php';
 require_once '../../../admin/includes/validator.php';
+require_once '../../../admin/includes/security_utils.php';
+require_once '../includes/csrf_validation.php';
 
 // Check authentication
 if (!isAdminAuthenticated()) {
@@ -28,67 +35,36 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ErrorHandler::sendError(ErrorHandler::METHOD_NOT_ALLOWED, 'Only POST requests are allowed', null, 405);
 }
 
-/**
- * Validate staff data using centralized Validator
- */
-function validateStaffData($data, $is_update = false) {
-    $rules = [
-        'first_name' => [
-            'required' => true,
-            'length' => ['min' => null, 'max' => 50]
-        ],
-        'last_name' => [
-            'required' => true,
-            'length' => ['min' => null, 'max' => 50]
-        ],
-        'phone' => [
-            'required' => true,
-            'phone' => true
-        ],
-        'role' => [
-            'required' => true,
-            'enum' => ['values' => ['staff', 'admin']]
-        ],
-        'bio' => [
-            'length' => ['min' => null, 'max' => 500]
-        ]
-    ];
+try {
+    // Get data from FormData (for image upload support) or JSON
+    $input = [];
     
-    // Add email and password validation for create only
-    if (!$is_update) {
-        $rules['staff_email'] = [
-            'required' => true,
-            'email' => true,
-            'length' => ['min' => null, 'max' => 100]
-        ];
-        $rules['password'] = [
-            'required' => true,
-            'password' => true
-        ];
+    if (!empty($_POST)) {
+        // FormData submission
+        $input = $_POST;
+    } else {
+        // JSON submission
+        $json_input = json_decode(file_get_contents('php://input'), true);
+        if ($json_input !== null) {
+            $input = $json_input;
+        }
     }
     
-    $validation = Validator::validate($data, $rules);
-    return $validation['errors'];
-}
-
-try {
-    // Get JSON input
-    $input = json_decode(file_get_contents('php://input'), true);
-    
-    if ($input === null) {
-        ErrorHandler::sendError(ErrorHandler::INVALID_JSON, 'Invalid JSON data');
+    if (empty($input)) {
+        ErrorHandler::sendError(ErrorHandler::INVALID_JSON, 'No data provided');
     }
     
     // Validate CSRF token
-    if (!isset($input['csrf_token']) || !validateCSRFToken($input['csrf_token'])) {
+    if (!validateCSRFToken()) {
         ErrorHandler::sendError(ErrorHandler::INVALID_CSRF_TOKEN, 'Invalid CSRF token', null, 403);
     }
     
-    // Validate input data
-    $validation_errors = validateStaffData($input);
-    
-    if (!empty($validation_errors)) {
-        ErrorHandler::handleValidationError($validation_errors);
+    // Validate required fields
+    $required_fields = ['staff_email', 'phone', 'first_name', 'last_name', 'password', 'role'];
+    foreach ($required_fields as $field) {
+        if (empty($input[$field])) {
+            ErrorHandler::handleValidationError([$field => ucfirst(str_replace('_', ' ', $field)) . ' is required']);
+        }
     }
     
     // Prepare data
@@ -99,10 +75,45 @@ try {
     $last_name = trim($input['last_name']);
     $bio = isset($input['bio']) ? trim($input['bio']) : null;
     $role = trim($input['role']);
-    $staff_image = isset($input['staff_image']) ? trim($input['staff_image']) : null;
+    $staff_image = null;
+    
+    // Validate email format
+    if (!filter_var($staff_email, FILTER_VALIDATE_EMAIL)) {
+        ErrorHandler::handleValidationError(['staff_email' => 'Invalid email format']);
+    }
+    
+    // Validate phone format
+    $phone_validation = Validator::phoneNumber($phone);
+    if ($phone_validation !== null) {
+        ErrorHandler::handleValidationError(['phone' => $phone_validation]);
+    }
+    
+    // Validate password strength
+    $password_errors = Validator::passwordStrength($password);
+    if (!empty($password_errors)) {
+        ErrorHandler::handleValidationError(['password' => implode('. ', $password_errors)]);
+    }
+    
+    // Validate role
+    if (!in_array($role, ['staff', 'admin'])) {
+        ErrorHandler::handleValidationError(['role' => 'Role must be either "staff" or "admin"']);
+    }
+    
+    // Validate name lengths
+    if (strlen($first_name) > 50 || strlen($last_name) > 50) {
+        ErrorHandler::handleValidationError(['name' => 'First name and last name must not exceed 50 characters']);
+    }
+    
+    // Validate bio length
+    if ($bio && strlen($bio) > 500) {
+        ErrorHandler::handleValidationError(['bio' => 'Bio must not exceed 500 characters']);
+    }
+    
+    // Get database connection
+    $conn = getDBConnection();
     
     // Check for duplicate email
-    $check_email_sql = "SELECT staff_email FROM Staff WHERE staff_email = ?";
+    $check_email_sql = "SELECT staff_email FROM staff WHERE staff_email = ?";
     $check_email_stmt = $conn->prepare($check_email_sql);
     $check_email_stmt->bind_param("s", $staff_email);
     $check_email_stmt->execute();
@@ -116,7 +127,7 @@ try {
     $check_email_stmt->close();
     
     // Check for duplicate phone
-    $check_phone_sql = "SELECT staff_email FROM Staff WHERE phone = ?";
+    $check_phone_sql = "SELECT staff_email FROM staff WHERE phone = ?";
     $check_phone_stmt = $conn->prepare($check_phone_sql);
     $check_phone_stmt->bind_param("s", $phone);
     $check_phone_stmt->execute();
@@ -129,11 +140,28 @@ try {
     }
     $check_phone_stmt->close();
     
+    // Handle image upload if provided
+    if (isset($_FILES['staff_image']) && $_FILES['staff_image']['error'] === UPLOAD_ERR_OK) {
+        $upload_dir = __DIR__ . '/../../../images/staff/';
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $max_size_mb = 2;
+        
+        $upload_result = secureFileUpload($_FILES['staff_image'], $upload_dir, $allowed_types, $max_size_mb);
+        
+        if (!$upload_result['success']) {
+            $conn->close();
+            ErrorHandler::handleFileUploadError($upload_result['error']);
+        }
+        
+        // Store relative path for database
+        $staff_image = '/images/staff/' . basename($upload_result['file_path']);
+    }
+    
     // Hash password
-    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     
     // Insert new staff account
-    $sql = "INSERT INTO Staff (staff_email, phone, password, first_name, last_name, 
+    $sql = "INSERT INTO staff (staff_email, phone, password, first_name, last_name, 
                                bio, role, staff_image, is_active)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)";
     
@@ -164,5 +192,9 @@ try {
     }
     
 } catch (Exception $e) {
+    if (isset($conn)) {
+        $conn->close();
+    }
     ErrorHandler::handleDatabaseError($e, 'staff account creation');
 }
+?>

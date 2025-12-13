@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'config/db_connect.php';
 $conn = getDBConnection();
 
 $result = $conn->query("SELECT staff_email, phone, first_name, last_name, role FROM Staff WHERE role='admin'");

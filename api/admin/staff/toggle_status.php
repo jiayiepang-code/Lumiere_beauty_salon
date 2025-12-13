@@ -1,68 +1,102 @@
 <?php
 /**
- * Toggle Staff Status API
+ * Staff Toggle Status API Endpoint
+ * Toggles staff active/inactive status
  */
 
+// Start session with secure configuration
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', 0);
+ini_set('session.use_strict_mode', 1);
 session_start();
+
 header('Content-Type: application/json');
 
+// Include required files
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
-require_once '../../../config/config.php';
+require_once '../../../admin/includes/error_handler.php';
+require_once '../includes/csrf_validation.php';
 
 // Check authentication
-if (!isAdminLoggedIn()) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
+if (!isAdminAuthenticated()) {
+    ErrorHandler::handleAuthError();
 }
 
+// Check session timeout
+if (!checkSessionTimeout()) {
+    ErrorHandler::sendError(ErrorHandler::SESSION_EXPIRED, 'Session has expired', null, 401);
+}
+
+// Handle POST request only
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Method not allowed']);
-    exit;
-}
-
-$data = json_decode(file_get_contents('php://input'), true);
-$staff_email = $data['staff_email'] ?? null;
-
-if (!$staff_email) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Staff email is required']);
-    exit;
+    ErrorHandler::sendError(ErrorHandler::METHOD_NOT_ALLOWED, 'Only POST requests are allowed', null, 405);
 }
 
 try {
-    $conn = getDBConnection();
+    // Get JSON input
+    $input = json_decode(file_get_contents('php://input'), true);
     
-    // Toggle the status
-    $stmt = $conn->prepare("UPDATE Staff SET status = IF(status = 'active', 'inactive', 'active') WHERE staff_email = ?");
-    $stmt->bind_param("s", $staff_email);
-    
-    if ($stmt->execute()) {
-        // Get the new status
-        $stmt = $conn->prepare("SELECT status FROM Staff WHERE staff_email = ?");
-        $stmt->bind_param("s", $staff_email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        $row = $result->fetch_assoc();
-        
-        echo json_encode([
-            'success' => true,
-            'message' => 'Staff status updated to ' . ucfirst($row['status']),
-            'status' => $row['status']
-        ]);
-    } else {
-        throw new Exception($stmt->error);
+    if ($input === null || empty($input)) {
+        ErrorHandler::sendError(ErrorHandler::INVALID_JSON, 'Invalid JSON data');
     }
     
-    $stmt->close();
-    $conn->close();
+    // Validate CSRF token
+    if (!validateCSRFToken()) {
+        ErrorHandler::sendError(ErrorHandler::INVALID_CSRF_TOKEN, 'Invalid CSRF token', null, 403);
+    }
+    
+    // Validate required fields
+    if (empty($input['staff_email'])) {
+        ErrorHandler::handleValidationError(['staff_email' => 'Email is required']);
+    }
+    
+    $staff_email = trim($input['staff_email']);
+    
+    // Get database connection
+    $conn = getDBConnection();
+    
+    // Check if staff exists and get current status
+    $check_sql = "SELECT is_active FROM staff WHERE staff_email = ?";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("s", $staff_email);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+    
+    if ($check_result->num_rows === 0) {
+        $check_stmt->close();
+        $conn->close();
+        ErrorHandler::handleNotFound('Staff member');
+    }
+    
+    $current_status = $check_result->fetch_assoc()['is_active'];
+    $check_stmt->close();
+    
+    // Toggle status
+    $new_status = $current_status ? 0 : 1;
+    
+    $sql = "UPDATE staff SET is_active = ? WHERE staff_email = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("is", $new_status, $staff_email);
+    
+    if ($stmt->execute()) {
+        $stmt->close();
+        $conn->close();
+        
+        http_response_code(200);
+        echo json_encode([
+            'success' => true,
+            'is_active' => (bool)$new_status,
+            'message' => 'Staff status updated successfully'
+        ]);
+    } else {
+        throw new Exception('Failed to update staff status: ' . $stmt->error);
+    }
     
 } catch (Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error updating status: ' . $e->getMessage()
-    ]);
+    if (isset($conn)) {
+        $conn->close();
+    }
+    ErrorHandler::handleDatabaseError($e, 'staff status update');
 }
 ?>

@@ -31,18 +31,6 @@ define('SMTP_PORT', 587); // TSL port
 define('SMTP_SENDER_EMAIL', 'lumierebeautysalon2022@gmail.com');
 define('SMTP_SENDER_NAME', 'Lumiere Beauty Salon');
 
-// Helper function to connect to DB
-function getDBConnection() {
-    $conn = new mysqli(DB_SERVER, DB_USERNAME, DB_PASSWORD, DB_NAME);
-    if ($conn->connect_error) {
-        // Return JSON error instead of dying
-        if (headers_sent() === false && isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'api') !== false) {
-            header('Content-Type: application/json');
-            echo json_encode(['success' => false, 'error' => 'Database connection failed']);
-            exit;
-        }
-        die("Connection failed: " . $conn->connect_error);
-    }
-    return $conn;
-}
+// Note: Database connection function is now in config/db_connect.php
+// Use require_once '../../config/db_connect.php' to get getDBConnection() function
 ?>

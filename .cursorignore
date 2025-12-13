@@ -1,0 +1,11 @@
+# Cursor IDE Ignore File
+# Files and folders listed here will be excluded from codebase searches and AI analysis
+
+# Archived files and folders
+archive/
+ARCHIVE_SUMMARY.md
+archive_files.ps1
+
+# Archive script (optional - you may want to keep this accessible)
+# archive_files.ps1
+

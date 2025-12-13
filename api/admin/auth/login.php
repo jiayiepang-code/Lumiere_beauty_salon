@@ -22,6 +22,7 @@ header('Content-Type: application/json');
 
 // Include required files
 require_once __DIR__ . '/../../../config/config.php';
+require_once __DIR__ . '/../../../config/db_connect.php';
 require_once __DIR__ . '/../../../config/utils.php';
 
 // Only allow POST requests

@@ -12,6 +12,7 @@ requireAdminAuth();
 
 // Include database connection
 require_once '../config/config.php';
+require_once '../config/db_connect.php';
 
 // Get current admin data
 $admin = getCurrentAdmin();

@@ -1,5 +1,6 @@
 <?php
 require_once 'config/config.php';
+require_once 'config/db_connect.php';
 $conn = getDBConnection();
 
 echo "<h2>Service Table Structure:</h2>";

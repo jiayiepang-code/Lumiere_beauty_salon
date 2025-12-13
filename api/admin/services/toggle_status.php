@@ -8,6 +8,7 @@ header('Content-Type: application/json');
 
 require_once '../../../admin/includes/auth_check.php';
 require_once '../../../config/config.php';
+require_once '../../../config/db_connect.php';
 
 // Check authentication
 if (!isAdminLoggedIn()) {

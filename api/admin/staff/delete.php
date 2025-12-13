@@ -1,104 +1,63 @@
 <?php
+/**
+ * Staff DELETE API Endpoint
+ * Handles staff account deletion (soft delete by setting is_active = 0)
+ */
+
 // Start session with secure configuration
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
+ini_set('session.cookie_secure', 0);
 ini_set('session.use_strict_mode', 1);
 session_start();
 
 header('Content-Type: application/json');
 
-// Include database connection
-require_once '../../../php/connection.php';
+// Include required files
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
+require_once '../../../admin/includes/error_handler.php';
+require_once '../includes/csrf_validation.php';
 
 // Check authentication
 if (!isAdminAuthenticated()) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'error' => [
-            'code' => 'AUTH_REQUIRED',
-            'message' => 'Authentication required'
-        ]
-    ]);
-    exit;
+    ErrorHandler::handleAuthError();
 }
 
 // Check session timeout
 if (!checkSessionTimeout()) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'error' => [
-            'code' => 'SESSION_EXPIRED',
-            'message' => 'Session has expired'
-        ]
-    ]);
-    exit;
+    ErrorHandler::sendError(ErrorHandler::SESSION_EXPIRED, 'Session has expired', null, 401);
 }
 
 // Handle DELETE request only
 if ($_SERVER['REQUEST_METHOD'] !== 'DELETE') {
-    http_response_code(405);
-    echo json_encode([
-        'success' => false,
-        'error' => [
-            'code' => 'METHOD_NOT_ALLOWED',
-            'message' => 'Only DELETE requests are allowed'
-        ]
-    ]);
-    exit;
+    ErrorHandler::sendError(ErrorHandler::METHOD_NOT_ALLOWED, 'Only DELETE requests are allowed', null, 405);
 }
 
 try {
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
     
-    if ($input === null) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'INVALID_JSON',
-                'message' => 'Invalid JSON data'
-            ]
-        ]);
-        exit;
+    if ($input === null || empty($input)) {
+        ErrorHandler::sendError(ErrorHandler::INVALID_JSON, 'Invalid JSON data');
     }
     
     // Validate CSRF token
-    if (!isset($input['csrf_token']) || !validateCSRFToken($input['csrf_token'])) {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'INVALID_CSRF_TOKEN',
-                'message' => 'Invalid CSRF token'
-            ]
-        ]);
-        exit;
+    if (!validateCSRFToken()) {
+        ErrorHandler::sendError(ErrorHandler::INVALID_CSRF_TOKEN, 'Invalid CSRF token', null, 403);
     }
     
     // Validate required fields
     if (empty($input['staff_email'])) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'VALIDATION_ERROR',
-                'message' => 'Staff email is required',
-                'details' => [
-                    'staff_email' => 'Staff email is required'
-                ]
-            ]
-        ]);
-        exit;
+        ErrorHandler::handleValidationError(['staff_email' => 'Email is required']);
     }
     
     $staff_email = trim($input['staff_email']);
     
+    // Get database connection
+    $conn = getDBConnection();
+    
     // Check if staff exists
-    $check_sql = "SELECT staff_email FROM Staff WHERE staff_email = ?";
+    $check_sql = "SELECT staff_email, staff_image FROM staff WHERE staff_email = ?";
     $check_stmt = $conn->prepare($check_sql);
     $check_stmt->bind_param("s", $staff_email);
     $check_stmt->execute();
@@ -107,87 +66,83 @@ try {
     if ($check_result->num_rows === 0) {
         $check_stmt->close();
         $conn->close();
-        
-        http_response_code(404);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'NOT_FOUND',
-                'message' => 'Staff member not found'
-            ]
-        ]);
-        exit;
+        ErrorHandler::handleNotFound('Staff member');
     }
+    
+    $staff = $check_result->fetch_assoc();
     $check_stmt->close();
     
-    // Check for future bookings
-    $future_bookings_sql = "SELECT COUNT(*) as booking_count 
-                            FROM Booking_Service bs
-                            INNER JOIN Booking b ON bs.booking_id = b.booking_id
-                            WHERE bs.staff_email = ? 
-                            AND b.booking_date >= CURDATE()
-                            AND bs.service_status IN ('confirmed')";
+    // Check for foreign key constraints (bookings, schedules)
+    // Check if staff has any bookings
+    $check_bookings_sql = "SELECT COUNT(*) as count FROM booking_service WHERE staff_email = ?";
+    $check_bookings_stmt = $conn->prepare($check_bookings_sql);
+    $check_bookings_stmt->bind_param("s", $staff_email);
+    $check_bookings_stmt->execute();
+    $bookings_result = $check_bookings_stmt->get_result();
+    $bookings_count = $bookings_result->fetch_assoc()['count'];
+    $check_bookings_stmt->close();
     
-    $future_stmt = $conn->prepare($future_bookings_sql);
-    $future_stmt->bind_param("s", $staff_email);
-    $future_stmt->execute();
-    $future_result = $future_stmt->get_result();
-    $future_data = $future_result->fetch_assoc();
-    $future_stmt->close();
+    // Check if staff has any schedules
+    $check_schedules_sql = "SELECT COUNT(*) as count FROM staff_schedule WHERE staff_email = ?";
+    $check_schedules_stmt = $conn->prepare($check_schedules_sql);
+    $check_schedules_stmt->bind_param("s", $staff_email);
+    $check_schedules_stmt->execute();
+    $schedules_result = $check_schedules_stmt->get_result();
+    $schedules_count = $schedules_result->fetch_assoc()['count'];
+    $check_schedules_stmt->close();
     
-    if ($future_data['booking_count'] > 0) {
-        $conn->close();
+    // If staff has bookings or schedules, use soft delete (set is_active = 0)
+    // Otherwise, hard delete
+    if ($bookings_count > 0 || $schedules_count > 0) {
+        // Soft delete
+        $sql = "UPDATE staff SET is_active = 0 WHERE staff_email = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $staff_email);
         
-        http_response_code(409);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'HAS_FUTURE_BOOKINGS',
-                'message' => 'Cannot delete staff member with future bookings',
-                'details' => [
-                    'future_bookings' => $future_data['booking_count']
-                ]
-            ],
-            'warning' => true
-        ]);
-        exit;
-    }
-    
-    // Delete staff member
-    $delete_sql = "DELETE FROM Staff WHERE staff_email = ?";
-    $delete_stmt = $conn->prepare($delete_sql);
-    $delete_stmt->bind_param("s", $staff_email);
-    
-    if ($delete_stmt->execute()) {
-        $delete_stmt->close();
-        $conn->close();
-        
-        http_response_code(200);
-        echo json_encode([
-            'success' => true,
-            'staff_email' => $staff_email,
-            'message' => 'Staff account deleted successfully'
-        ]);
+        if ($stmt->execute()) {
+            $stmt->close();
+            $conn->close();
+            
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Staff account deactivated successfully (has existing bookings/schedules)'
+            ]);
+        } else {
+            throw new Exception('Failed to deactivate staff account: ' . $stmt->error);
+        }
     } else {
-        throw new Exception('Failed to delete staff account: ' . $delete_stmt->error);
+        // Hard delete - delete image file first
+        if (!empty($staff['staff_image'])) {
+            $image_path = __DIR__ . '/../../..' . $staff['staff_image'];
+            if (file_exists($image_path)) {
+                @unlink($image_path);
+            }
+        }
+        
+        // Delete staff account
+        $sql = "DELETE FROM staff WHERE staff_email = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("s", $staff_email);
+        
+        if ($stmt->execute()) {
+            $stmt->close();
+            $conn->close();
+            
+            http_response_code(200);
+            echo json_encode([
+                'success' => true,
+                'message' => 'Staff account deleted successfully'
+            ]);
+        } else {
+            throw new Exception('Failed to delete staff account: ' . $stmt->error);
+        }
     }
     
 } catch (Exception $e) {
-    // Log error
-    error_log(json_encode([
-        'timestamp' => date('Y-m-d H:i:s'),
-        'user' => $_SESSION['admin']['email'] ?? 'unknown',
-        'message' => $e->getMessage(),
-        'file' => $e->getFile(),
-        'line' => $e->getLine()
-    ]), 3, '../../../logs/admin_errors.log');
-    
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => [
-            'code' => 'DATABASE_ERROR',
-            'message' => 'An error occurred while deleting the staff account'
-        ]
-    ]);
+    if (isset($conn)) {
+        $conn->close();
+    }
+    ErrorHandler::handleDatabaseError($e, 'staff account deletion');
 }
+?>
