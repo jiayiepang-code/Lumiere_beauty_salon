@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apply Leave - Staff</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body class="staff-page">
+    <div class="auth-container" style="height:auto; max-width:900px; padding:30px 0;">
+        <div class="auth-main" style="width:100%; padding:40px 50px;">
+            <div class="form-header" style="text-align:left;">
+                <h1>Apply Leave</h1>
+                <p>Submit a leave request to your manager</p>
+            </div>
+
+            <div id="success-alert" class="success-alert" style="display:none; margin-bottom:15px;">
+                Request submitted. We will process it shortly.
+            </div>
+            <div id="error-alert" class="error-alert" style="display:none; margin-bottom:15px;">
+            </div>
+
+            <form id="leaveForm">
+                <div class="form-group">
+                    <label class="form-label" for="leaveType">Leave Type</label>
+                    <select id="leaveType" class="form-control" required>
+                        <option value="">Select leave type</option>
+                        <option value="Annual">Annual Leave</option>
+                        <option value="Sick">Sick Leave</option>
+                        <option value="Emergency">Emergency Leave</option>
+                        <option value="Unpaid">Unpaid Leave</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="display:flex; gap:10px;">
+                    <div style="flex:1;">
+                        <label class="form-label" for="startDate">Start Date</label>
+                        <input type="date" id="startDate" class="form-control" required>
+                    </div>
+                    <div style="flex:1;">
+                        <label class="form-label" for="endDate">End Date</label>
+                        <input type="date" id="endDate" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reason">Reason</label>
+                    <textarea id="reason" class="form-control" rows="3" placeholder="Add details" required></textarea>
+                </div>
+
+                <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                    <input type="checkbox" id="halfDay">
+                    <label for="halfDay">Half-day</label>
+                </div>
+
+                <button type="submit" class="submit-btn">Submit Request</button>
+
+                <div class="switch-form" style="margin-top:12px;">
+                    <a href="dashboard.html">Back to Home</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('leaveForm');
+        const successBox = document.getElementById('success-alert');
+        const errorBox = document.getElementById('error-alert');
+
+        // Set minimum date to today
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').setAttribute('min', today);
+            document.getElementById('endDate').setAttribute('min', today);
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            successBox.style.display = 'none';
+            errorBox.style.display = 'none';
+
+            const type = document.getElementById('leaveType').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const reason = document.getElementById('reason').value.trim();
+            const halfDay = document.getElementById('halfDay').checked;
+
+            if (!type || !startDate || !endDate || !reason) {
+                errorBox.textContent = 'Please complete all required fields.';
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            // Date validation
+            if (new Date(endDate) < new Date(startDate)) {
+                errorBox.textContent = 'End date cannot be before start date.';
+                errorBox.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('leave_type', type);
+            formData.append('start_date', startDate);
+            formData.append('end_date', endDate);
+            formData.append('reason', reason);
+            formData.append('half_day', halfDay ? '1' : '0');
+
+            fetch('api/leave.php?action=request', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => {
+                const ct = res.headers.get('content-type');
+                if (!ct || !ct.includes('application/json')) {
+                    return res.text().then(t => { throw new Error(t); });
+                }
+                return res.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    successBox.textContent = data.message || 'Request submitted.';
+                    successBox.style.display = 'block';
+                    form.reset();
+                } else {
+                    errorBox.textContent = data.error || 'Failed to submit request.';
+                    errorBox.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                errorBox.textContent = 'System error. Please try again.';
+                errorBox.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
+

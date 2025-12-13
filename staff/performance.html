@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance - Lumière</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.0.3/plotly.min.js"></script>
+    <style>
+        /* CSS to accommodate the fixed sidebar */
+        .main-content {
+            padding: 2rem 0; /* General padding */
+            margin-left: 200px; /* Space for the default-width sidebar */
+            transition: margin-left 0.3s;
+        }
+
+        /* Fix the header alignment when sidebar is present */
+        .header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            margin-left: 200px;
+            width: calc(100% - 200px);
+            transition: margin-left 0.3s, width 0.3s;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .logo-img {
+            width: 120px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--staff-color);
+            cursor: pointer;
+            display: none;
+        }
+
+        .nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin-left: 2rem;
+        }
+
+        .nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 0.25rem 0;
+            transition: color 0.2s ease;
+        }
+
+        .nav a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -6px;
+            width: 100%;
+            height: 2px;
+            background: var(--staff-color);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.25s ease;
+        }
+
+        .nav a:hover,
+        .nav a.active {
+            color: var(--staff-color);
+        }
+
+        .nav a:hover::after,
+        .nav a.active::after {
+            transform: scaleX(1);
+        }
+
+        .profile-section {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .notification-wrapper:hover {
+            background: #f4efeb;
+            transform: translateY(-1px);
+        }
+
+        .notification-bell {
+            font-size: 1.1rem;
+            color: var(--text-color);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: #d9534f;
+            color: #fff;
+            border-radius: 999px;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 48px;
+            right: 0;
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-soft);
+            box-shadow: var(--shadow-soft);
+            width: 300px;
+            max-height: 360px;
+            overflow-y: auto;
+            display: none;
+            z-index: 900;
+        }
+
+        .notification-dropdown.active {
+            display: block;
+        }
+
+        .notification-header {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .notification-item {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 0.6rem;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #d9534f;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+
+        .notification-time {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .notification-empty {
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .profile-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--staff-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .profile-icon:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--staff-color);
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .avatar.has-image img {
+            display: block;
+        }
+
+        .avatar.has-image .avatar-initials {
+            display: none;
+        }
+
+        .avatar-initials {
+            letter-spacing: 0.5px;
+        }
+
+        .profile-meta {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: capitalize;
+        }
+
+        .profile-role {
+            font-size: 0.9rem;
+            color: var(--staff-color);
+            background: var(--accent-pink);
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            background: white;
+            border-radius: var(--radius-soft);
+            box-shadow: var(--shadow-soft);
+            padding: 1rem;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            border: 1px solid var(--border-color);
+        }
+
+        .profile-dropdown.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+            color: var(--staff-color);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.5rem 0 0.75rem;
+        }
+
+        .dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem 0.75rem;
+        }
+
+        .dropdown-header .avatar {
+            width: 48px;
+            height: 48px;
+        }
+
+        .dropdown-names {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dropdown-names .profile-name {
+            font-size: 1rem;
+        }
+
+        .logout-item {
+            color: var(--error-color);
+        }
+
+        :root {
+            --staff-color: #968073;
+            --accent-pink: #f2cbd7;
+            --success-color: #5cb85c;
+            --error-color: #d9534f;
+            --text-color: #5c4e4b;
+            --text-light: #8a8a95;
+            --border-color: #e6d9d2;
+            --bg-gradient: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
+            --shadow-soft: 0 4px 20px rgba(150, 128, 115, 0.1);
+            --radius-soft: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* ---------- SIDEBAR ---------- */
+        #nav-toggle{display:none;}
+        .sidebar{position:fixed;left:0;top:0;height:100%;width:200px;background:#fff;border-right:1px solid var(--border-color);padding-top:60px;transition:.3s;z-index:150;}
+        .sidebar ul{list-style:none;padding:0;margin:0;}
+        .sidebar li a{display:flex;align-items:center;gap:.75rem;padding:1rem 1.5rem;color:var(--text-color);text-decoration:none;}
+        .sidebar li.active a,.sidebar li a:hover{background:#faf8f6;color:var(--staff-color);}
+        
+        .toggle-btn{
+            position:absolute;
+            right:-40px;
+            top:15px;
+            background:var(--staff-color);
+            color:#fff;
+            width:32px;
+            height:32px;
+            border-radius:4px;
+            display:none;
+            place-items:center;
+            cursor:pointer;
+        }
+        /* Header */
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--staff-color);
+            cursor: pointer;
+        }
+
+        .profile-section {
+            position: relative;
+        }
+
+        .profile-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--staff-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .profile-icon:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            background: white;
+            border-radius: var(--radius-soft);
+            box-shadow: var(--shadow-soft);
+            padding: 1rem;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+        }
+
+        .profile-dropdown.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+            color: var(--staff-color);
+        }
+
+        /* Main Content Wrapper (White card background, matching index.html layout) */
+        .performance-wrapper {
+            background: white;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-color);
+        }
+        
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            color: var(--staff-color);
+        }
+
+        .page-subtitle {
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+        
+        /* Date Picker Styling for Metrics */
+        .date-filter-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .date-filter-group label, .chart-controls label {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .date-filter-group input[type="date"], input[type="month"], .chart-controls select {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .date-filter-group input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+        }
+        
+        #metricDate {
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .date-filter-group button, .chart-controls button {
+            background: var(--staff-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .chart-controls button.nav-btn {
+            padding: 0.75rem 1rem;
+            width: 40px;
+            flex-shrink: 0;
+        }
+
+
+        /* --- New Grid for Side-by-Side Content --- */
+        .top-performance-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr; /* Metric on left (1fr), Chart on right (2fr) */
+            gap: 2rem;
+            margin-bottom: 3rem;
+            align-items: start;
+        }
+        
+        /* Performance Metrics (Left Column) */
+        .performance-overview {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            gap: 1.5rem;
+        }
+        
+        .metric-card {
+            background: #faf8f6;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: none;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            transition: all 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Ranking Card Styling (Longer Rectangle) */
+        .ranking-card {
+            background: #faf8f6;
+            border-radius: var(--radius-soft);
+            padding: 1.5rem 2rem; /* Increased padding for a longer look */
+            box-shadow: var(--shadow-soft); /* Added a slight shadow for depth */
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 600px; /* Constrained max width for a desktop-friendly rectangle */
+            margin: 0 auto 3rem; /* Centered and added space below */
+            text-align: center;
+        }
+
+        .ranking-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--staff-color);
+            margin-bottom: 1rem;
+        }
+
+        .ranking-value {
+            font-size: 3rem; /* Slightly larger */
+            font-weight: 700;
+            color: var(--staff-color);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .ranking-subtext {
+            color: var(--text-light);
+            font-weight: 500;
+        }
+        
+        /* Metric Card specific styles */
+        .metric-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--staff-color), #b8957b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--staff-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            color: var(--text-light);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-change {
+            font-size: 0.9rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .metric-change.positive {
+            background: rgba(92, 184, 92, 0.1);
+            color: var(--success-color);
+        }
+
+        /* Charts Section (Right Column) */
+        .charts-section {
+            padding: 0;
+            margin: 0;
+        }
+
+        .chart-container {
+            background: #faf8f6;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: none;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.3rem;
+            color: var(--staff-color);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .chart {
+            width: 100%;
+            height: 350px;
+        }
+        
+        /* Bar Chart Section */
+        .bar-chart-section {
+            background: #faf8f6;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: none;
+            border: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        /* Commission Chart Section */
+        .commission-chart-section {
+            background: #faf8f6;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: none;
+            border: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+        
+        .chart-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            justify-content: center; /* Center controls */
+            flex-wrap: wrap;
+        }
+        
+        .chart-controls select, .chart-controls input[type="date"], .chart-controls input[type="month"], .chart-controls input[type="number"] {
+            min-width: 150px;
+        }
+
+        /* Completed Sessions List */
+        .activity-section {
+            background: #faf8f6;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: none;
+            border: 1px solid var(--border-color);
+            margin-top: 3rem;
+        }
+
+        .activity-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            color: var(--staff-color);
+            margin-bottom: 1.5rem;
+        }
+
+        .activity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid var(--border-color);
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--success-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1rem;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-text {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+        
+        .activity-service {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .activity-time {
+            font-size: 0.9rem;
+            color: var(--text-light);
+            text-align: right;
+            margin-left: auto;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .top-performance-grid {
+                grid-template-columns: 1fr;
+            }
+            .performance-overview {
+                order: 2;
+            }
+            .charts-section {
+                order: 1;
+            }
+            .metric-card {
+                max-width: 100%;
+            }
+            .date-filter-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .chart-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .chart-controls button.nav-btn {
+                width: 100%;
+            }
+            .ranking-card {
+                max-width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .performance-wrapper {
+                padding: 1rem;
+            }
+            .charts-section {
+                max-width: 100%;
+            }
+            .chart {
+                height: 300px;
+            }
+            
+            .sidebar {
+                left: -200px;
+            }
+            .main-content, .header {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .toggle-btn {
+                display: grid;
+                position: fixed;
+                left: 10px;
+                top: 15px;
+            }
+            
+            #nav-toggle:checked ~ .sidebar {
+                left: 0;
+            }
+            
+            .chart-controls {
+                flex-direction: row; /* Keep arrow buttons inline if possible */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .performance-overview {
+                padding: 0;
+            }
+            .chart-controls {
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+            .chart-controls select, .chart-controls button {
+                flex-grow: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <input type="checkbox" id="nav-toggle" hidden>
+
+    <aside class="sidebar">
+      <label for="nav-toggle" class="toggle-btn"><i class="fas fa-bars"></i></label>
+      <ul>
+        <li><a href="dashboard.html"><i class="fas fa-home"></i> Home</a></li>
+        <li><a href="schedule.html"><i class="fas fa-calendar-alt"></i> Schedule</a></li>
+        <li class="active"><a href="performance.html"><i class="fas fa-chart-line"></i> Performance</a></li>
+        <li><a href="history.html"><i class="fas fa-history"></i> History</a></li>
+        <li><a href="profile.html"><i class="fas fa-user"></i> My Profile</a></li>
+      </ul>
+    </aside>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="brand">
+                    <img src="../images/16.png" alt="Lumière logo" class="logo-img">
+                    <div class="logo">Lumière</div>
+                </div>
+                <nav class="nav">
+                    <a href="dashboard.html">Home</a>
+                    <a href="schedule.html">Schedule</a>
+                    <a href="performance.html" class="active">Performance</a>
+                    <a href="apply-leave.html">Leave</a>
+                </nav>
+                <div class="profile-section">
+                    <div class="notification-wrapper" onclick="toggleNotifications(event)">
+                        <i class="fas fa-bell notification-bell"></i>
+                        <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header">
+                                <span>Notifications</span>
+                                <span id="notificationCountText">0</span>
+                            </div>
+                            <ul class="notification-list" id="notificationList"></ul>
+                            <div class="notification-empty" id="notificationEmpty">No new notifications</div>
+                        </div>
+                    </div>
+                    <div class="profile-icon" onclick="toggleProfileDropdown()">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <div class="dropdown-header">
+                            <div class="avatar" id="dropdownAvatar">
+                                <img id="dropdownAvatarImg" alt="Staff profile">
+                                <span class="avatar-initials" id="dropdownAvatarPlaceholder">ST</span>
+                            </div>
+                            <div class="dropdown-names">
+                                <span class="profile-name" id="dropdownName">Staff</span>
+                                <span class="profile-role">Staff</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" onclick="window.location.href='profile.html'">
+                            <i class="fas fa-user"></i>
+                            <span>My Profile</span>
+                        </div>
+                        <div class="dropdown-item" onclick="window.location.href='apply-leave.html'">
+                            <i class="fas fa-calendar-minus"></i>
+                            <span>Apply Leave</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item logout-item" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            
+            <div class="performance-wrapper">
+
+                <div class="page-header">
+                    <h1 class="page-title">Performance Dashboard</h1>
+                    <p class="page-subtitle">Track your key performance metrics and achievements</p>
+                </div>
+                
+                <section class="ranking-card">
+                    <h3 class="ranking-title">Monthly Staff Ranking (Completed Appointments)</h3>
+                    <div class="date-filter-group" style="justify-content: center;">
+                        <label for="rankingMonth">Select Month:</label>
+                        <input type="month" id="rankingMonth" value="2025-12">
+                        <button onclick="updateRanking()">View Rank</button>
+                    </div>
+                    <div id="rankingDisplay">
+                        <span class="ranking-value">#1</span>
+                        <span class="ranking-subtext">out of 5 staff members (156 bookings)</span>
+                    </div>
+                </section>
+                
+                <hr style="margin: 3rem 0; border: 1px solid var(--border-color);"/>
+
+                <div class="top-performance-grid">
+                    
+                    <section class="performance-overview">
+                        <h3 class="chart-title" style="margin-bottom: 0;">Completed Appointments</h3>
+                        <div class="date-filter-group">
+                            <label for="metricDate">View Date:</label>
+                            <input type="date" id="metricDate">
+                            <button onclick="updateCompletedAppointments()">View</button>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div class="metric-value" id="completedAppointmentsValue">8</div>
+                            <div class="metric-label">Completed Appointments</div>
+                            <div class="metric-change positive" id="completedAppointmentsChange">8 completed today</div>
+                        </div>
+                    </section>
+
+                    <section class="charts-section">
+                        <div class="chart-container">
+                            <h3 class="chart-title">Appointment Distribution</h3>
+                            <div class="chart-controls">
+                                <label for="monthlySelector">Select Month:</label>
+                                <input type="month" id="monthlySelector">
+                                <button onclick="createAppointmentChart()">View</button>
+                            </div>
+                            <div id="appointmentChart" class="chart"></div>
+                        </div>
+                    </section>
+                    
+                </div>
+                
+                <section class="bar-chart-section">
+                    <h2 class="activity-title" style="margin-top: 0; text-align: center;">Performance Trend</h2>
+                    <div class="chart-controls">
+                        <button class="nav-btn" onclick="scrollBarChart('left')"><i class="fas fa-chevron-left"></i></button>
+                        <label for="timeframeSelector">Select Timeframe:</label>
+                        <select id="timeframeSelector" onchange="resetBarChartScroll(); createPerformanceBarChart()">
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        <button onclick="createPerformanceBarChart()">Load Data</button>
+                        <button class="nav-btn" onclick="scrollBarChart('right')"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div id="performanceBarChart" class="chart" style="height: 400px;"></div>
+                </section>
+
+                <section class="commission-chart-section">
+                    <h2 class="activity-title" style="margin-top: 0; text-align: center;">Commission Earnings</h2>
+                    <div class="chart-controls">
+                        <button class="nav-btn" onclick="scrollCommissionChart('left')"><i class="fas fa-chevron-left"></i></button>
+                        <label for="commissionTimeframe">Select Timeframe:</label>
+                        <select id="commissionTimeframe" onchange="resetCommissionChartScroll(); createCommissionChart()">
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                        </select>
+                        <button onclick="createCommissionChart()">Load Data</button>
+                        <button class="nav-btn" onclick="scrollCommissionChart('right')"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                    <div id="commissionChart" class="chart" style="height: 400px;"></div>
+                </section>
+
+            </div>
+            </div>
+    </main>
+
+    <script>
+        // Header Functions
+        function toggleProfileDropdown(event) {
+            event?.stopPropagation();
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        function toggleNotifications(event){
+            event?.stopPropagation();
+            const dropdown=document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        function setNotifications(notifications){
+            const badge=document.getElementById('notificationBadge');
+            const list=document.getElementById('notificationList');
+            const empty=document.getElementById('notificationEmpty');
+            const countText=document.getElementById('notificationCountText');
+
+            list.innerHTML='';
+            const unread=notifications.length;
+            countText.textContent=`${unread} new`;
+
+            if(unread>0){
+                badge.style.display='inline-block';
+                badge.textContent=unread>9?'9+':unread;
+                empty.style.display='none';
+                notifications.forEach(n=>{
+                    const li=document.createElement('li');
+                    li.className='notification-item';
+                    li.innerHTML=`
+                        <div class="notification-dot"></div>
+                        <div class="notification-content">
+                            <div>${n.message}</div>
+                            <div class="notification-time">${n.time}</div>
+                        </div>`;
+                    list.appendChild(li);
+                });
+            }else{
+                badge.style.display='none';
+                empty.style.display='block';
+            }
+        }
+
+        async function loadNotifications(){
+            try {
+                const response = await fetch('api/dashboard.php');
+                if (!response.ok) throw new Error('Failed to fetch notifications');
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Failed to fetch notifications');
+                
+                const notifications = data.notifications || [];
+                setNotifications(notifications);
+            } catch (error) {
+                console.warn('Error loading notifications:', error.message);
+                setNotifications([]);
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const profileSection = document.querySelector('.profile-section');
+            const dropdown = document.getElementById('profileDropdown');
+            const notifyDropdown=document.getElementById('notificationDropdown');
+            
+            if (!profileSection.contains(event.target)) {
+                dropdown.classList.remove('active');
+                notifyDropdown.classList.remove('active');
+            }
+        });
+
+        async function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    const response = await fetch('api/logout.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        window.location.href = 'login.html';
+                    } else {
+                        alert('Logout failed. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    window.location.href = 'login.html';
+                }
+            }
+        }
+
+        function resolveStaffImage(imagePath) {
+            if (!imagePath) return '';
+            if (imagePath.startsWith('http')) return imagePath;
+            if (imagePath.startsWith('/')) return '..' + imagePath;
+            if (imagePath.startsWith('staff/')) return '../' + imagePath;
+            return imagePath;
+        }
+
+        function getInitials(name) {
+            return name
+                .split(' ')
+                .filter(Boolean)
+                .map(part => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase() || 'ST';
+        }
+
+        function updateAvatar(avatarId, imgId, placeholderId, imagePath, initials) {
+            const avatar = document.getElementById(avatarId);
+            const img = document.getElementById(imgId);
+            const placeholder = document.getElementById(placeholderId);
+            if (!avatar || !img || !placeholder) return;
+
+            if (imagePath) {
+                img.src = resolveStaffImage(imagePath);
+                img.alt = 'Staff profile picture';
+                avatar.classList.add('has-image');
+            } else {
+                avatar.classList.remove('has-image');
+            }
+
+            placeholder.textContent = initials;
+        }
+
+        function setProfileName(name) {
+            const safeName = name || 'Staff';
+            const dropdownNameEl = document.getElementById('dropdownName');
+            if (dropdownNameEl) dropdownNameEl.textContent = safeName;
+        }
+
+        async function loadStaffProfile() {
+            const fallbackName = 'Staff';
+            try {
+                const response = await fetch('api/staff.php');
+                if (!response.ok) throw new Error('Unable to fetch staff profile');
+
+                const data = await response.json();
+                if (!data.success || !data.staff) throw new Error('No staff data');
+
+                const { first_name, last_name, staff_image } = data.staff;
+                const fullName = [first_name, last_name].filter(Boolean).join(' ') || fallbackName;
+                const initials = getInitials(fullName);
+
+                setProfileName(fullName);
+                updateAvatar('dropdownAvatar', 'dropdownAvatarImg', 'dropdownAvatarPlaceholder', staff_image, initials);
+            } catch (error) {
+                console.warn(error.message);
+                const initials = getInitials(fallbackName);
+                setProfileName(fallbackName);
+                updateAvatar('dropdownAvatar', 'dropdownAvatarImg', 'dropdownAvatarPlaceholder', '', initials);
+            }
+        }
+
+        // Store current scroll position (range) for the bar chart
+        let currentRange = [0, 4]; // Default view range for 4 data points
+        let commissionRange = [0, 6]; // Default view range for commission chart (6 months/weeks)
+
+        // --- Utility Functions ---
+        function getStartOfWeek(dateStr) {
+            const d = new Date(dateStr);
+            const day = d.getDay();
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+            d.setDate(diff);
+            return d;
+        }
+
+        function getMonthYear(dateStr) {
+            const options = { year: 'numeric', month: 'short' };
+            return new Date(dateStr).toLocaleDateString('en-US', options).replace(',', '');
+        }
+
+        // Store performance data
+        let performanceData = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateInput = document.getElementById('metricDate');
+            const today = new Date().toISOString().split('T')[0];
+            dateInput.setAttribute('max', today);
+            dateInput.value = today;
+
+            // Format and display date as dd/mm/yyyy
+            formatMetricDateDisplay();
+            dateInput.addEventListener('change', formatMetricDateDisplay);
+            dateInput.addEventListener('blur', formatMetricDateDisplay);
+
+            // Set default month for appointment distribution to current month
+            const currentMonth = new Date();
+            const year = currentMonth.getFullYear();
+            const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
+            document.getElementById('monthlySelector').value = `${year}-${month}`;
+
+            loadPerformanceData();
+            loadStaffProfile();
+            loadNotifications();
+        });
+
+        function formatMetricDateDisplay() {
+            const dateInput = document.getElementById('metricDate');
+            if (dateInput.value) {
+                const [year, month, day] = dateInput.value.split('-');
+                // Update the input's display value to dd/mm/yyyy format
+                const formattedDate = `${day}/${month}/${year}`;
+                dateInput.setAttribute('data-formatted', formattedDate);
+                
+                // For browsers that support it, we can style the input to show the formatted value
+                // Using a data attribute and CSS to display it
+            }
+        }
+
+        async function loadPerformanceData() {
+            try {
+                const response = await fetch('api/performance.php?period=month');
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load performance data');
+                }
+                
+                performanceData = data;
+                updateCompletedAppointments();
+                updateRanking();
+                createAppointmentChart();
+                createPerformanceBarChart();
+                createCommissionChart();
+            } catch (error) {
+                console.error('Error loading performance data:', error);
+                alert('Failed to load performance data: ' + error.message);
+            }
+        }
+
+        async function updateRanking() {
+            const selectedMonth = document.getElementById('rankingMonth').value;
+            const rankingDisplay = document.getElementById('rankingDisplay');
+            
+            try {
+                const response = await fetch(`api/performance.php?month=${selectedMonth}`);
+                const data = await response.json();
+                
+                if (data.success && data.ranking) {
+                    const rank = data.ranking;
+                    rankingDisplay.innerHTML = `
+                        <span class="ranking-value">#${rank.rank}</span>
+                        <span class="ranking-subtext">out of ${rank.total_staff} staff members (${rank.completed} bookings)</span>
+                    `;
+                } else {
+                    rankingDisplay.innerHTML = `<span class="ranking-value">N/A</span><span class="ranking-subtext">No data available</span>`;
+                }
+            } catch (error) {
+                console.error('Error loading ranking:', error);
+                rankingDisplay.innerHTML = `<span class="ranking-value">Error</span><span class="ranking-subtext">Failed to load ranking</span>`;
+            }
+        }
+
+        async function updateCompletedAppointments() {
+            const selectedDate = document.getElementById('metricDate').value;
+            const completedValueElement = document.getElementById('completedAppointmentsValue');
+            const completedChangeElement = document.getElementById('completedAppointmentsChange');
+            
+            let date = new Date(selectedDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (date > today) {
+                completedValueElement.textContent = '0';
+                completedChangeElement.textContent = 'Future Date Selected';
+                completedChangeElement.className = 'metric-change';
+                return;
+            }
+
+            try {
+                const response = await fetch(`api/performance.php?date=${selectedDate}`);
+                const data = await response.json();
+                
+                if (data.success && data.metrics) {
+                    const value = data.metrics.completed_today || 0;
+                    const [year, month, day] = selectedDate.split('-');
+                    const formattedDate = `${day}/${month}/${year}`;
+                    completedValueElement.textContent = value;
+                    completedChangeElement.textContent = `${value} completed on ${formattedDate}`;
+                    completedChangeElement.className = 'metric-change positive';
+                } else {
+                    completedValueElement.textContent = '0';
+                    completedChangeElement.textContent = 'No data available';
+                    completedChangeElement.className = 'metric-change';
+                }
+            } catch (error) {
+                console.error('Error loading completed appointments:', error);
+                completedValueElement.textContent = '0';
+                completedChangeElement.textContent = 'Error loading data';
+                completedChangeElement.className = 'metric-change';
+            }
+        }
+
+        function createAppointmentChart() {
+            const monthlySelector = document.getElementById('monthlySelector').value;
+            if (!monthlySelector) {
+                alert('Please select a month');
+                return;
+            }
+            
+            const queryParams = `timeframe=monthly&month=${monthlySelector}`;
+            const [year, month] = monthlySelector.split('-');
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            const displayLabel = `${monthNames[parseInt(month) - 1]} ${year}`;
+            
+            fetch(`api/performance.php?${queryParams}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.success || !data.service_distribution) {
+                        throw new Error('No service distribution data available');
+                    }
+                    
+                    const services = data.service_distribution.map(s => s.service_name);
+                    const counts = data.service_distribution.map(s => parseInt(s.count));
+
+                    if (services.length === 0) {
+                        document.getElementById('appointmentChart').innerHTML = '<p style="text-align:center;padding:2rem;">No service data available</p>';
+                        return;
+                    }
+
+                    const trace = {
+                        labels: services,
+                        values: counts,
+                        type: 'pie',
+                        marker: {
+                            colors: ['#968073', '#b8957b', '#d4b5a0', '#e6d9d2', '#f5e9e4']
+                        },
+                        textinfo: 'percent',
+                        insidetextfont: { size: 14, color: '#5c4e4b' },
+                        hovertemplate: '<b>%{label}</b><br>Count: %{value}<br>Percentage: %{percent}<extra></extra>'
+                    };
+
+                    const layout = {
+                        title: displayLabel,
+                        plot_bgcolor: 'rgba(0,0,0,0)',
+                        paper_bgcolor: 'rgba(0,0,0,0)',
+                        font: {
+                            family: 'Inter, sans-serif',
+                            size: 12,
+                            color: '#5c4e4b'
+                        },
+                        margin: { t: 30, r: 0, b: 0, l: 0 },
+                        showlegend: true,
+                        legend: { orientation: "h", y: -0.1, x: 0.1 }
+                    };
+
+                    Plotly.newPlot('appointmentChart', [trace], layout, {displayModeBar: false, staticPlot: true});
+                })
+                .catch(error => {
+                    console.error('Error creating appointment chart:', error);
+                    document.getElementById('appointmentChart').innerHTML = '<p style="text-align:center;padding:2rem;">Error loading chart data</p>';
+                });
+        }
+        
+        function resetBarChartScroll() {
+            currentRange = [0, 4]; // Show 4 data points by default
+        }
+
+        async function scrollBarChart(direction) {
+            const timeframe = document.getElementById('timeframeSelector').value;
+            
+            try {
+                // Re-fetch data to get full dataset
+                const response = await fetch(`api/performance.php?timeframe=${timeframe}`);
+                const data = await response.json();
+                
+                if (!data.success || !data.bar_chart) return;
+                
+                const fullData = {
+                    x: data.bar_chart.map(item => item.x),
+                    y: data.bar_chart.map(item => item.y)
+                };
+                
+                const maxIndex = fullData.x.length;
+                const visibleCount = 4; // Number of bars to show at once
+                const step = 1; // Scroll by 1 data point at a time
+
+                if (direction === 'left') {
+                    // Left button: scroll right (show earlier data, move view to the right)
+                    // Decrease start index to show earlier periods
+                    if (currentRange[0] > 0) {
+                        currentRange[0] = Math.max(0, currentRange[0] - step);
+                        currentRange[1] = currentRange[0] + visibleCount;
+                    }
+                } else if (direction === 'right') {
+                    // Right button: scroll left (show later data, move view to the left)
+                    // Increase start index to show later periods
+                    if (currentRange[1] < maxIndex) {
+                        currentRange[0] = Math.min(maxIndex - visibleCount, currentRange[0] + step);
+                        currentRange[1] = Math.min(maxIndex, currentRange[0] + visibleCount);
+                    }
+                }
+
+                createPerformanceBarChart(false);
+            } catch (error) {
+                console.error('Error scrolling chart:', error);
+            }
+        }
+
+        async function createPerformanceBarChart(resetRange = true) {
+            const timeframe = document.getElementById('timeframeSelector').value;
+            
+            try {
+                const response = await fetch(`api/performance.php?timeframe=${timeframe}`);
+                const data = await response.json();
+                
+                if (!data.success || !data.bar_chart) {
+                    throw new Error('No bar chart data available');
+                }
+                
+                const fullData = {
+                    x: data.bar_chart.map(item => item.x),
+                    y: data.bar_chart.map(item => item.y),
+                    title: timeframe === 'weekly' ? 'Weekly Completed Appointments' : 
+                           timeframe === 'monthly' ? 'Monthly Completed Appointments' : 
+                           'Yearly Completed Appointments'
+                };
+                
+                if (resetRange) {
+                    resetBarChartScroll();
+                }
+
+                const maxIndex = fullData.x.length;
+                const visibleCount = 4; // Number of bars to show at once
+                
+                // Ensure range is valid
+                if (currentRange[1] > maxIndex) {
+                    currentRange[1] = maxIndex;
+                    currentRange[0] = Math.max(0, maxIndex - visibleCount);
+                }
+                if (currentRange[0] < 0) {
+                    currentRange[0] = 0;
+                    currentRange[1] = Math.min(maxIndex, visibleCount);
+                }
+                // Ensure range size doesn't exceed visible count
+                if (currentRange[1] - currentRange[0] > visibleCount) {
+                    currentRange[1] = currentRange[0] + visibleCount;
+                }
+
+                const visibleX = fullData.x.slice(currentRange[0], currentRange[1]);
+                const visibleY = fullData.y.slice(currentRange[0], currentRange[1]);
+
+                const trace = {
+                    x: visibleX,
+                    y: visibleY,
+                    type: 'bar',
+                    marker: {
+                        color: '#968073'
+                    },
+                    text: visibleY.map(y => y.toString()), // Add text labels on bars
+                    textposition: 'outside', // Position text above bars
+                    textfont: {
+                        size: 12,
+                        color: '#5c4e4b'
+                    },
+                    hovertemplate: '<b>%{x}</b><br>Completed: %{y}<extra></extra>'
+                };
+
+                let layout = {
+                    title: fullData.title,
+                    xaxis: {
+                        title: timeframe.charAt(0).toUpperCase() + timeframe.slice(1),
+                        automargin: true,
+                        type: 'category' 
+                    },
+                    yaxis: {
+                        title: 'Bookings Completed',
+                        tickformat: ',d',
+                        ...(timeframe === 'weekly' ? { range: [0, 5] } : {})
+                    },
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    font: {
+                        family: 'Inter, sans-serif',
+                        size: 12,
+                        color: '#5c4e4b'
+                    },
+                    margin: { t: 50, r: 20, b: 60, l: 60 },
+                    responsive: true
+                };
+
+                Plotly.newPlot('performanceBarChart', [trace], layout, {
+                    displayModeBar: false, 
+                    staticPlot: true 
+                });
+            } catch (error) {
+                console.error('Error creating bar chart:', error);
+                document.getElementById('performanceBarChart').innerHTML = '<p style="text-align:center;padding:2rem;">Error loading chart data</p>';
+            }
+        }
+
+        function updateRecentActivity() {
+            if (!performanceData || !performanceData.recent_activity) return;
+            
+            const activityList = document.querySelector('.activity-list');
+            if (!activityList) return;
+            
+            activityList.innerHTML = '';
+            
+            if (performanceData.recent_activity.length === 0) {
+                activityList.innerHTML = '<div class="empty-state"><p>No recent activity</p></div>';
+                return;
+            }
+            
+            performanceData.recent_activity.forEach(activity => {
+                const item = document.createElement('div');
+                item.className = 'activity-item';
+                item.innerHTML = `
+                    <div class="activity-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">${activity.customer_name || 'Customer'}</div>
+                        <div class="activity-service">${activity.service || 'Service'}</div>
+                    </div>
+                    <div class="activity-time">${activity.time_ago || 'Recently'}</div>
+                `;
+                activityList.appendChild(item);
+            });
+        }
+
+        function resetCommissionChartScroll() {
+            commissionRange = [0, 6]; // Reset to show 6 data points by default
+        }
+
+        async function scrollCommissionChart(direction) {
+            const timeframe = document.getElementById('commissionTimeframe').value;
+            
+            try {
+                const response = await fetch(`api/performance.php?timeframe=${timeframe}&commission=true`);
+                const data = await response.json();
+                
+                if (!data.success || !data.commission_data) return;
+                
+                const fullData = {
+                    x: data.commission_data.map(item => item.period),
+                    y: data.commission_data.map(item => parseFloat(item.commission))
+                };
+                
+                const maxIndex = fullData.x.length;
+                const visibleCount = timeframe === 'weekly' ? 6 : 6; // Show 6 periods at once
+                const step = 1; // Scroll by 1 data point at a time
+
+                if (direction === 'left') {
+                    // Left button: scroll right (show earlier data)
+                    if (commissionRange[0] > 0) {
+                        commissionRange[0] = Math.max(0, commissionRange[0] - step);
+                        commissionRange[1] = commissionRange[0] + visibleCount;
+                    }
+                } else if (direction === 'right') {
+                    // Right button: scroll left (show later data)
+                    if (commissionRange[1] < maxIndex) {
+                        commissionRange[0] = Math.min(maxIndex - visibleCount, commissionRange[0] + step);
+                        commissionRange[1] = Math.min(maxIndex, commissionRange[0] + visibleCount);
+                    }
+                }
+
+                createCommissionChartWithRange(fullData, timeframe, false);
+            } catch (error) {
+                console.error('Error scrolling commission chart:', error);
+            }
+        }
+
+        async function createCommissionChart() {
+            const timeframe = document.getElementById('commissionTimeframe').value;
+            
+            try {
+                const response = await fetch(`api/performance.php?timeframe=${timeframe}&commission=true`);
+                const data = await response.json();
+                
+                if (!data.success || !data.commission_data) {
+                    throw new Error('No commission data available');
+                }
+                
+                const fullData = {
+                    x: data.commission_data.map(item => item.period),
+                    y: data.commission_data.map(item => parseFloat(item.commission))
+                };
+
+                resetCommissionChartScroll();
+                createCommissionChartWithRange(fullData, timeframe, true);
+            } catch (error) {
+                console.error('Error creating commission chart:', error);
+                document.getElementById('commissionChart').innerHTML = '<p style="text-align:center;padding:2rem;">Error loading commission data</p>';
+            }
+        }
+
+        function createCommissionChartWithRange(fullData, timeframe, resetRange = true) {
+            if (resetRange) {
+                resetCommissionChartScroll();
+            }
+
+            const maxIndex = fullData.x.length;
+            const visibleCount = 6; // Number of periods to show at once
+            
+            // Ensure range is valid
+            if (commissionRange[1] > maxIndex) {
+                commissionRange[1] = maxIndex;
+                commissionRange[0] = Math.max(0, maxIndex - visibleCount);
+            }
+            if (commissionRange[0] < 0) {
+                commissionRange[0] = 0;
+                commissionRange[1] = Math.min(maxIndex, visibleCount);
+            }
+            // Ensure range size doesn't exceed visible count
+            if (commissionRange[1] - commissionRange[0] > visibleCount) {
+                commissionRange[1] = commissionRange[0] + visibleCount;
+            }
+
+            const visibleX = fullData.x.slice(commissionRange[0], commissionRange[1]);
+            const visibleY = fullData.y.slice(commissionRange[0], commissionRange[1]);
+
+            // Add spacing before first data point and after last data point
+            const spacedX = ['', ...visibleX, ''];
+            const spacedY = [null, ...visibleY, null];
+            const spacedText = ['', ...visibleY.map(y => y.toFixed(2)), ''];
+
+            // Calculate appropriate y-axis range (no negatives)
+            const maxValue = Math.max(...visibleY.filter(v => v !== null), 0);
+            const yAxisMin = 0;
+            const yAxisMax = maxValue > 0 ? maxValue * 1.2 : 1; // Add 20% padding or minimum 1
+
+            const trace = {
+                x: spacedX,
+                y: spacedY,
+                type: 'scatter',
+                mode: 'lines+markers+text',
+                fill: 'tozeroy',
+                line: {
+                    color: '#968073',
+                    width: 3
+                },
+                marker: {
+                    size: 8,
+                    color: '#968073',
+                    symbol: 'circle'
+                },
+                fillcolor: 'rgba(150, 128, 115, 0.1)',
+                text: spacedText,
+                textposition: 'top center',
+                textfont: {
+                    size: 11,
+                    color: '#5c4e4b'
+                },
+                hovertemplate: '<b>%{x}</b><br>Commission: RM%{y:.2f}<extra></extra>'
+            };
+
+            // Extract year for monthly view
+            let xaxisTitle = timeframe.charAt(0).toUpperCase() + timeframe.slice(1);
+            if (timeframe === 'monthly' && visibleX.length > 0) {
+                // Extract year from the first visible month entry (e.g., "Jan 2025" -> "2025")
+                const yearMatch = visibleX[1]?.match(/\d{4}/);
+                if (yearMatch) {
+                    xaxisTitle = `Year ${yearMatch[0]}`;
+                }
+            }
+
+            const layout = {
+                title: timeframe === 'weekly' ? 'Weekly Commission Earnings' : 'Monthly Commission Earnings',
+                xaxis: {
+                    title: xaxisTitle,
+                    automargin: true,
+                    type: 'category',
+                    side: 'bottom',
+                    tickangle: 0,
+                    tickfont: {
+                        size: 11
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'RM',
+                        font: {
+                            size: 12,
+                            color: '#5c4e4b'
+                        }
+                    },
+                    tickformat: '.2f',
+                    range: [yAxisMin, yAxisMax],
+                    zeroline: true,
+                    zerolinewidth: 1,
+                    zerolinecolor: '#e6d9d2'
+                },
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                font: {
+                    family: 'Inter, sans-serif',
+                    size: 12,
+                    color: '#5c4e4b'
+                },
+                margin: { t: 50, r: 120, b: 80, l: 80 },
+                responsive: true,
+                hovermode: 'x unified'
+            };
+
+            Plotly.newPlot('commissionChart', [trace], layout, {
+                displayModeBar: false, 
+                staticPlot: true 
+            });
+        }
+    </script>
+</body>
+</html>
