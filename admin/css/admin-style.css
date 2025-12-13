@@ -2512,30 +2512,29 @@ tr:last-child td {
   .timeline-row {
     grid-template-columns: 60px 1fr;
   }
-  
+
   .timeline-time {
     font-size: 11px;
     padding: 8px;
   }
-  
+
   .month-day {
     min-height: 80px;
     padding: 4px;
   }
-  
+
   .month-day-number {
     width: 24px;
     height: 24px;
     font-size: 12px;
   }
-  
+
   .month-booking-pill {
     font-size: 10px;
     padding: 3px 6px;
   }
-  
+
   .week-table .day-col {
     min-width: 100px;
   }
 }
-

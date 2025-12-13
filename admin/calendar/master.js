@@ -1,26 +1,28 @@
 // Master Calendar Logic: drag-and-drop rescheduling, conflict checks, and modal details
 // Minimal scaffolding to enable interactions; integrates with future API endpoints.
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
   initCalendarInteractions();
 });
 
 function initCalendarInteractions() {
-  const events = document.querySelectorAll('.calendar-event');
-  events.forEach(ev => {
-    ev.setAttribute('draggable', 'true');
-    ev.addEventListener('dragstart', onDragStart);
+  const events = document.querySelectorAll(".calendar-event");
+  events.forEach((ev) => {
+    ev.setAttribute("draggable", "true");
+    ev.addEventListener("dragstart", onDragStart);
   });
 
-  const slots = document.querySelectorAll('.calendar-slot');
-  slots.forEach(slot => {
-    slot.addEventListener('dragover', (e) => e.preventDefault());
-    slot.addEventListener('drop', onDropReschedule);
+  const slots = document.querySelectorAll(".calendar-slot");
+  slots.forEach((slot) => {
+    slot.addEventListener("dragover", (e) => e.preventDefault());
+    slot.addEventListener("drop", onDropReschedule);
   });
 
   // Click to open booking details
-  document.querySelectorAll('.calendar-event').forEach(ev => {
-    ev.addEventListener('click', () => openBookingDetails(ev.dataset.bookingId));
+  document.querySelectorAll(".calendar-event").forEach((ev) => {
+    ev.addEventListener("click", () =>
+      openBookingDetails(ev.dataset.bookingId)
+    );
   });
 }
 
@@ -32,7 +34,7 @@ function onDragStart(e) {
     staffEmail: el.dataset.staffEmail,
     originalSlot: el.dataset.slot,
   };
-  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.effectAllowed = "move";
 }
 
 async function onDropReschedule(e) {
@@ -43,18 +45,20 @@ async function onDropReschedule(e) {
 
   // Basic client-side conflict check: avoid same slot double-booking
   const occupied = !!document.querySelector(
-    `.calendar-event[data-staff-email="${CSS.escape(staffEmail)}"][data-slot="${CSS.escape(targetSlot)}"]`
+    `.calendar-event[data-staff-email="${CSS.escape(
+      staffEmail
+    )}"][data-slot="${CSS.escape(targetSlot)}"]`
   );
   if (occupied) {
-    toast('Slot already occupied for staff', 'error');
+    toast("Slot already occupied for staff", "error");
     return;
   }
 
   try {
     // Call reschedule API (to be implemented server-side)
-    const resp = await fetch('../../api/admin/bookings/reschedule.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const resp = await fetch("../../api/admin/bookings/reschedule.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         booking_id: dragData.bookingId,
         staff_email: staffEmail,
@@ -62,16 +66,19 @@ async function onDropReschedule(e) {
       }),
     });
     const data = await resp.json();
-    if (!resp.ok || !data.success) throw new Error(data.error?.message || 'Reschedule failed');
+    if (!resp.ok || !data.success)
+      throw new Error(data.error?.message || "Reschedule failed");
     // Update UI: move element
-    const draggedEl = document.querySelector(`.calendar-event[data-booking-id="${CSS.escape(dragData.bookingId)}"]`);
+    const draggedEl = document.querySelector(
+      `.calendar-event[data-booking-id="${CSS.escape(dragData.bookingId)}"]`
+    );
     if (draggedEl) {
       draggedEl.dataset.slot = targetSlot;
       e.currentTarget.appendChild(draggedEl);
     }
-    toast('Booking rescheduled', 'success');
+    toast("Booking rescheduled", "success");
   } catch (err) {
-    toast(err.message, 'error');
+    toast(err.message, "error");
   } finally {
     dragData = null;
   }
@@ -79,44 +86,57 @@ async function onDropReschedule(e) {
 
 async function openBookingDetails(bookingId) {
   try {
-    const resp = await fetch(`../../api/admin/bookings/details.php?booking_id=${encodeURIComponent(bookingId)}`);
+    const resp = await fetch(
+      `../../api/admin/bookings/details.php?booking_id=${encodeURIComponent(
+        bookingId
+      )}`
+    );
     const data = await resp.json();
-    if (!resp.ok || !data.success) throw new Error(data.error?.message || 'Failed to load details');
+    if (!resp.ok || !data.success)
+      throw new Error(data.error?.message || "Failed to load details");
     renderBookingModal(data.booking);
   } catch (err) {
-    toast(err.message, 'error');
+    toast(err.message, "error");
   }
 }
 
 function renderBookingModal(booking) {
-  const modal = document.getElementById('bookingModal');
-  const body = modal?.querySelector('.modal-body');
+  const modal = document.getElementById("bookingModal");
+  const body = modal?.querySelector(".modal-body");
   if (!modal || !body) return;
   body.innerHTML = `
     <div class="detail-grid">
-      <div><strong>Customer:</strong> ${escapeHtml(booking.customer_name)} (${escapeHtml(booking.customer_phone)})</div>
+      <div><strong>Customer:</strong> ${escapeHtml(
+        booking.customer_name
+      )} (${escapeHtml(booking.customer_phone)})</div>
       <div><strong>Staff:</strong> ${escapeHtml(booking.staff_name)}</div>
-      <div><strong>Service(s):</strong> ${booking.services.map(s => escapeHtml(s.name)).join(', ')}</div>
-      <div><strong>Time:</strong> ${escapeHtml(booking.start_time)} - ${escapeHtml(booking.end_time)}</div>
+      <div><strong>Service(s):</strong> ${booking.services
+        .map((s) => escapeHtml(s.name))
+        .join(", ")}</div>
+      <div><strong>Time:</strong> ${escapeHtml(
+        booking.start_time
+      )} - ${escapeHtml(booking.end_time)}</div>
       <div><strong>Status:</strong> ${escapeHtml(booking.status)}</div>
-      <div><strong>Price:</strong> RM ${Number(booking.total_price || 0).toFixed(2)}</div>
-      <div><strong>Notes:</strong> ${escapeHtml(booking.notes || '-')}</div>
+      <div><strong>Price:</strong> RM ${Number(
+        booking.total_price || 0
+      ).toFixed(2)}</div>
+      <div><strong>Notes:</strong> ${escapeHtml(booking.notes || "-")}</div>
     </div>
   `;
-  modal.classList.add('active');
+  modal.classList.add("active");
 }
 
-function toast(message, kind='success') {
+function toast(message, kind = "success") {
   console.log(`[${kind}]`, message);
 }
 
 function escapeHtml(str) {
   return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 // Calendar state
 let currentView = "day";
@@ -128,15 +148,15 @@ let staffList = [];
 // Initialize calendar on page load
 document.addEventListener("DOMContentLoaded", function () {
   initializeCalendar();
-  
+
   // Add event listeners to filter dropdowns
   const staffFilter = document.getElementById("staffFilter");
   const statusFilter = document.getElementById("statusFilter");
-  
+
   if (staffFilter) {
     staffFilter.addEventListener("change", applyFilters);
   }
-  
+
   if (statusFilter) {
     statusFilter.addEventListener("change", applyFilters);
   }
@@ -209,8 +229,16 @@ async function loadCalendarData() {
       params.append("start_date", startOfWeek.toISOString().split("T")[0]);
       params.append("end_date", endOfWeek.toISOString().split("T")[0]);
     } else if (currentView === "month") {
-      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      const startOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      const endOfMonth = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
       params.append("start_date", startOfMonth.toISOString().split("T")[0]);
       params.append("end_date", endOfMonth.toISOString().split("T")[0]);
     }
@@ -234,9 +262,11 @@ async function loadCalendarData() {
 
     if (data.success) {
       // Normalize customer names
-      bookingsData = (data.bookings || []).map(booking => {
+      bookingsData = (data.bookings || []).map((booking) => {
         if (!booking.customer_name && booking.customer_first_name) {
-          booking.customer_name = `${booking.customer_first_name} ${booking.customer_last_name || ''}`;
+          booking.customer_name = `${booking.customer_first_name} ${
+            booking.customer_last_name || ""
+          }`;
         }
         return booking;
       });
@@ -304,16 +334,24 @@ function renderDayView() {
     if (slotBookings.length > 0) {
       slotBookings.forEach((booking) => {
         const statusColor = getStatusColor(booking.status);
-        const customer = escapeHtml(booking.customer_name || (booking.customer_first_name + ' ' + booking.customer_last_name));
+        const customer = escapeHtml(
+          booking.customer_name ||
+            booking.customer_first_name + " " + booking.customer_last_name
+        );
         const services = booking.services || [];
-        const serviceName = services.length > 0 ? escapeHtml(services[0].service_name) : 'Service';
-        
+        const serviceName =
+          services.length > 0
+            ? escapeHtml(services[0].service_name)
+            : "Service";
+
         html += `
           <div class="booking-block" 
                style="border-left: 4px solid ${statusColor};"
                onclick="viewBookingDetails('${booking.booking_id}')">
             <div class="booking-block-customer">${customer}</div>
-            <div class="booking-block-time">${formatTime(booking.start_time)} - ${formatTime(booking.expected_finish_time)}</div>
+            <div class="booking-block-time">${formatTime(
+              booking.start_time
+            )} - ${formatTime(booking.expected_finish_time)}</div>
             <div class="booking-block-service">${serviceName}</div>
           </div>`;
       });
@@ -335,7 +373,7 @@ function renderWeekView() {
   // Get week start (Sunday) and generate 7 days
   const weekStart = new Date(currentDate);
   weekStart.setDate(currentDate.getDate() - currentDate.getDay());
-  
+
   const weekDays = [];
   for (let i = 0; i < 7; i++) {
     const day = new Date(weekStart);
@@ -361,33 +399,38 @@ function renderWeekView() {
   }
 
   let html = '<div class="calendar-week-grid"><table class="week-table">';
-  
+
   // Header row with day names and dates
   html += '<thead><tr><th class="time-col">Time</th>';
-  weekDays.forEach(day => {
-    const dayName = day.toLocaleDateString('en-US', { weekday: 'short' });
+  weekDays.forEach((day) => {
+    const dayName = day.toLocaleDateString("en-US", { weekday: "short" });
     const dayDate = day.getDate();
     const isToday = day.toDateString() === new Date().toDateString();
-    html += `<th class="day-col ${isToday ? 'today' : ''}">
+    html += `<th class="day-col ${isToday ? "today" : ""}">
       <div>${dayName}</div>
       <div class="day-date">${dayDate}</div>
     </th>`;
   });
-  html += '</tr></thead><tbody>';
+  html += "</tr></thead><tbody>";
 
   // Time rows
-  timeSlots.forEach(hour => {
-    html += `<tr><td class="time-cell">${formatTime(hour.toString().padStart(2, '0') + ':00')}</td>`;
-    
-    weekDays.forEach(day => {
-      const dateStr = day.toISOString().split('T')[0];
-      const key = `${dateStr}_${hour.toString().padStart(2, '0')}`;
+  timeSlots.forEach((hour) => {
+    html += `<tr><td class="time-cell">${formatTime(
+      hour.toString().padStart(2, "0") + ":00"
+    )}</td>`;
+
+    weekDays.forEach((day) => {
+      const dateStr = day.toISOString().split("T")[0];
+      const key = `${dateStr}_${hour.toString().padStart(2, "0")}`;
       const bookings = bookingsByDateTime[key] || [];
-      
+
       html += '<td class="booking-cell">';
-      bookings.forEach(booking => {
+      bookings.forEach((booking) => {
         const statusColor = getStatusColor(booking.status);
-        const customer = escapeHtml(booking.customer_name || (booking.customer_first_name + ' ' + booking.customer_last_name));
+        const customer = escapeHtml(
+          booking.customer_name ||
+            booking.customer_first_name + " " + booking.customer_last_name
+        );
         html += `
           <div class="week-booking-pill" 
                style="background: ${statusColor};"
@@ -395,13 +438,13 @@ function renderWeekView() {
             ${customer}
           </div>`;
       });
-      html += '</td>';
+      html += "</td>";
     });
-    
-    html += '</tr>';
+
+    html += "</tr>";
   });
 
-  html += '</tbody></table></div>';
+  html += "</tbody></table></div>";
   calendarView.innerHTML = html;
 }
 
@@ -427,16 +470,16 @@ function renderMonthView() {
   });
 
   let html = '<div class="calendar-month-grid">';
-  
+
   // Day headers
   html += '<div class="month-header">';
-  ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+  ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].forEach((day) => {
     html += `<div class="month-day-name">${day}</div>`;
   });
-  html += '</div>';
+  html += "</div>";
 
   html += '<div class="month-days">';
-  
+
   // Empty cells for days before month starts
   for (let i = 0; i < startDay; i++) {
     html += '<div class="month-day empty"></div>';
@@ -445,18 +488,23 @@ function renderMonthView() {
   // Days of the month
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = date.toISOString().split("T")[0];
     const bookings = bookingsByDate[dateStr] || [];
     const isToday = date.toDateString() === new Date().toDateString();
-    
-    html += `<div class="month-day ${isToday ? 'today' : ''}" onclick="filterByDate('${dateStr}')">`;
+
+    html += `<div class="month-day ${
+      isToday ? "today" : ""
+    }" onclick="filterByDate('${dateStr}')">`;
     html += `<div class="month-day-number">${day}</div>`;
     html += '<div class="month-day-bookings">';
-    
+
     // Show up to 3 booking pills
-    bookings.slice(0, 3).forEach(booking => {
+    bookings.slice(0, 3).forEach((booking) => {
       const statusColor = getStatusColor(booking.status);
-      const customer = escapeHtml(booking.customer_name || (booking.customer_first_name + ' ' + booking.customer_last_name));
+      const customer = escapeHtml(
+        booking.customer_name ||
+          booking.customer_first_name + " " + booking.customer_last_name
+      );
       const time = formatTime(booking.start_time);
       html += `
         <div class="month-booking-pill" 
@@ -465,16 +513,18 @@ function renderMonthView() {
           <span class="pill-time">${time}</span> ${customer}
         </div>`;
     });
-    
+
     // Show "+ more" if there are more bookings
     if (bookings.length > 3) {
-      html += `<div class="month-booking-more">+${bookings.length - 3} more</div>`;
+      html += `<div class="month-booking-more">+${
+        bookings.length - 3
+      } more</div>`;
     }
-    
-    html += '</div></div>';
+
+    html += "</div></div>";
   }
 
-  html += '</div></div>';
+  html += "</div></div>";
   calendarView.innerHTML = html;
 }
 
@@ -729,11 +779,15 @@ function switchView(view) {
 
   // Update button styles
   document.getElementById("viewDay").classList.toggle("active", view === "day");
-  document.getElementById("viewWeek").classList.toggle("active", view === "week");
-  document.getElementById("viewMonth").classList.toggle("active", view === "month");
+  document
+    .getElementById("viewWeek")
+    .classList.toggle("active", view === "week");
+  document
+    .getElementById("viewMonth")
+    .classList.toggle("active", view === "month");
 
   // Update buttons background
-  ["viewDay", "viewWeek", "viewMonth"].forEach(id => {
+  ["viewDay", "viewWeek", "viewMonth"].forEach((id) => {
     const btn = document.getElementById(id);
     if (btn.classList.contains("active")) {
       btn.style.background = "white";
@@ -754,7 +808,7 @@ function changeDate(direction) {
   if (currentView === "day") {
     currentDate.setDate(currentDate.getDate() + direction);
   } else if (currentView === "week") {
-    currentDate.setDate(currentDate.getDate() + (direction * 7));
+    currentDate.setDate(currentDate.getDate() + direction * 7);
   } else if (currentView === "month") {
     currentDate.setMonth(currentDate.getMonth() + direction);
   }
@@ -782,9 +836,19 @@ function updateDateDisplay() {
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
-    display.textContent = `${startOfWeek.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${endOfWeek.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+    display.textContent = `${startOfWeek.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })} - ${endOfWeek.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })}`;
   } else if (currentView === "month") {
-    display.textContent = currentDate.toLocaleDateString("en-US", { year: "numeric", month: "long" });
+    display.textContent = currentDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+    });
   }
 }
 
@@ -795,16 +859,16 @@ function applyFilters() {
 
 // Filter by specific date (from month view)
 function filterByDate(date) {
-  currentDate = new Date(date + 'T12:00:00'); // Add time to avoid timezone issues
+  currentDate = new Date(date + "T12:00:00"); // Add time to avoid timezone issues
   currentView = "day";
-  
+
   // Update view buttons
   document.getElementById("viewDay").classList.add("active");
   document.getElementById("viewWeek").classList.remove("active");
   document.getElementById("viewMonth").classList.remove("active");
-  
+
   // Update button styles
-  ["viewDay", "viewWeek", "viewMonth"].forEach(id => {
+  ["viewDay", "viewWeek", "viewMonth"].forEach((id) => {
     const btn = document.getElementById(id);
     if (btn.classList.contains("active")) {
       btn.style.background = "white";
@@ -814,7 +878,7 @@ function filterByDate(date) {
       btn.style.boxShadow = "none";
     }
   });
-  
+
   updateDateDisplay();
   loadCalendarData();
 }
@@ -844,12 +908,12 @@ function escapeHtml(text) {
 
 function getStatusColor(status) {
   const colors = {
-    'confirmed': '#4CAF50',
-    'completed': '#2196F3',
-    'cancelled': '#F44336',
-    'no-show': '#F44336'
+    confirmed: "#4CAF50",
+    completed: "#2196F3",
+    cancelled: "#F44336",
+    "no-show": "#F44336",
   };
-  return colors[status] || '#9E9E9E';
+  return colors[status] || "#9E9E9E";
 }
 
 function showNotification(message, type = "info") {
