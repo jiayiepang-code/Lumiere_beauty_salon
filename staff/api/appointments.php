@@ -20,10 +20,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             if (!preg_match('/^\d{4}-\d{2}$/', $month)) {
                 jsonResponse(['error' => 'Invalid month format. Use YYYY-MM'], 400);
             }
-            list($year, $month_num) = explode('-', $month);
-            $where_clause .= ' AND YEAR(b.booking_date) = ? AND MONTH(b.booking_date) = ?';
-            $params[] = intval($year);
-            $params[] = intval($month_num);
+            // Calculate start and end dates for the month (database uses yyyy-mm-dd format)
+            $month_start = $month . '-01'; // First day of month
+            $month_end = date('Y-m-t', strtotime($month_start)); // Last day of month
+            $where_clause .= ' AND b.booking_date >= ? AND b.booking_date <= ?';
+            $params[] = $month_start;
+            $params[] = $month_end;
         } elseif ($date) {
             // Specific date format: YYYY-MM-DD
             if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
@@ -83,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $appointments[$booking_id] = [
                     'booking_id' => $booking_id,
                     'date' => $row['booking_date'],
-                    'date_formatted' => date('M d, Y', strtotime($row['booking_date'])),
+                    'date_formatted' => date('d/m/Y', strtotime($row['booking_date'])),
                     'time' => $row['start_time'],
                     'time_formatted' => date('h:i A', strtotime($row['start_time'])),
                     'expected_finish_time' => isset($row['expected_finish_time']) ? $row['expected_finish_time'] : null,

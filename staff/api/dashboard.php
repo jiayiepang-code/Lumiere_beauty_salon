@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $booking_date = new DateTime($booking['booking_date']);
             $booking_time = new DateTime($booking['start_time']);
             $time_str = $booking_time->format('h:i A');
-            $date_str = $booking_date->format('M d');
+            $date_str = $booking_date->format('d/m/Y');
             $customer_name = trim($booking['first_name'] . ' ' . $booking['last_name']);
             
             $notifications[] = [

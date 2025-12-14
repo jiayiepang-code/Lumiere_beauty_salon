@@ -8,6 +8,56 @@ $staff_email = $_SESSION['staff_id']; // staff_id is actually staff_email from l
 // Database uses table names with spaces (wrapped in backticks)
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Handle target commission requests
+    if (isset($_GET['action']) && $_GET['action'] === 'get_target') {
+        $month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
+        
+        try {
+            // Calculate current commission for the month
+            $month_start = $month . '-01';
+            $month_end = date('Y-m-t', strtotime($month_start));
+            
+            $stmt = $pdo->prepare("SELECT COALESCE(SUM(bs.quoted_price * bs.quantity * 0.1), 0) as commission 
+                                  FROM `booking_service` bs
+                                  INNER JOIN `booking` b ON bs.booking_id = b.booking_id
+                                  WHERE bs.staff_email = ? AND b.status = 'completed' 
+                                  AND b.booking_date >= ? AND b.booking_date <= ?");
+            $stmt->execute([$staff_email, $month_start, $month_end]);
+            $current_commission = (float)$stmt->fetchColumn();
+            
+            // Get target commission (check if table exists, if not return 0)
+            $target = 0;
+            try {
+                // Check if staff_target_commission table exists
+                $check_table = $pdo->query("SHOW TABLES LIKE 'staff_target_commission'");
+                if ($check_table->rowCount() > 0) {
+                    $stmt = $pdo->prepare("SELECT target_amount FROM staff_target_commission 
+                                          WHERE staff_email = ? AND target_month = ?");
+                    $stmt->execute([$staff_email, $month]);
+                    $result = $stmt->fetch();
+                    if ($result) {
+                        $target = (float)$result['target_amount'];
+                    }
+                }
+            } catch(PDOException $e) {
+                // Table doesn't exist, target is 0
+                $target = 0;
+            }
+            
+            jsonResponse([
+                'success' => true,
+                'target' => $target,
+                'current_commission' => $current_commission,
+                'month' => $month
+            ]);
+            
+        } catch(PDOException $e) {
+            error_log("Get Target Commission Error: " . $e->getMessage());
+            jsonResponse(['error' => 'Failed to get target commission: ' . $e->getMessage()], 500);
+        }
+        exit;
+    }
+    
     $period = isset($_GET['period']) ? $_GET['period'] : 'month';
     $date = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
     $month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
@@ -216,7 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             } elseif ($diff->days < 7) {
                 $time_ago = $diff->days . ' days ago';
             } else {
-                $time_ago = $booking_date->format('M d, Y');
+                $time_ago = $booking_date->format('d/m/Y');
             }
             
             $recent_activity[] = [
@@ -297,7 +347,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $count = (int)$stmt->fetchColumn();
                 
                 $bar_chart_data[] = [
-                    'x' => date('M d, Y', strtotime($week_start)),
+                    'x' => date('d/m/Y', strtotime($week_start)),
                     'y' => $count
                 ];
             }
@@ -364,7 +414,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                     $commission = (float)$stmt->fetchColumn();
                     
                     $commission_data[] = [
-                        'period' => date('M d', strtotime($week_start)),
+                        'period' => date('d/m/Y', strtotime($week_start)),
                         'commission' => $commission
                     ];
                 }
@@ -423,5 +473,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         error_log("Performance API Error: " . $e->getMessage());
         jsonResponse(['error' => 'Failed to fetch performance data: ' . $e->getMessage()], 500);
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+    if (isset($data['action']) && $data['action'] === 'set_target') {
+        $month = isset($data['month']) ? $data['month'] : '';
+        $target_amount = isset($data['target_amount']) ? (float)$data['target_amount'] : 0;
+        
+        if (empty($month) || !preg_match('/^\d{4}-\d{2}$/', $month)) {
+            jsonResponse(['error' => 'Invalid month format. Use YYYY-MM'], 400);
+        }
+        
+        if ($target_amount < 0) {
+            jsonResponse(['error' => 'Target amount must be positive'], 400);
+        }
+        
+        try {
+            // Create table if it doesn't exist
+            $pdo->exec("CREATE TABLE IF NOT EXISTS staff_target_commission (
+                id INT PRIMARY KEY AUTO_INCREMENT,
+                staff_email VARCHAR(100) NOT NULL,
+                target_month VARCHAR(7) NOT NULL,
+                target_amount DECIMAL(10,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_staff_month (staff_email, target_month)
+            )");
+            
+            // Insert or update target
+            $stmt = $pdo->prepare("INSERT INTO staff_target_commission (staff_email, target_month, target_amount) 
+                                  VALUES (?, ?, ?)
+                                  ON DUPLICATE KEY UPDATE target_amount = ?, updated_at = CURRENT_TIMESTAMP");
+            $stmt->execute([$staff_email, $month, $target_amount, $target_amount]);
+            
+            jsonResponse([
+                'success' => true,
+                'message' => 'Target commission saved successfully',
+                'target' => $target_amount,
+                'month' => $month
+            ]);
+            
+        } catch(PDOException $e) {
+            error_log("Set Target Commission Error: " . $e->getMessage());
+            jsonResponse(['error' => 'Failed to save target commission: ' . $e->getMessage()], 500);
+        }
+        exit;
+    }
+    
+    jsonResponse(['error' => 'Invalid action'], 400);
 }
 ?>

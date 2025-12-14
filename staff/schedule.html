@@ -32,9 +32,9 @@
             --bg-gradient: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
             --shadow-soft: 0 4px 20px rgba(150, 128, 115, 0.1);
             --radius-soft: 12px;
-            --status-green: #5cb85c;
-            --status-blue: #0275d8;
-            --status-red: #d9534f;
+            --status-green: #28a745;
+            --status-blue: #007bff;
+            --status-red: #dc3545;
             --status-grey: #6c757d;
         }
         /* card border colours */
@@ -48,10 +48,14 @@
         .container{max-width:1200px;margin:0 auto;padding:0 20px;}
         /* ---------- SIDEBAR ---------- */
         #nav-toggle{display:none;}
-        .sidebar{position:fixed;left:0;top:0;height:100%;width:200px;background:#fff;border-right:1px solid var(--border-color);padding-top:60px;transition:.3s;z-index:150;}
-        .sidebar ul{list-style:none;padding:0;margin:0;}
+        .sidebar{position:fixed;left:0;top:0;height:100%;width:200px;background:#fff;border-right:1px solid var(--border-color);padding-top:60px;transition:.3s;z-index:150;display:flex;flex-direction:column;justify-content:space-between;}
+        .sidebar ul{list-style:none;padding:0;margin:0;flex:1;}
         .sidebar li a{display:flex;align-items:center;gap:.75rem;padding:1rem 1.5rem;color:var(--text-color);text-decoration:none;}
         .sidebar li.active a,.sidebar li a:hover{background:#faf8f6;color:var(--staff-color);}
+        .sidebar-logout{display:flex;align-items:center;gap:.75rem;padding:1rem 1.5rem;color:#d9534f;text-decoration:none;border-top:1px solid var(--border-color);cursor:pointer;transition:all .3s ease;}
+        .sidebar-logout:hover{background:#fff5f5;color:#c9302c;}
+        .sidebar-logout i{color:#d9534f;}
+        .sidebar-logout:hover i{color:#c9302c;}
         
         .toggle-btn{
             position:absolute;
@@ -171,9 +175,10 @@
         .appointment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
         .appointment-time{font-weight:600;color:var(--staff-color);font-size:1.1rem;}
         .appointment-status{padding:.25rem .75rem;border-radius:20px;font-size:.8rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
-        .status-confirmed{background:rgba(92,184,92,.1);color:var(--status-green);}
-        .status-completed{background:rgba(2,117,216,.1);color:var(--status-blue);}
-        .status-cancelled{background:rgba(217,83,79,.1);color:var(--status-red);}
+        .status-confirmed{background:rgba(40,167,69,.1);color:var(--status-green);}
+        .status-completed{background:rgba(0,123,255,.1);color:var(--status-blue);}
+        .status-cancelled{background:rgba(220,53,69,.1);color:var(--status-red);}
+        .status-no_show{background:rgba(108,117,125,.1);color:var(--status-grey);}
         .status-available{background:rgba(108,117,125,.1);color:var(--status-grey);}
         .appointment-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;}
         .detail-item{display:flex;flex-direction:column;gap:.25rem;}
@@ -183,10 +188,10 @@
         .action-btn{padding:.5rem 1rem;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:500;transition:all .3s ease;}
         .btn-complete{background:var(--status-blue);color:#fff;}
         .btn-complete:hover{background:#025aa5;}
-        .btn-noshow{background:var(--status-red);color:#fff;}
-        .btn-noshow:hover{background:#c9302c;}
-        .btn-cancel{background:#6c757d;color:#fff;}
-        .btn-cancel:hover{background:#5a6268;}
+        .btn-cancel{background:var(--status-red);color:#fff;}
+        .btn-cancel:hover{background:#c9302c;}
+        .btn-noshow{background:var(--status-grey);color:#fff;}
+        .btn-noshow:hover{background:#5a6268;}
         .empty-state{text-align:center;padding:3rem;color:var(--text-light);}
         .empty-state i{font-size:3rem;margin-bottom:1rem;opacity:.5;}
         .view-request-btn{
@@ -257,8 +262,12 @@
         <li class="active"><a href="schedule.html"><i class="fas fa-calendar-alt"></i> Schedule</a></li>
         <li><a href="performance.html"><i class="fas fa-chart-line"></i> Performance</a></li>
         <li><a href="history.html"><i class="fas fa-history"></i> History</a></li>
+        <li><a href="apply-leave.html"><i class="fas fa-calendar-minus"></i> Leave</a></li>
         <li><a href="profile.html"><i class="fas fa-user"></i> My Profile</a></li>
       </ul>
+      <a href="#" class="sidebar-logout" onclick="logout(); return false;">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
     </aside>
 
     <header class="header">
@@ -338,12 +347,12 @@
 
         <section class="appointments-section">
           <div class="appointments-header">
-            <h2 class="appointments-title">Appointments for December 5, 2025</h2>
+            <h2 class="appointments-title" id="dailyScheduleTitle">Appointments</h2>
             <div class="legend">
               <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
               <div class="legend-item"><div class="legend-color blue"></div><span>Completed (Service finished successfully)</span></div>
-              <div class="legend-item"><div class="legend-color red"></div><span>Cancelled or no-show</span></div>
-              <div class="legend-item"><div class="legend-color grey"></div><span>Available slot</span></div>
+              <div class="legend-item"><div class="legend-color red"></div><span>Cancelled</span></div>
+              <div class="legend-item"><div class="legend-color grey"></div><span>No-show</span></div>
             </div>
           </div>
           <div class="appointments-grid" id="appointmentsGrid"></div>
@@ -369,8 +378,8 @@
             <div class="legend">
               <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
               <div class="legend-item"><div class="legend-color blue"></div><span>Completed (Service finished successfully)</span></div>
-              <div class="legend-item"><div class="legend-color red"></div><span>Cancelled or no-show</span></div>
-              <div class="legend-item"><div class="legend-color grey"></div><span>Available slot</span></div>
+              <div class="legend-item"><div class="legend-color red"></div><span>Cancelled</span></div>
+              <div class="legend-item"><div class="legend-color grey"></div><span>No-show</span></div>
             </div>
           </div>
           <div class="appointments-grid" id="monthAppointmentsGrid"></div>
@@ -560,9 +569,27 @@ function toggleSpecialRequest(bookingId,btn){
 }
 
 function formatDate(dateStr){
+  if(!dateStr) return '';
   const date=new Date(dateStr);
-  const options={year:'numeric',month:'long',day:'numeric'};
-  return date.toLocaleDateString('en-US',options);
+  if(isNaN(date.getTime())) return dateStr; // Return original if invalid date
+  const day=String(date.getDate()).padStart(2,'0');
+  const month=String(date.getMonth()+1).padStart(2,'0');
+  const year=date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function formatDateFromString(dateStr){
+  if(!dateStr) return '';
+  try {
+    const date=new Date(dateStr);
+    if(isNaN(date.getTime())) return dateStr;
+    const day=String(date.getDate()).padStart(2,'0');
+    const month=String(date.getMonth()+1).padStart(2,'0');
+    const year=date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch(e) {
+    return dateStr;
+  }
 }
 
 function getStatusColorClass(status){
@@ -570,7 +597,7 @@ function getStatusColorClass(status){
     'confirmed':'green',
     'completed':'blue',
     'cancelled':'red',
-    'no_show':'red',
+    'no_show':'grey',
     'available':'grey'
   };
   return statusMap[status]||'grey';
@@ -638,8 +665,8 @@ async function loadAppointments(){
         ${ap.status==='confirmed'?`
         <div class="appointment-actions">
           <button class="action-btn btn-complete" onclick="updateStatus('${ap.booking_id}','completed')">Mark Complete</button>
-          <button class="action-btn btn-noshow" onclick="updateStatus('${ap.booking_id}','cancelled')">Mark No-Show</button>
           <button class="action-btn btn-cancel" onclick="updateStatus('${ap.booking_id}','cancelled')">Cancel</button>
+          <button class="action-btn btn-noshow" onclick="updateStatus('${ap.booking_id}','no_show')">No-Show</button>
         </div>`:''}`;
       grid.appendChild(card);
     });
@@ -710,6 +737,20 @@ async function loadMonthAppointments(){
     const monthName=new Date(year,month-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
     titleEl.textContent=`Appointments for ${monthName}`;
     
+    // Format dates in month view to dd/mm/yyyy
+    appointments.forEach(ap => {
+      if(ap.date_formatted) {
+        ap.date_formatted = formatDateFromString(ap.date_formatted);
+      }
+    });
+    
+    // Format dates in month view to dd/mm/yyyy
+    appointments.forEach(ap => {
+      if(ap.date_formatted) {
+        ap.date_formatted = formatDateFromString(ap.date_formatted);
+      }
+    });
+    
     grid.innerHTML='';
     
     if(appointments.length===0){
@@ -732,7 +773,7 @@ async function loadMonthAppointments(){
       
       card.innerHTML=`
         <div class="appointment-header">
-          <div class="appointment-time">${ap.time_formatted} - ${ap.date_formatted}</div>
+          <div class="appointment-time">${ap.time_formatted} - ${formatDateFromString(ap.date_formatted || ap.date || '')}</div>
           <div class="appointment-status ${statusClass}">${statusText}</div>
         </div>
         <div class="appointment-details">
@@ -753,8 +794,8 @@ async function loadMonthAppointments(){
         ${ap.status==='confirmed'?`
         <div class="appointment-actions">
           <button class="action-btn btn-complete" onclick="updateStatus('${ap.booking_id}','completed')">Mark Complete</button>
-          <button class="action-btn btn-noshow" onclick="updateStatus('${ap.booking_id}','cancelled')">Mark No-Show</button>
           <button class="action-btn btn-cancel" onclick="updateStatus('${ap.booking_id}','cancelled')">Cancel</button>
+          <button class="action-btn btn-noshow" onclick="updateStatus('${ap.booking_id}','no_show')">No-Show</button>
         </div>`:''}`;
       grid.appendChild(card);
     });
