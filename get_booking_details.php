@@ -27,7 +27,7 @@ $query = "SELECT
     b.*,
     c.first_name,
     c.last_name,
-    c.email,
+    c.customer_email as email,
     c.phone
 FROM booking b
 JOIN customer c ON b.customer_email = c.customer_email
@@ -45,7 +45,7 @@ if(!$booking) {
 // Get booking services
 $query = "SELECT 
     bs.*,
-    COALESCE(s.service_name, s.name) as service_name,
+    s.service_name,
     s.description,
     st.first_name as staff_first_name,
     st.last_name as staff_last_name
@@ -57,72 +57,182 @@ WHERE bs.booking_id = ?";
 $stmt = $db->prepare($query);
 $stmt->execute([$bookingId]);
 $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Calculate subtotal from services
+$subtotal = 0;
+foreach($services as $service) {
+    $subtotal += floatval($service['quoted_price'] ?? $service['price'] ?? 0);
+}
+
+// Calculate duration
+$duration = 0;
+foreach($services as $service) {
+    $duration += intval($service['quoted_duration_minutes'] ?? $service['duration_minutes'] ?? 0);
+}
+
+// Calculate grand total (no SST)
+$grandTotal = $subtotal;
+
+// Format Reference ID (using booking_id)
+$referenceId = $booking['booking_id'];
+// If booking_id doesn't start with 'LB', use as is, otherwise format it
+if (strpos($referenceId, 'LB') === 0 || strpos($referenceId, 'BK') === 0) {
+    $referenceId = $booking['booking_id'];
+} else {
+    $referenceId = 'LB' . date('YmdHis') . str_pad($booking['booking_id'], 5, '0', STR_PAD_LEFT);
+}
+
+// Determine payment method (default to Pay_at_salon if not set)
+$paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
 ?>
 
-<div class="row">
-    <div class="col-md-6">
-        <h6>Booking Information</h6>
-        <table class="table table-sm">
-            <tr>
-                <td><strong>Booking ID:</strong></td>
-                <td><?php echo htmlspecialchars($booking['booking_id']); ?></td>
-            </tr>
-            <tr>
-                <td><strong>Customer:</strong></td>
-                <td><?php echo htmlspecialchars($booking['first_name'] . ' ' . $booking['last_name']); ?></td>
-            </tr>
-            <tr>
-                <td><strong>Email:</strong></td>
-                <td><?php echo htmlspecialchars($booking['email']); ?></td>
-            </tr>
-            <tr>
-                <td><strong>Phone:</strong></td>
-                <td><?php echo htmlspecialchars($booking['phone']); ?></td>
-            </tr>
-            <tr>
-                <td><strong>Status:</strong></td>
-                <td>
-                    <span class="badge 
-                        <?php 
-                        switch($booking['status']) {
-                            case 'confirmed': echo 'bg-success'; break;
-                            case 'completed': echo 'bg-primary'; break;
-                            case 'cancelled': echo 'bg-danger'; break;
-                            default: echo 'bg-warning';
-                        }
-                        ?>">
+<style>
+.booking-details-modal {
+    font-family: sans-serif;
+}
+.booking-details-section {
+    margin-bottom: 1.5rem;
+}
+.booking-details-section h6 {
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #333;
+}
+.booking-info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+.booking-info-label {
+    font-weight: 600;
+    color: #555;
+}
+.booking-info-value {
+    color: #333;
+}
+.status-badge-modal {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-block;
+}
+.status-confirmed {
+    background-color: #28a745;
+    color: white;
+}
+.status-cancelled {
+    background-color: #dc3545;
+    color: white;
+}
+.services-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+.services-table th {
+    background-color: #f8f9fa;
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #555;
+    border-bottom: 2px solid #dee2e6;
+}
+.services-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #dee2e6;
+}
+.total-summary {
+    margin-top: 1.5rem;
+    text-align: right;
+}
+.total-row {
+    display: flex;
+    justify-content: flex-end;
+    padding: 0.5rem 0;
+}
+.total-row-label {
+    min-width: 150px;
+    text-align: right;
+    padding-right: 1rem;
+}
+.total-row-value {
+    min-width: 120px;
+    text-align: right;
+}
+.grand-total {
+    background-color: #4A90E2;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+    font-weight: 700;
+}
+.booking-timestamp {
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+</style>
+
+<div class="booking-details-modal">
+    <div class="row">
+        <div class="col-md-6 booking-details-section">
+            <h6><strong>Booking Information</strong></h6>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Reference ID:</span>
+                <span class="booking-info-value"><?php echo htmlspecialchars($referenceId); ?></span>
+            </div>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Customer:</span>
+                <span class="booking-info-value"><?php echo htmlspecialchars($booking['first_name'] . ' ' . $booking['last_name']); ?></span>
+            </div>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Email:</span>
+                <span class="booking-info-value"><?php echo htmlspecialchars($booking['email']); ?></span>
+            </div>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Phone:</span>
+                <span class="booking-info-value"><?php echo htmlspecialchars($booking['phone']); ?></span>
+            </div>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Status:</span>
+                <span class="booking-info-value">
+                    <span class="status-badge-modal status-<?php echo strtolower($booking['status']); ?>">
                         <?php echo ucfirst($booking['status']); ?>
                     </span>
-                </td>
-            </tr>
-        </table>
+                </span>
+            </div>
+        </div>
+        
+        <div class="col-md-6 booking-details-section">
+            <h6><strong>Appointment Details</strong></h6>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Date:</span>
+                <span class="booking-info-value"><?php echo date('d M Y', strtotime($booking['booking_date'])); ?></span>
+            </div>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Time:</span>
+                <span class="booking-info-value"><?php echo date('h:i A', strtotime($booking['start_time'])); ?> - <?php echo date('h:i A', strtotime($booking['expected_finish_time'])); ?></span>
+            </div>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Duration:</span>
+                <span class="booking-info-value"><?php echo $duration; ?> minutes</span>
+            </div>
+            <div class="booking-info-row">
+                <span class="booking-info-label">Payment Method:</span>
+                <span class="booking-info-value"><?php echo htmlspecialchars($paymentMethod); ?></span>
+            </div>
+        </div>
     </div>
-    
-    <div class="col-md-6">
-        <h6>Appointment Details</h6>
-        <table class="table table-sm">
-            <tr>
-                <td><strong>Date:</strong></td>
-                <td><?php echo date('d M Y', strtotime($booking['booking_date'])); ?></td>
-            </tr>
-            <tr>
-                <td><strong>Time:</strong></td>
-                <td><?php echo date('h:i A', strtotime($booking['start_time'])); ?> - <?php echo date('h:i A', strtotime($booking['expected_finish_time'])); ?></td>
-            </tr>
-            <?php if($booking['remarks']): ?>
-            <tr>
-                <td><strong>Remarks:</strong></td>
-                <td><?php echo htmlspecialchars($booking['remarks']); ?></td>
-            </tr>
-            <?php endif; ?>
-        </table>
-    </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-12">
-        <h6>Services</h6>
-        <table class="table table-striped">
+    <div class="booking-details-section">
+        <h6><strong>Services</strong></h6>
+        <table class="services-table">
             <thead>
                 <tr>
                     <th>Service</th>
@@ -136,7 +246,7 @@ $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <?php foreach($services as $service): ?>
                 <tr>
                     <td><?php echo htmlspecialchars($service['service_name']); ?></td>
-                    <td><?php echo htmlspecialchars($service['description']); ?></td>
+                    <td><?php echo htmlspecialchars($service['description'] ?? 'N/A'); ?></td>
                     <td><?php echo $service['quoted_duration_minutes'] ?? $service['duration_minutes'] ?? 'N/A'; ?> min</td>
                     <td>
                         <?php 
@@ -153,28 +263,18 @@ $services = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </tbody>
         </table>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-6 offset-md-6">
-        <table class="table table-sm text-end">
-            <tr class="table-primary">
-                <td><strong>Total:</strong></td>
-                <td><strong>RM <?php echo number_format($booking['total_price'], 2); ?></strong></td>
-            </tr>
-        </table>
+    <div class="total-summary">
+        <div class="total-row grand-total">
+            <span class="total-row-label"><strong>Total:</strong></span>
+            <span class="total-row-value"><strong>RM <?php echo number_format($grandTotal, 2); ?></strong></span>
+        </div>
     </div>
-</div>
 
-<div class="row mt-3">
-    <div class="col-12 text-center">
-        <p class="text-muted">
-            <small>Booking created on <?php echo date('d M Y h:i A', strtotime($booking['created_at'])); ?></small>
-        </p>
-        <?php if($booking['updated_at'] !== $booking['created_at']): ?>
-        <p class="text-muted">
-            <small>Last updated on <?php echo date('d M Y h:i A', strtotime($booking['updated_at'])); ?></small>
-        </p>
+    <div class="booking-timestamp">
+        <p><small>Booking created on <?php echo date('d M Y h:i A', strtotime($booking['created_at'])); ?></small></p>
+        <?php if($booking['updated_at'] && $booking['updated_at'] !== $booking['created_at']): ?>
+        <p><small>Last updated on <?php echo date('d M Y h:i A', strtotime($booking['updated_at'])); ?></small></p>
         <?php endif; ?>
     </div>
 </div>

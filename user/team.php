@@ -109,22 +109,25 @@ foreach ($allStaff as $member) {
     $staffByRole[$filterClass][] = $member;
 }
 
-// Get user's favorites if logged in (table uses customer_email, not customer_phone)
+// Fetch user's favourites (if logged in)
 $userFavorites = [];
 if (isset($_SESSION['customer_phone'])) {
-    $phone = $_SESSION['customer_phone'];
-    // Get customer_email from phone
-    $emailQuery = "SELECT customer_email FROM customer WHERE phone = ? LIMIT 1";
-    $emailStmt = $db->prepare($emailQuery);
-    $emailStmt->execute([$phone]);
-    $customerData = $emailStmt->fetch(PDO::FETCH_ASSOC);
-    
-    if ($customerData && !empty($customerData['customer_email'])) {
-        $customerEmail = $customerData['customer_email'];
-        $favQuery = "SELECT staff_email FROM customer_favourites WHERE customer_email = ?";
-        $favStmt = $db->prepare($favQuery);
-        $favStmt->execute([$customerEmail]);
-        $userFavorites = $favStmt->fetchAll(PDO::FETCH_COLUMN);
+    try {
+        $phone = $_SESSION['customer_phone'];
+        $emailQuery = "SELECT customer_email FROM customer WHERE phone = ? LIMIT 1";
+        $emailStmt = $db->prepare($emailQuery);
+        $emailStmt->execute([$phone]);
+        $cust = $emailStmt->fetch(PDO::FETCH_ASSOC);
+        if (!empty($cust['customer_email'])) {
+            $custEmail = $cust['customer_email'];
+            $favQuery = "SELECT staff_email FROM customer_favourites WHERE customer_email = ?";
+            $favStmt = $db->prepare($favQuery);
+            $favStmt->execute([$custEmail]);
+            $favRows = $favStmt->fetchAll(PDO::FETCH_ASSOC);
+            $userFavorites = array_map(function($r){ return $r['staff_email']; }, $favRows);
+        }
+    } catch (Exception $e) {
+        // ignore and leave empty
     }
 }
 
@@ -192,15 +195,9 @@ require_once '../includes/header.php';
                     <div class="flip-card-back">
                         <h3><?= $fullName ?></h3>
                         <p><?= $bio ?></p>
-                        <?php if (isset($_SESSION['customer_phone'])): ?>
-                            <button class="fav-btn <?= $isFavorite ? 'favorited' : '' ?>" 
-                                    data-staff-email="<?= htmlspecialchars($staffEmail) ?>" 
-                                    onclick="toggleFavorite(this, '<?= htmlspecialchars($staffEmail) ?>')">
-                                <?= $favButtonText ?>
-                            </button>
-                        <?php else: ?>
-                            <a href="../login.php" class="fav-btn">Login to Add Favorites</a>
-                        <?php endif; ?>
+                        <div class="card-actions">
+                            <button class="fav-btn <?= $isFavorite ? 'favorited' : '' ?>" data-staff-email="<?= htmlspecialchars($staffEmail, ENT_QUOTES) ?>" onclick="toggleFavorite(this, '<?= htmlspecialchars($staffEmail, ENT_QUOTES) ?>')"><?= $favButtonText ?></button>
+                        </div>
                     </div>
                 </div>
             </div>

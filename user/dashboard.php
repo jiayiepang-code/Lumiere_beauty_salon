@@ -130,47 +130,150 @@ try {
     $bookings = [];
 }
 
-// Fetch favorite staff (use customer_email, not customer_phone)
-$favorites = [];
-try {
-    // Get customer email first
-    $queryEmail = $email;
-    if (!$queryEmail && isset($phone) && $phone) {
-        $fallbackEmailQuery = "SELECT customer_email FROM customer WHERE phone = ? LIMIT 1";
-        $fallbackEmailStmt = $db->prepare($fallbackEmailQuery);
-        $fallbackEmailStmt->execute([$phone]);
-        $fallbackEmailRow = $fallbackEmailStmt->fetch(PDO::FETCH_ASSOC);
-        $queryEmail = $fallbackEmailRow['customer_email'] ?? null;
-    }
-    
-    if ($queryEmail) {
-        $favoritesQuery = "SELECT 
-            f.staff_email,
-            s.first_name,
-            s.last_name,
-            s.role,
-            s.staff_image,
-            s.bio,
-            GROUP_CONCAT(DISTINCT sv.service_name ORDER BY ss.proficiency_level DESC SEPARATOR ' & ') as primary_services
-        FROM customer_favourites f
-        JOIN staff s ON f.staff_email = s.staff_email
-        LEFT JOIN staff_service ss ON s.staff_email = ss.staff_email AND ss.is_active = 1
-        LEFT JOIN service sv ON ss.service_id = sv.service_id AND sv.is_active = 1
-        WHERE f.customer_email = ? AND s.is_active = 1
-        GROUP BY f.staff_email, s.first_name, s.last_name, s.role, s.staff_image, s.bio";
+// Fetch user's favourites to display on the dashboard
+ $favorites = [];
 
-        $favoritesStmt = $db->prepare($favoritesQuery);
-        $favoritesStmt->execute([$queryEmail]);
-        $favorites = $favoritesStmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        error_log('Dashboard favorites - Email: ' . $queryEmail . ', Found: ' . count($favorites) . ' favorites');
+
+// Get customer email
+$customerEmail = $_SESSION['customer_email'] ?? null;
+$customerPhone = $_SESSION['customer_phone'] ?? null;
+
+// Retrieve email from database if not in session
+if (!$customerEmail && $customerPhone) {
+    $emailQuery = "SELECT customer_email, first_name, last_name FROM customer WHERE phone = ? LIMIT 1";
+    $emailStmt = $db->prepare($emailQuery);
+    $emailStmt->execute([$customerPhone]);
+    $customerRow = $emailStmt->fetch(PDO::FETCH_ASSOC);
+    if ($customerRow) {
+        $customerEmail = $customerRow['customer_email'];
+        $_SESSION['customer_email'] = $customerEmail;
+        $_SESSION['customer_first_name'] = $customerRow['first_name'];
+        $_SESSION['customer_last_name'] = $customerRow['last_name'];
     }
+}
+
+if (!$customerEmail) {
+    header('Location: ../login.php');
+    exit();
+}
+
+// Get customer details
+$customerQuery = "SELECT * FROM customer WHERE customer_email = ? LIMIT 1";
+$customerStmt = $db->prepare($customerQuery);
+$customerStmt->execute([$customerEmail]);
+$customerInfo = $customerStmt->fetch(PDO::FETCH_ASSOC);
+
+// Map staff names to their specific images (based on user's requirements)
+$staffImageMap = [
+    'Jay' => '../images/42.png',
+    'Mei' => '../images/47.png',
+    'Ken' => '../images/48.png',
+    'Chloe' => '../images/60.png',
+    'Sarah' => '../images/65.png',
+    'Nisha' => '../images/66.png',
+    'Rizal' => '../images/67.png',
+    'Siti' => '../images/68.png',
+    'Jessica' => '../images/69.png',
+    'Yuna' => '../images/71.png'
+];
+
+// Map staff names to their specific primary services text (override database values)
+$staffPrimaryServicesMap = [
+    'Jay' => 'Haircuts & Hair Styling',
+    'Mei' => 'Hair Styling & Hair Colouring',
+    'Ken' => 'Technical Cuts & Hair Treatments',
+    'Chloe' => 'Anti-Aging & Brightening',
+    'Sarah' => 'Deep Cleansing & Hydrating',
+    'Nisha' => 'Aromatherapy Massage & Hot Stone Massage',
+    'Rizal' => 'Deep Tissue Massage & Traditional Massage',
+    'Jessica' => 'Nail Extensions & Nail Gelish',
+    'Siti' => 'Classic Manicure & Add-ons',
+    'Yuna' => 'Nail Art Design & Gelish'
+];
+
+// Load favourite staff for this customer (if table exists)
+try {
+    $favQuery = "SELECT f.staff_email, st.first_name, st.last_name, st.staff_image, st.bio,
+        GROUP_CONCAT(DISTINCT sv.service_name ORDER BY sv.service_name SEPARATOR ' & ') as primary_services
+        FROM customer_favourites f
+        JOIN staff st ON f.staff_email = st.staff_email
+        LEFT JOIN staff_service ss ON st.staff_email = ss.staff_email AND ss.is_active = 1
+        LEFT JOIN service sv ON ss.service_id = sv.service_id AND sv.is_active = 1
+        WHERE f.customer_email = ?
+        GROUP BY f.staff_email";
+    $favStmt = $db->prepare($favQuery);
+    $favStmt->execute([$customerEmail]);
+    $favorites = $favStmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {
-    // If table doesn't exist or query fails, just use empty array
-    // Log error for debugging
-    error_log('Favorites query failed: ' . $e->getMessage());
     $favorites = [];
 }
+
+// Get all bookings for this customer (matches your booking table structure)
+$query = "SELECT 
+    b.booking_id,
+    b.customer_email,
+    b.booking_date,
+    b.start_time,
+    b.expected_finish_time,
+    b.status,
+    b.remarks,
+    b.promo_code,
+    b.discount_amount,
+    b.total_price,
+    b.created_at,
+    b.updated_at,
+    COUNT(bs.booking_service_id) as service_count
+FROM booking b
+LEFT JOIN booking_service bs ON b.booking_id = bs.booking_id
+WHERE b.customer_email = ?
+GROUP BY b.booking_id
+ORDER BY b.booking_date DESC, b.start_time DESC";
+
+$stmt = $db->prepare($query);
+$stmt->execute([$customerEmail]);
+$bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get services for each booking (matches your booking_service table structure)
+$bookingServices = [];
+foreach($bookings as $booking) {
+    $servicesQuery = "SELECT 
+        bs.booking_service_id,
+        bs.booking_id,
+        bs.service_id,
+        bs.staff_email,
+        bs.quoted_price,
+        bs.quoted_duration_minutes,
+        s.service_name,
+        s.service_category,
+        s.description,
+        st.first_name as staff_first_name,
+        st.last_name as staff_last_name
+    FROM booking_service bs
+    JOIN service s ON bs.service_id = s.service_id
+    LEFT JOIN staff st ON bs.staff_email = st.staff_email
+    WHERE bs.booking_id = ?";
+    
+    $servicesStmt = $db->prepare($servicesQuery);
+    $servicesStmt->execute([$booking['booking_id']]);
+    $bookingServices[$booking['booking_id']] = $servicesStmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Separate upcoming and past bookings
+$today = date('Y-m-d');
+$upcomingBookings = [];
+$pastBookings = [];
+
+foreach($bookings as $booking) {
+    // Upcoming: only confirmed bookings with future dates
+    if ($booking['booking_date'] >= $today && strtolower($booking['status']) === 'confirmed') {
+        $upcomingBookings[] = $booking;
+    } else {
+        // History: all other bookings (past dates, cancelled, completed, etc.)
+        // This ensures confirmed bookings only appear in upcoming section, not in history
+        $pastBookings[] = $booking;
+    }
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -182,1020 +285,9 @@ try {
     <link rel="stylesheet" href="../user/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <style>
-        .dash-section { 
-            display: none; 
-            width: 100%;
-            max-width: 100%;
-        }
-        .dash-section.active { 
-            display: block !important; 
-            width: 100%;
-            max-width: 100%;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-        .dash-nav a.active { background-color: var(--primary-brown); color: white; }
-        
-        /* Ensure main content area is properly positioned */
-        .dash-main {
-            position: relative;
-            width: 100%;
-            overflow-x: hidden;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .dash-section {
-            width: 100%;
-            align-self: flex-start;
-        }
-        
-        /* =========================================
-           BOOKINGS PAGE REDESIGN
-        ========================================= */
-        
-        .bookings-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        
-        .bookings-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
-            font-weight: 700;
-            color: #5c4e4b;
-            margin: 0;
-        }
-        
-        .btn-new-booking {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: #c29076;
-            color: white;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-new-booking:hover {
-            background: #a87b65;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(194, 144, 118, 0.3);
-            color: white;
-        }
-        
-        .bookings-section {
-            margin-bottom: 3rem;
-        }
-        
-        .section-subtitle {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #5c4e4b;
-            margin-bottom: 1.5rem;
-        }
-        
-        .bookings-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .booking-card-new {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-        
-        .booking-card-new:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            transform: translateY(-3px);
-        }
-        
-        .booking-card-cancelled {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            padding: 1.5rem;
-            opacity: 0.75;
-            transition: all 0.3s ease;
-        }
-        
-        .booking-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1.5rem;
-        }
-        
-        .booking-id-text {
-            font-size: 0.85rem;
-            font-family: monospace;
-            color: #8a8a95;
-        }
-        
-        .badge-confirmed {
-            padding: 0.4rem 0.75rem;
-            background: #d4edda;
-            color: #155724;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-        
-        .badge-cancelled {
-            padding: 0.4rem 0.75rem;
-            background: #f8d7da;
-            color: #721c24;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-        
-        .badge-completed {
-            padding: 0.4rem 0.75rem;
-            background: #e2e3e5;
-            color: #383d41;
-            font-size: 0.75rem;
-            font-weight: 600;
-            border-radius: 20px;
-            text-transform: uppercase;
-        }
-        
-        .booking-card-content {
-            margin-bottom: 1.5rem;
-        }
-        
-        .info-section {
-            margin-bottom: 1.2rem;
-        }
-        
-        .info-label {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #8a8a95;
-            margin-bottom: 0.3rem;
-        }
-        
-        .info-value {
-            font-size: 1rem;
-            color: #5c4e4b;
-            margin: 0.2rem 0;
-        }
-        
-        .info-value-small {
-            font-size: 0.9rem;
-            color: #5c4e4b;
-            margin: 0;
-        }
-        
-        .info-section-total {
-            padding-top: 1rem;
-            border-top: 1px solid #e0e0e0;
-            margin-bottom: 1rem;
-        }
-        
-        .price-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #c29076;
-            margin: 0.3rem 0 0 0;
-        }
-        
-        .booking-card-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-        
-        .btn-view {
-            flex: 1;
-            padding: 0.6rem 1rem;
-            border: 1px solid #c29076;
-            background: white;
-            color: #c29076;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-view:hover {
-            background: #f5e9e4;
-        }
-        
-        .btn-cancel {
-            flex: 1;
-            padding: 0.6rem 1rem;
-            border: 1px solid #dc3545;
-            background: white;
-            color: #dc3545;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-cancel:hover {
-            background: #fff5f5;
-        }
-        
-        .btn-book-again {
-            flex: 1;
-            padding: 0.6rem 1rem;
-            border: none;
-            background: #c29076;
-            color: white;
-            border-radius: 8px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-book-again:hover {
-            background: #a87b65;
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 4rem 3rem;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            width: 100%;
-            margin: 0;
-        }
-        
-        .empty-state-icon {
-            font-size: 4rem;
-            color: #c29076;
-            margin-bottom: 1.5rem;
-        }
-        
-        .empty-state h3 {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #5c4e4b;
-            margin: 0 0 1rem 0;
-        }
-        
-        .empty-state p {
-            font-size: 1rem;
-            color: #8a8a95;
-            margin: 0 0 2rem 0;
-            line-height: 1.6;
-        }
-        
-        .empty-state-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: #c29076;
-            color: white;
-            border: none;
-            border-radius: 25px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-        }
-        
-        .empty-state-btn:hover {
-            background: #a87b65;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(194, 144, 118, 0.3);
-            color: white;
-        }
-        
-        /* =========================================
-           DASHBOARD OVERVIEW
-        ========================================= */
-        
-        .overview-stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transition: all 0.3s ease;
-            border: 1px solid #f0f0f0;
-        }
-        
-        .overview-stat-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 4px 15px rgba(194, 144, 118, 0.15);
-        }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-        
-        .stat-content {
-            flex: 1;
-        }
-        
-        .stat-label {
-            font-size: 0.9rem;
-            color: #8a8a95;
-            margin: 0 0 5px 0;
-        }
-        
-        .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #5c4e4b;
-            margin: 0;
-            font-family: 'Playfair Display', serif;
-        }
-        
-        .upcoming-appointment-banner {
-            background: linear-gradient(135deg, #c29076, #a87b65);
-            border-radius: 18px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 6px 20px rgba(194, 144, 118, 0.3);
-        }
-        
-        .action-card {
-            background: linear-gradient(135deg, #ffffff, #FFF8F0);
-            border-radius: 16px;
-            padding: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid #f0f0f0;
-        }
-        
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 6px 20px rgba(194, 144, 118, 0.2);
-            background: linear-gradient(135deg, #FFF8F0, #f5e9e4);
-        }
-        
-        .action-icon {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #c29076, #a87b65);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-        
-        .action-content {
-            flex: 1;
-        }
-        
-        .action-content h3 {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: #5c4e4b;
-            margin: 0 0 5px 0;
-            font-family: 'Playfair Display', serif;
-        }
-        
-        .action-content p {
-            font-size: 0.9rem;
-            color: #8a8a95;
-            margin: 0;
-        }
-        
-        .action-arrow {
-            font-size: 1.3rem;
-            color: #c29076;
-            transition: transform 0.3s ease;
-        }
-        
-        .action-card:hover .action-arrow {
-            transform: translateX(5px);
-        }
-        
-        .recent-appointments-section {
-            margin-top: 2rem;
-        }
-        
-        .recent-appointment-item {
-            background: white;
-            border-radius: 12px;
-            padding: 1.2rem 1.5rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-            transition: all 0.3s ease;
-            border: 1px solid #f0f0f0;
-        }
-        
-        .recent-appointment-item:hover {
-            box-shadow: 0 4px 12px rgba(194, 144, 118, 0.15);
-            transform: translateX(5px);
-        }
-        
-        .recent-icon {
-            width: 50px;
-            height: 50px;
-            background: #f5e9e4;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #c29076;
-            font-size: 1.2rem;
-            flex-shrink: 0;
-        }
-        
-        .recent-details {
-            flex: 1;
-        }
-        
-        .recent-details h4 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #5c4e4b;
-            margin: 0 0 3px 0;
-        }
-        
-        .recent-details p {
-            font-size: 0.9rem;
-            color: #8a8a95;
-            margin: 0;
-        }
-        
-        .recent-date {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-        }
-        
-        .recent-date span {
-            font-size: 0.9rem;
-            color: #8a8a95;
-            font-weight: 500;
-        }
-        
-        /* =========================================
-           PROFILE PAGE REDESIGN
-        ========================================= */
-        
-        .profile-info-card {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid #f0f0f0;
-        }
-        
-        .card-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #5c4e4b;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .form-label {
-            display: block;
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #5c4e4b;
-            margin-bottom: 0.5rem;
-        }
-        
-        .form-control-custom {
-            width: 100%;
-            padding: 0.75rem 1rem;
-            font-size: 1rem;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-            background: white;
-        }
-        
-        .form-control-custom:focus {
-            outline: none;
-            border-color: #c29076;
-            box-shadow: 0 0 0 3px rgba(194, 144, 118, 0.1);
-        }
-        
-        .form-control-custom:read-only {
-            background: #f9f9f9;
-            cursor: not-allowed;
-        }
-        
-        .btn-custom {
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .btn-primary-custom {
-            background: #c29076;
-            color: white;
-        }
-        
-        .btn-primary-custom:hover {
-            background: #a87b65;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(194, 144, 118, 0.3);
-        }
-        
-        .btn-success-custom {
-            background: #5cb85c;
-            color: white;
-        }
-        
-        .btn-success-custom:hover {
-            background: #4cae4c;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(92, 184, 92, 0.3);
-        }
-        
-        .btn-secondary-custom {
-            background: #8a8a95;
-            color: white;
-        }
-        
-        .btn-secondary-custom:hover {
-            background: #6c757d;
-        }
-        
-        .notification-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem;
-            background: #f9f9f9;
-            border-radius: 12px;
-            margin-bottom: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .notification-item:hover {
-            background: #f5f5f5;
-        }
-        
-        .notification-content {
-            flex: 1;
-        }
-        
-        .notification-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #5c4e4b;
-            margin: 0 0 0.3rem 0;
-        }
-        
-        .notification-desc {
-            font-size: 0.9rem;
-            color: #8a8a95;
-            margin: 0;
-        }
-        
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-        
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.4s;
-            border-radius: 34px;
-        }
-        
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
-        
-        .toggle-switch input:checked + .toggle-slider {
-            background-color: #c29076;
-        }
-        
-        .toggle-switch input:checked + .toggle-slider:before {
-            transform: translateX(26px);
-        }
-        
-        /* Back arrow styling */
-        .back-link {
-            color: #c29076;
-            text-decoration: none;
-            font-size: 1.2rem;
-            margin-bottom: 20px;
-            display: inline-block;
-            transition: color 0.3s ease;
-        }
-        
-        .back-link:hover {
-            color: #a87b65;
-        }
-        
-        /* =========================================
-           FAVOURITES STAFF PAGE
-        ========================================= */
-        
-        .favourites-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-        
-        .favourites-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
-            font-weight: 700;
-            color: #5c4e4b;
-            margin: 0;
-        }
-        
-        .btn-browse-staff {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: #c29076;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-browse-staff:hover {
-            background: #a87b65;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(194, 144, 118, 0.3);
-            color: white;
-        }
-        
-        .favourites-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
-        }
-        
-        .staff-favourite-card {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-        }
-        
-        .staff-favourite-card:hover {
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            transform: translateY(-3px);
-        }
-        
-        .staff-favourite-image {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #d4af37;
-            margin-bottom: 1rem;
-        }
-        
-        .staff-favourite-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #833E18;
-            margin: 0.5rem 0;
-        }
-        
-        .staff-favourite-services {
-            margin: 1rem 0;
-            width: 100%;
-        }
-        
-        .staff-favourite-services-label {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #8a8a95;
-            margin-bottom: 0.3rem;
-        }
-        
-        .staff-favourite-services-value {
-            font-size: 1rem;
-            color: #5c4e4b;
-            margin: 0;
-        }
-        
-        .staff-favourite-bio {
-            font-size: 0.9rem;
-            color: #8a8a95;
-            margin: 0.5rem 0 1.5rem 0;
-            font-style: italic;
-        }
-        
-        .staff-favourite-actions {
-            display: flex;
-            gap: 0.75rem;
-            width: 100%;
-            margin-top: auto;
-        }
-        
-        .btn-book-now {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            background: #c29076;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        
-        .btn-book-now:hover {
-            background: #a87b65;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(194, 144, 118, 0.3);
-        }
-        
-        .btn-remove-favourite {
-            flex: 1;
-            padding: 0.75rem 1rem;
-            background: white;
-            color: #dc3545;
-            border: 2px solid #f8d7da;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-        
-        .btn-remove-favourite:hover {
-            background: #fff5f5;
-            border-color: #dc3545;
-        }
-        
-        .favourites-empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            background: white;
-            border-radius: 16px;
-            color: #8a8a95;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .favourites-empty-state h3 {
-            font-family: 'Playfair Display', serif;
-            color: #5c4e4b;
-            margin-bottom: 1rem;
-        }
-        
-        .favourites-empty-state p {
-            margin-bottom: 2rem;
-        }
-        
-        /* =========================================
-           HELP & SUPPORT PAGE
-        ========================================= */
-        
-        .help-container {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-        
-        .help-card {
-            background: white;
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid #f0f0f0;
-        }
-        
-        .help-card-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #5c4e4b;
-            margin: 0 0 0.5rem 0;
-            display: flex;
-            align-items: center;
-        }
-        
-        .help-card-desc {
-            font-size: 0.95rem;
-            color: #8a8a95;
-            margin: 0 0 1.5rem 0;
-            line-height: 1.6;
-        }
-        
-        .help-contact-form {
-            margin-top: 1.5rem;
-        }
-        
-        .help-contact-form .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-        }
-        
-        .help-contact-form .form-group {
-            margin-bottom: 1.5rem;
-        }
-        
-        .help-contact-form label {
-            display: block;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #5c4e4b;
-            margin-bottom: 0.5rem;
-        }
-        
-        .help-contact-form textarea.form-control-custom {
-            resize: vertical;
-            min-height: 120px;
-        }
-        
-        .help-submit-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 1.5rem;
-            background: #c29076;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 1rem;
-        }
-        
-        .help-submit-btn:hover {
-            background: #a87b65;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(194, 144, 118, 0.3);
-        }
-        
-        /* FAQ Styles */
-        .faq-list {
-            margin-top: 1.5rem;
-        }
-        
-        .faq-item {
-            border-bottom: 1px solid #f0f0f0;
-            margin-bottom: 0;
-        }
-        
-        .faq-item:last-child {
-            border-bottom: none;
-        }
-        
-        .faq-question {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.25rem 0;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        
-        .faq-question:hover {
-            color: #c29076;
-        }
-        
-        .faq-question span {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #5c4e4b;
-        }
-        
-        .faq-question i {
-            color: #c29076;
-            font-size: 0.9rem;
-            transition: transform 0.3s ease;
-        }
-        
-        .faq-item.active .faq-question i.fa-minus {
-            display: inline-block;
-        }
-        
-        .faq-item.active .faq-question i.fa-plus {
-            display: none;
-        }
-        
-        .faq-item:not(.active) .faq-question i.fa-minus {
-            display: none;
-        }
-        
-        .faq-item:not(.active) .faq-question i.fa-plus {
-            display: inline-block;
-        }
-        
-        .faq-answer {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease, padding 0.3s ease;
-            padding: 0 0;
-        }
-        
-        .faq-answer.active {
-            max-height: 500px;
-            padding: 0 0 1.25rem 0;
-        }
-        
-        .faq-answer p {
-            font-size: 0.95rem;
-            color: #8a8a95;
-            line-height: 1.6;
-            margin: 0;
-        }
-        
-        @media (max-width: 768px) {
-            .help-contact-form .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 </head>
 
 <body>
@@ -1218,6 +310,8 @@ try {
                 <span class="member-badge">Customer</span>
             </div>
         </div>
+
+        <!-- bookings moved into main to avoid layout constraints in sidebar -->
 
         <ul class="dash-nav">
             <li><a href="#" onclick="switchSection('overview', this)" class="active">Overview</a></li>
@@ -1293,15 +387,15 @@ try {
                             <i class="fas fa-calendar-alt" style="color: #c29076;"></i>
                         </div>
                         <div class="stat-content">
-                            <p class="stat-label">Next Appointment</p>
+                            <p class="stat-label">Next Visit In</p>
                             <h3 class="stat-value">
                                 <?php if ($daysUntilNext !== null): ?>
                                     <?php if ($daysUntilNext == 0): ?>
                                         Today
                                     <?php elseif ($daysUntilNext == 1): ?>
-                                        Tomorrow
+                                        1 Day
                                     <?php else: ?>
-                                        In <?= $daysUntilNext ?> days
+                                        <?= $daysUntilNext ?> Days
                                     <?php endif; ?>
                                 <?php else: ?>
                                     No upcoming
@@ -1331,58 +425,75 @@ try {
                             <i class="fas fa-star" style="color: #d4af37;"></i>
                         </div>
                         <div class="stat-content">
-                            <p class="stat-label">Favorite Staff</p>
+                            <p class="stat-label">Favourite Staff</p>
                             <h3 class="stat-value" style="font-size: 1.3rem;"><?= htmlspecialchars($favoriteStaff) ?></h3>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Upcoming Appointment Banner -->
+            <!-- Upcoming Appointment Banner (moved to Overview) -->
             <?php if ($upcomingAppointment): 
                 $upcomingDate = new DateTime($upcomingAppointment['booking_date']);
                 $upcomingTime = new DateTime($upcomingAppointment['start_time']);
-                $upcomingServices = explode(', ', $upcomingAppointment['services'] ?? 'Service');
-                $upcomingStaff = $upcomingAppointment['staff_names'] ?? 'Staff Member';
+                
+                // Get the first service and staff from booking services
+                $firstService = 'Service';
+                $firstStaffName = 'Staff Member';
+                $firstStaffFirstName = '';
+                $firstStaffLastName = '';
+                
+                if (isset($bookingServices[$upcomingAppointment['booking_id']]) && !empty($bookingServices[$upcomingAppointment['booking_id']])) {
+                    $firstServiceData = $bookingServices[$upcomingAppointment['booking_id']][0];
+                    $firstService = $firstServiceData['service_name'] ?? 'Service';
+                    
+                    if (!empty($firstServiceData['staff_first_name']) || !empty($firstServiceData['staff_last_name'])) {
+                        $firstStaffFirstName = $firstServiceData['staff_first_name'] ?? '';
+                        $firstStaffLastName = $firstServiceData['staff_last_name'] ?? '';
+                        $firstStaffName = trim($firstStaffFirstName . ' ' . $firstStaffLastName);
+                    } else {
+                        $firstStaffName = 'No Preference';
+                    }
+                }
             ?>
             <div class="upcoming-appointment-banner">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <h2 style="color: white; font-family: 'Playfair Display', serif; margin-bottom: 5px;">
-                            <i class="fas fa-calendar-check me-2"></i>Upcoming Appointment
+                            <i class="fas fa-calendar-check me-2"></i>Next Booking
                         </h2>
                         <p style="color: rgba(255,255,255,0.9); margin: 0;">Your next visit is coming up soon!</p>
                     </div>
                 </div>
 
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 5px;">Service</p>
-                        <h4 style="color: white; font-weight: 600;"><?= htmlspecialchars($upcomingServices[0]) ?></h4>
+                <div class="upcoming-inner">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <p class="upcoming-label">Service</p>
+                            <h4 class="upcoming-value"><?= htmlspecialchars($firstService) ?></h4>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="upcoming-label">Staff Member</p>
+                            <h4 class="upcoming-value"><i class="fas fa-user-circle me-2"></i><?= htmlspecialchars($firstStaffName) ?></h4>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="upcoming-label">Date</p>
+                            <h4 class="upcoming-value"><?= $upcomingDate->format('M d, Y') ?></h4>
+                        </div>
+                        <div class="col-md-3">
+                            <p class="upcoming-label">Time</p>
+                            <h4 class="upcoming-value"><?= $upcomingTime->format('g:i A') ?></h4>
+                        </div>
                     </div>
-                    <div class="col-md-3">
-                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 5px;">Staff Member</p>
-                        <h4 style="color: white; font-weight: 600;">
-                            <i class="fas fa-user-circle me-2"></i><?= htmlspecialchars(explode(',', $upcomingStaff)[0]) ?>
-                        </h4>
-                    </div>
-                    <div class="col-md-3">
-                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 5px;">Date</p>
-                        <h4 style="color: white; font-weight: 600;"><?= $upcomingDate->format('M d, Y') ?></h4>
-                    </div>
-                    <div class="col-md-3">
-                        <p style="color: rgba(255,255,255,0.8); font-size: 0.9rem; margin-bottom: 5px;">Time</p>
-                        <h4 style="color: white; font-weight: 600;"><?= $upcomingTime->format('g:i A') ?></h4>
-                    </div>
-                </div>
 
-                <div class="d-flex gap-3 mt-4">
-                    <button class="btn btn-light" style="flex: 1; border-radius: 12px; font-weight: 600;">
-                        <i class="fas fa-edit me-2"></i>Reschedule
-                    </button>
-                    <button class="btn btn-outline-light" onclick="cancelBooking('<?= htmlspecialchars($upcomingAppointment['booking_id'], ENT_QUOTES) ?>')" style="flex: 1; border-radius: 12px; font-weight: 600; border: 2px solid white;">
-                        <i class="fas fa-times me-2"></i>Cancel
-                    </button>
+                    <div class="d-flex gap-3 mt-4">
+                        <button class="btn btn-upcoming btn-light" style="flex: 1;" onclick="viewDetails('<?= htmlspecialchars($upcomingAppointment['booking_id'], ENT_QUOTES) ?>')">
+                            <i class="fas fa-eye me-2"></i>View Details
+                        </button>
+                        <button class="btn btn-upcoming btn-outline-light" onclick="cancelBooking('<?= htmlspecialchars($upcomingAppointment['booking_id'], ENT_QUOTES) ?>')" style="flex: 1;">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
             <?php endif; ?>
@@ -1395,7 +506,7 @@ try {
                             <i class="fas fa-plus-circle"></i>
                         </div>
                         <div class="action-content">
-                            <h3>Book New Appointment</h3>
+                            <h3>Book New Booking</h3>
                             <p>Schedule your next beauty session</p>
                         </div>
                         <i class="fas fa-arrow-right action-arrow"></i>
@@ -1403,8 +514,8 @@ try {
                 </div>
                 <div class="col-md-6">
                     <div class="action-card" onclick="switchSection('bookings', null)">
-                        <div class="action-icon" style="background: #f5e9e4;">
-                            <i class="fas fa-history" style="color: #c29076;"></i>
+                        <div class="action-icon" style="background: var(--primary-brown-light);">
+                            <i class="fas fa-history" style="color: var(--primary-brown);"></i>
                         </div>
                         <div class="action-content">
                             <h3>View All Bookings</h3>
@@ -1418,8 +529,7 @@ try {
             <!-- Recent Appointments -->
             <?php if (!empty($recentAppointments)): ?>
             <div class="recent-appointments-section">
-                <h2 style="font-family: 'Playfair Display', serif; color: #5c4e4b; margin-bottom: 20px;">Recent Appointments</h2>
-                
+                <h2 style="font-family: 'Playfair Display', serif; color: var(--dark-brown); margin-bottom: 20px;">Recent Appointments</h2>
                 <?php foreach ($recentAppointments as $recent): 
                     $recentDate = new DateTime($recent['booking_date']);
                     $recentServices = explode(', ', $recent['services'] ?? 'Service');
@@ -1435,12 +545,138 @@ try {
                     </div>
                     <div class="recent-date">
                         <span><?= $recentDate->format('M d, Y') ?></span>
-                        <button class="btn btn-sm" onclick="window.location.href='../booking.php'" style="background: #c29076; color: white; border-radius: 8px; padding: 4px 12px; font-size: 0.85rem;">Book Again</button>
+                        <a href="../booking.php" class="book-again">Book Again</a>
                     </div>
                 </div>
                 <?php endforeach; ?>
             </div>
             <?php endif; ?>
+
+        </div>
+
+        <!-- ========== SECTION: ALL BOOKINGS (separate page) ========== -->
+        <div id="section-bookings" class="dash-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="bookings-page-title mb-0">Your Bookings</h1>
+                <?php if (!empty($upcomingBookings)): ?>
+                    <a href="../booking.php" class="btn btn-primary new-booking-btn" style="background: linear-gradient(to bottom, #D7BB91, #B59267); border: 1px solid #8A6E4D; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);">
+                        <i class="fas fa-plus me-2"></i>New Booking
+                    </a>
+                <?php endif; ?>
+            </div>
+
+            <div class="dashboard-header rounded-3 mb-3">
+                <h3 class="section-title mb-0 ps-4">
+                    <i class="fas fa-calendar-alt me-2"></i>Upcoming Bookings
+                    <span class="badge bg-primary ms-2"><?php echo count($upcomingBookings); ?></span>
+                </h3>
+                <?php if (count($upcomingBookings) > 3): ?>
+                    <a href="#" id="toggle-view-all-link" class="view-all-link" style="margin-left:12px;">View all</a>
+                <?php endif; ?>
+            </div>
+
+            <?php if(empty($upcomingBookings)): ?>
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fas fa-calendar-times"></i></div>
+                    <h3>No bookings yet</h3>
+                    <p class="text-muted mb-4">You haven't made any bookings yet. Start by booking your first appointment!</p>
+                    <a href="../booking.php" class="btn empty-state-btn">
+                        <i class="fas fa-plus me-2"></i>Book Appointment
+                    </a>
+                </div>
+            <?php else: ?>
+                <div class="bookings-grid">
+                    <?php foreach($upcomingBookings as $booking): ?>
+                        <div class="booking-item">
+                            <div class="card booking-card h-100">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold" style="color: #c29076;"><?php echo htmlspecialchars($booking['booking_id']); ?></span>
+                                    <span class="status-badge status-<?php echo $booking['status']; ?>">
+                                        <?php echo ucfirst($booking['status']); ?>
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <h6 class="text-muted mb-2"><i class="fas fa-calendar me-2"></i>Date & Time</h6>
+                                        <p class="mb-0 fw-semibold"><?php echo date('l, d M Y', strtotime($booking['booking_date'])); ?></p>
+                                        <p class="mb-0 text-muted small"><?php echo date('h:i A', strtotime($booking['start_time'])); ?> - <?php echo date('h:i A', strtotime($booking['expected_finish_time'])); ?></p>
+                                    </div>
+                                    <div class="mb-3">
+                                        <h6 class="text-muted mb-2"><i class="fas fa-scissors me-2"></i>Services <span class="badge bg-secondary ms-1"><?php echo $booking['service_count']; ?></span></h6>
+                                        <div class="service-list">
+                                            <?php 
+                                            $services = $bookingServices[$booking['booking_id']];
+                                            $totalServices = count($services);
+                                            $displayServices = array_slice($services, 0, 2);
+                                            foreach($displayServices as $service): ?>
+                                                <div class="service-item">
+                                                    <strong><?php echo htmlspecialchars($service['service_name']); ?></strong>
+                                                    <div class="small text-muted"><i class="fas fa-clock"></i> <?php echo $service['quoted_duration_minutes']; ?> min <?php if($service['staff_first_name']): ?> | <i class="fas fa-user"></i> <?php echo htmlspecialchars($service['staff_first_name'] . ' ' . $service['staff_last_name']); ?><?php endif; ?></div>
+                                                </div>
+                                            <?php endforeach; ?>
+                                            <?php if($totalServices > 2): ?>
+                                                <div class="mt-2">
+                                                    <a href="#" class="text-decoration-none fw-semibold" style="color: #c29076;" onclick="viewDetails('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>'); return false;">
+                                                        <i class="fas fa-chevron-down me-1"></i>View More (<?php echo ($totalServices - 2); ?> more)
+                                                    </a>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                        <span class="text-muted">Total:</span>
+                                        <strong class="fs-5" style="color: #c29076;">RM <?php echo number_format($booking['total_price'], 2); ?></strong>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white d-flex gap-2" style="padding: 1rem;">
+                                    <button class="btn btn-sm btn-outline-primary booking-action-btn" style="flex: 1 1 0; min-width: 0; padding: 0.5rem 1rem; border: 1px solid #0d6efd; color: #0d6efd;" onclick="viewDetails('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-eye"></i> View Details</button>
+                                    <button class="btn btn-sm btn-outline-danger booking-action-btn" style="flex: 1 1 0; min-width: 0; padding: 0.5rem 1rem; border: 1px solid #dc3545; color: #dc3545;" onclick="cancelBooking('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-times"></i> Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if(!empty($pastBookings)): ?>
+            <div class="mt-5">
+            <div class="booking-history-header">
+              <h3 class="section-title">
+                <i class="fas fa-history me-2"></i>Bookings History
+                <span class="badge bg-secondary ms-2"><?php echo count($pastBookings); ?></span>
+              </h3>
+              <?php if (count($pastBookings) > 3): ?>
+                  <a href="#" id="toggle-history-view-all-link" class="view-all-link" style="margin-left:12px;">View all</a>
+              <?php endif; ?>
+            </div>
+                <div class="bookings-grid booking-history-grid mt-3">
+                    <?php foreach($pastBookings as $booking): ?>
+                        <div class="booking-history-item">
+                            <div class="card booking-card h-100" style="opacity: 0.95;">
+                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                    <span class="fw-bold"><?php echo htmlspecialchars($booking['booking_id']); ?></span>
+                                    <span class="status-badge status-<?php echo $booking['status']; ?>"><?php echo ucfirst($booking['status']); ?></span>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3"><h6 class="text-muted mb-2"><i class="fas fa-calendar me-2"></i>Date & Time</h6><p class="mb-0"><?php echo date('d M Y', strtotime($booking['booking_date'])); ?></p><p class="mb-0 small text-muted"><?php echo date('h:i A', strtotime($booking['start_time'])); ?></p></div>
+                                    <div class="mb-3"><h6 class="text-muted mb-2"><i class="fas fa-scissors me-2"></i>Services</h6><ul class="list-unstyled small mb-0"><?php foreach($bookingServices[$booking['booking_id']] as $service): ?><li>• <?php echo htmlspecialchars($service['service_name']); ?></li><?php endforeach; ?></ul></div>
+                                    <div class="border-top pt-2"><strong>RM <?php echo number_format($booking['total_price'], 2); ?></strong></div>
+                                </div>
+                                <div class="card-footer bg-white">
+                                    <button class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="viewDetails('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-eye"></i> View Details</button>
+                                    <?php if(strtolower($booking['status']) === 'completed'): ?>
+                                        <button class="btn btn-sm btn-outline-success w-100" onclick="openCommentModal('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-comment"></i> Add Comment</button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
+
+
         </div>
 
         <!-- ========== SECTION 2: PROFILE ========== -->
@@ -1544,818 +780,249 @@ try {
             </div>
         </div>
 
-        <!-- ========== SECTION 2: BOOKINGS ========== -->
-        <div id="section-bookings" class="dash-section">
-            <!-- Header -->
-            <div class="bookings-header">
-                <h1 class="bookings-title">Your Bookings</h1>
-            </div>
+        <!-- ========== SECTION 4: FAVOURITES STAFF ========== -->
+<div id="section-favourites" class="dash-section">
 
-            <?php 
-            // Debug: Log bookings array
-            error_log('Dashboard - Bookings array count: ' . count($bookings));
-            error_log('Dashboard - Bookings array: ' . json_encode($bookings));
-            if (empty($bookings)): ?>
-                <div class="empty-state">
-                    <i class="fas fa-calendar-alt empty-state-icon"></i>
-                    <h3>No bookings yet</h3>
-                    <p>You haven't made any bookings yet. Start by booking your first appointment!</p>
-                    <a href="../booking.php" class="empty-state-btn">
-                        <i class="fas fa-plus"></i>
-                        Book Appointment
-                    </a>
-                </div>
-            <?php else: ?>
-                <?php 
-                // Separate upcoming and history bookings
-                $upcomingBookings = [];
-                $historyBookings = [];
-                $today = new DateTime('today');
-                
-                foreach ($bookings as $booking) {
-                    $bookingDate = new DateTime($booking['booking_date']);
-                    if ($booking['status'] === 'confirmed' && $bookingDate >= $today) {
-                        $upcomingBookings[] = $booking;
+    <h1 class="favourites-title">My Favourite Staff</h1>
+
+    <?php if (empty($favorites)): ?>
+        <div class="empty-state" style="background: white; border-radius: 20px;">
+            <div class="empty-state-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>No Favourite Staff Yet</h3>
+            <p>Start adding your favourite staff members from the team page!</p>
+            <a href="team.php" class="empty-state-btn">
+                <i class="fas fa-users me-2"></i>Browse Staff
+            </a>
+        </div>
+    <?php else: ?>
+
+        <div class="favourites-grid">
+            <?php foreach ($favorites as $staff): ?>
+                <?php
+                    $staffEmail = $staff['staff_email'] ?? '';
+                    $firstName = trim($staff['first_name'] ?? '');
+                    $lastName = trim($staff['last_name'] ?? '');
+                    
+                    // Debug: Log staff info
+                    error_log("Dashboard Favourites - Processing: $firstName $lastName ($staffEmail)");
+                    
+                    // Get image - priority: mapped by first name > database > default
+                    if (!empty($firstName) && isset($staffImageMap[$firstName])) {
+                        $img = $staffImageMap[$firstName];
+                        error_log("Dashboard - Using mapped image for $firstName: $img");
+                    } elseif (!empty($staff['staff_image'])) {
+                        $img = $staff['staff_image'];
+                        // Ensure the path is correct (if it doesn't start with ../, add it)
+                        if (strpos($img, '../') !== 0 && strpos($img, 'http') !== 0) {
+                            $img = '../' . ltrim($img, '/');
+                        }
+                        error_log("Dashboard - Using database image for $firstName: $img");
                     } else {
-                        $historyBookings[] = $booking;
+                        $img = '../images/42.png';
+                        error_log("Dashboard - Using default image for $firstName");
                     }
-                }
+
+                    // Get services - priority: mapped by first name > limited database services
+                    if (!empty($firstName) && isset($staffPrimaryServicesMap[$firstName])) {
+                        $services = $staffPrimaryServicesMap[$firstName];
+                    } else {
+                        // Limit to first 2 services from database
+                        $dbServices = $staff['primary_services'] ?? 'Various Services';
+                        $serviceArray = explode(' & ', $dbServices);
+                        $services = implode(' & ', array_slice($serviceArray, 0, 2));
+                    }
+
+                    // Get bio
+                    $bio = $staff['bio'] ?? '';
+                    $bio = trim($bio) !== '' ? $bio : 'Professional staff member';
+                    
+                    // Display full name
+                    $displayName = $firstName;
+                    if (!empty($lastName)) {
+                        $displayName = $firstName . ' ' . $lastName;
+                    }
+                    
+                    error_log("Dashboard - Final image path: $img for $displayName");
                 ?>
 
-                <!-- Upcoming Bookings -->
-                <?php if (!empty($upcomingBookings)): ?>
-                <div class="bookings-section">
-                    <h2 class="section-subtitle">Upcoming Bookings</h2>
-                    <div class="bookings-grid">
-                        <?php foreach ($upcomingBookings as $booking): 
-                            $bookingDate = new DateTime($booking['booking_date']);
-                            $startTime = new DateTime($booking['start_time']);
-                            // Use end_time if available, otherwise fallback to expected_finish_time
-                            $endTimeValue = $booking['end_time'] ?? $booking['expected_finish_time'] ?? null;
-                            $endTime = $endTimeValue ? new DateTime($endTimeValue) : null;
-                            $services = $booking['services'] ?? 'Service';
-                            $servicesArray = explode(', ', $services);
-                            $serviceCount = $booking['service_count'] ?? count($servicesArray);
-                            $status = $booking['status'] ?? 'confirmed';
-                            // Use reference_id if available, otherwise fallback to booking_id
-                            $referenceId = $booking['reference_id'] ?? $booking['booking_id'] ?? '';
-                            $bookingId = $booking['booking_id'] ?? '';
-                            // Use grand_total if available, otherwise fallback to total_price
-                            $totalPrice = $booking['grand_total'] ?? $booking['total_price'] ?? 0;
-                            
-                            $dateFormatted = $bookingDate->format('d M Y');
-                            $timeFormatted = $startTime->format('h:i A');
-                            if ($endTime) {
-                                $timeFormatted .= ' - ' . $endTime->format('h:i A');
-                            }
-                        ?>
-                            <div class="booking-card-new">
-                                <div class="booking-card-header">
-                                    <div class="booking-id-text"><?= htmlspecialchars($referenceId) ?></div>
-                                    <span class="badge-confirmed"><?= ucfirst($status) ?></span>
-                                </div>
+                <div class="staff-favourite-card" data-staff-email="<?= htmlspecialchars($staffEmail) ?>">
 
-                                <div class="booking-card-content">
-                                    <div class="info-section">
-                                        <h3 class="info-label">Date & Time:</h3>
-                                        <p class="info-value"><?= $dateFormatted ?></p>
-                                        <p class="info-value"><?= $timeFormatted ?></p>
-                                    </div>
+                    <img
+                        src="<?= htmlspecialchars($img) ?>"
+                        alt="<?= htmlspecialchars($displayName) ?>"
+                        class="staff-favourite-image"
+                        onerror="this.onerror=null; this.src='../images/42.png'; console.error('Image failed to load: <?= htmlspecialchars($img) ?>');"
+                    >
 
-                                    <div class="info-section">
-                                        <h3 class="info-label">Services: (<?= $serviceCount ?>)</h3>
-                                        <p class="info-value-small"><?= htmlspecialchars($services) ?></p>
-                                    </div>
+                    <h3 class="staff-favourite-name"><?= htmlspecialchars($displayName) ?></h3>
 
-                                    <div class="info-section-total">
-                                        <h3 class="info-label">Total:</h3>
-                                        <p class="price-value">RM <?= number_format($totalPrice, 2) ?></p>
-                                    </div>
-                                </div>
-
-                                <div class="booking-card-actions">
-                                    <button class="btn-view" onclick="viewBookingDetails('<?= htmlspecialchars($booking['booking_id'], ENT_QUOTES) ?>')" data-bs-toggle="modal" data-bs-target="#bookingModal">
-                                        View Details
-                                    </button>
-                                    <button class="btn-cancel" onclick="cancelBooking('<?= htmlspecialchars($booking['booking_id'], ENT_QUOTES) ?>')">
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
+                    <div class="staff-favourite-services">
+                        <p class="staff-favourite-services-label">Primary Services:</p>
+                        <p class="staff-favourite-services-value"><?= htmlspecialchars($services) ?></p>
                     </div>
-                </div>
-                <?php endif; ?>
 
-                <!-- Booking History -->
-                <?php if (!empty($historyBookings)): ?>
-                <div class="bookings-section">
-                    <h2 class="section-subtitle">Booking History</h2>
-                    <div class="bookings-grid">
-                        <?php foreach ($historyBookings as $booking): 
-                            $bookingDate = new DateTime($booking['booking_date']);
-                            $startTime = new DateTime($booking['start_time']);
-                            // Use end_time if available, otherwise fallback to expected_finish_time
-                            $endTimeValue = $booking['end_time'] ?? $booking['expected_finish_time'] ?? null;
-                            $endTime = $endTimeValue ? new DateTime($endTimeValue) : null;
-                            $services = $booking['services'] ?? 'Service';
-                            $servicesArray = explode(', ', $services);
-                            $serviceCount = $booking['service_count'] ?? count($servicesArray);
-                            $status = $booking['status'] ?? 'confirmed';
-                            // Use reference_id if available, otherwise fallback to booking_id
-                            $referenceId = $booking['reference_id'] ?? $booking['booking_id'] ?? '';
-                            $bookingId = $booking['booking_id'] ?? '';
-                            // Use grand_total if available, otherwise fallback to total_price
-                            $totalPrice = $booking['grand_total'] ?? $booking['total_price'] ?? 0;
-                            
-                            $dateFormatted = $bookingDate->format('d M Y');
-                            $timeFormatted = $startTime->format('h:i A');
-                            if ($endTime) {
-                                $timeFormatted .= ' - ' . $endTime->format('h:i A');
-                            }
-                            
-                            $badgeClass = $status === 'cancelled' ? 'badge-cancelled' : ($status === 'completed' ? 'badge-completed' : 'badge-confirmed');
-                            $badgeText = ucfirst($status);
-                            $cardClass = $status === 'cancelled' ? 'booking-card-cancelled' : 'booking-card-new';
-                        ?>
-                            <div class="<?= $cardClass ?>">
-                                <div class="booking-card-header">
-                                    <div class="booking-id-text"><?= htmlspecialchars($referenceId) ?></div>
-                                    <span class="<?= $badgeClass ?>"><?= $badgeText ?></span>
-                                </div>
+                    <p class="staff-favourite-bio"><?= htmlspecialchars($bio) ?></p>
 
-                                <div class="booking-card-content">
-                                    <div class="info-section">
-                                        <h3 class="info-label">Date & Time:</h3>
-                                        <p class="info-value"><?= $dateFormatted ?></p>
-                                        <p class="info-value"><?= $timeFormatted ?></p>
-                                    </div>
+                    <div class="staff-favourite-actions">
+                        <a class="btn-fav-book" href="../booking.php?staff=<?= urlencode($staffEmail) ?>">
+    <i class="fas fa-calendar"></i> Book Now
+</a>
 
-                                    <div class="info-section">
-                                        <h3 class="info-label">Services: (<?= $serviceCount ?>)</h3>
-                                        <p class="info-value-small"><?= htmlspecialchars($services) ?></p>
-                                    </div>
+<button class="btn-fav-remove" onclick="removeFavorite('<?= htmlspecialchars($staffEmail, ENT_QUOTES) ?>', this)">
+    <i class="fas fa-heart-broken"></i> Remove
+</button>
 
-                                    <div class="info-section-total">
-                                        <h3 class="info-label">Total:</h3>
-                                        <p class="price-value">RM <?= number_format($totalPrice, 2) ?></p>
-                                    </div>
-                                    
-                                    <?php if (!empty($booking['special_requests'])): ?>
-                                    <div class="info-section">
-                                        <h3 class="info-label">Special Requests:</h3>
-                                        <p class="info-value-small"><?= htmlspecialchars($booking['special_requests']) ?></p>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <div class="booking-card-actions">
-                                    <button class="btn-view" onclick="viewBookingDetails('<?= htmlspecialchars($bookingId, ENT_QUOTES) ?>')" data-bs-toggle="modal" data-bs-target="#bookingModal">
-                                        View Details
-                                    </button>
-                                    <?php if ($status === 'pending' || $status === 'confirmed'): ?>
-                                        <button class="btn-cancel" onclick="cancelBooking('<?= htmlspecialchars($bookingId, ENT_QUOTES) ?>')" <?= $bookingDate < new DateTime('today') ? 'disabled' : '' ?>>
-                                            Cancel
-                                        </button>
-                                    <?php elseif ($status === 'completed'): ?>
-                                        <button class="btn-book-again" onclick="window.location.href='../booking.php'">
-                                            Book Again
-                                        </button>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-                <?php endif; ?>
-            <?php endif; ?>
-            
-            <?php if (isset($_GET['section']) && $_GET['section'] === 'bookings'): ?>
-                <script>
-                    // Force show bookings section when coming from confirmation
-                    document.addEventListener('DOMContentLoaded', function() {
-                        setTimeout(function() {
-                            const bookingsSection = document.getElementById('section-bookings');
-                            const profileSection = document.getElementById('section-profile');
-                            if (bookingsSection && profileSection) {
-                                profileSection.classList.remove('active');
-                                bookingsSection.classList.add('active');
-                                // Also update nav link
-                                document.querySelectorAll('.dash-nav a').forEach(a => {
-                                    a.classList.remove('active');
-                                    if (a.getAttribute('onclick') && a.getAttribute('onclick').includes("'bookings'")) {
-                                        a.classList.add('active');
-                                    }
-                                });
-                            }
-                        }, 50);
-                    });
-                </script>
-            <?php endif; ?>
-        </div>
-        
-        <!-- ========== SECTION 4: FAVOURITES STAFF ========== -->
-        <div id="section-favourites" class="dash-section">
-            <!-- Header -->
-            <div class="favourites-header">
-                <h1 class="favourites-title">My Favourite Staff</h1>
-            </div>
-
-            <?php if (empty($favorites)): ?>
-                <div class="favourites-empty-state">
-                    <h3>No Favourite Staff Yet</h3>
-                    <p>Start adding your favourite staff members from the team page!</p>
-                    <a href="team.php" class="btn-browse-staff">
-                        <i class="fas fa-users"></i>
-                        Browse Staff
-                    </a>
-                </div>
-            <?php else: ?>
-                <div class="favourites-grid">
-                    <?php 
-                    // Staff image mapping (same as team.php)
-                    $staffImageMap = [
-                        'Jay' => '../images/42.png',
-                        'Mei' => '../images/47.png',
-                        'Ken' => '../images/48.png',
-                        'Chloe' => '../images/60.png',
-                        'Sarah' => '../images/65.png',
-                        'Nisha' => '../images/66.png',
-                        'Rizal' => '../images/67.png',
-                        'Siti' => '../images/68.png',
-                        'Jessica' => '../images/69.png',
-                        'Yuna' => '../images/71.png'
-                    ];
-                    
-                    // Staff primary services mapping
-                    $staffPrimaryServicesMap = [
-                        'Jay' => 'Haircuts & Hair Styling',
-                        'Mei' => 'Hair Styling & Hair Colouring',
-                        'Ken' => 'Technical Cuts & Hair Treatments',
-                        'Chloe' => 'Anti-Aging & Brightening',
-                        'Sarah' => 'Deep Cleansing & Hydrating',
-                        'Nisha' => 'Aromatherapy Massage & Hot Stone Massage',
-                        'Rizal' => 'Deep Tissue Massage & Traditional Massage',
-                        'Jessica' => 'Nail Extensions & Nail Gelish',
-                        'Siti' => 'Classic Manicure & Add-ons',
-                        'Yuna' => 'Nail Art Design & Gelish'
-                    ];
-                    
-                    // Function to determine category name from services
-                    function getCategoryName($primaryServices) {
-                        $services = strtolower($primaryServices);
-                        
-                        // Check for hair-related services
-                        if (strpos($services, 'hair') !== false || 
-                            strpos($services, 'cut') !== false || 
-                            strpos($services, 'styling') !== false || 
-                            strpos($services, 'colouring') !== false || 
-                            strpos($services, 'treatment') !== false) {
-                            return 'Hair Stylist';
-                        }
-                        
-                        // Check for beauty/facial services
-                        if (strpos($services, 'facial') !== false || 
-                            strpos($services, 'anti-aging') !== false || 
-                            strpos($services, 'cleansing') !== false || 
-                            strpos($services, 'hydrating') !== false || 
-                            strpos($services, 'brightening') !== false) {
-                            return 'Beautician';
-                        }
-                        
-                        // Check for nail services
-                        if (strpos($services, 'nail') !== false || 
-                            strpos($services, 'manicure') !== false || 
-                            strpos($services, 'pedicure') !== false || 
-                            strpos($services, 'gelish') !== false || 
-                            strpos($services, 'extension') !== false) {
-                            return 'Nail Technician';
-                        }
-                        
-                        // Check for massage services
-                        if (strpos($services, 'massage') !== false || 
-                            strpos($services, 'aromatherapy') !== false || 
-                            strpos($services, 'hot stone') !== false || 
-                            strpos($services, 'tissue') !== false || 
-                            strpos($services, 'traditional') !== false) {
-                            return 'Massage Therapist';
-                        }
-                        
-                        // Default fallback
-                        return 'Staff Member';
-                    }
-                    
-                    foreach ($favorites as $fav): 
-                        $staffName = htmlspecialchars($fav['first_name']);
-                        $fullName = htmlspecialchars($fav['first_name'] . ' ' . $fav['last_name']);
-                        $staffEmail = htmlspecialchars($fav['staff_email']);
-                        
-                        // Use mapped primary services if available, otherwise use from database
-                        $primaryServices = $staffPrimaryServicesMap[$staffName] ?? htmlspecialchars($fav['primary_services'] ?? 'Various Services');
-                        
-                        // Get category name based on services
-                        $categoryName = getCategoryName($primaryServices);
-                        
-                        // Use mapped image if available, otherwise use staff_image from DB, fallback to default
-                        $image = $staffImageMap[$staffName] ?? ($fav['staff_image'] ?? '../images/42.png');
-                    ?>
-                        <div class="staff-favourite-card" data-staff-email="<?= $staffEmail ?>">
-                            <img src="<?= htmlspecialchars($image) ?>" alt="<?= $staffName ?>" class="staff-favourite-image" onerror="this.src='../images/42.png'">
-                            <h3 class="staff-favourite-name"><?= $staffName ?></h3>
-                            
-                            <div class="staff-favourite-services">
-                                <p class="staff-favourite-services-label">Primary Services:</p>
-                                <p class="staff-favourite-services-value"><?= $primaryServices ?></p>
-                            </div>
-                            
-                            <p class="staff-favourite-bio"><?= $categoryName ?></p>
-                            
-                            <div class="staff-favourite-actions">
-                                <button class="btn-book-now" onclick="window.location.href='../booking.php'">
-                                    <i class="fas fa-calendar"></i>
-                                    Book Now
-                                </button>
-                                <button class="btn-remove-favourite" onclick="removeFavorite('<?= $staffEmail ?>', this)">
-                                    <i class="fas fa-heart-broken"></i>
-                                    Remove
-                                </button>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-        
-        <!-- ========== SECTION 5: HELP & SUPPORT ========== -->
-        <div id="section-help" class="dash-section">
-            <h1 class="favourites-title" style="margin-bottom: 30px;">Help & Support</h1>
-            
-            <div class="help-container">
-                <!-- Contact Form Section -->
-                <div class="help-card">
-                    <h2 class="help-card-title">
-                        <i class="fas fa-envelope" style="color: #c29076; margin-right: 10px;"></i>
-                        Contact Us
-                    </h2>
-                    <p class="help-card-desc">Have a question or need assistance? Send us a message and we'll get back to you soon.</p>
-                    
-                    <form class="help-contact-form" id="helpContactForm">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="help-name">Name</label>
-                                <input type="text" id="help-name" name="name" class="form-control-custom" placeholder="John Carter" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="help-email">Email</label>
-                                <input type="email" id="help-email" name="email" class="form-control-custom" placeholder="example@youremail.com" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="help-phone">Phone</label>
-                            <input type="tel" id="help-phone" name="phone" class="form-control-custom" placeholder="(123) 346 - 2386">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="help-subject">Subject</label>
-                            <input type="text" id="help-subject" name="subject" class="form-control-custom" placeholder="ex. Manicure" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="help-message">Message</label>
-                            <textarea id="help-message" name="message" class="form-control-custom" rows="6" placeholder="Please type your message here..." required></textarea>
-                        </div>
-                        
-                        <button type="submit" class="help-submit-btn">
-                            <i class="fas fa-paper-plane"></i>
-                            Send Message
                         </button>
-                    </form>
-                </div>
-                
-                <!-- FAQ Section -->
-                <div class="help-card">
-                    <h2 class="help-card-title">
-                        <i class="fas fa-question-circle" style="color: #c29076; margin-right: 10px;"></i>
-                        Frequently Asked Questions
-                    </h2>
-                    <p class="help-card-desc">Find answers to common questions about our booking system and services.</p>
-                    
-                    <div class="faq-list">
-                        <div class="faq-item active">
-                            <div class="faq-question" onclick="toggleFaq(this)">
-                                <span>How do I cancel or reschedule my appointment?</span>
-                                <i class="fas fa-minus"></i>
-                            </div>
-                            <div class="faq-answer active">
-                                <p>To make changes to your booking, you need to cancel your current appointment and create a new one. Go to 'My Bookings', click 'Cancel' on the appointment, then book a new slot.</p>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <div class="faq-question" onclick="toggleFaq(this)">
-                                <span>What is the cancellation policy?</span>
-                                <i class="fas fa-plus"></i>
-                            </div>
-                            <div class="faq-answer">
-                                <p>You can cancel your appointment up to 24 hours before the scheduled time without any penalty. Cancellations made less than 24 hours in advance may be subject to a cancellation fee.</p>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <div class="faq-question" onclick="toggleFaq(this)">
-                                <span>What payment methods do you accept?</span>
-                                <i class="fas fa-plus"></i>
-                            </div>
-                            <div class="faq-answer">
-                                <p>We accept cash and card payments at the salon. Payment is required when you arrive for your appointment.</p>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <div class="faq-question" onclick="toggleFaq(this)">
-                                <span>Can I book multiple services at once?</span>
-                                <i class="fas fa-plus"></i>
-                            </div>
-                            <div class="faq-answer">
-                                <p>Yes, you can book multiple services in a single appointment. Simply select all the services you'd like during the booking process, and we'll schedule them accordingly.</p>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <div class="faq-question" onclick="toggleFaq(this)">
-                                <span>How will I receive appointment reminders?</span>
-                                <i class="fas fa-plus"></i>
-                            </div>
-                            <div class="faq-answer">
-                                <p>You will receive appointment reminders via email and SMS 24 hours before your scheduled appointment time.</p>
-                            </div>
-                        </div>
-                        
-                        <div class="faq-item">
-                            <div class="faq-question" onclick="toggleFaq(this)">
-                                <span>Can I request a specific staff member?</span>
-                                <i class="fas fa-plus"></i>
-                            </div>
-                            <div class="faq-answer">
-                                <p>Yes, you can select your preferred staff member during the booking process. You can also add staff members to your favorites for easier booking in the future.</p>
-                            </div>
-                        </div>
                     </div>
+
                 </div>
-            </div>
+            <?php endforeach; ?>
         </div>
-        
-        <!-- Booking Details Modal -->
-        <div class="modal fade" id="bookingModal" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Booking Details</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body" id="bookingDetailsContent">
-                        <!-- Content will be loaded by JavaScript -->
-                    </div>
-                </div>
+
+    <?php endif; ?>
+
+</div>
+        <!-- ========== SECTION 5: HELP & SUPPORT ========== -->
+        <!-- FAQ Section -->
+        <div id="section-help" class="dash-section">
+
+            <h1 class="favourites-title">Help & Support</h1>
+            <div class="faq-card">
+
+    <div class="faq-header">
+        <div class="faq-icon">?</div>
+        <div>
+            <h2>Frequently Asked Questions</h2>
+            <p>Find answers to common questions about our booking system and services.</p>
+        </div>
+    </div>
+
+    <div class="faq-list">
+
+        <div class="faq-item">
+            <button class="faq-question">
+                How do I cancel or reschedule my appointment?
+                <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+                <p>
+                    To make changes to your booking, you need to cancel your current appointment and create a new one.
+                    Go to <strong>My Bookings</strong>, click <strong>Cancel</strong> on the appointment, then book a new slot.
+                </p>
             </div>
         </div>
 
+        <div class="faq-item">
+            <button class="faq-question">
+                What is the cancellation policy?
+                <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+                <p>
+                    Appointments can be cancelled up to 24 hours before the scheduled time without penalty.
+                </p>
+            </div>
+        </div>
+
+    <div class="faq-item">
+            <button class="faq-question">
+                What payment methods do you accept?
+                <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+                <p>
+                    We accept cash and card payments at the salon. Payment is required when you arrive for your appointment.
+                </p>
+            </div>
+        </div>
+
+    <div class="faq-item">
+            <button class="faq-question">
+                Can I book multiple services at once?
+                <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+                <p>
+                    Yes! You can select multiple services when making a booking. The system will calculate the total duration and price for you.
+                </p>
+            </div>
+        </div>
+
+    <div class="faq-item">
+            <button class="faq-question">
+                How will I receive appointment reminders?
+                <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+                <p>
+                    If you've enabled email notifications in your profile settings, you'll receive booking confirmations and reminders via email.
+            </div>
+        </div>
+
+    <div class="faq-item">
+            <button class="faq-question">
+                Can I request a specific staff member?
+                <span class="faq-toggle">+</span>
+            </button>
+            <div class="faq-answer">
+                <p>
+                    Absolutely! When booking, you can choose your preferred staff member. You can also save favourite staff in the 'Favourite Staff' section for quick access
+            </div>
+        </div>
 
     </main>
 </div>
 
-<script>
-function switchSection(section, link) {
-    // Hide all sections
-    document.querySelectorAll('.dash-section').forEach(s => s.classList.remove('active'));
+<!-- Booking Details Modal - Outside main to ensure it's always accessible -->
+<div class="modal fade" id="bookingModal" tabindex="-1" aria-labelledby="bookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookingModalLabel">Booking Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="bookingDetailsContent">
+                <div class="text-center p-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted">Loading booking details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-    // Show target section
-    const targetSection = document.getElementById('section-' + section);
-    if (targetSection) {
-        targetSection.classList.add('active');
-    }
+<!-- Comment Modal for Completed Bookings -->
+<div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="commentModalLabel">Add Comment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="commentForm">
+                    <input type="hidden" id="commentBookingId" name="booking_id">
+                    <div class="mb-3">
+                        <label for="commentText" class="form-label">Your Comment / Review</label>
+                        <textarea class="form-control" id="commentText" name="comment" rows="5" placeholder="Share your experience with this booking..." required></textarea>
+                        <small class="form-text text-muted">Your feedback helps us improve our services.</small>
+                    </div>
+                    <div id="commentMessage" class="mt-3"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitComment()">Submit Comment</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-    // Remove active from all links
-    document.querySelectorAll('.dash-nav a').forEach(a => a.classList.remove('active'));
-
-    // Activate clicked link if provided
-    if (link) {
-        link.classList.add('active');
-    } else {
-        // Find and activate the corresponding nav link
-        const navLinks = document.querySelectorAll('.dash-nav a');
-        navLinks.forEach(a => {
-            if (a.getAttribute('onclick') && a.getAttribute('onclick').includes("'" + section + "'")) {
-                a.classList.add('active');
-            }
-        });
-    }
-}
-
-// Profile Edit Functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const section = urlParams.get('section');
-    
-    if (section) {
-        // Small delay to ensure DOM is ready
-        setTimeout(function() {
-            switchSection(section, null);
-        }, 100);
-    } else {
-        // Default to overview section
-        const overviewSection = document.getElementById('section-overview');
-        if (overviewSection) {
-            overviewSection.classList.add('active');
-        }
-    }
-    
-    // Profile Edit
-    const editBtn = document.getElementById('edit-profile-btn');
-    const saveBtn = document.getElementById('save-profile-btn');
-    const cancelBtn = document.getElementById('cancel-profile-btn');
-    const firstNameInput = document.getElementById('profile-firstname');
-    const lastNameInput = document.getElementById('profile-lastname');
-    const emailInput = document.getElementById('profile-email');
-    const profileMessage = document.getElementById('profile-message');
-    
-    let originalValues = {};
-    
-    if (editBtn) {
-        editBtn.addEventListener('click', function() {
-            originalValues = {
-                firstname: firstNameInput.value,
-                lastname: lastNameInput.value,
-                email: emailInput.value
-            };
-            
-            firstNameInput.removeAttribute('readonly');
-            lastNameInput.removeAttribute('readonly');
-            emailInput.removeAttribute('readonly');
-            
-            editBtn.style.display = 'none';
-            saveBtn.style.display = 'inline-block';
-            cancelBtn.style.display = 'inline-block';
-            profileMessage.innerHTML = '';
-        });
-    }
-    
-    if (cancelBtn) {
-        cancelBtn.addEventListener('click', function() {
-            firstNameInput.value = originalValues.firstname;
-            lastNameInput.value = originalValues.lastname;
-            emailInput.value = originalValues.email;
-            
-            firstNameInput.setAttribute('readonly', 'readonly');
-            lastNameInput.setAttribute('readonly', 'readonly');
-            emailInput.setAttribute('readonly', 'readonly');
-            
-            editBtn.style.display = 'inline-block';
-            saveBtn.style.display = 'none';
-            cancelBtn.style.display = 'none';
-            profileMessage.innerHTML = '';
-        });
-    }
-    
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function() {
-            const data = {
-                firstName: firstNameInput.value.trim(),
-                lastName: lastNameInput.value.trim(),
-                email: emailInput.value.trim()
-            };
-            
-            if (!data.firstName || !data.lastName) {
-                profileMessage.innerHTML = '<p style="color: red;">First name and last name are required</p>';
-                return;
-            }
-            
-            fetch('../update_profile.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    profileMessage.innerHTML = '<p style="color: green;">Profile updated successfully!</p>';
-                    firstNameInput.setAttribute('readonly', 'readonly');
-                    lastNameInput.setAttribute('readonly', 'readonly');
-                    emailInput.setAttribute('readonly', 'readonly');
-                    editBtn.style.display = 'inline-block';
-                    saveBtn.style.display = 'none';
-                    cancelBtn.style.display = 'none';
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    profileMessage.innerHTML = '<p style="color: red;">' + data.message + '</p>';
-                }
-            })
-            .catch(err => {
-                profileMessage.innerHTML = '<p style="color: red;">Error updating profile</p>';
-            });
-        });
-    }
-    
-    // Password Update
-    const updatePasswordBtn = document.getElementById('update-password-btn');
-    const passwordMessage = document.getElementById('password-message');
-    
-    if (updatePasswordBtn) {
-        updatePasswordBtn.addEventListener('click', function() {
-            const currentPassword = document.getElementById('current-password').value;
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-            
-            if (!currentPassword || !newPassword || !confirmPassword) {
-                passwordMessage.innerHTML = '<p style="color: red;">All fields are required</p>';
-                return;
-            }
-            
-            if (newPassword !== confirmPassword) {
-                passwordMessage.innerHTML = '<p style="color: red;">New passwords do not match</p>';
-                return;
-            }
-            
-            if (newPassword.length < 6) {
-                passwordMessage.innerHTML = '<p style="color: red;">Password must be at least 6 characters</p>';
-                return;
-            }
-            
-            fetch('../update_password.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    currentPassword: currentPassword,
-                    newPassword: newPassword,
-                    confirmPassword: confirmPassword
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    passwordMessage.innerHTML = '<p style="color: green;">Password updated successfully!</p>';
-                    document.getElementById('password-form').reset();
-                    setTimeout(() => passwordMessage.innerHTML = '', 3000);
-                } else {
-                    passwordMessage.innerHTML = '<p style="color: red;">' + data.message + '</p>';
-                }
-            })
-            .catch(err => {
-                passwordMessage.innerHTML = '<p style="color: red;">Error updating password</p>';
-            });
-        });
-    }
-});
-
-// View Booking Details
-function viewBookingDetails(bookingId) {
-    // Show modal first
-    const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
-    modal.show();
-    
-    // Load booking details
-    fetch('../get_booking_details.php?booking_id=' + encodeURIComponent(bookingId))
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.text();
-        })
-        .then(html => {
-            document.getElementById('bookingDetailsContent').innerHTML = html;
-        })
-        .catch(error => {
-            console.error('Error loading booking details:', error);
-            document.getElementById('bookingDetailsContent').innerHTML = '<p class="text-danger">Failed to load booking details. Please try again.</p>';
-        });
-}
-
-// Cancel Booking
-function cancelBooking(bookingId) {
-    if (!confirm('Do you want to cancel this booking?')) {
-        return;
-    }
-    
-    fetch('../cancel_booking.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ booking_id: bookingId })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            alert('Booking cancelled successfully');
-            location.reload();
-        } else {
-            alert('Error: ' + (data.message || 'Failed to cancel booking'));
-        }
-    })
-    .catch(err => {
-        alert('Error cancelling booking');
-    });
-}
-
-// Remove Favorite Staff
-function removeFavorite(staffEmail, buttonElement) {
-    if (!confirm('Do you want to remove this staff member from your favourites?')) {
-        return;
-    }
-    
-    fetch('../remove_favorite.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staff_email: staffEmail })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            // Remove the card from the DOM
-            const card = buttonElement.closest('.staff-favourite-card');
-            if (card) {
-                card.style.transition = 'opacity 0.3s, transform 0.3s';
-                card.style.opacity = '0';
-                card.style.transform = 'scale(0.9)';
-                setTimeout(() => {
-                    card.remove();
-                    // Check if no more favorites, reload to show empty state
-                    const remainingCards = document.querySelectorAll('.staff-favourite-card');
-                    if (remainingCards.length === 0) {
-                        location.reload();
-                    }
-                }, 300);
-            }
-        } else {
-            alert('Error: ' + (data.message || 'Failed to remove favorite'));
-        }
-    })
-    .catch(err => {
-        console.error('Error:', err);
-        alert('Error removing favorite');
-    });
-}
-
-// FAQ Toggle Function
-function toggleFaq(element) {
-    const faqItem = element.closest('.faq-item');
-    const isActive = faqItem.classList.contains('active');
-    
-    // Close all FAQ items
-    document.querySelectorAll('.faq-item').forEach(item => {
-        item.classList.remove('active');
-        const answer = item.querySelector('.faq-answer');
-        if (answer) {
-            answer.classList.remove('active');
-        }
-    });
-    
-    // Toggle current item if it wasn't active
-    if (!isActive) {
-        faqItem.classList.add('active');
-        const answer = faqItem.querySelector('.faq-answer');
-        if (answer) {
-            answer.classList.add('active');
-        }
-    }
-}
-
-// Help Contact Form Submission
-document.addEventListener('DOMContentLoaded', function() {
-    const helpForm = document.getElementById('helpContactForm');
-    if (helpForm) {
-        helpForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Get form data
-            const formData = {
-                name: document.getElementById('help-name').value,
-                email: document.getElementById('help-email').value,
-                phone: document.getElementById('help-phone').value,
-                subject: document.getElementById('help-subject').value,
-                message: document.getElementById('help-message').value
-            };
-            
-            // Here you would typically send the data to a server
-            // For now, we'll just show a success message
-            alert('Thank you for your message! We will get back to you soon.');
-            
-            // Reset form
-            helpForm.reset();
-        });
-    }
-    
-    // Initialize first FAQ item as active
-    const firstFaqItem = document.querySelector('.faq-item');
-    if (firstFaqItem) {
-        firstFaqItem.classList.add('active');
-        const firstAnswer = firstFaqItem.querySelector('.faq-answer');
-        if (firstAnswer) {
-            firstAnswer.classList.add('active');
-        }
-    }
-});
-
-</script>
+<script src="dashboard.js"></script>
 
 </body>
 </html>

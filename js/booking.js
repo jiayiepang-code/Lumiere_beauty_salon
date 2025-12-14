@@ -234,7 +234,7 @@ function updateSummary() {
         if(selectedTime) {
             let totDur = 0; selectedServices.forEach(id => { if(sData[id]) totDur += parseInt(sData[id].duration); });
             const end = calculateEndTime(selectedTime, totDur);
-            html += `<div class="text-primary mt-1"><i class="fas fa-clock me-2"></i>${selectedTime} - ${end} <span class="text-muted small">(${totDur} mins)</span></div>`;
+            html += `<div class="mt-1" style="color: #c29076;"><i class="fas fa-clock me-2"></i>${selectedTime} - ${end} <span class="text-muted small">(${totDur} mins)</span></div>`;
         } else { html += `<div class="text-muted small mt-1">Select a time</div>`; }
         html += `</div>`;
     }
@@ -271,7 +271,7 @@ function updateSummary() {
             });
             if(found) {
                 const displayName = found.first_name + (found.last_name ? ' ' + found.last_name : '');
-                sName = `<span class="text-primary small"><i class="fas fa-user-circle me-1"></i>${found.first_name}</span>`;
+                sName = `<span class="small" style="color: #c29076;"><i class="fas fa-user-circle me-1"></i>${found.first_name}</span>`;
             }
         }
 
@@ -301,7 +301,7 @@ function updateSummary() {
                         <a href="javascript:void(0)" class="text-danger text-decoration-none fw-bold small edit-action-btn" data-action="delete" data-service-id="${sid}" title="Delete this service" style="cursor: pointer;">
                             <i class="fas fa-trash-alt me-1"></i> Delete
                         </a>
-                        <a href="javascript:void(0)" class="text-primary text-decoration-none fw-bold small edit-action-btn" data-action="staff" data-service-id="${sid}" title="Change staff" style="cursor: pointer;">
+                        <a href="javascript:void(0)" class="text-decoration-none fw-bold small edit-action-btn" data-action="staff" data-service-id="${sid}" title="Change staff" style="cursor: pointer; color: #c29076;">
                             <i class="fas fa-user-edit me-1"></i> Staff
                         </a>
                     </div>
@@ -364,7 +364,7 @@ function changeMonth(dir) {
 
 function loadTimeSlots() {
     const container = $('#time-slots');
-    container.html('<div class="text-center py-3"><div class="spinner-border text-primary" role="status"></div></div>');
+    container.html('<div class="text-center py-3"><div class="spinner-border" role="status" style="color: #c29076;"></div></div>');
     let totalDuration = 0;
     const serviceData = window.allServicesData || {};
     selectedServices.forEach(id => { if(serviceData[id]) totalDuration += parseInt(serviceData[id].duration); });
@@ -790,8 +790,8 @@ function updateStaffHeader() {
         }
     });
     if(uStaff.length===0) { disp.text("No Preference / Any Staff"); icon.html('<i class="fas fa-users text-muted"></i>'); }
-    else if(uStaff.length===1) { disp.text(uStaff[0]); icon.html('<i class="fas fa-user text-primary"></i>'); }
-    else { disp.text(`Multiple Staff (${uStaff.join(", ")})`); icon.html('<div class="d-flex"><i class="fas fa-user text-primary"></i><i class="fas fa-user text-success ms-n1"></i></div>'); }
+    else if(uStaff.length===1) { disp.text(uStaff[0]); icon.html('<i class="fas fa-user" style="color: #c29076;"></i>'); }
+    else { disp.text(`Multiple Staff (${uStaff.join(", ")})`); icon.html('<div class="d-flex"><i class="fas fa-user" style="color: #c29076;"></i><i class="fas fa-user text-success ms-n1"></i></div>'); }
 }
 
 function validateCurrentStep() {
