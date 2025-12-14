@@ -15,7 +15,24 @@
     --text-light: #8a8a95;          
     --border-color: #e6d9d2;        
     --bg-gradient: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
+
+    /* Booking palette (aligned to site theme) */
+    --booking-primary-beige: #f5f1e8;
+    --booking-secondary-beige: #e8dcc6;
+    --booking-accent: #c29076;           /* use site primary instead of pure gold */
+    --booking-accent-dark: #a87b65;
+    --booking-warm-brown: #8b5a48;
+    --booking-text-dark: #2c1810;
+    --booking-text-light: #6b5b73;
+    --booking-shadow-soft: 0 4px 20px rgba(194, 144, 118, 0.15);
+    --booking-shadow-medium: 0 8px 30px rgba(139, 69, 19, 0.18);
+
+        /* 🔥 NEW – used in booking.php */
+        --warm-brown: var(--primary-color);
+        --secondary-beige: #f6e5da;
+        --accent-gold: #d4af37;
 }
+
 
 /* ========== GLOBAL RESET ========== */
 * {
@@ -26,14 +43,22 @@
 }
 
 body {
-    height: 100vh;
-    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;  /* Changed to flex to center auth-container */
     justify-content: center;
     align-items: center;
     background: var(--bg-gradient);
-    overflow: hidden;
+    overflow-x: hidden; /* Prevents side-scrolling issues */
+    overflow-y: auto;   /* Allows vertical scrolling */
 }
 
+img {
+    max-width: 100%;
+    display: block;
+}
 
 /* ========== FLOATING BUTTONS (Staff & Admin) ========== */
 .floating-btn-group {
@@ -125,13 +150,14 @@ body {
 .auth-container {
     display: flex;
     width: 900px;
-    height: 600px;
+    min-height: 600px;
+    max-height: 90vh;
     background: white;
     border-radius: 25px;
     overflow: hidden;
     box-shadow: 0 18px 50px rgba(200,150,130,0.35);
     position: relative;
-    margin: auto;
+    margin: 20px auto;
 }
 
 /* Sidebar */
@@ -215,17 +241,28 @@ body {
     padding: 50px;
     position: relative;
     background: #fff;
-    height: 100%; /* FORCE FULL HEIGHT */
+    min-height: 100%; /* FORCE FULL HEIGHT */
     display: flex; /* Add flex to center content vertically if needed */
     flex-direction: column;
-    justify-content: center; /* Centers the form vertically */
+    justify-content: center; /* Center content vertically */
+    align-items: center; /* Center content horizontally */
+}
+
+/* Center the form content */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto; /* Center horizontally */
 }
 
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .auth-form { animation: fadeIn 0.5s ease; }
 
-.form-header { text-align: center; margin-bottom: 30px; }
+.form-header { text-align: center; margin-bottom: 25px; margin-top: 0; }
 .form-header h1 { color: var(--primary-color); font-size: 32px; margin-bottom: 5px; }
 .form-header p { color: var(--text-light); font-size: 14px; }
 
@@ -250,14 +287,48 @@ body {
 }
 
 .step {
-    width: 35px; height: 35px; background: white;
-    border: 2px solid var(--border-color); border-radius: 50%;
-    display: flex; justify-content: center; align-items: center;
-    color: var(--text-light); font-weight: bold; z-index: 1; transition: 0.3s;
+    width: 35px; 
+    height: 35px; 
+    background: white;
+    border: 2px solid var(--border-color); 
+    border-radius: 50%;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    color: var(--text-light); 
+    font-weight: bold; 
+    z-index: 1; 
+    transition: 0.3s;
+    position: relative;
 }
 
-.step.step-active { border-color: var(--primary-color); color: var(--primary-color); }
-.step.step-done { background: var(--success-color); border-color: var(--success-color); color: white; }
+.step .step-number {
+    display: block;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.step.step-active { 
+    border-color: var(--primary-color); 
+    color: var(--primary-color); 
+}
+.step.step-active .step-number { 
+    color: var(--primary-color); 
+}
+.step.step-done { 
+    background: var(--success-color); 
+    border-color: var(--success-color); 
+    color: white; 
+}
+.step.step-done .step-number { 
+    color: white; 
+}
 
 /* ========== INPUTS & FORMS ========== */
 .form-step { display: none; }
@@ -589,4 +660,1160 @@ body {
     /* Fix scrolling behavior */
     background-repeat: no-repeat;
     background-attachment: fixed;
+}
+
+/* --- PROFILE PANEL (SIDEBAR) --- */
+.profile-panel {
+    position: fixed;
+    top: 90px; /* Distance from the top of the screen */
+    right: 40px; /* Distance from the right edge */
+    width: 280px; /* Fixed width */
+    max-height: calc(100vh - 120px); /* Maximum height: viewport minus top margin and padding */
+    height: auto; /* Fits the content height up to max-height */
+    
+    background: #ffffff;
+    border-radius: 20px; /* Rounded corners */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15); /* Soft shadow */
+    z-index: 2000;
+    
+    /* ANIMATION SETTINGS (Hidden by default) */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-20px); /* Starts slightly higher */
+    transition: all 0.3s ease;
+    pointer-events: none; /* Prevent interaction when hidden */
+    
+    /* Padding inside the white box */
+    padding: 20px;
+    box-sizing: border-box;
+    
+    /* Overflow handling */
+    overflow-y: auto; /* Enable scrolling if content exceeds max-height */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Class added by JS to show the panel */
+.profile-panel.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0); /* Slides down into place */
+    pointer-events: auto; /* Enable interaction when visible */
+}
+
+/* Hover support - show panel when hovering over profile button */
+.profile-btn:hover + .profile-panel,
+.profile-btn:hover ~ .profile-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Keep panel visible when hovering over it */
+.profile-panel:hover {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+/* Close Button */
+.panel-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    color: #555;
+}
+
+/* Menu Links */
+.panel-menu {
+    list-style: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.panel-menu li {
+    margin: 15px 0;
+}
+
+.panel-menu a {
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+    display: block;
+    transition: 0.2s;
+}
+
+.panel-menu a:hover {
+    color: #C19A83; /* Your theme color */
+    transform: translateX(5px);
+}
+
+/* Panel Header */
+.panel-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    gap: 15px;
+}
+
+.avatar-circle {
+    width: 50px;
+    height: 50px;
+    background-color: #c29076;
+    color: #ffffff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 50px;
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #e6d9d2;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.user-details h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #5c4e4b;
+}
+
+.user-role-badge {
+    font-size: 12px;
+    color: #8a8a95;
+    background: #f5f5f5;
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: inline-block;
+    margin-top: 4px;
+}
+
+/* Panel Divider */
+.panel-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 20px 0;
+}
+
+/* Logout Link */
+.panel-logout {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: #d9534f;
+    padding: 10px 5px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.panel-logout:hover {
+    background-color: #fff5f5;
+    color: #c9302c;
+}
+
+.logout-img {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    object-fit: contain;
+    filter: invert(49%) sepia(19%) saturate(1996%) hue-rotate(314deg) brightness(91%) contrast(88%);
+    transition: transform 0.2s ease;
+}
+
+.panel-logout:hover .logout-img {
+    transform: translateX(-3px);
+}
+
+/* ==========================
+   GLOBAL BOOKING LAYOUT
+========================== */
+
+.booking-page-bg { 
+    background: #f5eee6; /* warm beige */ 
+    min-height: calc(100vh - 80px); 
+    padding: 20px 0 0; margin-bottom: 0 !important;
+     padding-bottom: 0 !important;
+     background-repeat: no-repeat;
+     background-attachment: fixed; 
+    }
+
+.booking-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Row layout for side-by-side */
+.booking-container .row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: flex-start !important;
+    gap: 30px !important;
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Left column (calendar section with stepper) */
+.booking-container .row .col-lg-8 {
+    flex: 0 0 65% !important;
+    max-width: 65% !important;
+    width: 65% !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    box-sizing: border-box !important;
+}
+
+/* Right column (booking summary) */
+.booking-container .row .col-lg-4 {
+    flex: 0 0 35% !important;
+    max-width: 35% !important;
+    width: 35% !important;
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+    box-sizing: border-box !important;
+    position: relative;
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* LEFT SIDE (steps: calendar / services / staff / customer info) */
+.booking-left {
+    flex: 0 0 65%;
+}
+
+.booking-right {
+    flex: 0 0 35%;
+    position: sticky;
+    top: 110px;
+}
+
+/* ===== NAV BUTTONS ===== */ 
+#prev-btn, #next-btn { 
+    border-radius: 999px; 
+    padding: 12px 30px; 
+    font-weight: 600; 
+    border: none; 
+    background: #c79b19; 
+    color: #fff; 
+    margin-left: auto; 
+    margin-right: 0; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+} 
+
+#next-btn i { 
+    font-size: 14px; 
+} 
+
+#next-btn:hover { 
+    background: #b48816; 
+} 
+
+#prev-btn { 
+    border-radius: 999px; 
+    padding: 12px 30px; 
+    font-weight: 600; 
+    background: #f0ddc5; 
+    color: #3b2e26;
+    margin-right: auto; 
+    margin-left: 0; 
+} 
+
+#prev-btn:hover { 
+    background: #e4cfb3; 
+} 
+
+
+/* ==========================
+   STEPPER
+========================== */
+
+.stepper-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    margin-bottom: 40px;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #6e5a52;
+}
+
+.step-number {
+    width: 42px;
+    height: 42px;
+    background: #e3d5c7;
+    color: #6e5a52;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+.step.active .step-number {
+    background: #c29076;
+    color: white;
+}
+
+/* Stepper inside col-lg-8 (with calendar section) */
+.col-lg-8 .step-indicator {
+    display: flex !important;
+    gap: 40px;
+    align-items: center;
+    justify-content: center;
+    width: 100% !important;
+    margin-bottom: 30px !important;
+    margin-top: 0 !important;
+    padding: 20px 0 !important;
+    padding-bottom: 0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 100 !important;
+    background: transparent !important;
+}
+
+.booking-page-bg .step-indicator, .booking-page-bg .stepper {
+    display: flex !important; 
+    gap: 40px; 
+    align-items: center; 
+    justify-content: center; 
+    width: 100% !important; 
+    flex-wrap: nowrap;
+    padding: 0 20px !important;
+    visibility: visible !important; 
+    opacity: 1 !important; 
+    position: relative !important; 
+    z-index: 100 !important; 
+    margin: 0 !important; 
+    background: transparent !important; 
+}
+
+.booking-page-bg .step, .booking-page-bg .step-indicator .step { 
+    background: transparent; 
+    border: none; 
+    padding: 0; 
+    box-shadow: none; 
+    display: flex; 
+    align-items: center; 
+    gap: 12px; 
+    color: #7a6c64; 
+    font-size: 16px; 
+    font-weight: 600; 
+    white-space: nowrap; 
+    flex-shrink: 0; 
+    min-width: fit-content; 
+} 
+.booking-page-bg .step span { 
+    display: inline-block; 
+    white-space: nowrap;
+    min-width: fit-content;
+} 
+.booking-page-bg .step-number { 
+    width: 42px; 
+    height: 42px; 
+    flex: 0 0 42px; 
+    border-radius: 50%; 
+    background: #c79b19;
+     color: #fff; 
+     font-weight: 700; 
+     display: flex; 
+     align-items: center; 
+     justify-content: center; 
+     font-size: 18px; 
+     line-height: 1; 
+} 
+    .booking-page-bg .step:not(.active):not(.completed) .step-number { 
+        background: #e6d9c8; color: #7a6c64; 
+} 
+.booking-page-bg .step.active { 
+    color: #2f2721; 
+} 
+.booking-page-bg .step.active .step-number, .booking-page-bg .step.completed .step-number {
+    background: #c79b19; color: #fff; }
+
+/* ==========================
+   STEPS SYSTEM
+========================== */
+
+.booking-step {
+    display: none;
+}
+
+.booking-step.active {
+    display: block;
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+
+/* ==========================
+   CARD BLOCKS
+========================== */
+
+.booking-card {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    margin-bottom: 25px;
+}
+
+.booking-card h3 {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #3b2c24;
+}
+
+.booking-step .card { 
+    border-radius: 22px; 
+    border: none; 
+    padding: 28px 30px; 
+    background: #fff; 
+    box-shadow: 0 22px 40px rgba(0,0,0,0.06); 
+}
+
+.booking-step .card-header { 
+    padding: 0 0 18px 0; 
+    margin-bottom: 18px; 
+    border: none; 
+    background: transparent; 
+} 
+
+.booking-step .card-header h4 {
+     font-size: 24px; 
+     font-weight: 700; 
+     margin-bottom: 4px; 
+     color: #2d2620; 
+} 
+
+    .booking-step .card-header p { 
+        font-size: 14px; 
+        color: #867c73; 
+        margin-bottom: 0; 
+} 
+    
+    .booking-step .card-body { 
+        padding: 0; 
+}
+/* ==========================
+   CALENDAR (Step 1)
+========================== */
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 14px;
+    margin-top: 20px;
+}
+
+.calendar-date {
+    padding: 10px 0;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: 0.25s;
+    font-weight: 600;
+    color: #4c3a34;
+}
+
+.calendar-date:hover {
+    background: #ead8c8;
+}
+
+.calendar-date.selected {
+    background: #c29076;
+    color: white;
+}
+
+.calendar-date.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* ==========================
+   TIME SLOTS
+========================== */
+
+#time-slots { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 10px; 
+    margin-top: 15px; 
+    min-height: 100px; 
+} 
+
+#time-slots:empty::before { 
+    content: "Select a date to see available time slots"; 
+    color: #9e9690; 
+    font-size: 14px; 
+    grid-column: 1 / -1; 
+    text-align: center; 
+    padding: 20px; 
+} 
+
+.time-slot { 
+    border-radius: 8px; 
+    padding: 10px 12px; 
+    border: 1px solid #ded6cf; 
+    background: #ffffff; 
+    font-size: 14px; 
+    font-weight: 500; 
+    color: #2f2721; 
+    cursor: pointer; 
+    text-align: center; 
+    transition: all 0.2s ease; 
+    min-width: 80px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    user-select: none; -webkit-user-select: none; 
+} 
+
+.time-slot:hover:not(.disabled) {
+    border-color: #c79b19; 
+    background: #fffaf1; 
+    transform: translateY(-1px); 
+} 
+
+.time-slot.selected { 
+    background: #c79b19; 
+    color: #fff; 
+    border-color: #c79b19; 
+    font-weight: 600; 
+} 
+
+.time-slot.disabled { 
+    background: #f5f3f0 !important; 
+    color: #b8b0a8 !important; 
+    border: 1px dashed #d0c8c0 !important; 
+    cursor: not-allowed !important; 
+    opacity: 0.7; pointer-events: none; 
+} 
+
+.time-slot.disabled:hover { 
+    transform: none; 
+    border-color: #d0c8c0; 
+    background: #f5f3f0; } 
+    
+#closing-warning { 
+    border-radius: 12px; 
+    background: #fff5db; 
+    border: 1px solid #f3e0a6; 
+}
+/* ==========================
+   SERVICES (Step 2)
+========================== */
+
+.service-card {
+    border-radius: 15px;
+    padding: 18px;
+    border: 1px solid #eee;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.service-card:hover {
+    border-color: #c79b19;
+}
+
+.service-card.selected {
+    background: #c79b19;
+    color: white;
+    border-color: #c79b19;
+}
+
+
+/* ==========================
+   STAFF (Step 3)
+========================== */
+
+.staff-card {
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    cursor: pointer;
+}
+
+.staff-card:hover {
+    border-color: #c79b19;
+}
+
+.staff-card.selected {
+    border-color: #c79b19;
+    background: #fff7e8;
+}
+
+
+/* ==========================
+   SUMMARY (Right Column)
+========================== */
+.summary-box {
+    background: #fff7ee;
+    padding: 22px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.summary-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #3b2c24;
+    margin-bottom: 18px;
+}
+
+.summary-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #ecdccc;
+}
+
+.summary-total {
+    font-size: 18px;
+    font-weight: 700;
+    color: #c29076;
+    padding-top: 10px;
+}
+
+/* --- Columns Layout --- */
+.footer-left, 
+.footer-center, 
+.footer-right {
+    flex: 1; /* All columns take equal width */
+    min-width: 250px; /* Prevents them from getting too squashed */
+}
+
+/* --- Headings --- */
+.footer-brand-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: #d4a373; /* Gold/Bronze accent color */
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+.custom-footer h4 {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #d4a373;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+/* --- Text & Links --- */
+.custom-footer p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e0d0cc;
+    margin: 5px 0;
+}
+
+.footer-copyright {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 10px;
+}
+
+/* --- Logo --- */
+.footer-big-logo {
+    width: 180px; /* Increased size from 80px */
+    height: auto;
+    display: block;
+}
+
+/* --- Social Icons (Circles) --- */
+.footer-social-icons {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.footer-social-circle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 45px; /* Slightly larger circle */
+    height: 45px;
+    border-radius: 50%;
+    background-color: #5c4b45;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid #7c6a65;
+}
+
+.footer-social-circle img {
+    width: 22px; /* Size of the icon inside the circle */
+    height: 22px;
+    object-fit: contain;
+    transition: all 0.3s ease;
+}
+
+.footer-social-circle:hover {
+    background-color: #d4a373; /* Gold on hover */
+    transform: translateY(-3px); /* Slight lift effect */
+    border-color: #d4a373;
+}
+
+/* Change icon color on hover using a filter */
+.footer-social-circle:hover img {
+    filter: brightness(0.2); /* Darkens the icon on hover */
+}
+
+/* ================= RESPONSIVE (Mobile) ================= */
+@media (max-width: 768px) {
+    .custom-footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .footer-left, .footer-center, .footer-right {
+        margin-bottom: 30px;
+    }
+
+    /* Center the social icons on mobile */
+    .footer-social-icons {
+        justify-content: center;
+    }
+    
+    /* Center the logo on mobile */
+    .footer-big-logo {
+        margin: 0 auto 10px auto;
+    }
+}
+
+/* =========================================
+   NEW BOOKING PAGE STYLES
+   ========================================= */
+:root {
+    --primary-beige: #F5F1E8;
+    --secondary-beige: #E8DCC6;
+    --accent-gold: #D4AF37;
+    --dark-gold: #B8941F;
+    --warm-brown: #8B4513;
+    --light-brown: #D2B48C;
+    --text-dark: #2C1810;
+    --text-light: #6B5B73;
+    --shadow-soft: 0 4px 20px rgba(212, 175, 55, 0.1);
+    --shadow-medium: 0 8px 30px rgba(139, 69, 19, 0.15);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--primary-beige);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* =========================================
+   1. NAVBAR & FOOTER
+   ========================================= */
+.navbar {
+    background: linear-gradient(135deg, var(--secondary-beige), var(--primary-beige));
+    box-shadow: var(--shadow-soft);
+    padding: 1rem 0;
+}
+.navbar-brand {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    color: var(--warm-brown) !important;
+}
+.nav-link {
+    color: #6b5043 !important;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+.nav-link:hover {
+    color: #c29076 !important;
+}
+
+.footer {
+    background-color: var(--warm-brown);
+    color: white;
+    padding: 2rem 0;
+    margin-top: 4rem;
+}
+
+/* =========================================
+   2. BUTTONS & UI ELEMENTS
+   ========================================= */
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-gold), var(--dark-gold));
+    border: none;
+    border-radius: 25px;
+    padding: 12px 30px;
+    font-weight: 600;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    background: linear-gradient(135deg, var(--dark-gold), var(--accent-gold));
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--light-brown), var(--secondary-beige));
+    border: none;
+    border-radius: 25px;
+    color: var(--text-dark);
+    padding: 12px 30px;
+    font-weight: 600;
+    box-shadow: var(--shadow-soft);
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-medium);
+    background: linear-gradient(135deg, var(--secondary-beige), var(--light-brown));
+}
+
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: var(--shadow-soft);
+    background: linear-gradient(135deg, white, #FFF8F0);
+    margin-top: 2rem;
+}
+.card-header {
+    background: transparent;
+    border-bottom: none;
+    padding: 1.5rem 1.5rem 0.5rem;
+}
+.card-header h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--warm-brown);
+    font-weight: 700;
+}
+
+.form-control {
+    border-radius: 10px;
+    border: 2px solid var(--secondary-beige);
+    padding: 12px 15px;
+}
+.form-control:focus {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25);
+}
+.form-label {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+}
+
+/* =========================================
+   3. BOOKING - SERVICES (STEP 1)
+   ========================================= */
+.service-card, .staff-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.service-card:hover, .staff-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+
+.service-card.selected {
+    border: 3px solid var(--accent-gold);
+    background: linear-gradient(135deg, var(--accent-gold), var(--dark-gold));
+    color: white;
+}
+
+.service-card.selected .text-muted, 
+.service-card.selected .card-title,
+.service-card.selected .card-text {
+    color: #fff !important;
+}
+
+.service-variant-select {
+    background-color: #f8f9fa;
+    border: 1px solid var(--secondary-beige);
+    color: var(--text-dark);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.price-badge {
+    font-size: 0.9em;
+    font-weight: bold;
+    color: var(--accent-gold) !important;
+}
+
+/* =========================================
+   4. BOOKING - CALENDAR (STEP 3)
+   ========================================= */
+.calendar-wrapper {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: var(--shadow-soft);
+    border: 2px solid var(--secondary-beige);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    font-weight: bold;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.calendar-date {
+    height: 40px;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; /* CIRCLE SHAPE */
+    cursor: pointer;
+    margin: 0 auto;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.calendar-date:hover:not(.disabled) {
+    background-color: var(--secondary-beige);
+}
+
+.calendar-date.selected {
+    background-color: var(--warm-brown);
+    color: white;
+    font-weight: bold;
+}
+
+.calendar-date.disabled {
+    color: #ccc;
+    cursor: not-allowed;
+}
+
+.calendar-date.today {
+    border: 2px solid var(--accent-gold);
+}
+
+/* =========================================
+   5. BOOKING - TIME SLOTS
+   ========================================= */
+.time-slot {
+    cursor: pointer;
+    padding: 10px 15px;
+    border: 2px solid var(--secondary-beige);
+    border-radius: 10px;
+    margin: 5px;
+    transition: all 0.3s ease;
+    display: inline-block;
+    background: white;
+}
+
+.time-slot:hover {
+    border-color: var(--accent-gold);
+    background-color: var(--accent-gold);
+    color: white;
+}
+
+.time-slot.selected {
+    background-color: var(--accent-gold);
+    border-color: var(--dark-gold);
+    color: white;
+}
+
+.time-slot.disabled {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.time-slot.duration-occupied {
+    background-color: #4a4a4a;
+    color: #dcdcdc;
+    border-color: #4a4a4a;
+    cursor: not-allowed;
+    opacity: 0.9;
+}
+
+.estimated-time-message {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-gold);
+}
+
+/* =========================================
+   6. BOOKING - SUMMARY SIDEBAR
+   ========================================= */
+.booking-summary {
+    background: linear-gradient(135deg, white, var(--primary-beige));
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: var(--shadow-soft);
+    position: sticky;
+    top: 100px;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+}
+
+.summary-list {
+    flex-grow: 1;
+}
+
+.summary-item {
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.summary-left {
+    flex-grow: 1;
+    padding-right: 15px;
+}
+
+.summary-right {
+    white-space: nowrap;
+    font-weight: bold;
+    text-align: right;
+}
+
+.action-icon {
+    color: #6c757d;
+    cursor: pointer;
+    margin-left: 8px;
+    font-size: 0.9em;
+    transition: color 0.2s;
+}
+.action-icon:hover { color: var(--accent-gold); }
+.action-icon.delete:hover { color: #dc3545; }
+
+.staff-selector-header {
+    border: 2px solid var(--secondary-beige);
+    border-radius: 25px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    background: white;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+/* =========================================
+   7. STEP INDICATORS
+   ========================================= */
+.step-indicator {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 3rem;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    margin: 0 1rem;
+    opacity: 0.5;
+}
+
+.step.active { opacity: 1; }
+.step.completed { opacity: 1; color: var(--accent-gold); }
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--secondary-beige);
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 0.5rem;
+}
+
+.step.active .step-number {
+    background-color: var(--accent-gold);
+    color: white;
+}
+
+.step.completed .step-number {
+    background-color: var(--dark-gold);
+    color: white;
+}
+
+/* =========================================
+   8. MISC
+   ========================================= */
+.hero-section {
+    background: linear-gradient(135deg, var(--secondary-beige), var(--primary-beige));
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: var(--warm-brown);
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .hero-title { font-size: 2.5rem; }
+    .booking-summary { position: static; margin-top: 2rem; }
 }

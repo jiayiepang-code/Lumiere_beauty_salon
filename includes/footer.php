@@ -1,7 +1,11 @@
+<?php
+// Determine asset base path (same logic as header.php)
+$assetBase = (strpos($_SERVER['SCRIPT_NAME'], '/user/') !== false) ? '../' : '';
+?>
 <footer class="custom-footer">
 
     <div class="footer-left">
-        <img src="../images/16.png" class="footer-big-logo" alt="Lumière Beauty Salon Logo">
+        <img src="<?php echo $assetBase; ?>images/16.png" class="footer-big-logo" alt="Lumière Beauty Salon Logo">
         <h2 class="footer-brand-name">Lumière Beauty Salon</h2>
         <br><br>
         <p class="footer-copyright">
@@ -30,13 +34,13 @@
         <h4 style="margin-top:18px;">Follow Us</h4>
         <div class="footer-social-icons">
             <a href="#" class="footer-social-circle">
-                <img src="../images/77.png" alt="Instagram">
+                <img src="<?php echo $assetBase; ?>images/77.png" alt="Instagram">
             </a>
             <a href="#" class="footer-social-circle">
-                <img src="../images/76.png" alt="Facebook">
+                <img src="<?php echo $assetBase; ?>images/76.png" alt="Facebook">
             </a>
             <a href="#" class="footer-social-circle">
-                <img src="../images/78.png" alt="TikTok">
+                <img src="<?php echo $assetBase; ?>images/78.png" alt="TikTok">
             </a>
         </div>
     </div>

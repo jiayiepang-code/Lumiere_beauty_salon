@@ -190,14 +190,15 @@ body {
     height: 100%; /* FORCE FULL HEIGHT */
     display: flex; /* Add flex to center content vertically if needed */
     flex-direction: column;
-    justify-content: center; /* Centers the form vertically */
+    justify-content: flex-start; /* Changed from center to flex-start */
+    padding-top: 50px; /* Reduced top padding */
 }
 
 /* Animations */
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 .auth-form { animation: fadeIn 0.5s ease; }
 
-.form-header { text-align: center; margin-bottom: 30px; }
+.form-header { text-align: center; margin-bottom: 25px; margin-top: 0; }
 .form-header h1 { color: var(--primary-color); font-size: 32px; margin-bottom: 5px; }
 .form-header p { color: var(--text-light); font-size: 14px; }
 
@@ -222,14 +223,48 @@ body {
 }
 
 .step {
-    width: 35px; height: 35px; background: white;
-    border: 2px solid var(--border-color); border-radius: 50%;
-    display: flex; justify-content: center; align-items: center;
-    color: var(--text-light); font-weight: bold; z-index: 1; transition: 0.3s;
+    width: 35px; 
+    height: 35px; 
+    background: white;
+    border: 2px solid var(--border-color); 
+    border-radius: 50%;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    color: var(--text-light); 
+    font-weight: bold; 
+    z-index: 1; 
+    transition: 0.3s;
+    position: relative;
 }
 
-.step.step-active { border-color: var(--primary-color); color: var(--primary-color); }
-.step.step-done { background: var(--success-color); border-color: var(--success-color); color: white; }
+.step .step-number {
+    display: block;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.step.step-active { 
+    border-color: var(--primary-color); 
+    color: var(--primary-color); 
+}
+.step.step-active .step-number { 
+    color: var(--primary-color); 
+}
+.step.step-done { 
+    background: var(--success-color); 
+    border-color: var(--success-color); 
+    color: white; 
+}
+.step.step-done .step-number { 
+    color: white; 
+}
 
 /* ========== INPUTS & FORMS ========== */
 .form-step { display: none; }

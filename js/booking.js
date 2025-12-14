@@ -26,8 +26,50 @@ const roleKeywords = {
 };
 
 $(document).ready(function() {
+    // Ensure step 1 is visible and active
+    $('.booking-step').removeClass('show-step');
+    $('#step-1').addClass('show-step');
+    currentStep = 1;
     updateStepIndicator();
-    renderCalendar(); 
+    updateNavigationButtons();
+    renderCalendar();
+    
+    // Add event delegation for edit pencil icons
+    $(document).on('click', '.edit-service-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const serviceId = $(this).data('service-id') || $(this).attr('data-service-id');
+        if(serviceId) {
+            toggleEditMode(String(serviceId));
+        }
+    });
+    
+    // Add event delegation for edit action buttons (Delete, Staff, Close)
+    $(document).on('click', '.edit-action-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const action = $(this).data('action') || $(this).attr('data-action');
+        const serviceId = $(this).data('service-id') || $(this).attr('data-service-id');
+        
+        if (!serviceId) {
+            console.error('Service ID not found for edit action:', action);
+            return;
+        }
+        
+        const serviceIdStr = String(serviceId);
+        
+        if (action === 'delete') {
+            removeService(serviceIdStr);
+        } else if (action === 'staff') {
+            toggleEditMode(serviceIdStr);
+            // Small delay to ensure edit mode closes before modal opens
+            setTimeout(function() {
+                openStaffModal(serviceIdStr);
+            }, 100);
+        } else if (action === 'close') {
+            toggleEditMode(serviceIdStr);
+        }
+    }); 
     
     // CLICK HANDLER
     $('.service-card').click(function(e) {
@@ -48,12 +90,20 @@ $(document).ready(function() {
             serviceId = $(this).data('service-id');
         }
 
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:93',message:'Service selection clicked',data:{serviceId:serviceId,serviceIdType:typeof serviceId,dataAttr:$(this).data('service-id'),isSelected:$(this).hasClass('selected')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
+        
         if($(this).hasClass('selected')) {
             removeService(serviceId); 
         } else {
             $(this).addClass('selected');
             selectedServices.push(serviceId);
-            selectedStaff[serviceId] = 0; 
+            selectedStaff[serviceId] = 0;
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:105',message:'Service added to selection',data:{serviceId:serviceId,selectedServicesLength:selectedServices.length,lastAdded:selectedServices[selectedServices.length-1],allSelected:selectedServices},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion 
             updateSummary();
             if(selectedDate) loadTimeSlots(); 
         }
@@ -74,7 +124,7 @@ $(document).ready(function() {
     $('#prev-btn').click(prevStep);
 });
 
-// --- SMART STAFF FILTER (FIXED FOR HAND SCRUB) ---
+// --- SMART STAFF FILTER (CATEGORY-BASED) ---
 function getRolesForService(categoryName, serviceName) {
     const cat = (categoryName || '').toLowerCase();
     const svc = (serviceName || '').toLowerCase();
@@ -85,11 +135,29 @@ function getRolesForService(categoryName, serviceName) {
         return ['nail_technician'];
     }
 
+    // Category-based mapping (strict matching)
+    const categoryRoleMap = {
+        'facial': ['beautician'],
+        'massage': ['massage_therapist'],
+        'haircut': ['hair_stylist'],
+        'hair': ['hair_stylist'],
+        'manicure': ['nail_technician'],
+        'nail': ['nail_technician']
+    };
+
+    // First, check category mapping (strict)
+    if (categoryRoleMap[cat]) {
+        return categoryRoleMap[cat];
+    }
+
+    // Fallback to keyword matching if category doesn't match
     let allowedRoles = [];
     for (const [role, keywords] of Object.entries(roleKeywords)) {
         if (keywords.some(k => combined.includes(k))) allowedRoles.push(role);
     }
-    return allowedRoles.length === 0 ? Object.keys(roleKeywords) : allowedRoles;
+    
+    // Only return matched roles, don't show all if no match
+    return allowedRoles;
 }
 
 function updateCardPrice(selectElement) {
@@ -103,6 +171,16 @@ function updateCardPrice(selectElement) {
 }
 
 function removeService(serviceId) {
+    // Close edit mode if open
+    const editMode = $(`#edit-mode-${serviceId}`);
+    const viewMode = $(`#view-mode-${serviceId}`);
+    if(editMode.length > 0 && !editMode.hasClass('d-none')) {
+        editMode.addClass('d-none').removeClass('d-flex');
+        if(viewMode.length > 0) {
+            viewMode.removeClass('d-none');
+        }
+    }
+    
     selectedServices = selectedServices.filter(id => id != serviceId);
     delete selectedStaff[serviceId];
     
@@ -119,12 +197,24 @@ function removeService(serviceId) {
 }
 
 function toggleEditMode(serviceId) {
-    const viewMode = $(`#view-mode-${serviceId}`);
-    const editMode = $(`#edit-mode-${serviceId}`);
+    const serviceIdStr = String(serviceId);
+    const viewMode = $(`#view-mode-${serviceIdStr}`);
+    const editMode = $(`#edit-mode-${serviceIdStr}`);
+    
+    if (viewMode.length === 0 || editMode.length === 0) {
+        console.error('Edit mode elements not found for service:', serviceIdStr);
+        console.log('View mode element:', viewMode.length, 'Edit mode element:', editMode.length);
+        return;
+    }
+    
     if (viewMode.hasClass('d-none')) {
-        viewMode.removeClass('d-none'); editMode.addClass('d-none');
+        // Show view mode, hide edit mode
+        viewMode.removeClass('d-none');
+        editMode.addClass('d-none').removeClass('d-flex');
     } else {
-        viewMode.addClass('d-none'); editMode.removeClass('d-none').addClass('d-flex');
+        // Hide view mode, show edit mode
+        viewMode.addClass('d-none');
+        editMode.removeClass('d-none').addClass('d-flex');
     }
 }
 
@@ -166,10 +256,23 @@ function updateSummary() {
 
         const stid = selectedStaff[sid] || 0;
         let sName = '<span class="text-muted small">No Preference</span>';
-        if(stid > 0 && window.staffData) {
+        if(stid != 0 && stid != '0' && window.staffData) {
             const all = Object.values(window.staffData).flat();
-            const found = all.find(st => st.staff_id == stid);
-            if(found) sName = `<span class="text-primary small"><i class="fas fa-user-circle me-1"></i>${found.first_name}</span>`;
+            // Match by both staff_id and staff_email (since staff_id is actually email)
+            const found = all.find(st => {
+                if(!st) return false;
+                const staffIdStr = String(st.staff_id || '');
+                const staffEmailStr = String(st.staff_email || '');
+                const selectedIdStr = String(stid || '');
+                return staffIdStr === selectedIdStr || 
+                       staffEmailStr === selectedIdStr ||
+                       staffIdStr.toLowerCase() === selectedIdStr.toLowerCase() ||
+                       staffEmailStr.toLowerCase() === selectedIdStr.toLowerCase();
+            });
+            if(found) {
+                const displayName = found.first_name + (found.last_name ? ' ' + found.last_name : '');
+                sName = `<span class="text-primary small"><i class="fas fa-user-circle me-1"></i>${found.first_name}</span>`;
+            }
         }
 
         // GRID LAYOUT FOR ALIGNMENT
@@ -180,7 +283,9 @@ function updateSummary() {
                         <div class="col-8">
                             <div class="d-flex align-items-center mb-1">
                                 <span class="fw-bold text-dark me-2">${idx+1}. ${s.name}</span>
-                                <a href="javascript:void(0)" onclick="toggleEditMode(${sid})" class="text-secondary" title="Edit"><i class="fas fa-pen small" style="font-size: 0.8em;"></i></a>
+                                <a href="javascript:void(0)" class="text-secondary edit-service-btn" data-service-id="${sid}" title="Edit service" style="cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all 0.2s;">
+                                    <i class="fas fa-pen small" style="font-size: 0.8em;"></i>
+                                </a>
                             </div>
                             <div class="mb-1">${sName}</div>
                             <div>${timeDisplay}</div>
@@ -191,24 +296,27 @@ function updateSummary() {
                     </div>
                 </div>
 
-                <div id="edit-mode-${sid}" class="d-none align-items-center justify-content-between w-100 bg-light p-2 rounded mt-1">
+                <div id="edit-mode-${sid}" class="d-none d-flex align-items-center justify-content-between w-100 bg-light p-2 rounded mt-1">
                     <div class="d-flex gap-3">
-                        <a href="javascript:void(0)" onclick="removeService(${sid})" class="text-danger text-decoration-none fw-bold small"><i class="fas fa-trash-alt me-1"></i> Delete</a>
-                        <a href="javascript:void(0)" onclick="openStaffModal(${sid})" class="text-primary text-decoration-none fw-bold small"><i class="fas fa-user-edit me-1"></i> Staff</a>
+                        <a href="javascript:void(0)" class="text-danger text-decoration-none fw-bold small edit-action-btn" data-action="delete" data-service-id="${sid}" title="Delete this service" style="cursor: pointer;">
+                            <i class="fas fa-trash-alt me-1"></i> Delete
+                        </a>
+                        <a href="javascript:void(0)" class="text-primary text-decoration-none fw-bold small edit-action-btn" data-action="staff" data-service-id="${sid}" title="Change staff" style="cursor: pointer;">
+                            <i class="fas fa-user-edit me-1"></i> Staff
+                        </a>
                     </div>
-                    <a href="javascript:void(0)" onclick="toggleEditMode(${sid})" class="text-success" title="Done"><i class="fas fa-check-circle"></i></a>
+                    <a href="javascript:void(0)" class="text-success edit-action-btn" data-action="close" data-service-id="${sid}" title="Done editing" style="cursor: pointer;">
+                        <i class="fas fa-check-circle"></i>
+                    </a>
                 </div>
             </div>`;
         totalP += parseFloat(s.price);
     });
     html += '</div>';
 
-    const sst = totalP * 0.06;
     html += `
         <div class="mt-auto">
-            <div class="d-flex justify-content-between mb-1"><span>Subtotal:</span><span>RM ${totalP.toFixed(2)}</span></div>
-            <div class="d-flex justify-content-between mb-2"><span>SST (6%):</span><span>RM ${sst.toFixed(2)}</span></div>
-            <div class="d-flex justify-content-between border-top pt-3"><span class="h5">Total</span><span class="h5" style="color: var(--accent-gold);">RM ${(totalP+sst).toFixed(2)}</span></div>
+            <div class="d-flex justify-content-between border-top pt-3"><span class="h5">Total</span><span class="h5" style="color: var(--accent-gold);">RM ${totalP.toFixed(2)}</span></div>
         </div>`;
     
     container.html(html);
@@ -305,39 +413,370 @@ function loadStaffSelection() {
         const service = sData[sid]; if(!service) return;
         const curStaff = selectedStaff[sid] || 0;
         let sName = "No Preference"; let btnText = "Select Staff"; let style = "border: 2px solid var(--secondary-beige);";
-        if(curStaff != 0) {
+        if(curStaff != 0 && curStaff != '0') {
             btnText = "Change"; style = "border: 2px solid var(--accent-gold); background: rgba(212, 175, 55, 0.05);";
             const all = Object.values(staffData).flat();
-            const found = all.find(s => s.staff_id == curStaff);
-            if(found) sName = found.first_name + " " + found.last_name;
+            const found = all.find(s => {
+                if(!s) return false;
+                const staffIdStr = String(s.staff_id || '');
+                const staffEmailStr = String(s.staff_email || '');
+                const curStaffStr = String(curStaff || '');
+                return staffIdStr === curStaffStr || 
+                       staffEmailStr === curStaffStr ||
+                       staffIdStr.toLowerCase() === curStaffStr.toLowerCase() ||
+                       staffEmailStr.toLowerCase() === curStaffStr.toLowerCase();
+            });
+            if(found) sName = found.first_name + (found.last_name ? " " + found.last_name : "");
         }
-        container.append(`<div class="col-md-6 mb-3"><div class="card h-100 shadow-sm" style="cursor: pointer; ${style}" onclick="openStaffModal(${sid})"><div class="card-body d-flex justify-content-between align-items-center p-4"><div><h6 class="text-muted mb-1">${service.name}</h6><h5 class="mb-0 fw-bold" style="color: var(--warm-brown);"><i class="fas fa-user-check me-2"></i>${sName}</h5></div><div><span class="badge rounded-pill bg-light text-dark border">${btnText}</span></div></div></div></div>`);
+        // Use data attribute and event delegation for better reliability
+        const serviceId = typeof sid === 'string' ? `'${sid}'` : sid;
+        container.append(`
+            <div class="col-md-6 mb-3">
+                <div class="card h-100 shadow-sm staff-selection-card" 
+                     data-service-id="${sid}" 
+                     style="cursor: pointer; ${style}">
+                    <div class="card-body d-flex justify-content-between align-items-center" style="padding: 1rem 1.25rem; min-height: 100%; display: flex; align-items: center;">
+                        <div style="flex: 1;">
+                            <h6 class="text-muted mb-1" style="margin-bottom: 0.5rem;">${service.name}</h6>
+                            <h5 class="mb-0 fw-bold" style="color: var(--warm-brown); margin-bottom: 0;">
+                                <i class="fas fa-user-check me-2"></i>${sName}
+                            </h5>
+                        </div>
+                        <div>
+                            <span class="badge rounded-pill bg-light text-dark border">${btnText}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `);
+    });
+    
+    // Use event delegation for better reliability
+    $(document).off('click', '.staff-selection-card').on('click', '.staff-selection-card', function(e) {
+        e.stopPropagation();
+        const serviceId = $(this).data('service-id');
+        if(serviceId) {
+            openStaffModal(serviceId);
+        }
     });
 }
 
 function openStaffModal(sid) {
-    const sData = window.allServicesData; const staffData = window.staffData;
-    $('#modal-service-name').text(sData[sid].name);
-    const list = $('#modal-staff-list'); list.empty();
+    // Ensure sid is treated as the correct type
+    if(!sid) {
+        console.error('openStaffModal: No service ID provided');
+        return;
+    }
+    
+    // Close any open edit mode when opening staff modal
+    const editMode = $(`#edit-mode-${sid}`);
+    const viewMode = $(`#view-mode-${sid}`);
+    if(editMode.length > 0 && !editMode.hasClass('d-none')) {
+        editMode.addClass('d-none').removeClass('d-flex');
+        if(viewMode.length > 0) {
+            viewMode.removeClass('d-none');
+        }
+    }
+    
+    const sData = window.allServicesData; 
+    const staffData = window.staffData;
+    const staffServiceMap = window.staffServiceMap || {};
+    
+    // Check if service exists
+    if(!sData || !sData[sid]) {
+        console.error('openStaffModal: Service not found for ID:', sid);
+        alert('Service not found. Please refresh the page.');
+        return;
+    }
+    
+    const service = sData[sid];
+    $('#modal-service-name').text(service.name);
+    const list = $('#modal-staff-list'); 
+    list.empty();
+    
+    // Convert service ID to string for matching (staffServiceMap uses string keys)
+    const serviceIdStr = String(sid);
+    
+    // Get suggested staff emails for this service (check both string and number keys)
+    const suggestedStaffEmails = staffServiceMap[serviceIdStr] || staffServiceMap[sid] || [];
+    
+    // Add "No Preference" option
     const isNo = (selectedStaff[sid] == 0);
-    list.append(`<div class="d-flex justify-content-between p-3 border rounded mb-2 bg-light" onclick="selectStaff(${sid}, 0)" style="cursor: pointer; ${isNo ? 'border-color: var(--accent-gold) !important;' : ''}"><span class="fw-bold">No Preference</span><button class="btn btn-sm ${isNo ? 'btn-warning' : 'btn-outline-secondary'} rounded-pill">${isNo ? 'Selected' : 'Select'}</button></div>`);
-    const allowedRoles = getRolesForService(sData[sid].category, sData[sid].name);
+    list.append(`<div class="d-flex justify-content-between p-3 border rounded mb-2 bg-light staff-option" data-service-id="${sid}" data-staff-id="0" style="cursor: pointer; ${isNo ? 'border-color: var(--accent-gold) !important;' : ''}"><span class="fw-bold">No Preference</span><button class="btn btn-sm ${isNo ? 'btn-warning' : 'btn-outline-secondary'} rounded-pill staff-select-btn" data-service-id="${sid}" data-staff-id="0" onclick="event.stopPropagation(); selectStaff('${sid}', 0);">${isNo ? 'Selected' : 'Select'}</button></div>`);
+    
+    // Get allowed roles for this service (for role-based matching)
+    const allowedRoles = getRolesForService(service.category, service.name);
+    
+    // Service keywords for matching
+    const serviceText = (service.category + ' ' + service.name).toLowerCase();
+    const categoryLower = (service.category || '').toLowerCase();
+    
+    // Collect all matching staff with their suggested status
+    const staffList = [];
+    
+    // Service category to role keyword mapping
+    const categoryToRole = {
+        'facial': 'beautician',
+        'massage': 'massage_therapist',
+        'haircut': 'hair_stylist',
+        'hair': 'hair_stylist',
+        'manicure': 'nail_technician',
+        'nail': 'nail_technician'
+    };
+    
+    // Determine expected role keyword from category
+    const expectedRoleKeyword = categoryToRole[categoryLower] || allowedRoles[0];
+    
+    // Role keyword patterns for matching
+    const rolePatterns = {
+        'beautician': ['beaut', 'facial'],
+        'massage_therapist': ['massage'],
+        'hair_stylist': ['hair', 'stylist', 'cut'],
+        'nail_technician': ['nail', 'manicure']
+    };
+    
     if(staffData) {
+        // Get all staff from all roles
+        const allStaffMembers = [];
         Object.keys(staffData).forEach(dbRole => {
-            if (allowedRoles.includes(dbRole)) {
-                staffData[dbRole].forEach(member => {
-                    const isSel = (selectedStaff[sid] == member.staff_id);
-                    list.append(`<div class="d-flex justify-content-between p-3 border rounded mb-2 bg-white" onclick="selectStaff(${sid}, ${member.staff_id})" style="cursor: pointer; ${isSel ? 'border-color: var(--accent-gold) !important;' : ''}"><div><div class="fw-bold">${member.first_name} ${member.last_name}</div><small class="text-muted">${dbRole.replace('_',' ')}</small></div><button class="btn btn-sm ${isSel ? 'btn-warning' : 'btn-outline-secondary'} rounded-pill">${isSel ? 'Selected' : 'Select'}</button></div>`);
+            staffData[dbRole].forEach(member => {
+                allStaffMembers.push({
+                    member: member,
+                    dbRole: dbRole
+                });
+            });
+        });
+        
+        // Filter staff based on service matching
+        allStaffMembers.forEach(({member, dbRole}) => {
+            let shouldInclude = false;
+            const dbRoleLower = dbRole.toLowerCase();
+            
+            // Method 1: Check if staff has this service in their primary services (staffServiceMap)
+            // This is the most reliable - if they have the service, always include them
+            const hasService = suggestedStaffEmails.includes(member.staff_id) || 
+                              suggestedStaffEmails.includes(member.staff_email) ||
+                              suggestedStaffEmails.some(email => 
+                                  String(email).toLowerCase() === String(member.staff_id).toLowerCase() ||
+                                  String(email).toLowerCase() === String(member.staff_email).toLowerCase()
+                              );
+            
+            if (hasService) {
+                shouldInclude = true;
+            }
+            // Method 2: Role-based matching by category
+            else if (expectedRoleKeyword && rolePatterns[expectedRoleKeyword]) {
+                const keywords = rolePatterns[expectedRoleKeyword];
+                if (keywords.some(kw => dbRoleLower.includes(kw))) {
+                    shouldInclude = true;
+                }
+            }
+            // Method 3: Service name keyword matching (fallback - match any role that has relevant keywords)
+            else {
+                // Match by service text keywords
+                if (serviceText.includes('facial') || serviceText.includes('anti-aging') || serviceText.includes('cleansing')) {
+                    if (dbRoleLower.includes('beaut') || dbRoleLower.includes('facial')) {
+                        shouldInclude = true;
+                    }
+                } else if (serviceText.includes('massage') || serviceText.includes('hot stone') || serviceText.includes('aromatherapy')) {
+                    if (dbRoleLower.includes('massage')) {
+                        shouldInclude = true;
+                    }
+                } else if (serviceText.includes('hair') || serviceText.includes('cut') || serviceText.includes('styling')) {
+                    if (dbRoleLower.includes('hair') || dbRoleLower.includes('stylist')) {
+                        shouldInclude = true;
+                    }
+                } else if (serviceText.includes('nail') || serviceText.includes('manicure') || serviceText.includes('pedicure') || serviceText.includes('gel')) {
+                    if (dbRoleLower.includes('nail') || dbRoleLower.includes('manicure')) {
+                        shouldInclude = true;
+                    }
+                }
+            }
+            
+            if (shouldInclude) {
+                // Check if this staff member has this service in their primary services (for suggested badge)
+                const isSuggested = suggestedStaffEmails.includes(member.staff_id) || 
+                                   suggestedStaffEmails.includes(member.staff_email) ||
+                                   suggestedStaffEmails.some(email => 
+                                       String(email).toLowerCase() === String(member.staff_id).toLowerCase() ||
+                                       String(email).toLowerCase() === String(member.staff_email).toLowerCase()
+                                   );
+                staffList.push({
+                    member: member,
+                    role: dbRole,
+                    isSuggested: isSuggested
                 });
             }
         });
     }
-    new bootstrap.Modal(document.getElementById('staffModal')).show();
+    
+    // Sort: suggested staff first, then others
+    staffList.sort((a, b) => {
+        if (a.isSuggested && !b.isSuggested) return -1;
+        if (!a.isSuggested && b.isSuggested) return 1;
+        return 0;
+    });
+    
+    // Show message if no staff found (no fallback - strict filtering)
+    if(staffList.length === 0) {
+        list.append(`
+            <div class="alert alert-info mb-2">
+                <i class="fas fa-info-circle me-2"></i>
+                No staff members available for this service category. Please select "No Preference" to let us assign a specialist.
+            </div>
+        `);
+    }
+    
+    // Render staff list
+    staffList.forEach(item => {
+        const member = item.member;
+        const dbRole = item.role;
+        const isSuggested = item.isSuggested;
+        const isSel = (selectedStaff[sid] == member.staff_id);
+        
+        // Enhanced "Suggested" badge with better styling
+        const suggestedBadge = isSuggested 
+            ? '<span class="badge bg-warning text-dark ms-2 px-2 py-1" style="font-size: 0.75rem; font-weight: 600;"><i class="fas fa-star me-1"></i>Suggested</span>' 
+            : '';
+        
+        const cardStyle = isSel 
+            ? 'border-color: var(--accent-gold) !important; background: rgba(212, 175, 55, 0.05) !important;' 
+            : isSuggested 
+                ? 'border-color: #ffc107 !important; background: rgba(255, 193, 7, 0.08) !important; box-shadow: 0 2px 4px rgba(255, 193, 7, 0.2) !important;' 
+                : '';
+        
+        // Use data attributes for better reliability
+        const staffIdEscaped = member.staff_id.replace(/"/g, '&quot;');
+        list.append(`
+            <div class="d-flex justify-content-between p-3 border rounded mb-2 bg-white staff-option" 
+                 data-service-id="${sid}" 
+                 data-staff-id="${staffIdEscaped}"
+                 style="cursor: pointer; ${cardStyle}">
+                <div class="flex-grow-1">
+                    <div class="fw-bold d-flex align-items-center flex-wrap">
+                        ${member.first_name} ${member.last_name}
+                        ${suggestedBadge}
+                    </div>
+                    <small class="text-muted d-block mt-1">${dbRole.replace('_',' ').replace(/\b\w/g, l => l.toUpperCase())}</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm ${isSel ? 'btn-warning' : 'btn-outline-secondary'} rounded-pill staff-select-btn" 
+                            data-service-id="${sid}" 
+                            data-staff-id="${staffIdEscaped}"
+                            onclick="event.stopPropagation(); selectStaff('${sid}', '${staffIdEscaped}');">
+                        ${isSel ? 'Selected' : 'Select'}
+                    </button>
+                </div>
+            </div>
+        `);
+    });
+    
+    // Add event delegation for staff options in modal (clicking the card)
+    $(document).off('click', '.staff-option').on('click', '.staff-option', function(e) {
+        // Don't trigger if clicking the button (button has its own handler)
+        if ($(e.target).closest('.staff-select-btn').length > 0) {
+            return;
+        }
+        e.stopPropagation();
+        const serviceId = $(this).data('service-id');
+        const staffId = $(this).data('staff-id');
+        if(serviceId !== undefined) {
+            selectStaff(serviceId, staffId);
+        }
+    });
+    
+    // Add event delegation for the Select button specifically
+    $(document).off('click', '.staff-select-btn').on('click', '.staff-select-btn', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        const serviceId = $(this).data('service-id');
+        const staffId = $(this).data('staff-id');
+        if(serviceId !== undefined) {
+            selectStaff(serviceId, staffId);
+        }
+    });
+    
+    // Show the modal using Bootstrap
+    const modalElement = document.getElementById('staffModal');
+    if(modalElement) {
+        // Dispose of any existing modal instance
+        const existingModal = bootstrap.Modal.getInstance(modalElement);
+        if(existingModal) {
+            existingModal.dispose();
+        }
+        // Create and show new modal
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    } else {
+        console.error('Modal element not found');
+        alert('Unable to open staff selection. Please refresh the page.');
+    }
 }
 
 function selectStaff(sid, stid) {
-    selectedStaff[sid] = stid; loadStaffSelection(); updateSummary();
-    bootstrap.Modal.getInstance(document.getElementById('staffModal')).hide();
+    // Handle both string and number IDs
+    const serviceId = typeof sid === 'string' ? sid : String(sid);
+    const staffId = stid === 0 || stid === '0' ? 0 : stid;
+    
+    // Toggle selection: if clicking the same staff again, deselect (set to No Preference)
+    const currentSelection = selectedStaff[serviceId];
+    if (currentSelection == staffId && staffId != 0) {
+        // Deselect: set to No Preference
+        selectedStaff[serviceId] = 0;
+    } else {
+        // Select the staff
+        selectedStaff[serviceId] = staffId;
+    }
+    
+    // Update the UI
+    loadStaffSelection();
+    updateSummary();
+    
+    // Update the modal content to reflect the new selection (keep modal open)
+    const list = $('#modal-staff-list');
+    if(list.length > 0) {
+        // Update all staff option buttons and styles
+        list.find('.staff-option').each(function() {
+            const $option = $(this);
+            const optionStaffId = $option.data('staff-id');
+            const optionServiceId = $option.data('service-id');
+            
+            // Check if this option is selected
+            let isSel = false;
+            if(optionStaffId == '0' || optionStaffId == 0) {
+                isSel = (selectedStaff[optionServiceId] == 0);
+            } else {
+                isSel = (selectedStaff[optionServiceId] == optionStaffId);
+            }
+            
+            // Update button
+            const $btn = $option.find('button');
+            $btn.removeClass('btn-warning btn-outline-secondary')
+                .addClass(isSel ? 'btn-warning' : 'btn-outline-secondary')
+                .text(isSel ? 'Selected' : 'Select');
+            
+            // Update card style
+            if(isSel) {
+                $option.css({
+                    'border-color': 'var(--accent-gold)',
+                    'background': 'rgba(212, 175, 55, 0.05)'
+                });
+            } else {
+                const isSuggested = $option.find('.badge').length > 0;
+                if(isSuggested) {
+                    $option.css({
+                        'border-color': '#ffc107',
+                        'background': 'rgba(255, 193, 7, 0.08)'
+                    });
+                } else {
+                    $option.css({
+                        'border-color': '',
+                        'background': ''
+                    });
+                }
+            }
+        });
+    }
 }
 
 function updateStaffHeader() {
@@ -363,16 +802,199 @@ function validateCurrentStep() {
 }
 function nextStep() {
     if(currentStep<4) {
-        $(`#step-${currentStep}`).hide(); currentStep++; $(`#step-${currentStep}`).show();
+        $(`#step-${currentStep}`).removeClass('show-step'); 
+        currentStep++; 
+        $(`#step-${currentStep}`).addClass('show-step');
         if(currentStep===2) loadStaffSelection();
         if(currentStep===3) { updateStaffHeader(); renderCalendar(); }
         updateStepIndicator(); updateNavigationButtons();
     } else submitBooking();
 }
-function prevStep() { if(currentStep>1) { $(`#step-${currentStep}`).hide(); currentStep--; $(`#step-${currentStep}`).show(); updateStepIndicator(); updateNavigationButtons(); } }
+function prevStep() { 
+    if(currentStep>1) { 
+        $(`#step-${currentStep}`).removeClass('show-step'); 
+        currentStep--; 
+        $(`#step-${currentStep}`).addClass('show-step'); 
+        updateStepIndicator(); 
+        updateNavigationButtons(); 
+    } 
+}
 function updateStepIndicator() { $('.step').removeClass('active completed'); for(let i=1; i<=4; i++) { if(i<currentStep) $(`#step-${i}-indicator`).addClass('completed'); else if(i===currentStep) $(`#step-${i}-indicator`).addClass('active'); } }
 function updateNavigationButtons() { $('#prev-btn').toggle(currentStep>1); $('#next-btn').html(currentStep===4 ? 'Confirm' : 'Next'); }
 function submitBooking() {
-    const data = { services: selectedServices, staff: selectedStaff, date: selectedDate, time: selectedTime, specialRequests: $('#special-requests').val(), paymentMethod: $('#payment-method').val() };
-    $.ajax({ url: 'process_booking.php', method: 'POST', data: JSON.stringify(data), contentType: 'application/json', success: res => { if(res.success) window.location.href='booking_confirmation.php?reference='+res.reference_id; else alert(res.message); }, error: () => alert('Error') });
+    // Validate before submitting
+    if(selectedServices.length === 0) {
+        if (typeof showErrorModal === 'function') {
+            showErrorModal('Please select at least one service.');
+        } else {
+            alert('Please select at least one service.');
+        }
+        return;
+    }
+    
+    if(!selectedDate || !selectedTime) {
+        if (typeof showErrorModal === 'function') {
+            showErrorModal('Please select a date and time for your booking.');
+        } else {
+            alert('Please select a date and time for your booking.');
+        }
+        return;
+    }
+    
+    // Disable the confirm button to prevent double submission
+    const confirmBtn = $('#next-btn');
+    const originalText = confirmBtn.html();
+    confirmBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Processing...');
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:841',message:'Before normalization',data:{selectedServices:selectedServices,selectedServicesType:typeof selectedServices[0],selectedServicesLength:selectedServices.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
+    // Service IDs are alphanumeric strings (e.g., "FC04", "MC04"), NOT integers
+    // Keep them as strings, only filter out null/undefined/empty values
+    const normalizedServices = selectedServices.filter(id => id !== null && id !== undefined && id !== '');
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:857',message:'After normalization',data:{normalizedServices:normalizedServices,normalizedLength:normalizedServices.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
+    // Normalize staff IDs - service IDs are strings, staff IDs are emails (strings) or 0
+    const normalizedStaff = {};
+    Object.keys(selectedStaff).forEach(serviceId => {
+        const staffValue = selectedStaff[serviceId];
+        // Keep service ID as string, keep staff as-is (email string or 0)
+        normalizedStaff[serviceId] = (staffValue === 0 || staffValue == '0') ? 0 : staffValue;
+    });
+    
+    const data = { 
+        services: normalizedServices, 
+        staff: normalizedStaff, 
+        date: selectedDate, 
+        time: selectedTime, 
+        specialRequests: $('#special-requests').val() || '', 
+        paymentMethod: $('#payment-method').val() || 'pay_at_salon' 
+    };
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:862',message:'Final data being sent',data:{services:data.services,servicesLength:data.services.length,firstService:data.services[0],staff:data.staff},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
+    // Log data being sent (for debugging)
+    console.log('Submitting booking with data:', data);
+    console.log('Selected services count:', normalizedServices.length);
+    console.log('Selected staff:', normalizedStaff);
+    
+    $.ajax({ 
+        url: 'process_booking.php', 
+        method: 'POST', 
+        data: JSON.stringify(data), 
+        contentType: 'application/json', 
+        success: function(res) { 
+            console.log('Server response:', res);
+            if(res.success) {
+                // Get booking summary data
+                const allServicesData = window.allServicesData || {};
+                const serviceNames = selectedServices.map(sid => {
+                    const service = allServicesData[sid];
+                    return service ? service.name : 'Service';
+                });
+                
+                // Calculate totals
+                let subtotal = 0;
+                selectedServices.forEach(sid => {
+                    const service = allServicesData[sid];
+                    if(service) subtotal += parseFloat(service.price || 0);
+                });
+                
+                // Format date
+                const dateObj = new Date(selectedDate);
+                const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                
+                // Format time
+                const timeParts = selectedTime.split(':');
+                const hour = parseInt(timeParts[0]);
+                const minute = timeParts[1];
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+                const formattedTime = `${displayHour}:${minute} ${ampm}`;
+                
+                // Show confirmation modal
+                if (typeof showBookingConfirmation === 'function') {
+                    showBookingConfirmation({
+                        booking_id: res.booking_id,
+                        date: formattedDate,
+                        time: formattedTime,
+                        services: res.services || serviceNames.join(', '), // Use services array from response if available
+                        subtotal: subtotal.toFixed(2)
+                    });
+                } else {
+                    // Fallback to alert if function not available
+                    alert('Booking Successful! Booking ID: ' + res.booking_id);
+                    window.location.href = 'user/dashboard.php?section=bookings';
+                }
+            } else {
+                confirmBtn.prop('disabled', false).html(originalText);
+                console.error('Booking failed. Full server response:', JSON.stringify(res, null, 2));
+                let errorMsg = res.message || 'Booking failed. Please try again.';
+                
+                // Include error details if available (for debugging - can remove in production)
+                if (res.error) {
+                    console.error('Server error details:', res.error);
+                    // For development: show error details in console
+                    if (res.debug) {
+                        console.error('Debug info:', res.debug);
+                    }
+                }
+                
+                if (typeof showErrorModal === 'function') {
+                    showErrorModal(errorMsg);
+                } else {
+                    alert(errorMsg);
+                }
+            }
+        }, 
+        error: function(xhr, status, error) {
+            confirmBtn.prop('disabled', false).html(originalText);
+            let errorMessage = 'An error occurred. Please try again.';
+            
+            // Try to parse error response
+            if (xhr.responseText) {
+                try {
+                    const errorData = JSON.parse(xhr.responseText);
+                    if (errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                    if (errorData.error) {
+                        console.error('Server error details:', errorData.error);
+                        // Include error details in message for debugging (remove in production)
+                        if (errorData.error) {
+                            errorMessage += '\n\nDetails: ' + errorData.error;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Raw response (not JSON):', xhr.responseText);
+                    errorMessage = 'Server returned an invalid response. Please try again.';
+                }
+            }
+            
+            // Log full error details
+            console.error('Booking AJAX error:', {
+                error: error,
+                status: status,
+                statusCode: xhr.status,
+                responseText: xhr.responseText
+            });
+            
+            if (typeof showErrorModal === 'function') {
+                showErrorModal(errorMessage);
+            } else {
+                alert(errorMessage);
+            }
+        }
+    });
 }
+

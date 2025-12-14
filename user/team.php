@@ -1,5 +1,133 @@
 <?php
 session_start();
+require_once '../config/database.php';
+
+// Fetch staff from database
+$database = new Database();
+$db = $database->getConnection();
+
+// Fetch staff with their primary services (exclude admin, only show staff role)
+// Join with staff_service and service to get primary services
+$staffQuery = "SELECT 
+    s.staff_email, 
+    s.first_name, 
+    s.last_name, 
+    s.role, 
+    s.staff_image, 
+    s.bio,
+    GROUP_CONCAT(DISTINCT sv.service_name ORDER BY ss.proficiency_level DESC, sv.service_name SEPARATOR ' & ') as primary_services,
+    GROUP_CONCAT(DISTINCT sv.service_category ORDER BY sv.service_category SEPARATOR ', ') as service_categories
+FROM staff s
+LEFT JOIN staff_service ss ON s.staff_email = ss.staff_email AND ss.is_active = 1
+LEFT JOIN service sv ON ss.service_id = sv.service_id AND sv.is_active = 1
+WHERE s.is_active = 1 AND s.role = 'staff'
+GROUP BY s.staff_email
+ORDER BY s.first_name ASC";
+
+// #region agent log
+file_put_contents(__DIR__ . '/../.cursor/debug.log', json_encode(['location' => 'team.php:20', 'message' => 'Fetching staff with services', 'data' => ['query' => $staffQuery], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND);
+// #endregion
+
+$staffStmt = $db->prepare($staffQuery);
+$staffStmt->execute();
+$allStaff = $staffStmt->fetchAll(PDO::FETCH_ASSOC);
+
+// #region agent log
+file_put_contents(__DIR__ . '/../.cursor/debug.log', json_encode(['location' => 'team.php:28', 'message' => 'Staff fetched', 'data' => ['count' => count($allStaff), 'sample_staff' => !empty($allStaff) ? ['email' => $allStaff[0]['staff_email'], 'name' => $allStaff[0]['first_name'], 'services' => $allStaff[0]['primary_services'] ?? 'none', 'image' => $allStaff[0]['staff_image'] ?? 'none'] : []], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND);
+// #endregion
+
+// Map staff names to their specific images (based on user's requirements)
+$staffImageMap = [
+    'Jay' => '../images/42.png',
+    'Mei' => '../images/47.png',
+    'Ken' => '../images/48.png',
+    'Chloe' => '../images/60.png',  // Changed from 62.png to 60.png
+    'Sarah' => '../images/65.png',
+    'Nisha' => '../images/66.png',
+    'Rizal' => '../images/67.png',
+    'Siti' => '../images/68.png',
+    'Jessica' => '../images/69.png',
+    'Yuna' => '../images/71.png'
+];
+
+// Map staff names to their specific primary services text (override database values)
+$staffPrimaryServicesMap = [
+    'Jay' => 'Haircuts & Hair Styling',
+    'Mei' => 'Hair Styling & Hair Colouring',
+    'Ken' => 'Technical Cuts & Hair Treatments',
+    'Chloe' => 'Anti-Aging & Brightening',
+    'Sarah' => 'Deep Cleansing & Hydrating',
+    'Nisha' => 'Aromatherapy Massage & Hot Stone Massage',
+    'Rizal' => 'Deep Tissue Massage & Traditional Massage',
+    'Jessica' => 'Nail Extensions & Nail Gelish',
+    'Siti' => 'Classic Manicure & Add-ons',
+    'Yuna' => 'Nail Art Design & Gelish'
+];
+
+// Group staff by service category for filtering
+$staffByRole = [];
+foreach ($allStaff as $member) {
+    // Use service categories to determine filter class
+    $categories = !empty($member['service_categories']) ? explode(', ', $member['service_categories']) : [];
+    $filterClass = 'all'; // Default
+    
+    // Map service categories to filter classes
+    foreach ($categories as $cat) {
+        $catLower = strtolower(trim($cat));
+        if (strpos($catLower, 'hair') !== false) {
+            $filterClass = 'hair';
+            break;
+        } elseif (strpos($catLower, 'beauty') !== false || strpos($catLower, 'facial') !== false || strpos($catLower, 'skin') !== false) {
+            $filterClass = 'beauty';
+            break;
+        } elseif (strpos($catLower, 'massage') !== false) {
+            $filterClass = 'massage';
+            break;
+        } elseif (strpos($catLower, 'nail') !== false || strpos($catLower, 'manicure') !== false || strpos($catLower, 'pedicure') !== false) {
+            $filterClass = 'nail';
+            break;
+        }
+    }
+    
+    // If no category match, try to infer from service names
+    if ($filterClass === 'all' && !empty($member['primary_services'])) {
+        $services = strtolower($member['primary_services']);
+        if (strpos($services, 'hair') !== false || strpos($services, 'cut') !== false || strpos($services, 'styl') !== false || strpos($services, 'colouring') !== false) {
+            $filterClass = 'hair';
+        } elseif (strpos($services, 'facial') !== false || strpos($services, 'skin') !== false || strpos($services, 'beauty') !== false || strpos($services, 'anti-aging') !== false || strpos($services, 'brightening') !== false || strpos($services, 'cleansing') !== false || strpos($services, 'hydrating') !== false) {
+            $filterClass = 'beauty';
+        } elseif (strpos($services, 'massage') !== false || strpos($services, 'aromatherapy') !== false || strpos($services, 'hot stone') !== false || strpos($services, 'deep tissue') !== false || strpos($services, 'traditional') !== false) {
+            $filterClass = 'massage';
+        } elseif (strpos($services, 'nail') !== false || strpos($services, 'manicure') !== false || strpos($services, 'pedicure') !== false || strpos($services, 'gelish') !== false || strpos($services, 'extension') !== false || strpos($services, 'art') !== false) {
+            $filterClass = 'nail';
+        }
+    }
+    
+    if (!isset($staffByRole[$filterClass])) {
+        $staffByRole[$filterClass] = [];
+    }
+    $staffByRole[$filterClass][] = $member;
+}
+
+// Get user's favorites if logged in (table uses customer_email, not customer_phone)
+$userFavorites = [];
+if (isset($_SESSION['customer_phone'])) {
+    $phone = $_SESSION['customer_phone'];
+    // Get customer_email from phone
+    $emailQuery = "SELECT customer_email FROM customer WHERE phone = ? LIMIT 1";
+    $emailStmt = $db->prepare($emailQuery);
+    $emailStmt->execute([$phone]);
+    $customerData = $emailStmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($customerData && !empty($customerData['customer_email'])) {
+        $customerEmail = $customerData['customer_email'];
+        $favQuery = "SELECT staff_email FROM customer_favourites WHERE customer_email = ?";
+        $favStmt = $db->prepare($favQuery);
+        $favStmt->execute([$customerEmail]);
+        $userFavorites = $favStmt->fetchAll(PDO::FETCH_COLUMN);
+    }
+}
+
 // 1. Include the Header
 require_once '../includes/header.php';
 ?>
@@ -34,168 +162,54 @@ require_once '../includes/header.php';
     </div>
 
     <div class="team-container">
-
-        <div class="flip-card filterDiv hair">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/42.png" alt="Jay" class="team-photo">
-                    <h3>Jay</h3>
-                    <p class="primary-service">Primary: Haircuts & Styling</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Jay</h3>
-                    <p>Focuses on textured cuts and formal styling. The expert for modern shapes and long-lasting event styles.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flip-card filterDiv hair">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/47.png" alt="Mei" class="team-photo">
-                    <h3>Mei</h3>
-                    <p class="primary-service">Primary: Styling & Colouring</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Mei</h3>
-                    <p>Focuses on formal styling and vibrant fashion coloring.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flip-card filterDiv hair">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/48.png" alt="Ken" class="team-photo">
-                    <h3>Ken</h3>
-                    <p class="primary-service">Primary: Technical Cuts & Treatments</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Ken</h3>
-                    <p>Specializes in precision haircuts and hair treatments. Expert in classic shapes and hair health restoration.</p>
-                    <button class="fav-btn">Add to Favourites</button>
+        <?php if (empty($allStaff)): ?>
+            <p style="text-align: center; padding: 40px; color: #8f8986;">No staff members available at the moment.</p>
+        <?php else: ?>
+            <?php foreach ($staffByRole as $filterClass => $staffMembers): 
+                foreach ($staffMembers as $member):
+                    $staffEmail = $member['staff_email'];
+                    $staffName = htmlspecialchars($member['first_name']);
+                    $fullName = htmlspecialchars($member['first_name'] . ' ' . $member['last_name']);
+                    $bio = htmlspecialchars($member['bio'] ?? 'Professional staff member');
+                    
+                    // Use mapped primary services if available, otherwise use from database
+                    $primaryServices = $staffPrimaryServicesMap[$staffName] ?? htmlspecialchars($member['primary_services'] ?? 'Various Services');
+                    
+                    // Use mapped image if available, otherwise use staff_image from DB, fallback to default
+                    $image = $staffImageMap[$staffName] ?? ($member['staff_image'] ?? '../images/42.png');
+                    
+                    $isFavorite = in_array($staffEmail, $userFavorites);
+                    $favButtonText = $isFavorite ? 'Remove from Favourites' : 'Add to Favourites';
+            ?>
+            <div class="flip-card filterDiv <?= $filterClass ?>">
+                <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                        <img src="<?= htmlspecialchars($image) ?>" alt="<?= $staffName ?>" class="team-photo" onerror="this.src='../images/42.png'">
+                        <h3><?= $staffName ?></h3>
+                        <p class="primary-service"><strong>Primary Services:</strong> <?= $primaryServices ?></p>
+                        <p class="hover-hint">(Hover for details)</p>
+                    </div>
+                    <div class="flip-card-back">
+                        <h3><?= $fullName ?></h3>
+                        <p><?= $bio ?></p>
+                        <?php if (isset($_SESSION['customer_phone'])): ?>
+                            <button class="fav-btn <?= $isFavorite ? 'favorited' : '' ?>" 
+                                    data-staff-email="<?= htmlspecialchars($staffEmail) ?>" 
+                                    onclick="toggleFavorite(this, '<?= htmlspecialchars($staffEmail) ?>')">
+                                <?= $favButtonText ?>
+                            </button>
+                        <?php else: ?>
+                            <a href="../login.php" class="fav-btn">Login to Add Favorites</a>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
-        </div>
+            <?php endforeach; endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>
 
-        <div class="flip-card filterDiv beauty">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/60.png" alt="Chloe" class="team-photo">
-                    <h3>Chloe</h3>
-                    <p class="primary-service">Primary: Anti-Aging & Brightening</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Chloe</h3>
-                    <p>Senior Aesthetician. Combines advanced lifting methods with brightening peels for mature skin types.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flip-card filterDiv beauty">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/65.png" alt="Sarah" class="team-photo">
-                    <h3>Sarah</h3>
-                    <p class="primary-service">Primary: Deep Cleansing & Hydrating</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Sarah</h3>
-                    <p>Skin Balance Specialist. Focuses on maintaining healthy skin barriers without drying out the skin.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flip-card filterDiv massage">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/66.png" alt="Nisha" class="team-photo">
-                    <h3>Nisha</h3>
-                    <p class="primary-service">Primary: Aromatherapy & Hot Stone</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Nisha</h3>
-                    <p>Specializes in relaxation and stress relief using essential oils to calm the nervous system.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flip-card filterDiv massage">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/67.png" alt="Rizal" class="team-photo">
-                    <h3>Rizal</h3>
-                    <p class="primary-service">Primary: Deep Tissue & Traditional</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Rizal</h3>
-                    <p>Focuses on muscle recovery and pain relief. Expert for deep pressure techniques targeting knots.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flip-card filterDiv nail">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/71.png" alt="Yuna" class="team-photo">
-                    <h3>Yuna</h3>
-                    <p class="primary-service">Primary: Nail Art & Gelish</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Yuna</h3>
-                    <p>The Creative Artist. Specializes in intricate designs, from 3D Art to Chrome and Cat Eyes.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flip-card filterDiv nail">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/69.png" alt="Jessica" class="team-photo">
-                    <h3>Jessica</h3>
-                    <p class="primary-service">Primary: Extensions & Gelish</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Jessica</h3>
-                    <p>The Structure Specialist. She focuses on Acrylic and Tip extensions, ensuring perfect shaping.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="flip-card filterDiv nail">
-            <div class="flip-card-inner">
-                <div class="flip-card-front">
-                    <img src="../images/68.png" alt="Siti" class="team-photo">
-                    <h3>Siti</h3>
-                    <p class="primary-service">Primary: Classic Manicure</p>
-                    <p class="hover-hint">(Hover for details)</p>
-                </div>
-                <div class="flip-card-back">
-                    <h3>Siti</h3>
-                    <p>Natural Nail Health Specialist. Focuses on detailed cuticle care and relaxation.</p>
-                    <button class="fav-btn">Add to Favourites</button>
-                </div>
-            </div>
-        </div>
-
-    </div> </div> <?php
+<?php
 require_once '../includes/footer.php';
 ?>
 
@@ -263,6 +277,46 @@ for (var i = 0; i < btns.length; i++) {
     current[0].className = current[0].className.replace(" active", "");
     this.className += " active";
   });
+}
+
+// Toggle Favorite Function
+function toggleFavorite(button, staffEmail) {
+    if (!staffEmail) {
+        staffEmail = button.getAttribute('data-staff-email');
+    }
+    
+    if (!staffEmail) {
+        alert('Staff information not available');
+        return;
+    }
+    
+    const isFavorited = button.classList.contains('favorited');
+    const url = isFavorited ? '../remove_favorite.php' : '../add_favorite.php';
+    const action = isFavorited ? 'remove' : 'add';
+    
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ staff_email: staffEmail })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            if (isFavorited) {
+                button.classList.remove('favorited');
+                button.textContent = 'Add to Favourites';
+            } else {
+                button.classList.add('favorited');
+                button.textContent = 'Remove from Favourites';
+            }
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('Error updating favorites');
+    });
 }
 </script>
 

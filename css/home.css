@@ -68,7 +68,7 @@ body {
 .nav-link,
 .dropdown-toggle {
     text-decoration: none;
-    color: #9f8e8a;
+    color: #6b5043;
     position: relative;
     padding-bottom: 4px;
     font-size: 16px;
@@ -76,6 +76,7 @@ body {
     background: none;
     border: none;
     cursor: pointer;
+    transition: color 0.3s ease;
 }
 
 .nav-link.active,
@@ -84,8 +85,9 @@ body {
     color: #c29076;
 }
 
-.nav-link.active::after,
-.nav-link:hover::after {
+/* Underline for regular nav links (not dropdown) */
+.nav-link:not(.dropdown-toggle).active::after,
+.nav-link:not(.dropdown-toggle):hover::after {
     content: "";
     position: absolute;
     left: 0;
@@ -94,6 +96,36 @@ body {
     height: 2px;
     border-radius: 999px;
     background: #c29076;
+}
+
+/* Dropdown arrow for Meet The Team - always visible */
+.dropdown-toggle::after {
+    content: " ▾";
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.9em;
+    position: relative;
+    background: none !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    left: auto !important;
+    bottom: auto !important;
+}
+
+/* Ensure dropdown arrow stays visible on hover */
+.dropdown-toggle:hover::after {
+    content: " ▾" !important;
+    display: inline-block !important;
+    margin-left: 4px;
+    font-size: 0.9em;
+    position: relative !important;
+    background: none !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    left: auto !important;
+    bottom: auto !important;
 }
 
 /* Dropdown container */
@@ -164,6 +196,14 @@ body {
     align-items: center;
 }
 
+/* Profile button as link */
+a.profile-btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .header-profile-img {
     width: 32px;
     height: 32px;
@@ -172,35 +212,30 @@ body {
     transition: transform 0.2s ease;
 }
 
-.profile-btn:hover .header-profile-img {
+.profile-btn:hover .header-profile-img,
+a.profile-btn:hover .header-profile-img {
     transform: scale(1.1);
+}
+
+/* Profile panel hover support */
+.profile-btn {
+    position: relative;
+}
+
+/* Show panel on hover (CSS fallback, JS handles the main logic) */
+.profile-btn:hover ~ .profile-panel,
+.profile-panel:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
 }
 
 /* ===========================
    PROFILE PANEL
    =========================== */
-
-.profile-panel {
-    position: fixed;
-    top: 85px;
-    right: 60px;
-    width: 230px;
-    background: #fffdfb;
-    border-radius: 18px;
-    box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12);
-    padding: 20px 18px 18px;
-    transform: translateY(-20px);
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    z-index: 1100;
-}
-
-.profile-panel.open {
-    transform: translateY(0);
-    opacity: 1;
-    visibility: visible;
-}
+/* Profile panel styles are defined in style.css for consistency across all pages */
+/* Only keeping the open state if it differs from style.css */
 
 .panel-close {
     border: none;

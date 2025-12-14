@@ -80,16 +80,26 @@ function updateStepperVisuals(step) {
         if (!circle) continue;
 
         circle.classList.remove('step-active', 'step-done');
-        // Reset to number
-        circle.innerHTML = `<span class="step-number">${i}</span>`;
+        
+        // Get or create the step-number span
+        let stepNumber = circle.querySelector('.step-number');
+        if (!stepNumber) {
+            stepNumber = document.createElement('span');
+            stepNumber.className = 'step-number';
+            circle.appendChild(stepNumber);
+        }
 
         if (i < step) {
             // Completed steps get a checkmark
             circle.classList.add('step-done');
-            circle.innerHTML = `✔`; // You can replace with <i class="fas fa-check"></i> if using FontAwesome
+            stepNumber.textContent = '✔';
         } else if (i === step) {
             // Current step gets highlighted
             circle.classList.add('step-active');
+            stepNumber.textContent = i;
+        } else {
+            // Future steps show number
+            stepNumber.textContent = i;
         }
     }
 }

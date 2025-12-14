@@ -35,9 +35,11 @@ $currentUrlEncoded = urlencode($currentUrl);
 
         <!-- LOGO -->
         <div class="logo-area">
-            <img src="../images/16.png"
-                 alt="Lumière Beauty Salon Logo"
-                 class="header-logo">
+            <a href="index.php" style="text-decoration: none; display: block;">
+                <img src="../images/16.png"
+                     alt="Lumière Beauty Salon Logo"
+                     class="header-logo">
+            </a>
         </div>
 
         <!-- NAVIGATION -->
@@ -47,7 +49,7 @@ $currentUrlEncoded = urlencode($currentUrl);
 
             <!-- Meet the Team dropdown -->
             <div class="nav-dropdown">
-               <button class="nav-link dropdown-toggle">Meet The Team ▾</button>
+               <a href="team.php" class="nav-link dropdown-toggle">Meet The Team</a>
                <div class="dropdown-menu">
             <a href="team.php?cat=hair">Hair Stylists</a>
             <a href="team.php?cat=beauty">Beauticians</a>
@@ -62,17 +64,17 @@ $currentUrlEncoded = urlencode($currentUrl);
         <!-- BOOK NOW (forces login if guest) -->
         <?php if ($isLoggedIn): ?>
     <button class="book-btn"
-            onclick="window.location.href='booking-service.php'">
+            onclick="window.location.href='../booking.php'">
         Book Now
     </button>
 <?php else: ?>
     <button class="book-btn"
-            onclick="window.location.href='../auth/login.php?mode=login&redirect=user/booking-service.php'">
+            onclick="window.location.href='../login.php?redirect=' + encodeURIComponent('booking.php')">
         Book Now
     </button>
 <?php endif; ?>
 
-        <!-- PROFILE ICON -->
+        <!-- PROFILE ICON - Toggle profile panel -->
         <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
             <img src="../images/50.png" class="header-profile-img" alt="Profile">
         </button>
@@ -85,9 +87,11 @@ $currentUrlEncoded = urlencode($currentUrl);
 <?php if ($isLoggedIn): ?>
     <div class="panel-content">
         <div class="panel-header">
-            <div id="dynamicAvatar" class="avatar-circle">
-                <?= htmlspecialchars($initials) ?>
-            </div>
+            <a href="dashboard.php" style="text-decoration: none; display: block;">
+                <div id="dynamicAvatar" class="avatar-circle" style="cursor: pointer;">
+                    <?= htmlspecialchars($initials) ?>
+                </div>
+            </a>
             <div class="user-details">
                 <h3 id="panelUserName">
                     <?= htmlspecialchars($firstName . ' ' . $lastName) ?>
@@ -99,11 +103,11 @@ $currentUrlEncoded = urlencode($currentUrl);
         </div>
 
         <ul class="panel-menu">
-            <li><a href="profile.php">My Profile</a></li>
-            <li><a href="history.php">Booking History</a></li>
-            <li><a href="favourites.php">Favourites Staff</a></li>
-            <li><a href="settings.php">Settings</a></li>
-            <li><a href="../about.php">About Us</a></li>
+            <li><a href="dashboard.php?section=overview">Overview</a></li>
+            <li><a href="dashboard.php?section=bookings">My Bookings</a></li>
+            <li><a href="dashboard.php?section=profile">My Profile</a></li>
+            <li><a href="dashboard.php?section=favourites">Favourites Staff</a></li>
+            <li><a href="dashboard.php?section=help">Help & Support</a></li>
         </ul>
 
         <div class="panel-divider"></div>
@@ -287,11 +291,11 @@ $currentUrlEncoded = urlencode($currentUrl);
         <p>Book your appointment today and experience the ultimate in beauty and relaxation!</p>
 
         <?php if ($isLoggedIn): ?>
-            <button class="booking-btn" onclick="window.location.href='booking.php'">
+            <button class="booking-btn" onclick="window.location.href='../booking.php'">
                 Book Now
             </button>
         <?php else: ?>
-            <button class="booking-btn" onclick="window.location.href='login.php?redirect=user/booking-service.php'">
+            <button class="booking-btn" onclick="window.location.href='../login.php?redirect=' + encodeURIComponent('booking.php')">
                 Book Now
             </button>
         <?php endif; ?>
@@ -303,7 +307,80 @@ $currentUrlEncoded = urlencode($currentUrl);
 
     
 
-</div> <script src="../js/home.js"></script>
+</div> 
+<script src="../js/home.js"></script>
+<script>
+// Profile Panel Hover Script for index.php
+document.addEventListener("DOMContentLoaded", function() {
+    const toggle = document.getElementById("profileToggle");
+    const panel = document.getElementById("profilePanel");
+    const closeBtn = document.getElementById("panelClose");
+
+    if (toggle && panel) {
+        let hoverTimeout;
+        let isHovering = false;
+
+        // Show panel on hover
+        toggle.addEventListener("mouseenter", () => {
+            clearTimeout(hoverTimeout);
+            hoverTimeout = setTimeout(() => {
+                panel.classList.add("open");
+                isHovering = true;
+            }, 150); // Small delay to prevent accidental triggers
+        });
+
+        // Keep panel open when hovering over it
+        panel.addEventListener("mouseenter", () => {
+            clearTimeout(hoverTimeout);
+            panel.classList.add("open");
+            isHovering = true;
+        });
+
+        // Hide panel when mouse leaves both button and panel
+        toggle.addEventListener("mouseleave", () => {
+            hoverTimeout = setTimeout(() => {
+                if (!isHovering) {
+                    panel.classList.remove("open");
+                }
+            }, 200);
+        });
+
+        panel.addEventListener("mouseleave", () => {
+            hoverTimeout = setTimeout(() => {
+                panel.classList.remove("open");
+                isHovering = false;
+            }, 200);
+        });
+
+        // Also support click for mobile/touch devices
+        if (toggle.tagName === 'BUTTON') {
+            toggle.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                panel.classList.toggle("open");
+            });
+        }
+
+        // Close button
+        if (closeBtn) {
+            closeBtn.addEventListener("click", () => {
+                panel.classList.remove("open");
+                isHovering = false;
+            });
+        }
+
+        // Click outside to close
+        document.addEventListener("click", (e) => {
+            if (panel.classList.contains("open") && 
+                !panel.contains(e.target) && 
+                !toggle.contains(e.target)) {
+                panel.classList.remove("open");
+                isHovering = false;
+            }
+        });
+    }
+});
+</script>
 </body>
 </html>
 

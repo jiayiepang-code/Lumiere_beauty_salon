@@ -64,7 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['customer_id']    = $phoneNormalized; // use phone as ID surrogate
                 $_SESSION['customer_phone'] = $phoneNormalized;
                 $_SESSION['phone']          = $phoneNormalized; // header.php expects this key
-                $_SESSION['user_email']     = $row['customer_email'];
+                $_SESSION['customer_email'] = $row['customer_email']; // Store email for bookings
+                $_SESSION['user_email']     = $row['customer_email']; // Backward compatibility
                 $_SESSION['first_name']     = $firstNameVal;
                 $_SESSION['last_name']      = $lastNameVal;
                 $_SESSION['user_name']      = $fullName;
@@ -97,16 +98,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
 
     <div class="floating-btn-group">
-    <a href="../staff/login.php" class="float-wrapper staff-btn-container" style="text-decoration:none;">
+    <a href="staff/login.php" class="float-wrapper staff-btn-container" style="text-decoration:none;">
         <div class="icon-circle">
-            <img src="../images/79.png" alt="Staff">
+            <img src="images/79.png" alt="Staff">
         </div>
         <span class="float-text">Staff Login</span>
     </a>
 
-    <a href="../admin/login.php" class="float-wrapper admin-btn-container" style="text-decoration:none;">
+    <a href="admin/login.php" class="float-wrapper admin-btn-container" style="text-decoration:none;">
         <div class="icon-circle">
-            <img src="../images/80.png" alt="Admin">
+            <img src="images/80.png" alt="Admin">
         </div>
         <span class="float-text">Admin Login</span>
     </a>

@@ -56,40 +56,38 @@ function showAdminLogin() {
     window.location.href = "../admin/login.php";
 }
 
-// Step navigation for Register Stepper
+// Step navigation
 function goToStep(step) {
-    // Remove active class from all steps
     document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active-step'));
-    
-    // Add active class to target step
-    const targetStep = document.getElementById(`step-group-${step}`);
-    if (targetStep) targetStep.classList.add('active-step');
-    
-    // Update text "Step X of 4"
-    const stepCount = document.getElementById('stepCount');
-    if (stepCount) stepCount.innerText = step;
-    
+    document.getElementById(`step-group-${step}`).classList.add('active-step');
+    document.getElementById('stepCount').innerText = step;
     updateStepperVisuals(step);
     currentStep = step;
 }
 
-// Updates the circles (1-2-3-4) at the top
 function updateStepperVisuals(step) {
     for (let i = 1; i <= 4; i++) {
         const circle = document.getElementById(`circle-${i}`);
         if (!circle) continue;
-
+        
         circle.classList.remove('step-active', 'step-done');
-        // Reset to number
-        circle.innerHTML = `<span class="step-number">${i}</span>`;
+        
+        // Get or create the step-number span
+        let stepNumber = circle.querySelector('.step-number');
+        if (!stepNumber) {
+            stepNumber = document.createElement('span');
+            stepNumber.className = 'step-number';
+            circle.appendChild(stepNumber);
+        }
 
         if (i < step) {
-            // Completed steps get a checkmark
             circle.classList.add('step-done');
-            circle.innerHTML = `✔`; // You can replace with <i class="fas fa-check"></i> if using FontAwesome
+            stepNumber.textContent = '✓';
         } else if (i === step) {
-            // Current step gets highlighted
             circle.classList.add('step-active');
+            stepNumber.textContent = i;
+        } else {
+            stepNumber.textContent = i;
         }
     }
 }

@@ -11,9 +11,9 @@ body {
     margin: 0;
     padding: 0;
     
-    /* FIX: ROSE GOLD GRADIENT */
+    /* Consistent gradient matching index.php style */
     /* We use 'fixed' so it doesn't scroll away */
-    background: linear-gradient(180deg, #eebdb0, #faf5f2) no-repeat fixed !important;
+    background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff) no-repeat fixed !important;
     min-height: 100vh;
 }
 
@@ -123,8 +123,33 @@ body {
 .profile-btn { background: none; border: none; cursor: pointer; padding: 5px; display: flex; align-items: center; }
 .header-profile-img { width: 32px; height: 32px; object-fit: contain; transition: transform 0.2s ease; filter: invert(63%) sepia(11%) saturate(1319%) hue-rotate(338deg) brightness(92%) contrast(86%); }
 .profile-btn:hover .header-profile-img { transform: scale(1.1); }
-.profile-panel { position: fixed; top: 85px; right: 60px; width: 230px; background: #fffdfb; border-radius: 18px; box-shadow: 0 14px 40px rgba(0, 0, 0, 0.12); padding: 20px 18px 18px; transform: translateY(-20px); opacity: 0; visibility: hidden; transition: all 0.3s ease; z-index: 1100; }
-.profile-panel.open { transform: translateY(0); opacity: 1; visibility: visible; }
+.profile-panel { 
+    position: fixed !important; /* Must be fixed to stay visible when scrolling */
+    top: 90px !important; 
+    right: 40px !important; 
+    width: 280px !important; 
+    max-height: calc(100vh - 120px) !important; 
+    height: auto !important; 
+    background: #ffffff !important; 
+    border-radius: 20px !important; 
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important; 
+    padding: 20px !important; 
+    box-sizing: border-box !important; 
+    transform: translateY(-20px) !important; 
+    opacity: 0 !important; 
+    visibility: hidden !important; 
+    transition: all 0.3s ease !important; 
+    z-index: 2000 !important; /* High z-index to stay above content */
+    overflow-y: auto !important; 
+    overflow-x: hidden !important; 
+    pointer-events: none !important;
+}
+.profile-panel.open { 
+    transform: translateY(0) !important; 
+    opacity: 1 !important; 
+    visibility: visible !important; 
+    pointer-events: auto !important;
+}
 .panel-close { border: none; background: transparent; float: right; font-size: 16px; cursor: pointer; color: #c29076; }
 .panel-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
 .panel-avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #e6d9d2; }

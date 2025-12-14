@@ -111,12 +111,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
     <div class="floating-btn-group">
-    <a href="../staff/login.php" class="float-wrapper staff-btn-container" style="text-decoration:none;">
-        <div class="icon-circle"><img src="../images/79.png" alt="Staff"></div>
+    <a href="staff/login.php" class="float-wrapper staff-btn-container" style="text-decoration:none;">
+        <div class="icon-circle"><img src="images/79.png" alt="Staff"></div>
         <span class="float-text">Staff Login</span>
     </a>
-    <a href="../admin/login.php" class="float-wrapper admin-btn-container" style="text-decoration:none;">
-        <div class="icon-circle"><img src="../images/80.png" alt="Admin"></div>
+    <a href="admin/login.php" class="float-wrapper admin-btn-container" style="text-decoration:none;">
+        <div class="icon-circle"><img src="images/80.png" alt="Admin"></div>
         <span class="float-text">Admin Login</span>
     </a>
 </div>
@@ -143,6 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p>Step <span id="stepCount">1</span> of 4</p>
             </div>
 
+            <!-- STEPPER -->
             <div class="register-stepper">
                 <div class="step step-active" id="circle-1"><span class="step-number">1</span></div>
                 <div class="step" id="circle-2"><span class="step-number">2</span></div>

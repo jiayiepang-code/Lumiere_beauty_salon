@@ -1,3 +1,12 @@
+body {
+    /* Consistent gradient matching index.php style */
+    background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
+    background-attachment: fixed; /* Keeps the gradient in place when you scroll */
+    min-height: 100vh;
+    margin: 0;
+    font-family: 'Poppins', sans-serif; /* Ensures font matches the rest of the site */
+}
+
 /* ========== 1. HEADER SECTION ========== */
 .team-header-section {
     text-align: center;
@@ -107,7 +116,7 @@
 
 /* --- FRONT SIDE STYLING --- */
 .flip-card-front {
-    background-color: white;
+    background: linear-gradient(to bottom, #f4e4d5 0%, #ffffff 100%);
     color: black;
 }
 

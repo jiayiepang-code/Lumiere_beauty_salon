@@ -100,86 +100,161 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-require_once 'includes/header.php';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login – Lumière Beauty Salon</title>
+    <title>Forgot Password – Lumière Beauty Salon</title>
     <link rel="stylesheet" href="css/style.css">
     <script src="js/script.js" defer></script>
 </head>
 <body>
 
-<div class="container mt-4">
-
-<?php if ($step === 1): ?>
-    <h3>Find Your Account</h3>
-    <p class="text-muted">Enter your Email or Phone Number to begin.</p>
-
-    <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo $error; ?></div>
-    <?php endif; ?>
-
-    <form method="POST">
-
-        <label>Email or Phone:</label>
-        <input type="text" name="login_id" class="form-control mb-3" required>
-
-        <label>Enter CAPTCHA:</label>
-        <div class="d-flex mb-2">
-            <div class="p-2 bg-light border fw-bold" style="letter-spacing: 3px;">
-                <?php echo $_SESSION['fp_captcha']; ?>
-            </div>
+<div class="floating-btn-group">
+    <a href="staff/login.php" class="float-wrapper staff-btn-container" style="text-decoration:none;">
+        <div class="icon-circle">
+            <img src="images/79.png" alt="Staff">
         </div>
+        <span class="float-text">Staff Login</span>
+    </a>
 
-        <input type="text" name="captcha" class="form-control mb-3" required>
-
-        <button name="find_account" class="btn btn-primary w-100">Next</button>
-    </form>
-
-<?php elseif ($step === 2): ?>
-    <h3>Verify Phone Number</h3>
-    <p>Enter the <b>last 4 digits</b> of your registered phone number.</p>
-
-    <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo $error; ?></div>
-    <?php endif; ?>
-
-    <form method="POST">
-        <input type="text" name="last4" maxlength="4" class="form-control mb-3" required>
-        <button name="verify_phone" class="btn btn-primary w-100">Verify</button>
-    </form>
-
-<?php elseif ($step === 3): ?>
-    <h3>Reset Your Password</h3>
-    <p class="text-muted">Create a new password for your account.</p>
-
-    <?php if ($error): ?>
-        <div class="alert alert-danger"><?php echo $error; ?></div>
-    <?php endif; ?>
-
-    <form method="POST">
-        <label>New Password:</label>
-        <input type="password" name="new_password" class="form-control mb-3" required>
-
-        <label>Confirm Password:</label>
-        <input type="password" name="confirm_password" class="form-control mb-3" required>
-
-        <button name="reset_password" class="btn btn-success w-100">Reset Password</button>
-    </form>
-
-<?php elseif ($step === 4): ?>
-    <div class="alert alert-success">
-        <?php echo $success; ?>
-    </div>
-    <a href="login.php" class="btn btn-primary">Back to Login</a>
-<?php endif; ?>
-
+    <a href="admin/login.php" class="float-wrapper admin-btn-container" style="text-decoration:none;">
+        <div class="icon-circle">
+            <img src="images/80.png" alt="Admin">
+        </div>
+        <span class="float-text">Admin Login</span>
+    </a>
 </div>
 
-<?php require_once 'includes/footer.php'; ?>
+<div class="auth-container">
+
+    <div class="auth-sidebar">
+        <div>
+            <h2>Reset Password</h2>
+            <div class="logo-container">
+                <img src="images/16.png" class="sidebar-logo" alt="Lumière Logo">
+            </div>
+            <p>Follow the steps to recover your account.</p>
+        </div>
+        <p>Lumière Beauty Salon</p>
+    </div>
+
+    <div class="auth-main">
+
+        <form class="auth-form" method="POST">
+
+            <div class="form-header">
+                <?php if ($step === 1): ?>
+                    <h1>Find Your Account</h1>
+                    <p>Enter your Email or Phone Number to begin.</p>
+                <?php elseif ($step === 2): ?>
+                    <h1>Verify Phone Number</h1>
+                    <p>Enter the last 4 digits of your registered phone number.</p>
+                <?php elseif ($step === 3): ?>
+                    <h1>Reset Your Password</h1>
+                    <p>Create a new password for your account.</p>
+                <?php elseif ($step === 4): ?>
+                    <h1>Success!</h1>
+                    <p>Your password has been reset successfully.</p>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($error): ?>
+                <div class="error-message" style="display: block;">
+                    <?php echo htmlspecialchars($error); ?>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($step === 1): ?>
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <img src="images/75.png" class="input-icon">
+                        <input type="text" 
+                               name="login_id" 
+                               class="form-control indent-icon" 
+                               placeholder="Email or Phone Number" 
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; color: var(--text-color); font-weight: 600;">Enter CAPTCHA:</label>
+                    <div class="captcha-wrapper" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 12px;">
+                        <div class="captcha-box" style="text-align: center; margin: 0 auto;">
+                            <?php echo $_SESSION['fp_captcha']; ?>
+                        </div>
+                        <div class="input-wrapper">
+                            <input type="text" 
+                                   name="captcha" 
+                                   class="form-control" 
+                                   placeholder="Enter CAPTCHA" 
+                                   style="text-transform: uppercase; letter-spacing: 3px;"
+                                   maxlength="5"
+                                   required>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" name="find_account" class="submit-btn">Next</button>
+
+            <?php elseif ($step === 2): ?>
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <input type="text" 
+                               name="last4" 
+                               class="form-control" 
+                               placeholder="Last 4 digits of phone" 
+                               maxlength="4"
+                               pattern="[0-9]{4}"
+                               required>
+                    </div>
+                </div>
+
+                <button type="submit" name="verify_phone" class="submit-btn">Verify</button>
+
+            <?php elseif ($step === 3): ?>
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <img src="images/74.png" class="input-icon">
+                        <input type="password" 
+                               name="new_password" 
+                               class="form-control indent-icon" 
+                               placeholder="New Password" 
+                               required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <img src="images/74.png" class="input-icon">
+                        <input type="password" 
+                               name="confirm_password" 
+                               class="form-control indent-icon" 
+                               placeholder="Confirm Password" 
+                               required>
+                    </div>
+                </div>
+
+                <button type="submit" name="reset_password" class="submit-btn">Reset Password</button>
+
+            <?php elseif ($step === 4): ?>
+                <div class="success-view">
+                    <div class="success-icon">✓</div>
+                    <p style="color: var(--success-color); font-size: 18px; margin-bottom: 30px;">
+                        <?php echo htmlspecialchars($success); ?>
+                    </p>
+                    <a href="login.php" class="submit-btn" style="text-decoration: none; display: inline-block; width: auto; padding: 12px 40px;">Back to Login</a>
+                </div>
+            <?php endif; ?>
+
+            <div class="switch-form">
+                <a href="login.php">Back to Login</a>
+            </div>
+
+        </form>
+
+    </div>
+</div>
 </body>
 </html>

@@ -2,55 +2,283 @@
 session_start();
 require_once 'config/database.php';
 
-// If NOT logged in, save the page they wanted (booking.php) and send to Login
-if(!isset($_SESSION['customer_id'])) {
-    $_SESSION['redirect_after_login'] = 'booking.php';
-    header('Location: login.php');
+// If NOT logged in, redirect to login page with redirect parameter
+$isLoggedIn = isset($_SESSION['customer_phone']) || isset($_SESSION['customer_id']);
+if(!$isLoggedIn) {
+    $redirect = urlencode($_SERVER['REQUEST_URI']);
+    header('Location: login.php?redirect=' . $redirect);
     exit();
 }
+
+// Get customer phone for database queries
+$customerPhone = $_SESSION['customer_phone'] ?? $_SESSION['customer_id'] ?? '';
 
 $database = new Database();
 $db = $database->getConnection();
 
-// 2. FETCH SERVICES
+// FETCH SERVICES
 $query = "SELECT 
-    sc.category_id,
-    sc.name as category_name,
-    s.service_id,
-    s.name as service_name,
-    s.description,
-    s.duration_minutes,
-    s.price
-FROM service_category sc
-JOIN service s ON sc.category_id = s.category_id
-ORDER BY sc.category_id, s.service_id";
+    service_id,
+    service_name,
+    service_category,
+    sub_category,
+    description,
+    current_duration_minutes as duration_minutes,
+    current_price as price
+FROM service
+WHERE is_active = 1
+ORDER BY service_category, service_id";
 
-$stmt = $db->prepare($query);
-$stmt->execute();
-
-$services = [];
-while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $services[$row['category_name']][] = $row;
+try {
+    $stmt = $db->prepare($query);
+    $stmt->execute();
+    $allServices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Group services by category
+    $servicesGrouped = [];
+    $servicesFlat = [];
+    $categoryMap = [
+        'Haircut' => 'Haircut',
+        'Facial' => 'Facial',
+        'Manicure' => 'Manicure',
+        'Massage' => 'Massage'
+    ];
+    
+    foreach($allServices as $row) {
+        $dbCategory = $row['service_category'] ?? 'Other';
+        $category = $categoryMap[$dbCategory] ?? $dbCategory;
+        $sub = $row['sub_category'] ?? 'General';
+        
+        $row['category_name'] = $category;
+        $row['category_id'] = $category;
+        
+        $servicesGrouped[$category][$sub][] = $row;
+        $servicesFlat[] = $row;
+    }
+} catch(PDOException $e) {
+    $servicesFlat = [];
+    $servicesGrouped = [];
+    error_log("Booking.php: Failed to fetch services - " . $e->getMessage());
 }
 
-// 3. FETCH STAFF
-$query = "SELECT staff_id, first_name, last_name, role, is_active FROM staff WHERE is_active = TRUE ORDER BY role, first_name";
-$stmt = $db->prepare($query);
-$stmt->execute();
-
-$staff = [];
-while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    $staff[$row['role']][] = $row;
+// FETCH STAFF
+$query = "SELECT staff_email, first_name, last_name, role, is_active FROM staff WHERE is_active = 1 ORDER BY role, first_name";
+try {
+    $stmt = $db->prepare($query);
+    $stmt->execute();
+    
+    $staff = [];
+    while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        // Add staff_id alias for compatibility with JavaScript code
+        $row['staff_id'] = $row['staff_email'];
+        $staff[$row['role']][] = $row;
+    }
+} catch(PDOException $e) {
+    $staff = [];
+    error_log("Booking.php: Failed to fetch staff - " . $e->getMessage());
 }
 
-// 4. FETCH CURRENT CUSTOMER DETAILS (For Step 4 Review)
-$query = "SELECT first_name, last_name, email, phone FROM customer WHERE customer_id = ?";
+// FETCH STAFF-SERVICE RELATIONSHIPS (for suggested staff)
+$staffServiceMap = [];
+try {
+    $query = "SELECT staff_email, service_id FROM staff_service";
+    $stmt = $db->prepare($query);
+    $stmt->execute();
+    
+    while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        $staffEmail = $row['staff_email'];
+        $serviceId = $row['service_id'];
+        if(!isset($staffServiceMap[$serviceId])) {
+            $staffServiceMap[$serviceId] = [];
+        }
+        $staffServiceMap[$serviceId][] = $staffEmail;
+    }
+} catch(PDOException $e) {
+    error_log("Booking.php: Failed to fetch staff-service relationships - " . $e->getMessage());
+}
+
+// FETCH CURRENT CUSTOMER DETAILS (For Step 4 Review)
+$query = "SELECT first_name, last_name, customer_email as email, phone FROM customer WHERE phone = ? LIMIT 1";
 $stmt = $db->prepare($query);
-$stmt->execute([$_SESSION['customer_id']]);
+$stmt->execute([$customerPhone]);
 $customer_info = $stmt->fetch(PDO::FETCH_ASSOC);
 
+if (!$customer_info) {
+    header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
+    exit();
+}
+
+// Include header
 require_once 'includes/header.php';
 ?>
+<!-- Additional CSS for booking page -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+    /* Full page background */
+    body.booking-page {
+        background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff) !important;
+        min-height: 100vh !important;
+    }
+    
+    body.booking-page .page-wrapper {
+        background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff) !important;
+        min-height: 100vh !important;
+    }
+    
+    body.booking-page .container {
+        background: transparent !important;
+    }
+    
+    /* Ensure step indicator is visible - High specificity to override other styles */
+    .container .step-indicator {
+        display: flex !important;
+        justify-content: center;
+        align-items: center;
+        gap: 25px !important;
+        margin-bottom: 2rem;
+        padding: 20px 0;
+        width: 100%;
+        flex-wrap: nowrap;
+        overflow: visible;
+    }
+    
+    .container .step-indicator .step {
+        display: flex !important;
+        align-items: center;
+        gap: 10px !important;
+        opacity: 0.5;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+        margin: 0 !important;
+        flex-shrink: 0;
+        min-width: fit-content;
+        position: relative;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        box-shadow: none !important;
+    }
+    
+    .container .step-indicator .step span {
+        font-size: 16px !important;
+        font-weight: 600 !important;
+        white-space: nowrap !important;
+        display: inline-block !important;
+        line-height: 1.2 !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        color: inherit;
+    }
+    
+    .container .step-indicator .step.active {
+        opacity: 1 !important;
+        color: #2f2721 !important;
+    }
+    
+    .container .step-indicator .step.active span {
+        color: #2f2721 !important;
+        font-weight: 700 !important;
+    }
+    
+    .container .step-indicator .step.completed {
+        opacity: 1 !important;
+    }
+    
+    .container .step-indicator .step.completed span {
+        color: #7a6c64 !important;
+    }
+    
+    .container .step-indicator .step-number {
+        width: 42px !important;
+        height: 42px !important;
+        border-radius: 50% !important;
+        background: #e6d9c8 !important;
+        color: #7a6c64 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-weight: 700 !important;
+        font-size: 18px !important;
+        flex-shrink: 0 !important;
+        margin-right: 0 !important;
+        position: relative;
+        border: none !important;
+    }
+    
+    .container .step-indicator .step.active .step-number {
+        background: #c79b19 !important;
+        color: #fff !important;
+    }
+    
+    .container .step-indicator .step.completed .step-number {
+        background: #c79b19 !important;
+        color: #fff !important;
+    }
+    
+    /* Prevent text truncation and ensure proper display */
+    .container .step-indicator .step * {
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }
+    
+    /* Ensure step 3 "Date & Time" displays on one line */
+    #step-3-indicator span {
+        white-space: nowrap !important;
+        max-width: none !important;
+        text-align: center;
+        line-height: 1.3;
+    }
+    
+    /* Responsive adjustments for smaller screens */
+    @media (max-width: 768px) {
+        .container .step-indicator {
+            gap: 15px !important;
+        }
+        
+        .container .step-indicator .step span {
+            font-size: 14px !important;
+        }
+        
+        #step-3-indicator span {
+            max-width: none !important;
+            white-space: nowrap !important;
+            font-size: 12px !important;
+        }
+    }
+    
+    /* Ensure booking steps are properly displayed - hidden by default */
+    .booking-step {
+        display: none !important;
+    }
+    
+    /* JavaScript will add/remove this class to control visibility */
+    .booking-step.show-step {
+        display: block !important;
+    }
+    
+    /* Make edit pencil icon more clickable */
+    .edit-service-btn {
+        cursor: pointer !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+        text-decoration: none !important;
+    }
+    
+    .edit-service-btn:hover {
+        background-color: rgba(194, 144, 118, 0.1) !important;
+        color: #c29076 !important;
+        transform: scale(1.1);
+    }
+    
+    .edit-service-btn i {
+        pointer-events: none;
+    }
+</style>
 
 <div class="container mt-4">
     <div class="step-indicator">
@@ -63,102 +291,49 @@ require_once 'includes/header.php';
     <div class="row">
         <div class="col-lg-8">
             
-            <div id="step-1" class="booking-step">
+            <div id="step-1" class="booking-step" style="display: block;">
                 <div class="card">
                     <div class="card-header">
                         <h4>Choose Your Services</h4>
                         <p class="mb-0">Select one or more services for your appointment</p>
                     </div>
                     <div class="card-body">
-                        <?php 
-                        // GROUPING LOGIC
-                        $defined_groups = [
-                            'Haircut Services' => ['Men Haircut', 'Women Haircut', 'Wash + Cut + Blow', 'Wash Only'],
-                            'Styling' => ['Basic Styling', 'Rebonding', 'Perming'],
-                            'Hair Colouring' => ['Hair Colouring (Short)', 'Hair Colouring (Medium)', 'Hair Colouring (Long)', 'Root Touch Up'],
-                            'Hair Treatment' => ['Scalp Treatment', 'Keratin Treatment'],
-                            'Facial Treatments' => ['Anti-Aging Facial', 'Deep Cleansing Facial', 'Hydrating Facial', 'Brightening Facial'],
-                            'Manicure Options' => ['Classic Basic Manicure', 'Just Colour', 'Nail Care'],
-                            'Nail Gelish' => ['Nail Gelish', 'Gel Removal'],
-                            'Nail Art' => ['Nail Art (Chrome)', 'Nail Art (Cat Eyes)', 'Nail Art (French)', 'Nail Art (3D)', 'Nail Art (Matte)'],
-                            'Extensions' => ['Acrylic Extensions', 'Tip Extensions', 'Infill Extension', 'Extension Removal'],
-                            'Add-ons' => ['Hand Scrub + Massage', 'Cuticle Oil Massage'],
-                            'Body Massage' => ['Body Massage (60m)', 'Body Massage (90m)', 'Body Massage (120m)'],
-                            'Swedish Massage' => ['Swedish Massage (60m)', 'Swedish Massage (120m)'],
-                            'Traditional Massage' => ['Borneo Massage (60m)', 'Borneo Massage (120m)'],
-                            'Aromatherapy' => ['Aromatherapy (60m)', 'Aromatherapy (120m)'],
-                            'Hot Stone' => ['Hot Stone (90m)', 'Hot Stone (120m)']
-                        ];
-
-                        $grouped_services = [];
-                        $ungrouped_services = [];
-                        $service_to_group_map = [];
-
-                        foreach ($defined_groups as $group_title => $service_names) {
-                            foreach ($service_names as $name) $service_to_group_map[$name] = $group_title;
-                        }
-
-                        foreach ($services as $cat_name => $cat_services) {
-                            foreach ($cat_services as $s) {
-                                if (isset($service_to_group_map[$s['service_name']])) {
-                                    $grouped_services[$cat_name][$service_to_group_map[$s['service_name']]][] = $s;
-                                } else {
-                                    $ungrouped_services[$cat_name][] = $s;
-                                }
-                            }
-                        }
-                        ?>
-
-                        <?php foreach($services as $cat_name => $junk): ?>
-                            <?php if(isset($grouped_services[$cat_name]) || isset($ungrouped_services[$cat_name])): ?>
-                                <div class="mb-4">
-                                    <h5 class="mb-3" style="color: var(--warm-brown); border-bottom: 2px solid var(--secondary-beige); padding-bottom: 10px;">
-                                        <?php echo htmlspecialchars($cat_name); ?>
-                                    </h5>
-                                    <div class="row">
-                                        <?php if(isset($grouped_services[$cat_name])): ?>
-                                            <?php foreach($grouped_services[$cat_name] as $group_title => $variants): ?>
-                                                <?php $first = $variants[0]; ?>
-                                                <div class="col-md-6 mb-3">
-                                                    <div class="card service-card h-100 group-card">
-                                                        <div class="card-body">
-                                                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                                                <h6 class="card-title fw-bold mb-0"><?php echo htmlspecialchars($group_title); ?></h6>
-                                                                <span class="badge bg-light text-dark border price-badge">RM <?php echo number_format($first['price'], 0); ?></span>
-                                                            </div>
-                                                            <p class="card-text small text-muted mb-3"><?php echo htmlspecialchars($first['description']); ?></p>
-                                                            <select class="form-select form-select-sm service-variant-select" onclick="event.stopPropagation();" onchange="updateCardPrice(this)">
-                                                                <?php foreach($variants as $v): ?>
-                                                                    <option value="<?php echo $v['service_id']; ?>" data-price="<?php echo $v['price']; ?>" data-duration="<?php echo $v['duration_minutes']; ?>">
-                                                                        <?php echo htmlspecialchars($v['service_name']); ?> (<?php echo $v['duration_minutes']; ?>m) - RM<?php echo number_format($v['price'], 0); ?>
-                                                                    </option>
-                                                                <?php endforeach; ?>
-                                                            </select>
-                                                        </div>
+                        <?php foreach($servicesGrouped as $cat_name => $subcats): ?>
+                            <div class="mb-4">
+                                <h5 class="mb-3" style="color: var(--warm-brown); border-bottom: 2px solid var(--secondary-beige); padding-bottom: 10px;">
+                                    <?php echo htmlspecialchars($cat_name); ?>
+                                </h5>
+                                <div class="row">
+                                    <?php foreach($subcats as $sub_name => $items): ?>
+                                        <?php $first = $items[0]; ?>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="card service-card h-100 group-card" data-service-id="<?php echo $first['service_id']; ?>">
+                                                <div class="card-body" style="display: flex; flex-direction: column; justify-content: center; padding: 1rem 1rem 0.75rem 1rem;">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <h6 class="card-title fw-bold mb-0" style="flex: 1; text-align: left;"><?php echo htmlspecialchars($sub_name); ?></h6>
+                                                        <span class="badge bg-light text-dark border price-badge">RM <?php echo number_format($first['price'], 0); ?></span>
                                                     </div>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-
-                                        <?php if(isset($ungrouped_services[$cat_name])): ?>
-                                            <?php foreach($ungrouped_services[$cat_name] as $service): ?>
-                                                <div class="col-md-6 mb-3">
-                                                    <div class="card service-card h-100" data-service-id="<?php echo $service['service_id']; ?>">
-                                                        <div class="card-body">
-                                                            <h6 class="card-title"><?php echo htmlspecialchars($service['service_name']); ?></h6>
-                                                            <p class="card-text small"><?php echo htmlspecialchars($service['description']); ?></p>
-                                                            <div class="d-flex justify-content-between align-items-center">
-                                                                <span class="badge bg-secondary"><?php echo $service['duration_minutes']; ?> min</span>
-                                                                <span class="fw-bold" style="color: var(--accent-gold);">RM <?php echo number_format($service['price'], 2); ?></span>
-                                                            </div>
+                                                    <p class="card-text small text-muted mb-2" style="text-align: left;"><?php echo htmlspecialchars($first['description'] ?? ''); ?></p>
+                                                    <?php if(count($items) > 1): ?>
+                                                        <select class="form-select form-select-sm service-variant-select" onclick="event.stopPropagation();" onchange="updateCardPrice(this)">
+                                                            <?php foreach($items as $v): ?>
+                                                                <option value="<?php echo $v['service_id']; ?>" data-price="<?php echo $v['price']; ?>" data-duration="<?php echo $v['duration_minutes']; ?>">
+                                                                    <?php echo htmlspecialchars($v['service_name']); ?> (<?php echo $v['duration_minutes']; ?>m) - RM<?php echo number_format($v['price'], 0); ?>
+                                                                </option>
+                                                            <?php endforeach; ?>
+                                                        </select>
+                                                    <?php else: ?>
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span class="badge bg-secondary"><?php echo $first['duration_minutes']; ?> min</span>
+                                                            <span class="fw-bold" style="color: var(--accent-gold);">RM <?php echo number_format($first['price'], 2); ?></span>
                                                         </div>
-                                                    </div>
+                                                    <?php endif; ?>
                                                 </div>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
-                            <?php endif; ?>
+                            </div>
                         <?php endforeach; ?>
                     </div>
                 </div>
@@ -236,15 +411,15 @@ require_once 'includes/header.php';
                             <div class="bg-light p-3 rounded mb-4 border">
                                 <div class="mb-2">
                                     <small class="text-muted text-uppercase">Name</small><br>
-                                    <span class="fw-bold"><?php echo htmlspecialchars($customer_info['first_name'] . ' ' . $customer_info['last_name']); ?></span>
+                                    <span class="fw-bold"><?php echo htmlspecialchars(($customer_info['first_name'] ?? '') . ' ' . ($customer_info['last_name'] ?? '')); ?></span>
                                 </div>
                                 <div class="mb-2">
                                     <small class="text-muted text-uppercase">Phone</small><br>
-                                    <span class="fw-bold"><?php echo htmlspecialchars($customer_info['phone']); ?></span>
+                                    <span class="fw-bold"><?php echo htmlspecialchars($customer_info['phone'] ?? ''); ?></span>
                                 </div>
                                 <div>
                                     <small class="text-muted text-uppercase">Email</small><br>
-                                    <span class="fw-bold"><?php echo htmlspecialchars($customer_info['email']); ?></span>
+                                    <span class="fw-bold"><?php echo htmlspecialchars($customer_info['email'] ?? ''); ?></span>
                                 </div>
                             </div>
 
@@ -309,26 +484,354 @@ require_once 'includes/header.php';
     </div>
 </div>
 
+<!-- Booking Confirmation Modal -->
+<div id="bookingConfirmationModal" class="custom-modal">
+    <div class="custom-modal-content confirmation-modal-content">
+        <div class="custom-modal-header confirmation-header">
+            <h5 class="custom-modal-title" style="color: white;">
+                <i class="fas fa-check-circle me-2"></i>Booking Confirmed!
+            </h5>
+        </div>
+        <div class="custom-modal-body confirmation-body">
+            <div class="text-center mb-4">
+                <div class="success-icon mb-3">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h4 style="color: var(--warm-brown); margin-bottom: 10px;">Your appointment is confirmed!</h4>
+                <p class="text-muted mb-4">We've sent a confirmation email with all the details.</p>
+            </div>
+            
+            <div class="booking-details-summary">
+                <div class="detail-row">
+                    <span class="detail-label">Booking ID:</span>
+                    <span class="detail-value" id="confirmationBookingId" style="font-weight: bold; color: var(--accent-gold);"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Date & Time:</span>
+                    <span class="detail-value" id="confirmationDateTime"></span>
+                </div>
+            </div>
+            
+            <div class="booking-details-summary mt-3">
+                <h6 class="mb-3" style="color: var(--warm-brown);">Services Booked</h6>
+                <div id="confirmationServicesList" style="max-height: 200px; overflow-y: auto;">
+                    <!-- Services with staff will be populated here -->
+                </div>
+            </div>
+            
+            <div class="booking-details-summary mt-3">
+                <div class="detail-row" style="border-top: 2px solid var(--accent-gold); padding-top: 15px; margin-top: 10px;">
+                    <span class="detail-label" style="font-weight: bold; font-size: 1.1em;">Total:</span>
+                    <span class="detail-value" id="confirmationTotal" style="font-weight: bold; color: var(--accent-gold); font-size: 1.1em;"></span>
+                </div>
+            </div>
+            
+            <div class="confirmation-note mt-4 p-3" style="background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--accent-gold);">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Please arrive 10 minutes early. Payment will be collected at the salon.
+                </small>
+            </div>
+        </div>
+        <div class="custom-modal-footer confirmation-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeBookingConfirmation()">View Bookings</button>
+            <button type="button" class="btn btn-primary" onclick="closeBookingConfirmation()">Done</button>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="custom-modal-header">
+            <h5 class="custom-modal-title">localhost says</h5>
+        </div>
+        <div class="custom-modal-body">
+            <p id="errorMessage">Booking failed. Please try again.</p>
+        </div>
+        <div class="custom-modal-footer">
+            <button type="button" class="btn-custom-ok" onclick="closeErrorModal()">OK</button>
+        </div>
+    </div>
+</div>
+
+<style>
+.custom-modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.2s ease-in;
+}
+
+.custom-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-modal-content {
+    background-color: #424242;
+    color: white;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.2s ease-out;
+}
+
+.custom-modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #555;
+}
+
+.custom-modal-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+}
+
+.custom-modal-body {
+    padding: 20px;
+    font-size: 14px;
+    color: white;
+}
+
+.custom-modal-body p {
+    margin: 0;
+    color: white;
+}
+
+.custom-modal-footer {
+    padding: 12px 20px;
+    text-align: right;
+    border-top: 1px solid #555;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.btn-custom-ok {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+    background-color: #0078d4;
+    color: white;
+}
+
+.btn-custom-ok:hover {
+    background-color: #005a9e;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Confirmation Modal Styles */
+.confirmation-modal-content {
+    max-width: 500px;
+    background: white;
+    color: #333;
+}
+
+.confirmation-header {
+    background: linear-gradient(135deg, var(--accent-gold), #c79b19);
+    color: white;
+    border-bottom: none;
+}
+
+.confirmation-header .custom-modal-title {
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.confirmation-body {
+    color: #333;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.success-icon {
+    font-size: 60px;
+    color: #28a745;
+    animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.booking-details-summary {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #6c757d;
+}
+
+.detail-value {
+    color: #333;
+    text-align: right;
+}
+
+.confirmation-note {
+    font-size: 13px;
+}
+
+.confirmation-footer {
+    border-top: 1px solid #dee2e6;
+    background: #f8f9fa;
+    gap: 10px;
+}
+
+.confirmation-footer .btn {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+</style>
+
 <?php require_once 'includes/footer.php'; ?>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-    window.staffData = <?php echo json_encode($staff); ?>;
-    window.allServicesData = {
-        <?php 
-        foreach($services as $category => $category_services) {
-            foreach($category_services as $service) {
-                echo $service['service_id'] . ": {
-                    name: '" . addslashes($service['service_name']) . "',
-                    duration: " . $service['duration_minutes'] . ",
-                    price: " . $service['price'] . ",
-                    category: '" . addslashes($service['category_name']) . "' 
-                },";
-            }
+    // Error Modal Functions
+    function showErrorModal(message) {
+        document.getElementById('errorMessage').textContent = message;
+        const modal = document.getElementById('errorModal');
+        modal.classList.add('show');
+    }
+
+    function closeErrorModal() {
+        const modal = document.getElementById('errorModal');
+        modal.classList.remove('show');
+    }
+
+    // Booking Confirmation Modal Functions
+    function showBookingConfirmation(bookingData) {
+        // Populate confirmation details
+        document.getElementById('confirmationBookingId').textContent = bookingData.booking_id || 'N/A';
+        document.getElementById('confirmationDateTime').textContent = 
+            (bookingData.date || '') + ' at ' + (bookingData.time || '');
+        document.getElementById('confirmationTotal').textContent = 
+            bookingData.subtotal ? 'RM ' + parseFloat(bookingData.subtotal).toFixed(2) : 'RM 0.00';
+        
+        // Populate services list with staff assignments
+        const servicesListContainer = document.getElementById('confirmationServicesList');
+        if (bookingData.services && Array.isArray(bookingData.services) && bookingData.services.length > 0) {
+            let servicesHtml = '<table class="table table-sm" style="margin-bottom: 0;">';
+            servicesHtml += '<thead><tr><th>Service</th><th>Duration</th><th>Staff</th><th>Price</th></tr></thead><tbody>';
+            
+            bookingData.services.forEach(function(service) {
+                servicesHtml += '<tr>';
+                servicesHtml += '<td>' + (service.service_name || 'Service') + '</td>';
+                servicesHtml += '<td>' + (service.duration || 0) + ' min</td>';
+                servicesHtml += '<td>' + (service.staff_name || 'No Preference') + '</td>';
+                servicesHtml += '<td>RM ' + parseFloat(service.price || 0).toFixed(2) + '</td>';
+                servicesHtml += '</tr>';
+            });
+            
+            servicesHtml += '</tbody></table>';
+            servicesListContainer.innerHTML = servicesHtml;
+        } else {
+            // Fallback if services array is not available
+            servicesListContainer.innerHTML = '<p class="text-muted">' + (bookingData.services || 'Multiple services') + '</p>';
         }
-        ?>
-    };
+        
+        // Show modal
+        const modal = document.getElementById('bookingConfirmationModal');
+        modal.classList.add('show');
+    }
+
+    function closeBookingConfirmation() {
+        const modal = document.getElementById('bookingConfirmationModal');
+        modal.classList.remove('show');
+        // Redirect to dashboard with cache-busting to ensure fresh data
+        window.location.href = 'user/dashboard.php?section=bookings&t=' + Date.now();
+    }
+
+    // Close modals when clicking outside
+    document.addEventListener('click', function(event) {
+        const errorModal = document.getElementById('errorModal');
+        const confirmationModal = document.getElementById('bookingConfirmationModal');
+        
+        if (event.target == errorModal) {
+            closeErrorModal();
+        }
+        if (event.target == confirmationModal) {
+            closeBookingConfirmation();
+        }
+    });
+
+    window.staffData = <?php echo json_encode($staff); ?>;
+    window.staffServiceMap = <?php echo json_encode($staffServiceMap); ?>;
+    
+    <?php 
+    $jsServices = [];
+    if (isset($servicesFlat) && is_array($servicesFlat)) {
+        foreach($servicesFlat as $s) {
+            $jsServices[$s['service_id']] = [
+                'name' => $s['service_name'],
+                'duration' => (int)$s['duration_minutes'],
+                'price' => (float)$s['price'],
+                'category' => $s['category_name'] ?? ''
+            ];
+        }
+    }
+    ?>
+    
+    window.allServicesData = <?php echo json_encode($jsServices); ?>;
 </script>
 
 <script src="js/booking.js"></script>
+</div> <!-- Close page-wrapper from header.php -->
 </body>
 </html>

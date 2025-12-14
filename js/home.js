@@ -1,4 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
+    // #region agent log
+    const profilePanelCheck = document.getElementById("profilePanel");
+    if (profilePanelCheck) {
+        const computedStyle = window.getComputedStyle(profilePanelCheck);
+        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'home.js:2',message:'Page load - panel initial CSS',data:{width:computedStyle.width,height:computedStyle.height,maxHeight:computedStyle.maxHeight,overflow:computedStyle.overflow,top:computedStyle.top,right:computedStyle.right,position:computedStyle.position},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    }
+    // #endregion
 
     /* ===============================
        PROFILE PANEL
@@ -11,6 +18,15 @@ document.addEventListener("DOMContentLoaded", function () {
         profileToggle.addEventListener("click", (e) => {
             e.stopPropagation();
             profilePanel.classList.add("open");
+            // #region agent log
+            setTimeout(() => {
+                const rect = profilePanel.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(profilePanel);
+                const contentHeight = profilePanel.scrollHeight;
+                const viewportHeight = window.innerHeight;
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'home.js:13',message:'Panel opened - dimensions',data:{width:rect.width,height:rect.height,contentHeight:contentHeight,viewportHeight:viewportHeight,computedWidth:computedStyle.width,computedHeight:computedStyle.height,maxHeight:computedStyle.maxHeight,overflow:computedStyle.overflow},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+            }, 100);
+            // #endregion
         });
     }
 
@@ -29,6 +45,15 @@ document.addEventListener("DOMContentLoaded", function () {
         profileToggle.addEventListener("click", (e) => {
             e.stopPropagation();
             profilePanel.classList.add("open");
+            // #region agent log
+            setTimeout(() => {
+                const rect = profilePanel.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(profilePanel);
+                const contentHeight = profilePanel.scrollHeight;
+                const viewportHeight = window.innerHeight;
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'home.js:31',message:'Panel opened (duplicate handler) - dimensions',data:{width:rect.width,height:rect.height,contentHeight:contentHeight,viewportHeight:viewportHeight,computedWidth:computedStyle.width,computedHeight:computedStyle.height,maxHeight:computedStyle.maxHeight,overflow:computedStyle.overflow},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            }, 100);
+            // #endregion
         });
     }
 
