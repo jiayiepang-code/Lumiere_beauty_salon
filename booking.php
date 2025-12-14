@@ -115,10 +115,227 @@ require_once 'includes/header.php';
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
+    /* Protect header styles from Bootstrap overrides - Use high specificity selectors */
+    body.booking-page .main-header {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        padding: 18px 60px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        backdrop-filter: blur(10px) !important;
+        z-index: 1000 !important;
+        box-shadow: 0 4px 18px rgba(0,0,0,0.06) !important;
+    }
+    
+    body.booking-page .main-header .main-nav {
+        display: flex !important;
+        gap: 40px !important;
+        font-size: 16px !important;
+        justify-content: center !important;
+        flex: 1 !important;
+    }
+    
+    /* Target header nav links specifically to override Bootstrap */
+    body.booking-page .main-header .main-nav a.nav-link,
+    body.booking-page .main-header .main-nav .nav-link,
+    body.booking-page .main-header .main-nav .dropdown-toggle {
+        text-decoration: none !important;
+        color: #6b5043 !important;
+        position: relative !important;
+        padding-bottom: 4px !important;
+        font-size: 16px !important;
+        font-weight: 500 !important;
+        background: none !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: color 0.3s ease !important;
+        padding-top: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        margin: 0 !important;
+    }
+    
+    body.booking-page .main-header .main-nav a.nav-link.active,
+    body.booking-page .main-header .main-nav .nav-link.active,
+    body.booking-page .main-header .main-nav a.nav-link:hover,
+    body.booking-page .main-header .main-nav .nav-link:hover,
+    body.booking-page .main-header .main-nav .dropdown-toggle:hover {
+        color: #c29076 !important;
+        background: none !important;
+    }
+    
+    body.booking-page .main-header .main-nav a.nav-link:not(.dropdown-toggle).active::after,
+    body.booking-page .main-header .main-nav .nav-link:not(.dropdown-toggle).active::after,
+    body.booking-page .main-header .main-nav a.nav-link:not(.dropdown-toggle):hover::after,
+    body.booking-page .main-header .main-nav .nav-link:not(.dropdown-toggle):hover::after {
+        content: "" !important;
+        position: absolute !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        width: 26px !important;
+        height: 2px !important;
+        border-radius: 999px !important;
+        background: #c29076 !important;
+    }
+    
+    body.booking-page .main-header .main-nav .dropdown-toggle::after {
+        content: " ▾" !important;
+        display: inline-block !important;
+        margin-left: 4px !important;
+        font-size: 0.9em !important;
+        position: relative !important;
+        background: none !important;
+        width: auto !important;
+        height: auto !important;
+        border-radius: 0 !important;
+        left: auto !important;
+        bottom: auto !important;
+        border: none !important;
+        margin: 0 0 0 4px !important;
+        padding: 0 !important;
+    }
+    
+    body.booking-page .main-header .nav-dropdown {
+        position: relative !important;
+        display: inline-block !important;
+    }
+    
+    body.booking-page .main-header .nav-dropdown .dropdown-menu {
+        position: absolute !important;
+        top: 26px !important;
+        left: 0 !important;
+        background: white !important;
+        border: 1px solid #e6d9d2 !important;
+        border-radius: 10px !important;
+        padding: 12px 0 !important;
+        width: 190px !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+        display: none !important;
+        z-index: 1050 !important;
+        min-width: auto !important;
+        margin: 0 !important;
+    }
+    
+    body.booking-page .main-header .nav-dropdown:hover .dropdown-menu {
+        display: block !important;
+    }
+    
+    body.booking-page .main-header .nav-dropdown .dropdown-menu a {
+        display: block !important;
+        padding: 10px 16px !important;
+        color: #8a766e !important;
+        text-decoration: none !important;
+        font-size: 15px !important;
+        transition: background 0.2s ease !important;
+        background: transparent !important;
+        border: none !important;
+        margin: 0 !important;
+    }
+    
+    body.booking-page .main-header .nav-dropdown .dropdown-menu a:hover {
+        background: #f5ece8 !important;
+        color: #c29076 !important;
+    }
+    
+    body.booking-page .main-header .book-btn {
+        padding: 12px 32px !important;
+        background: #c29076 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 30px !important;
+        font-size: 16px !important;
+        cursor: pointer !important;
+        margin-right: 16px !important;
+        transition: all 0.25s ease !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08) !important;
+    }
+    
+    body.booking-page .main-header .book-btn:hover {
+        background: #ad7c65 !important;
+        box-shadow: 0 6px 14px rgba(0,0,0,0.15) !important;
+        color: white !important;
+    }
+    
+    body.booking-page .main-header .profile-btn {
+        background: none !important;
+        border: none !important;
+        cursor: pointer !important;
+        padding: 5px !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    body.booking-page .main-header .header-profile-img {
+        width: 32px !important;
+        height: 32px !important;
+        object-fit: contain !important;
+        filter: invert(63%) sepia(11%) saturate(1319%) hue-rotate(338deg) brightness(92%) contrast(86%) !important;
+        transition: transform 0.2s ease !important;
+    }
+    
+    body.booking-page .main-header .profile-btn:hover .header-profile-img {
+        transform: scale(1.1) !important;
+    }
+    
+    body.booking-page .main-header .logo-area {
+        display: flex !important;
+        align-items: center !important;
+    }
+    
+    body.booking-page .main-header .header-logo {
+        height: 60px !important;
+        width: auto !important;
+        object-fit: contain !important;
+    }
+    
+    /* Reset Bootstrap defaults for header elements */
+    body.booking-page .main-header * {
+        box-sizing: border-box;
+    }
+    
+    body.booking-page .main-header a {
+        text-decoration: none !important;
+    }
+    
+    body.booking-page .main-header button {
+        font-family: inherit !important;
+    }
+    
+    /* Ensure dropdown menu doesn't get Bootstrap nav styles */
+    body.booking-page .main-header .dropdown-menu {
+        list-style: none !important;
+    }
+    
+    body.booking-page .main-header .dropdown-menu li {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Font family for header to match index page */
+    body.booking-page .main-header,
+    body.booking-page .main-header .main-nav,
+    body.booking-page .main-header .main-nav a,
+    body.booking-page .main-header .main-nav .nav-link,
+    body.booking-page .main-header .book-btn {
+        font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+    }
+    
+    /* Ensure header links have proper line-height */
+    body.booking-page .main-header .main-nav a.nav-link,
+    body.booking-page .main-header .main-nav .nav-link {
+        line-height: 1.5 !important;
+        vertical-align: baseline !important;
+    }
+    
     /* Full page background */
     body.booking-page {
         background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff) !important;
         min-height: 100vh !important;
+        padding-top: 90px !important; /* Space for fixed header */
     }
     
     body.booking-page .page-wrapper {

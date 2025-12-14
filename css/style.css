@@ -274,60 +274,100 @@ img {
 .register-stepper {
     display: flex;
     justify-content: space-between;
+    align-items: center; /* Vertically center the steps */
     width: 80%;
     margin: 0 auto 30px;
     position: relative;
+    gap: 0; /* Remove any gap that might affect sizing */
+}
+
+/* Ensure step-number in register stepper has no background or border */
+.register-stepper .step .step-number {
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    width: auto !important;
+    height: auto !important;
 }
 
 .register-stepper::before {
     content: "";
     position: absolute;
     top: 50%; left: 0; width: 100%; height: 2px;
-    background: var(--border-color); z-index: 0; transform: translateY(-50%);
+    background: #e0e0e0; /* Light grey connecting line */
+    z-index: 0; 
+    transform: translateY(-50%);
 }
 
 .step {
     width: 35px; 
     height: 35px; 
-    background: white;
-    border: 2px solid var(--border-color); 
+    min-width: 35px; /* Prevent stretching */
+    min-height: 35px; /* Prevent stretching */
+    background: #f5f5f5; /* Light grey background for inactive steps */
+    border: 2px solid #e0e0e0; /* Light grey border for inactive steps */
     border-radius: 50%;
+    box-sizing: border-box; /* Include border in width/height calculation */
     display: flex; 
     justify-content: center; 
     align-items: center;
-    color: var(--text-light); 
+    color: #6b5043; /* Dark grey/brown text for inactive steps */
     font-weight: bold; 
     z-index: 1; 
-    transition: 0.3s;
+    transition: all 0.3s ease;
     position: relative;
+    padding: 0; /* Remove any padding */
+    margin: 0; /* Remove any margin */
+    flex-shrink: 0; /* Prevent flex shrinking */
+    aspect-ratio: 1 / 1; /* Force perfect circle */
 }
 
 .step .step-number {
-    display: block;
-    width: 100%;
-    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     font-size: 14px;
     font-weight: 600;
     line-height: 1;
+    color: inherit; /* Inherit color from parent step */
+    width: auto; /* Let it size naturally */
+    height: auto; /* Let it size naturally */
+    margin: 0;
+    padding: 0;
+    background: none !important; /* Remove any background */
+    border: none !important; /* Remove any border */
+    border-radius: 0 !important; /* Remove any border radius */
 }
 
 .step.step-active { 
-    border-color: var(--primary-color); 
-    color: var(--primary-color); 
+    background: #f5e6d3 !important; /* Light orange/beige background */
+    border: 2px solid #c29076 !important; /* Dark orange/brown border */
+    color: #6b5043 !important; /* Dark grey/brown text */
 }
 .step.step-active .step-number { 
-    color: var(--primary-color); 
+    color: #6b5043 !important; /* Dark grey/brown number */
 }
 .step.step-done { 
-    background: var(--success-color); 
-    border-color: var(--success-color); 
-    color: white; 
+    background: #28a745 !important; /* Darker green for better visibility */
+    border-color: #28a745 !important; 
+    color: white !important; 
 }
 .step.step-done .step-number { 
-    color: white; 
+    color: white !important; 
+    font-size: 18px !important; /* Larger checkmark */
+    font-weight: 700 !important; /* Bolder checkmark */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2); /* Subtle shadow for better visibility */
+    background: none !important; /* Ensure no background */
+    border: none !important; /* Ensure no border */
+    border-radius: 0 !important; /* Ensure no border radius */
+}
+.step.step-error {
+    background: #fff5f5 !important;
+    border: 2px solid #d9534f !important;
+    color: #d9534f !important;
+}
+.step.step-error .step-number {
+    color: #d9534f !important;
 }
 
 /* ========== INPUTS & FORMS ========== */
@@ -418,6 +458,14 @@ img {
     display: flex; justify-content: center; align-items: center;
 }
 .submit-btn:hover { background: var(--primary-hover); }
+.submit-btn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    background: #ccc !important;
+}
+.submit-btn:disabled:hover {
+    background: #ccc !important;
+}
 
 /* Theme Buttons */
 .staff-login-btn { background: var(--staff-color) !important; }

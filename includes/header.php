@@ -84,81 +84,79 @@ if (!isset($bodyClass)) {
         <a href="<?php echo $assetBase; ?>user/contact.php" class="nav-link">Contact Us</a>
     </nav>
 
-    <!-- Book Now Button -->
-    <?php 
-    $isLoggedInHeader = isset($_SESSION['customer_phone']) || isset($_SESSION['customer_email']);
-    if ($isLoggedInHeader): ?>
-        <button class="book-btn" onclick="location.href='<?php echo $assetBase; ?>booking.php'">Book Now</button>
-    <?php else: ?>
-        <button class="book-btn" onclick="location.href='<?php echo $assetBase; ?>login.php?redirect=booking.php'">Book Now</button>
-    <?php endif; ?>
-
-    <!-- Profile Button -->
+    <!-- BOOK NOW (forces login if guest) -->
     <?php if ($isLoggedIn): ?>
-        <a href="<?php echo $assetBase; ?>user/dashboard.php?section=profile" id="profileToggle" class="profile-btn" aria-label="Profile menu" style="text-decoration: none; display: inline-block;">
-            <img src="<?php echo $assetBase; ?>images/50.png" class="header-profile-img" alt="Profile">
-        </a>
-    <?php else: ?>
-        <button id="profileToggle" class="profile-btn" aria-label="Profile menu">
-            <img src="<?php echo $assetBase; ?>images/50.png" class="header-profile-img" alt="Profile">
-        </button>
-    <?php endif; ?>
+    <button class="book-btn"
+            onclick="window.location.href='<?php echo $assetBase; ?>booking.php'">
+        Book Now
+    </button>
+<?php else: ?>
+    <button class="book-btn"
+            onclick="window.location.href='<?php echo $assetBase; ?>login.php?redirect=' + encodeURIComponent('booking.php')">
+        Book Now
+    </button>
+<?php endif; ?>
+
+    <!-- PROFILE ICON - Toggle profile panel -->
+    <button class="profile-btn" id="profileToggle" aria-label="Profile menu">
+        <img src="<?php echo $assetBase; ?>images/50.png" class="header-profile-img" alt="Profile">
+    </button>
 
 </header>
 
 <aside class="profile-panel" id="profilePanel">
     <button class="panel-close" id="panelClose">✕</button>
 
-    <?php if ($isLoggedIn): ?>
-        <div class="panel-content">
-            <div class="panel-header">
-                <a href="<?php echo $assetBase; ?>user/dashboard.php?section=profile" style="text-decoration: none; display: block;">
-                    <div id="dynamicAvatar" class="avatar-circle" style="cursor: pointer;">
-                        <?= htmlspecialchars($initials) ?>
-                    </div>
-                </a>
-                <div class="user-details">
-                    <h3 id="panelUserName">
-                        <?= htmlspecialchars(trim($firstName . ' ' . $lastName)) ?>
-                    </h3>
-                    <span class="user-role-badge">
-                        <?= htmlspecialchars($role) ?>
-                    </span>
+<?php if ($isLoggedIn): ?>
+    <div class="panel-content">
+        <div class="panel-header">
+            <a href="<?php echo $assetBase; ?>user/dashboard.php" style="text-decoration: none; display: block;">
+                <div id="dynamicAvatar" class="avatar-circle" style="cursor: pointer;">
+                    <?= htmlspecialchars($initials) ?>
                 </div>
-            </div>
-
-            <ul class="panel-menu">
-                <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=overview">Overview</a></li>
-                <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=bookings">My Bookings</a></li>
-                <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=profile">My Profile</a></li>
-                <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=favourites">Favourites Staff</a></li>
-                <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=help">Help & Support</a></li>
-            </ul>
-
-            <div class="panel-divider"></div>
-
-            <a href="<?php echo $assetBase; ?>logout.php" class="panel-logout">
-                <img src="<?php echo $assetBase; ?>images/51.png" class="logout-img" alt="Logout">
-                Logout
             </a>
+            <div class="user-details">
+                <h3 id="panelUserName">
+                    <?= htmlspecialchars($firstName . ' ' . $lastName) ?>
+                </h3>
+                <span class="user-role-badge">
+                    <?= htmlspecialchars($role) ?>
+                </span>
+            </div>
         </div>
 
-    <?php else: ?>
-        <!-- GUEST VIEW -->
-        <div class="panel-content">
-            <div class="panel-header">
-                <div class="avatar-circle">?</div>
-                <div class="user-details">
-                    <h3>Welcome!</h3>
-                    <span class="user-role-badge">Guest</span>
+        <ul class="panel-menu">
+            <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=overview">Overview</a></li>
+            <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=bookings">My Bookings</a></li>
+            <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=profile">My Profile</a></li>
+            <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=favourites">Favourites Staff</a></li>
+            <li><a href="<?php echo $assetBase; ?>user/dashboard.php?section=help">Help & Support</a></li>
+        </ul>
+
+        <div class="panel-divider"></div>
+
+        <a href="<?php echo $assetBase; ?>logout.php" class="panel-logout">
+            <img src="<?php echo $assetBase; ?>images/51.png" class="logout-img" alt="Logout">
+            Logout
+        </a>
+    </div>
+
+<?php else: ?>
+            <!-- GUEST VIEW -->
+            <div class="panel-content">
+                <div class="panel-header">
+                    <div class="avatar-circle">?</div>
+                    <div class="user-details">
+                        <h3>Welcome!</h3>
+                        <span class="user-role-badge">Guest</span>
+                    </div>
                 </div>
-            </div>
 
-            <p style="font-size:14px; color:#7c6a65; margin-bottom:16px;">
-                Please log in to view your profile, bookings, and favourites.
-            </p>
+                <p style="font-size:14px; color:#7c6a65; margin-bottom:16px;">
+                    Please log in to view your profile, bookings, and favourites.
+                </p>
 
-            <ul class="panel-menu">
+                <ul class="panel-menu">
                 <li>
                     <!-- OPEN LOGIN TAB -->
                     <a href="<?php echo $assetBase; ?>login.php?mode=login&redirect=<?= $currentUrlEncoded ?>">
@@ -172,13 +170,13 @@ if (!isset($bodyClass)) {
                     Register
                     </a>
                 </li>
-            </ul>
-        </div>
-    <?php endif; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 </aside>
 
 <script>
-// Profile Panel Toggle Script (Works on all pages that include header.php)
+// Profile Panel Hover Script for index.php
 document.addEventListener("DOMContentLoaded", function() {
     const toggle = document.getElementById("profileToggle");
     const panel = document.getElementById("profilePanel");
@@ -227,13 +225,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 e.stopPropagation();
                 panel.classList.toggle("open");
             });
-        } else if (toggle.tagName === 'A') {
-            // For logged-in users, prevent navigation on click, show panel instead
-            toggle.addEventListener("click", (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                panel.classList.toggle("open");
-            });
         }
 
         // Close button
@@ -251,17 +242,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 !toggle.contains(e.target)) {
                 panel.classList.remove("open");
                 isHovering = false;
-            }
-        });
-
-        // Verify panel stays fixed when scrolling
-        let scrollCheckCount = 0;
-        window.addEventListener("scroll", () => {
-            if (panel && panel.classList.contains("open") && scrollCheckCount < 3) {
-                scrollCheckCount++;
-                setTimeout(() => {
-                    // Panel scroll position check (debugging code removed)
-                }, 100);
             }
         });
     }

@@ -58,12 +58,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Make CAPTCHA comparison case-insensitive and trim whitespace
-    $captcha = strtoupper(trim($captcha));
-    $sessionCaptcha = isset($_SESSION['register_captcha']) ? strtoupper(trim($_SESSION['register_captcha'])) : '';
-    
+    // Case-sensitive CAPTCHA validation - trim whitespace only
+    $captcha = trim($captcha);
+    $sessionCaptcha = isset($_SESSION['register_captcha']) ? trim($_SESSION['register_captcha']) : '';
+
     if (empty($sessionCaptcha) || $captcha !== $sessionCaptcha) {
-        echo json_encode(['status' => 'error', 'message' => 'Incorrect CAPTCHA.']);
+        echo json_encode(['status' => 'error', 'message' => 'Incorrect CAPTCHA. Please check the case of letters.']);
         exit;
     }
 

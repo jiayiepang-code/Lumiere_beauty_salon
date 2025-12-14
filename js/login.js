@@ -69,6 +69,19 @@ function goToStep(step) {
     const stepCount = document.getElementById('stepCount');
     if (stepCount) stepCount.innerText = step;
     
+    // If moving to step 2, disable Next Step button until password is strong
+    if (step === 2) {
+        const nextStepBtn = document.querySelector('#step-group-2 .submit-btn');
+        if (nextStepBtn) {
+            nextStepBtn.disabled = true;
+            nextStepBtn.style.opacity = '0.5';
+            nextStepBtn.style.cursor = 'not-allowed';
+            // Reset password strength check
+            isPasswordStrong = false;
+            passwordStrength = 'weak';
+        }
+    }
+    
     updateStepperVisuals(step);
     currentStep = step;
 }
@@ -148,8 +161,23 @@ function validateStep2() {
     if (!email.checkValidity()) {
         return email.reportValidity();
     }
-    if (pass.value === "") return pass.reportValidity();
-    if (confirmPass.value === "") return confirmPass.reportValidity();
+    if (pass.value === "") {
+        errorBox.style.display = 'block';
+        errorBox.innerText = "Please enter a password.";
+        return;
+    }
+    if (confirmPass.value === "") {
+        errorBox.style.display = 'block';
+        errorBox.innerText = "Please confirm your password.";
+        return;
+    }
+
+    // Check password strength - must be STRONG (all 5 rules met)
+    if (!isPasswordStrong || passwordStrength !== 'strong') {
+        errorBox.style.display = 'block';
+        errorBox.innerText = "Password must be STRONG. Please ensure all password requirements are met: at least 8 characters, one uppercase letter, one lowercase letter, one number, and one symbol.";
+        return;
+    }
 
     // Check if passwords match
     if (pass.value !== confirmPass.value) {
@@ -180,8 +208,9 @@ function validateStep3() {
         return;
     }
 
-    const expected = String(codeEl.dataset.code || '').toUpperCase();
-    const entered = captchaInput.value.trim().toUpperCase();
+    // Case-sensitive CAPTCHA validation
+    const expected = String(codeEl.dataset.code || '').trim();
+    const entered = captchaInput.value.trim();
 
     if (entered === '') {
         errorBox.style.display = 'block';
@@ -191,7 +220,7 @@ function validateStep3() {
 
     if (entered !== expected) {
         errorBox.style.display = 'block';
-        errorBox.innerText = "Incorrect CAPTCHA. Please try again.";
+        errorBox.innerText = "Incorrect CAPTCHA. Please check the case of letters.";
         return;
     }
 
@@ -266,12 +295,17 @@ if (passwordInput && passwordHints) {
     });
 }
 
+// Global variable to store password strength
+let passwordStrength = 'weak';
+let isPasswordStrong = false;
+
 // Password Strength Checker
 function checkPasswordRules() {
     const password = passwordInput.value;
     const bar = document.getElementById('strengthBar');
     const text = document.getElementById('strengthText');
     const strengthContainer = document.querySelector('.password-strength');
+    const nextStepBtn = document.querySelector('#step-group-2 .submit-btn');
 
     // Show bars
     if (strengthContainer) strengthContainer.style.display = "block";
@@ -302,26 +336,52 @@ function checkPasswordRules() {
     // Reset Classes
     bar.className = 'password-strength-bar';
 
+    // Check if ALL 5 rules are met (strong password)
+    isPasswordStrong = validCount === 5;
+
     if (validCount <= 1) {
         bar.style.width = '25%';
         bar.classList.add('strength-weak');
         text.innerText = "Weak";
         text.style.color = "#d9534f";
+        passwordStrength = 'weak';
     } else if (validCount === 2) {
         bar.style.width = '50%';
         bar.classList.add('strength-fair');
         text.innerText = "Fair";
         text.style.color = "#f0ad4e";
+        passwordStrength = 'fair';
     } else if (validCount === 3) {
         bar.style.width = '75%';
         bar.classList.add('strength-good');
         text.innerText = "Good";
         text.style.color = "#5bc0de";
-    } else if (validCount >= 4) {
+        passwordStrength = 'good';
+    } else if (validCount === 4) {
+        bar.style.width = '90%';
+        bar.classList.add('strength-good');
+        text.innerText = "Good";
+        text.style.color = "#5bc0de";
+        passwordStrength = 'good';
+    } else if (validCount === 5) {
         bar.style.width = '100%';
         bar.classList.add('strength-strong');
         text.innerText = "Strong";
         text.style.color = "#5cb85c";
+        passwordStrength = 'strong';
+    }
+
+    // Enable/disable Next Step button based on password strength
+    if (nextStepBtn) {
+        if (isPasswordStrong) {
+            nextStepBtn.disabled = false;
+            nextStepBtn.style.opacity = '1';
+            nextStepBtn.style.cursor = 'pointer';
+        } else {
+            nextStepBtn.disabled = true;
+            nextStepBtn.style.opacity = '0.5';
+            nextStepBtn.style.cursor = 'not-allowed';
+        }
     }
 }
 
