@@ -90,10 +90,10 @@ class Validator {
      * @return string|null Error message or null if valid
      */
     public static function phoneNumber($phone) {
-        // Remove spaces and dashes
-        $phone = preg_replace('/[\s\-]/', '', $phone);
+        // Remove spaces, dashes, and plus sign for validation
+        $phone = preg_replace('/[\s\-\+]/', '', $phone);
         
-        // Check for Malaysia format: 01X-XXXXXXX or 60XXXXXXXXX
+        // Check for Malaysia format: 01X-XXXXXXX, 60XXXXXXXXX, or +60XXXXXXXXX
         if (preg_match('/^(01[0-9]{8,9})$/', $phone)) {
             return null;
         }
@@ -101,7 +101,7 @@ class Validator {
             return null;
         }
         
-        return 'Invalid phone format. Use Malaysia format (01X-XXXXXXX or 60XXXXXXXXX)';
+        return 'Invalid phone format. Use Malaysia format (01X-XXXXXXX, 60XXXXXXXXX, or +60XXXXXXXXX)';
     }
     
     /**

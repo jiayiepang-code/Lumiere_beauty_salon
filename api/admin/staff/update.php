@@ -25,9 +25,9 @@ if (!checkSessionTimeout()) {
     ErrorHandler::sendError(ErrorHandler::SESSION_EXPIRED, 'Session has expired', null, 401);
 }
 
-// Handle PUT request only
-if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
-    ErrorHandler::sendError(ErrorHandler::METHOD_NOT_ALLOWED, 'Only PUT requests are allowed', null, 405);
+// Handle PUT or POST request (POST needed for FormData with file uploads)
+if ($_SERVER['REQUEST_METHOD'] !== 'PUT' && $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    ErrorHandler::sendError(ErrorHandler::METHOD_NOT_ALLOWED, 'Only PUT or POST requests are allowed', null, 405);
 }
 
 try {
@@ -35,17 +35,17 @@ try {
     $input = [];
     
     if (!empty($_POST)) {
-        // FormData submission
+        // FormData submission (POST request)
         $input = $_POST;
     } else {
-        // JSON submission
+        // JSON submission (PUT request or POST with JSON)
         $json_input = json_decode(file_get_contents('php://input'), true);
         if ($json_input !== null) {
             $input = $json_input;
         }
     }
     
-    if (empty($input)) {
+    if (empty($input) && empty($_FILES)) {
         ErrorHandler::sendError(ErrorHandler::INVALID_JSON, 'No data provided');
     }
     
@@ -87,7 +87,7 @@ try {
     
     // Update phone if provided
     if (isset($input['phone']) && !empty($input['phone'])) {
-        $phone = preg_replace('/[\s\-]/', '', trim($input['phone']));
+        $phone = preg_replace('/[\s\-\+]/', '', trim($input['phone']));
         $phone_validation = Validator::phoneNumber($phone);
         if ($phone_validation !== null) {
             $conn->close();
@@ -177,17 +177,32 @@ try {
     
     // Update is_active if provided
     if (isset($input['is_active'])) {
-        $is_active = filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        if ($is_active !== null) {
-            $update_fields[] = "is_active = ?";
-            $update_values[] = $is_active ? 1 : 0;
-            $update_types .= "i";
+        // Handle string "1"/"0" from FormData or boolean values
+        $is_active_value = $input['is_active'];
+        $is_active = 1; // Default
+        if ($is_active_value === '1' || $is_active_value === 1 || $is_active_value === true || $is_active_value === 'true') {
+            $is_active = 1;
+        } elseif ($is_active_value === '0' || $is_active_value === 0 || $is_active_value === false || $is_active_value === 'false') {
+            $is_active = 0;
         }
+        $update_fields[] = "is_active = ?";
+        $update_values[] = $is_active;
+        $update_types .= "i";
     }
     
     // Handle image upload if provided
     if (isset($_FILES['staff_image']) && $_FILES['staff_image']['error'] === UPLOAD_ERR_OK) {
         $upload_dir = __DIR__ . '/../../../images/staff/';
+        
+        // Ensure upload directory exists and is writable
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        if (!is_writable($upload_dir)) {
+            $conn->close();
+            ErrorHandler::handleFileUploadError('Upload directory is not writable');
+        }
+        
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         $max_size_mb = 2;
         
@@ -198,10 +213,13 @@ try {
             ErrorHandler::handleFileUploadError($upload_result['error']);
         }
         
-        // Delete old image if exists
+        // Delete old image if exists (with path traversal protection)
         if (!empty($existing_staff['staff_image'])) {
             $old_image_path = __DIR__ . '/../../..' . $existing_staff['staff_image'];
-            if (file_exists($old_image_path)) {
+            // Ensure path is within expected directory to prevent path traversal attacks
+            $real_upload_dir = realpath(__DIR__ . '/../../../images/staff/');
+            $real_old_path = realpath($old_image_path);
+            if ($real_old_path && $real_upload_dir && strpos($real_old_path, $real_upload_dir) === 0) {
                 @unlink($old_image_path);
             }
         }

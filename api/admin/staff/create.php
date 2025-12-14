@@ -57,15 +57,15 @@ try {
     // Validate required fields
     $required_fields = ['staff_email', 'phone', 'first_name', 'last_name', 'password', 'role'];
     foreach ($required_fields as $field) {
-        if (empty($input[$field])) {
+        if (!isset($input[$field]) || trim($input[$field]) === '') {
             ErrorHandler::handleValidationError([$field => ucfirst(str_replace('_', ' ', $field)) . ' is required']);
         }
     }
     
     // Prepare data
     $staff_email = trim($input['staff_email']);
-    $phone = preg_replace('/[\s\-]/', '', trim($input['phone']));
-    $password = $input['password'];
+    $phone = preg_replace('/[\s\-\+]/', '', trim($input['phone']));
+    $password = trim($input['password']);
     $first_name = trim($input['first_name']);
     $last_name = trim($input['last_name']);
     $bio = isset($input['bio']) ? trim($input['bio']) : null;
@@ -138,6 +138,16 @@ try {
     // Handle image upload if provided
     if (isset($_FILES['staff_image']) && $_FILES['staff_image']['error'] === UPLOAD_ERR_OK) {
         $upload_dir = __DIR__ . '/../../../images/staff/';
+        
+        // Ensure upload directory exists and is writable
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+        if (!is_writable($upload_dir)) {
+            $conn->close();
+            ErrorHandler::handleFileUploadError('Upload directory is not writable');
+        }
+        
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
         $max_size_mb = 2;
         
@@ -155,12 +165,14 @@ try {
     // Get is_active status (default to 1 if not provided)
     $is_active = 1; // Default to active
     if (isset($input['is_active'])) {
-        $is_active = filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        if ($is_active === null) {
-            $is_active = 1; // Default if invalid
-        } else {
-            $is_active = $is_active ? 1 : 0;
+        // Handle string "1"/"0" from FormData or boolean values
+        $is_active_value = $input['is_active'];
+        if ($is_active_value === '1' || $is_active_value === 1 || $is_active_value === true || $is_active_value === 'true') {
+            $is_active = 1;
+        } elseif ($is_active_value === '0' || $is_active_value === 0 || $is_active_value === false || $is_active_value === 'false') {
+            $is_active = 0;
         }
+        // Otherwise keep default (1)
     }
     
     // Hash password
@@ -172,15 +184,23 @@ try {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $conn->prepare($sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare statement: ' . $conn->error);
+    }
+    
+    // Handle NULL values properly
+    $bio_value = ($bio === null || $bio === '') ? null : $bio;
+    $staff_image_value = ($staff_image === null || $staff_image === '') ? null : $staff_image;
+    
     $stmt->bind_param("ssssssssi", 
         $staff_email,
         $phone,
         $hashed_password,
         $first_name,
         $last_name,
-        $bio,
+        $bio_value,
         $role,
-        $staff_image,
+        $staff_image_value,
         $is_active
     );
     

@@ -46,6 +46,22 @@ try {
 // Get CSRF token
 $csrf_token = getCSRFToken();
 
+/**
+ * Format phone number for display
+ * Adds +60 prefix if number starts with 60
+ */
+function formatPhoneForDisplay($phone) {
+    if (empty($phone)) return '';
+    
+    // If starts with 60, add + prefix
+    if (preg_match('/^60/', $phone)) {
+        return '+' . $phone;
+    }
+    
+    // If starts with 01, return as is (local format)
+    return $phone;
+}
+
 // Include header
 include '../includes/header.php';
 ?>
@@ -193,9 +209,9 @@ include '../includes/header.php';
         }
 
         .staff-avatar {
-            width: 48px;
-            height: 48px;
-            min-width: 48px;
+            width: 64px;
+            height: 64px;
+            min-width: 64px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
@@ -340,12 +356,24 @@ include '../includes/header.php';
         height: 18px;
         }
 
-        .btn-view {
-            color: var(--primary-color);
+        .btn-toggle {
+            transition: color 0.2s ease;
         }
 
-        .btn-view:hover {
-        background-color: rgba(194, 144, 118, 0.1);
+        .btn-toggle.toggle-active {
+            color: #2A9D8F;
+        }
+
+        .btn-toggle.toggle-active:hover {
+            background-color: rgba(42, 157, 143, 0.1);
+        }
+
+        .btn-toggle.toggle-inactive {
+            color: #9CA3AF;
+        }
+
+        .btn-toggle.toggle-inactive:hover {
+            background-color: rgba(156, 163, 175, 0.1);
         }
 
         .btn-edit {
@@ -760,6 +788,55 @@ include '../includes/header.php';
         cursor: pointer;
     }
 
+    /* Error message styling with animation */
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background-color: #fff5f5;
+        border-left: 3px solid #dc3545;
+        border-radius: 4px;
+        display: none;
+        animation: slideInError 0.3s ease-out;
+        box-shadow: 0 2px 4px rgba(220, 53, 69, 0.1);
+    }
+
+    .error-message.show {
+        display: block;
+        animation: slideInError 0.3s ease-out, shake 0.5s ease-in-out;
+    }
+
+    @keyframes slideInError {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+
+    /* Add red border to input fields with errors */
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    .form-control.is-invalid:focus,
+    .form-select.is-invalid:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
     /* Make modal responsive */
     @media (max-width: 768px) {
         #staffModal.modal {
@@ -784,7 +861,7 @@ include '../includes/header.php';
     <div class="staff-header mb-4">
         <div>
             <h1>Staff</h1>
-            <p class="subtitle">Manage your team members and roles</p>
+            <p class="subtitle">Manage your staff members and roles</p>
         </div>
         <button class="btn btn-add" onclick="openCreateModal()">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline; margin-right: 8px;">
@@ -854,6 +931,143 @@ include '../includes/header.php';
                         $joinDate = date('Y-m-d', strtotime($member['created_at']));
                         $roleClass = $member['role'] === 'admin' ? 'role-admin' : 'role-staff';
                         $imagePath = !empty($member['staff_image']) ? htmlspecialchars($member['staff_image']) : '';
+                        
+                        // #region agent log
+                        $log_data = [
+                            'sessionId' => 'debug-session',
+                            'runId' => 'run2',
+                            'hypothesisId' => 'A',
+                            'location' => 'list.php:905',
+                            'message' => 'Raw database image path',
+                            'data' => [
+                                'staff_email' => $member['staff_email'],
+                                'raw_staff_image' => $member['staff_image'],
+                                'imagePath_after_htmlspecialchars' => $imagePath
+                            ],
+                            'timestamp' => time() * 1000
+                        ];
+                        file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
+                        // #endregion
+                        
+                        // Smart image path resolution - handles old paths, missing extensions, and malformed paths
+                        if (!empty($imagePath)) {
+                            $originalPath = $imagePath;
+                            
+                            // Extract filename from various path formats
+                            // Handle: /images/70.png, /images/42, staff/uploads/staff/file.png, etc.
+                            $filename = basename($imagePath);
+                            
+                            // If filename has no extension, try common image extensions
+                            $extensions = ['', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
+                            $foundFile = false;
+                            $baseDir = __DIR__ . '/../../images/';
+                            
+                            // #region agent log
+                            $log_data = [
+                                'sessionId' => 'debug-session',
+                                'runId' => 'run2',
+                                'hypothesisId' => 'B',
+                                'location' => 'list.php:930',
+                                'message' => 'File resolution attempt',
+                                'data' => [
+                                    'staff_email' => $member['staff_email'],
+                                    'original_path' => $originalPath,
+                                    'extracted_filename' => $filename,
+                                    'base_dir' => $baseDir
+                                ],
+                                'timestamp' => time() * 1000
+                            ];
+                            file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
+                            // #endregion
+                            
+                            // Try to find file in root images directory first (where old files are)
+                            foreach ($extensions as $ext) {
+                                $testFilename = $filename . $ext;
+                                $testPathRoot = $baseDir . $testFilename;
+                                
+                                if (file_exists($testPathRoot)) {
+                                    // Use relative path with base_path to match other admin pages
+                                    $imagePath = $base_path . '/images/' . $testFilename;
+                                    $foundFile = true;
+                                    
+                                    // #region agent log
+                                    $log_data = [
+                                        'sessionId' => 'debug-session',
+                                        'runId' => 'run2',
+                                        'hypothesisId' => 'C',
+                                        'location' => 'list.php:950',
+                                        'message' => 'File found in root directory',
+                                        'data' => [
+                                            'staff_email' => $member['staff_email'],
+                                            'found_filename' => $testFilename,
+                                            'final_path' => $imagePath,
+                                            'physical_path' => $testPathRoot
+                                        ],
+                                        'timestamp' => time() * 1000
+                                    ];
+                                    file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
+                                    // #endregion
+                                    
+                                    break;
+                                }
+                            }
+                            
+                            // If not found in root, try staff directory
+                            if (!$foundFile) {
+                                foreach ($extensions as $ext) {
+                                    $testFilename = $filename . $ext;
+                                    $testPathStaff = $baseDir . 'staff/' . $testFilename;
+                                    
+                                    if (file_exists($testPathStaff)) {
+                                        // Use relative path with base_path to match other admin pages
+                                        $imagePath = $base_path . '/images/staff/' . $testFilename;
+                                        $foundFile = true;
+                                        
+                                        // #region agent log
+                                        $log_data = [
+                                            'sessionId' => 'debug-session',
+                                            'runId' => 'run2',
+                                            'hypothesisId' => 'C',
+                                            'location' => 'list.php:970',
+                                            'message' => 'File found in staff directory',
+                                            'data' => [
+                                                'staff_email' => $member['staff_email'],
+                                                'found_filename' => $testFilename,
+                                                'final_path' => $imagePath,
+                                                'physical_path' => $testPathStaff
+                                            ],
+                                            'timestamp' => time() * 1000
+                                        ];
+                                        file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
+                                        // #endregion
+                                        
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            // If still not found, set to empty so it shows initials instead of broken image
+                            if (!$foundFile) {
+                                $imagePath = '';
+                                
+                                // #region agent log
+                                $log_data = [
+                                    'sessionId' => 'debug-session',
+                                    'runId' => 'run2',
+                                    'hypothesisId' => 'D',
+                                    'location' => 'list.php:985',
+                                    'message' => 'File not found, setting to empty to show initials',
+                                    'data' => [
+                                        'staff_email' => $member['staff_email'],
+                                        'original_path' => $originalPath,
+                                        'final_path' => $imagePath
+                                    ],
+                                    'timestamp' => time() * 1000
+                                ];
+                                file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
+                                // #endregion
+                            }
+                        }
                     ?>
                     <tr data-email="<?php echo htmlspecialchars($member['staff_email']); ?>"
                         data-role="<?php echo htmlspecialchars($member['role']); ?>"
@@ -863,6 +1077,25 @@ include '../includes/header.php';
                             <div class="staff-cell">
                                 <div class="staff-avatar">
                                     <?php if (!empty($imagePath)): ?>
+                                        <?php 
+                                        // #region agent log
+                                        $log_data = [
+                                            'sessionId' => 'debug-session',
+                                            'runId' => 'run3',
+                                            'hypothesisId' => 'E',
+                                            'location' => 'list.php:1005',
+                                            'message' => 'HTML output - image src attribute',
+                                            'data' => [
+                                                'staff_email' => $member['staff_email'],
+                                                'imagePath_used_in_html' => $imagePath,
+                                                'base_path' => $base_path ?? 'N/A',
+                                                'full_url_would_be' => ($base_path ?? '') . $imagePath
+                                            ],
+                                            'timestamp' => time() * 1000
+                                        ];
+                                        file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
+                                        // #endregion
+                                        ?>
                                         <img src="<?php echo $imagePath; ?>" alt="<?php echo htmlspecialchars($member['first_name']); ?>" onerror="this.style.display='none'; this.parentElement.innerHTML='<?php echo htmlspecialchars($initials); ?>';">
                                     <?php else: ?>
                                         <?php echo htmlspecialchars($initials); ?>
@@ -887,7 +1120,7 @@ include '../includes/header.php';
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6C757D" stroke-width="2">
                                         <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                                     </svg>
-                                    <?php echo htmlspecialchars($member['phone']); ?>
+                                    <?php echo htmlspecialchars(formatPhoneForDisplay($member['phone'])); ?>
                                 </div>
                             </div>
                         </td>
@@ -903,10 +1136,13 @@ include '../includes/header.php';
                         <td><?php echo htmlspecialchars($joinDate); ?></td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn-icon btn-view" onclick="viewStaff('<?php echo htmlspecialchars($member['staff_email'], ENT_QUOTES); ?>')" title="View" type="button">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
+                                <button class="btn-icon btn-toggle <?php echo $member['is_active'] ? 'toggle-active' : 'toggle-inactive'; ?>" 
+                                        onclick="toggleStaffStatus('<?php echo htmlspecialchars($member['staff_email'], ENT_QUOTES); ?>', <?php echo $member['is_active'] ? '1' : '0'; ?>)" 
+                                        title="<?php echo $member['is_active'] ? 'Deactivate' : 'Activate'; ?>" 
+                                        type="button">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="1" y="5" width="22" height="14" rx="7" ry="7"></rect>
+                                        <circle cx="<?php echo $member['is_active'] ? '16' : '8'; ?>" cy="12" r="3"></circle>
                                     </svg>
                                 </button>
                                 <button class="btn-icon btn-edit" onclick="openEditModal('<?php echo htmlspecialchars($member['staff_email'], ENT_QUOTES); ?>')" title="Edit" type="button">
@@ -949,39 +1185,51 @@ include '../includes/header.php';
                 </button>
             </div>
             <div class="modal-body">
-                <form id="staffForm">
+                <form id="staffForm" enctype="multipart/form-data">
                     <input type="hidden" id="isEdit" name="is_edit" value="0">
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="firstName" name="first_name" required maxlength="50" placeholder="First name">
-                            <div class="text-danger small mt-1" id="error-first_name" style="display: none;"></div>
+                            <div class="error-message" id="error-first_name" style="display: none;"></div>
                         </div>
                         <div class="col-md-6">
                             <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="lastName" name="last_name" required maxlength="50" placeholder="Last name">
-                            <div class="text-danger small mt-1" id="error-last_name" style="display: none;"></div>
+                            <div class="error-message" id="error-last_name" style="display: none;"></div>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label for="staffEmail" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="staffEmail" name="staff_email" required maxlength="100" placeholder="email@lumiere.my">
-                        <div class="text-danger small mt-1" id="error-staff_email" style="display: none;"></div>
+                        <div class="error-message" id="error-staff_email" style="display: none;"></div>
                     </div>
 
                     <div class="mb-3">
                         <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
                         <input type="tel" class="form-control" id="phone" name="phone" required placeholder="+60 12 345 6789">
-                        <div class="text-danger small mt-1" id="error-phone" style="display: none;"></div>
+                        <div class="error-message" id="error-phone" style="display: none;"></div>
                     </div>
 
                     <div class="mb-3">
                         <label for="password" class="form-label">Password <span id="passwordRequired" class="text-danger">*</span></label>
-                        <input type="password" class="form-control" id="password" name="password" minlength="8" placeholder="Minimum 8 characters">
+                        <div class="password-input-wrapper">
+                            <input type="password" class="form-control password-input" id="password" name="password" minlength="8" placeholder="Enter your password">
+                            <button type="button" class="password-toggle-btn" id="togglePassword" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
+                                <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                <svg id="eyeOffIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            </button>
+                        </div>
                         <small class="text-muted d-block mt-1" id="passwordHint">Min 8 chars, 1 uppercase, 1 number, 1 special character</small>
-                        <div class="text-danger small mt-1" id="error-password" style="display: none;"></div>
+                        <div class="error-message" id="error-password" style="display: none;"></div>
                     </div>
 
                     <div class="mb-3">
@@ -991,14 +1239,14 @@ include '../includes/header.php';
                             <option value="staff">Staff</option>
                             <option value="admin">Admin</option>
                         </select>
-                        <div class="text-danger small mt-1" id="error-role" style="display: none;"></div>
+                        <div class="error-message" id="error-role" style="display: none;"></div>
                     </div>
 
                     <div class="mb-3">
                         <label for="bio" class="form-label">Bio</label>
                         <textarea class="form-control" id="bio" name="bio" rows="2" placeholder="Brief description..." maxlength="500" style="resize: vertical;"></textarea>
                         <small class="text-muted">Brief introduction about the staff member</small>
-                        <div class="text-danger small mt-1" id="error-bio" style="display: none;"></div>
+                        <div class="error-message" id="error-bio" style="display: none;"></div>
                     </div>
 
                     <div class="mb-3">
@@ -1041,9 +1289,14 @@ include '../includes/header.php';
                                 </div>
                                 <p class="preview-filename" id="previewFileName"></p>
                             </div>
+                            <input type="file" 
+                                   id="staffImage" 
+                                   name="staff_image" 
+                                   accept="image/jpeg,image/png,image/gif,image/webp" 
+                                   style="display: none;">
                         </div>
                         <small class="text-muted d-block mt-2">Max 2MB. Allowed: JPEG, PNG, GIF, WebP</small>
-                        <div class="text-danger small mt-1" id="error-staff_image" style="display: none;"></div>
+                        <div class="error-message" id="error-staff_image" style="display: none;"></div>
                     </div>
 
                     <div class="d-flex align-items-center justify-content-between">
@@ -1089,6 +1342,49 @@ include '../includes/header.php';
         color: var(--text-dark);
         margin-bottom: 0.5rem;
         font-size: 0.95rem;
+    }
+
+    /* Password input with eye toggle button */
+    .password-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .password-input-wrapper .password-input {
+        padding-right: 45px;
+        width: 100%;
+    }
+
+    .password-toggle-btn {
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background: transparent;
+        border: none;
+        padding: 0 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9CA3AF;
+        transition: color 0.2s ease;
+        z-index: 5;
+    }
+
+    .password-toggle-btn:hover {
+        color: #6B7280;
+    }
+
+    .password-toggle-btn:focus {
+        outline: none;
+    }
+
+    .password-toggle-btn svg {
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
     }
 
     /* Toggle switch styling */

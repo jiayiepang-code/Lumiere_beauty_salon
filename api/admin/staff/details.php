@@ -58,6 +58,20 @@ try {
     $staff = $result->fetch_assoc();
     $staff['is_active'] = (bool)$staff['is_active'];
     
+    // Fix old image paths that are missing /staff/ directory
+    if (!empty($staff['staff_image'])) {
+        $imagePath = $staff['staff_image'];
+        // If path is /images/71.png (old format), convert to /images/staff/71.png
+        if (strpos($imagePath, '/images/') === 0 && strpos($imagePath, '/images/staff/') === false) {
+            $filename = basename($imagePath);
+            $staff['staff_image'] = '/images/staff/' . $filename;
+        }
+        // If path is just "71.png" (no folder), add full path
+        elseif (strpos($imagePath, '/') === false) {
+            $staff['staff_image'] = '/images/staff/' . $imagePath;
+        }
+    }
+    
     $stmt->close();
     $conn->close();
     
