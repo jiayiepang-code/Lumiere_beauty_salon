@@ -7,47 +7,24 @@ session_start();
 
 header('Content-Type: application/json');
 
-// Include database connection
-require_once '../../../php/connection.php';
+// Include required files
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
+require_once '../../../admin/includes/error_handler.php';
 
 // Check authentication
 if (!isAdminAuthenticated()) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'error' => [
-            'code' => 'AUTH_REQUIRED',
-            'message' => 'Authentication required'
-        ]
-    ]);
-    exit;
+    ErrorHandler::handleAuthError();
 }
 
 // Check session timeout
 if (!checkSessionTimeout()) {
-    http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'error' => [
-            'code' => 'SESSION_EXPIRED',
-            'message' => 'Session has expired'
-        ]
-    ]);
-    exit;
+    ErrorHandler::sendError(ErrorHandler::SESSION_EXPIRED, 'Session has expired', null, 401);
 }
 
 // Handle PUT request only
 if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
-    http_response_code(405);
-    echo json_encode([
-        'success' => false,
-        'error' => [
-            'code' => 'METHOD_NOT_ALLOWED',
-            'message' => 'Only PUT requests are allowed'
-        ]
-    ]);
-    exit;
+    ErrorHandler::sendError(ErrorHandler::METHOD_NOT_ALLOWED, 'Only PUT requests are allowed', null, 405);
 }
 
 /**
@@ -78,8 +55,8 @@ function validateServiceData($data) {
     // Validate current_duration_minutes
     if (!isset($data['current_duration_minutes']) || $data['current_duration_minutes'] === '') {
         $errors['current_duration_minutes'] = 'Duration is required';
-    } elseif (!is_numeric($data['current_duration_minutes']) || $data['current_duration_minutes'] < 15 || $data['current_duration_minutes'] > 480) {
-        $errors['current_duration_minutes'] = 'Duration must be between 15 and 480 minutes';
+    } elseif (!is_numeric($data['current_duration_minutes']) || $data['current_duration_minutes'] < 5 || $data['current_duration_minutes'] > 480) {
+        $errors['current_duration_minutes'] = 'Duration must be between 5 and 480 minutes';
     }
     
     // Validate current_price
@@ -107,108 +84,66 @@ function validateServiceData($data) {
 }
 
 try {
+    // Get database connection
+    $conn = getDBConnection();
+    
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
     
     if ($input === null) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'INVALID_JSON',
-                'message' => 'Invalid JSON data'
-            ]
-        ]);
-        exit;
+        ErrorHandler::sendError(ErrorHandler::INVALID_JSON, 'Invalid JSON data');
     }
     
     // Validate CSRF token
     if (!isset($input['csrf_token']) || !validateCSRFToken($input['csrf_token'])) {
-        http_response_code(403);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'INVALID_CSRF_TOKEN',
-                'message' => 'Invalid CSRF token'
-            ]
-        ]);
-        exit;
+        ErrorHandler::sendError(ErrorHandler::INVALID_CSRF_TOKEN, 'Invalid CSRF token', null, 403);
     }
     
     // Validate input data
     $validation_errors = validateServiceData($input);
     
     if (!empty($validation_errors)) {
-        http_response_code(400);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'VALIDATION_ERROR',
-                'message' => 'Invalid input data',
-                'details' => $validation_errors
-            ]
-        ]);
-        exit;
+        ErrorHandler::handleValidationError($validation_errors);
     }
     
     // Prepare data
     $service_id = $input['service_id'];
     $service_category = trim($input['service_category']);
-    $sub_category = isset($input['sub_category']) ? trim($input['sub_category']) : null;
+    $sub_category = isset($input['sub_category']) && trim($input['sub_category']) !== '' ? trim($input['sub_category']) : null;
     $service_name = trim($input['service_name']);
     $current_duration_minutes = (int)$input['current_duration_minutes'];
     $current_price = (float)$input['current_price'];
-    $description = isset($input['description']) ? trim($input['description']) : null;
-    $service_image = isset($input['service_image']) ? trim($input['service_image']) : null;
+    $description = isset($input['description']) && trim($input['description']) !== '' ? trim($input['description']) : null;
+    $service_image = isset($input['service_image']) && trim($input['service_image']) !== '' ? trim($input['service_image']) : null;
     $default_cleanup_minutes = (int)$input['default_cleanup_minutes'];
+    $is_active = isset($input['is_active']) ? (int)(bool)$input['is_active'] : 1;
     
-    // Check if service exists
+    // Check if service exists (service_id is VARCHAR(4))
     $check_sql = "SELECT service_id FROM Service WHERE service_id = ?";
     $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("i", $service_id);
+    $check_stmt->bind_param("s", $service_id);
     $check_stmt->execute();
     $check_result = $check_stmt->get_result();
     
     if ($check_result->num_rows === 0) {
         $check_stmt->close();
         $conn->close();
-        
-        http_response_code(404);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'NOT_FOUND',
-                'message' => 'Service not found'
-            ]
-        ]);
-        exit;
+        ErrorHandler::handleNotFound('Service');
     }
     $check_stmt->close();
     
-    // Check for duplicate service name within the same category (excluding current service)
+    // Check for duplicate service name within the same category (excluding current service, case-insensitive)
     $dup_sql = "SELECT service_id FROM Service 
-                WHERE service_category = ? AND service_name = ? AND service_id != ?";
+                WHERE LOWER(service_category) = LOWER(?) AND LOWER(service_name) = LOWER(?) AND service_id != ?";
     $dup_stmt = $conn->prepare($dup_sql);
-    $dup_stmt->bind_param("ssi", $service_category, $service_name, $service_id);
+    $dup_stmt->bind_param("sss", $service_category, $service_name, $service_id);
     $dup_stmt->execute();
     $dup_result = $dup_stmt->get_result();
     
     if ($dup_result->num_rows > 0) {
         $dup_stmt->close();
         $conn->close();
-        
-        http_response_code(409);
-        echo json_encode([
-            'success' => false,
-            'error' => [
-                'code' => 'DUPLICATE_ENTRY',
-                'message' => 'A service with this name already exists in this category',
-                'details' => [
-                    'service_name' => 'Service name must be unique within the category'
-                ]
-            ]
-        ]);
-        exit;
+        ErrorHandler::handleDuplicateEntry('service_name', 'A service with this name already exists in this category');
     }
     $dup_stmt->close();
     
@@ -216,11 +151,11 @@ try {
     $sql = "UPDATE Service 
             SET service_category = ?, sub_category = ?, service_name = ?, 
                 current_duration_minutes = ?, current_price = ?, description = ?, 
-                service_image = ?, default_cleanup_minutes = ?
+                service_image = ?, default_cleanup_minutes = ?, is_active = ?
             WHERE service_id = ?";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssidssii", 
+    $stmt->bind_param("sssidssiis", 
         $service_category,
         $sub_category,
         $service_name,
@@ -229,6 +164,7 @@ try {
         $description,
         $service_image,
         $default_cleanup_minutes,
+        $is_active,
         $service_id
     );
     
@@ -247,21 +183,8 @@ try {
     }
     
 } catch (Exception $e) {
-    // Log error
-    error_log(json_encode([
-        'timestamp' => date('Y-m-d H:i:s'),
-        'user' => $_SESSION['admin']['email'] ?? 'unknown',
-        'message' => $e->getMessage(),
-        'file' => $e->getFile(),
-        'line' => $e->getLine()
-    ]), 3, '../../../logs/admin_errors.log');
-    
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => [
-            'code' => 'DATABASE_ERROR',
-            'message' => 'An error occurred while updating the service'
-        ]
-    ]);
+    if (isset($conn)) {
+        $conn->close();
+    }
+    ErrorHandler::handleDatabaseError($e, 'updating service');
 }

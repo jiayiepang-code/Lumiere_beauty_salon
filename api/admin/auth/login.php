@@ -92,7 +92,7 @@ try {
     
     // Prepare statement to find admin by phone
     $stmt = $conn->prepare("
-        SELECT staff_email, phone, password, first_name, last_name, role, is_active 
+        SELECT staff_email, phone, password, first_name, last_name, role, is_active, staff_image 
         FROM Staff 
         WHERE phone = ? AND role = 'admin'
     ");
@@ -171,6 +171,7 @@ try {
         'last_name' => $admin_data['last_name'],
         'name' => $admin_data['first_name'] . ' ' . $admin_data['last_name'],
         'role' => $admin_data['role'],
+        'staff_image' => $admin_data['staff_image'] ?? null,
         'csrf_token' => $csrf_token
     ];
     

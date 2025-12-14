@@ -8,7 +8,7 @@ session_start();
 header('Content-Type: application/json');
 
 // Include required files
-require_once '../../../php/connection.php';
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 require_once '../../../admin/includes/error_handler.php';
 require_once '../../../admin/includes/validator.php';
@@ -43,7 +43,7 @@ function validateServiceData($data) {
         ],
         'current_duration_minutes' => [
             'required' => true,
-            'range' => ['min' => 15, 'max' => 480]
+            'range' => ['min' => 5, 'max' => 480]
         ],
         'current_price' => [
             'required' => true,
@@ -63,6 +63,9 @@ function validateServiceData($data) {
 }
 
 try {
+    // Get database connection
+    $conn = getDBConnection();
+    
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
     
@@ -84,17 +87,18 @@ try {
     
     // Prepare data
     $service_category = trim($input['service_category']);
-    $sub_category = isset($input['sub_category']) ? trim($input['sub_category']) : null;
+    $sub_category = isset($input['sub_category']) && trim($input['sub_category']) !== '' ? trim($input['sub_category']) : null;
     $service_name = trim($input['service_name']);
     $current_duration_minutes = (int)$input['current_duration_minutes'];
     $current_price = (float)$input['current_price'];
-    $description = isset($input['description']) ? trim($input['description']) : null;
-    $service_image = isset($input['service_image']) ? trim($input['service_image']) : null;
+    $description = isset($input['description']) && trim($input['description']) !== '' ? trim($input['description']) : null;
+    $service_image = isset($input['service_image']) && trim($input['service_image']) !== '' ? trim($input['service_image']) : null;
     $default_cleanup_minutes = (int)$input['default_cleanup_minutes'];
+    $is_active = isset($input['is_active']) ? (int)(bool)$input['is_active'] : 1;
     
-    // Check for duplicate service name within the same category
+    // Check for duplicate service name within the same category (case-insensitive)
     $check_sql = "SELECT service_id FROM Service 
-                  WHERE service_category = ? AND service_name = ?";
+                  WHERE LOWER(service_category) = LOWER(?) AND LOWER(service_name) = LOWER(?)";
     $check_stmt = $conn->prepare($check_sql);
     $check_stmt->bind_param("ss", $service_category, $service_name);
     $check_stmt->execute();
@@ -111,10 +115,10 @@ try {
     $sql = "INSERT INTO Service (service_category, sub_category, service_name, 
                                  current_duration_minutes, current_price, description, 
                                  service_image, default_cleanup_minutes, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)";
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssidssi", 
+    $stmt->bind_param("sssidssii", 
         $service_category,
         $sub_category,
         $service_name,
@@ -122,7 +126,8 @@ try {
         $current_price,
         $description,
         $service_image,
-        $default_cleanup_minutes
+        $default_cleanup_minutes,
+        $is_active
     );
     
     if ($stmt->execute()) {
@@ -141,5 +146,8 @@ try {
     }
     
 } catch (Exception $e) {
+    if (isset($conn)) {
+        $conn->close();
+    }
     ErrorHandler::handleDatabaseError($e, 'service creation');
 }

@@ -45,15 +45,24 @@ document.addEventListener("DOMContentLoaded", function () {
     };
   });
 
-  // Initialize Bootstrap modals if they exist
+  // Get modal elements
   const staffModalElement = document.getElementById("staffModal");
   const deleteModalElement = document.getElementById("deleteModal");
 
   if (staffModalElement) {
-    staffModal = new bootstrap.Modal(staffModalElement, { backdrop: "static" });
+    staffModal = staffModalElement;
   }
   if (deleteModalElement) {
-    deleteModal = new bootstrap.Modal(deleteModalElement);
+    deleteModal = deleteModalElement;
+  }
+
+  // Close modal on outside click
+  if (staffModalElement) {
+    staffModalElement.addEventListener("click", function (e) {
+      if (e.target === staffModalElement) {
+        closeStaffModal();
+      }
+    });
   }
 
   // Set up event listeners
@@ -118,10 +127,6 @@ function openCreateModalFunction() {
   }
 
   document.getElementById("modalTitle").textContent = "Add Staff Member";
-  const modalDesc = document.getElementById("modalDescription");
-  if (modalDesc) {
-    modalDesc.textContent = "Fill in the details to add a new staff member";
-  }
   document.getElementById("isEdit").value = "0";
   document.getElementById("staffForm").reset();
   document.getElementById("staffEmail").readOnly = false;
@@ -159,12 +164,15 @@ function openCreateModalFunction() {
 
   // Update submit button text
   const submitButton = document.getElementById("submitButton");
-  if (submitButton) {
-    submitButton.textContent = "Add Staff Member";
+  const submitBtnText = document.getElementById("submitBtnText");
+  if (submitBtnText) {
+    submitBtnText.textContent = "Add Staff Member";
   }
 
   clearErrors();
-  staffModal.show();
+  if (staffModal) {
+    staffModal.classList.add("active");
+  }
 }
 
 // Make globally accessible immediately
@@ -226,10 +234,6 @@ async function openEditModal(staffEmail) {
       const member = data.staff;
 
       document.getElementById("modalTitle").textContent = "Edit Staff Member";
-      const modalDesc = document.getElementById("modalDescription");
-      if (modalDesc) {
-        modalDesc.textContent = "Update the staff member details";
-      }
       document.getElementById("isEdit").value = "1";
       document.getElementById("staffEmail").value = member.staff_email;
       document.getElementById("staffEmail").readOnly = true;
@@ -248,7 +252,7 @@ async function openEditModal(staffEmail) {
         "Leave blank to keep current password";
       document.getElementById("passwordRequired").textContent = "";
       document.getElementById("passwordHint").textContent =
-        "Leave blank to keep current password, or enter new password (min 8 chars)";
+        "Leave blank to keep current password, or enter new password (min 8 chars, 1 uppercase, 1 number, 1 special character)";
 
       // Show existing image if available
       const imagePreviewContainer = document.getElementById(
@@ -293,13 +297,15 @@ async function openEditModal(staffEmail) {
       }
 
       // Update submit button text
-      const submitButton = document.getElementById("submitButton");
-      if (submitButton) {
-        submitButton.textContent = "Update Staff Member";
+      const submitBtnText = document.getElementById("submitBtnText");
+      if (submitBtnText) {
+        submitBtnText.textContent = "Update Staff Member";
       }
 
       clearErrors();
-      staffModal.show();
+      if (staffModal) {
+        staffModal.classList.add("active");
+      }
     } else {
       Swal.fire({
         title: "Error",
@@ -398,7 +404,7 @@ async function toggleStaffStatus(staffEmail, currentStatus) {
  */
 function closeStaffModal() {
   if (staffModal) {
-    staffModal.hide();
+    staffModal.classList.remove("active");
   }
   document.getElementById("staffForm").reset();
 

@@ -1,14 +1,8 @@
 <?php
-// Start session with secure configuration
-ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
-ini_set('session.use_strict_mode', 1);
-session_start();
-
 header('Content-Type: application/json');
 
-// Include required files
-require_once '../../../php/connection.php';
+// Include required files - auth_check.php will handle session start with proper configuration
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 require_once '../../../admin/includes/error_handler.php';
 
@@ -28,6 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
+    // Get database connection
+    $conn = getDBConnection();
+    
     // Get filter parameters
     $category = isset($_GET['category']) ? trim($_GET['category']) : null;
     $search = isset($_GET['search']) ? trim($_GET['search']) : null;
@@ -101,5 +98,8 @@ try {
     ]);
     
 } catch (Exception $e) {
+    if (isset($conn)) {
+        $conn->close();
+    }
     ErrorHandler::handleDatabaseError($e, 'fetching services');
 }

@@ -9,8 +9,66 @@ requireAdminAuth();
 $page_title = 'Customer Management';
 $base_path = '../..';
 
+// Include database connection
+require_once '../../config/db_connect.php';
+require_once '../includes/security_utils.php';
+
+// Initialize variables
+$customers = [];
+$error = null;
+
+// Get CSRF token
+$csrf_token = getCSRFToken();
+
+// Fetch all customers using prepared statement
+try {
+    $conn = getDBConnection();
+    
+    // Query to get customers ordered by last name
+    $sql = "SELECT customer_email, phone, first_name, last_name, created_at
+            FROM customer
+            ORDER BY last_name ASC, first_name ASC";
+    
+    $stmt = $conn->prepare($sql);
+    
+    if ($stmt === false) {
+        throw new Exception("Failed to prepare statement: " . $conn->error);
+    }
+    
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        $customers[] = $row;
+    }
+    
+    $stmt->close();
+    $conn->close();
+} catch (Exception $e) {
+    $error = $e->getMessage();
+    error_log("Error fetching customers: " . $error);
+}
+
 // Include header
 include '../includes/header.php';
+?>
+
+<!-- SweetAlert2 for notifications -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<?php
+// Display session status messages
+if (isset($_SESSION['status'])): 
+    $status = $_SESSION['status'];
+?>
+<div style="display: none;" 
+     data-session-status="true" 
+     data-type="<?php echo htmlspecialchars($status['type']); ?>" 
+     data-message="<?php echo htmlspecialchars($status['message']); ?>">
+</div>
+<?php 
+    unset($_SESSION['status']); 
+endif; 
 ?>
 
 <!-- Toast Notification -->
@@ -68,11 +126,10 @@ include '../includes/header.php';
             <table id="customersTable" class="table" style="display: none;">
                 <thead>
                     <tr>
-                        <th>Customer Name</th>
-                        <th>Contact Info</th>
-                        <th>Total Bookings</th>
-                        <th>Total Spent</th>
-                        <th>Last Visit</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Date Registered</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -85,6 +142,56 @@ include '../includes/header.php';
             <div id="pagination" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
                 <!-- Pagination buttons will be generated here -->
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Customer Modal -->
+<div id="editModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3>Edit Customer</h3>
+            <button class="modal-close" onclick="closeEditModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="editForm" onsubmit="saveCustomer(event)">
+                <input type="hidden" id="edit_customer_email" name="customer_email">
+                
+                <div class="form-group">
+                    <label for="edit_first_name">First Name <span style="color: red;">*</span></label>
+                    <input type="text" id="edit_first_name" name="first_name" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit_last_name">Last Name <span style="color: red;">*</span></label>
+                    <input type="text" id="edit_last_name" name="last_name" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="edit_phone">Phone <span style="color: red;">*</span></label>
+                    <input type="tel" id="edit_phone" name="phone" class="form-control" required>
+                    <small class="form-text text-muted">Format: +60123456789 or 0123456789</small>
+                </div>
+                
+                <div class="form-group">
+                    <div class="checkbox-wrapper" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="reset_password_checkbox" onchange="togglePasswordReset()" style="width: 18px; height: 18px; cursor: pointer;">
+                        <label for="reset_password_checkbox" style="margin: 0; cursor: pointer;">Reset Password</label>
+                    </div>
+                    <small class="form-text text-muted" style="margin-left: 26px;">Check this box to set a new password for the customer</small>
+                </div>
+                
+                <div class="form-group" id="password_group" style="display: none;">
+                    <label for="edit_password">New Password <span style="color: red;">*</span></label>
+                    <input type="password" id="edit_password" name="password" class="form-control" minlength="8">
+                    <small class="form-text text-muted">Min 8 chars, 1 uppercase, 1 number, 1 special character</small>
+                </div>
+                
+                <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

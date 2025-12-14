@@ -32,16 +32,28 @@ function setupEventListeners() {
     statusFilter.addEventListener("change", filterServices);
   }
 
-  // Active only filter (checkbox)
-  const activeOnlyFilter = document.getElementById("activeOnlyFilter");
-  if (activeOnlyFilter) {
-    activeOnlyFilter.addEventListener("change", filterServices);
-  }
-
   // Service form submit
   const serviceForm = document.getElementById("serviceForm");
   if (serviceForm) {
     serviceForm.addEventListener("submit", handleServiceSubmit);
+  }
+
+  // Image upload handler
+  const serviceImageInput = document.getElementById("serviceImage");
+  if (serviceImageInput) {
+    serviceImageInput.addEventListener("change", handleImageUpload);
+  }
+
+  // Click handler for image upload area
+  const imageUploadArea = document.getElementById("imageUploadArea");
+  if (imageUploadArea) {
+    imageUploadArea.addEventListener("click", function (e) {
+      // Don't trigger if clicking the button directly
+      if (e.target.closest(".btn")) {
+        return;
+      }
+      serviceImageInput?.click();
+    });
   }
 
   // Close modal on outside click
@@ -84,7 +96,7 @@ async function handleLogout() {
     text: "Are you sure you want to logout?",
     icon: "question",
     showCancelButton: true,
-    confirmButtonColor: "#c29076",  /* Brown Primary */
+    confirmButtonColor: "#c29076" /* Brown Primary */,
     cancelButtonColor: "#6C757D",
     confirmButtonText: "Yes, logout",
     cancelButtonText: "Cancel",
@@ -127,7 +139,10 @@ async function loadServices() {
   showLoading();
 
   try {
-    const response = await fetch("../../api/admin/services/list.php");
+    const response = await fetch("../../api/admin/services/list.php", {
+      credentials: "same-origin", // Include cookies/session for authentication
+    });
+
     const data = await response.json();
 
     if (data.success) {
@@ -174,9 +189,7 @@ function filterServices() {
   const searchTerm =
     document.getElementById("searchInput")?.value.toLowerCase() || "";
   const categoryFilter = document.getElementById("categoryFilter")?.value || "";
-  const statusFilter = document.getElementById("statusFilter")?.value || "all";
-  const activeOnlyFilter =
-    document.getElementById("activeOnlyFilter")?.checked || false;
+  const statusFilter = document.getElementById("statusFilter")?.value || "";
 
   let filtered = allServices.filter((service) => {
     // Search filter
@@ -198,12 +211,7 @@ function filterServices() {
       matchesStatus = service.is_active === false;
     }
 
-    // Active only filter (checkbox)
-    const matchesActiveOnly = !activeOnlyFilter || service.is_active === true;
-
-    return (
-      matchesSearch && matchesCategory && matchesStatus && matchesActiveOnly
-    );
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   renderServices(filtered);
@@ -275,25 +283,39 @@ function renderServices(services) {
             </td>
             <td data-label="Actions">
                 <div class="action-buttons">
-                    <button class="btn-icon btn-view" onclick="viewService(${
-                      service.service_id
-                    })" title="View Details" aria-label="View service details">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
+                    <button class="btn-icon btn-toggle ${
+                      service.is_active ? "toggle-active" : "toggle-inactive"
+                    }" 
+                            onclick="toggleServiceStatus('${escapeHtml(
+                              String(service.service_id)
+                            )}', ${service.is_active ? "1" : "0"})" 
+                            title="${
+                              service.is_active ? "Deactivate" : "Activate"
+                            }" 
+                            aria-label="${
+                              service.is_active
+                                ? "Deactivate service"
+                                : "Activate service"
+                            }"
+                            type="button">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="1" y="5" width="22" height="14" rx="7" ry="7"></rect>
+                            <circle cx="${
+                              service.is_active ? "16" : "8"
+                            }" cy="12" r="3"></circle>
                         </svg>
                     </button>
-                    <button class="btn-icon btn-edit" onclick="openEditModal(${
-                      service.service_id
-                    })" title="Edit" aria-label="Edit service">
+                    <button class="btn-icon btn-edit" onclick="openEditModal('${escapeHtml(
+                      String(service.service_id)
+                    )}')" title="Edit" aria-label="Edit service">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
                     </button>
-                    <button class="btn-icon btn-delete" onclick="openDeleteModal(${
-                      service.service_id
-                    })" title="Delete" aria-label="Delete service">
+                    <button class="btn-icon btn-delete" onclick="openDeleteModal('${escapeHtml(
+                      String(service.service_id)
+                    )}')" title="Delete" aria-label="Delete service">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"></polyline>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -313,15 +335,6 @@ function formatDate(dateString) {
   const date = new Date(dateString);
   const options = { year: "numeric", month: "short", day: "numeric" };
   return date.toLocaleDateString("en-US", options);
-}
-
-// View service details (placeholder function)
-function viewService(serviceId) {
-  const service = allServices.find((s) => s.service_id === serviceId);
-  if (!service) return;
-
-  // For now, just open the edit modal - can be enhanced to show read-only view
-  openEditModal(serviceId);
 }
 
 // Show loading state
@@ -349,52 +362,108 @@ function showEmptyState() {
 // Open create modal
 function openCreateModal() {
   currentEditingService = null;
-  document.getElementById("modalTitle").textContent = "Add New Service";
-  document.getElementById("submitBtnText").textContent = "Create Service";
-  document.getElementById("serviceForm").reset();
-  document.getElementById("serviceId").value = "";
+  const modalTitle = document.getElementById("modalTitle");
+  const submitBtnText = document.getElementById("submitBtnText");
+  const serviceForm = document.getElementById("serviceForm");
+  const serviceId = document.getElementById("serviceId");
+  const serviceModal = document.getElementById("serviceModal");
+
+  if (modalTitle) modalTitle.textContent = "Add New Service";
+  if (submitBtnText) submitBtnText.textContent = "Create Service";
+  if (serviceForm) serviceForm.reset();
+  if (serviceId) serviceId.value = "";
+
   clearFormErrors();
   clearImagePreview();
-  document.getElementById("serviceModal").classList.add("active");
+
+  if (serviceModal) {
+    serviceModal.classList.add("active");
+  }
 }
 
 // Open edit modal
 function openEditModal(serviceId) {
-  const service = allServices.find((s) => s.service_id === serviceId);
-  if (!service) return;
+  // Convert to string for comparison (service_id is VARCHAR(4))
+  const serviceIdStr = String(serviceId);
+  const service = allServices.find(
+    (s) => String(s.service_id) === serviceIdStr
+  );
+  if (!service) {
+    console.error("Service not found:", serviceId);
+    showToast("Service not found", "error");
+    return;
+  }
 
   currentEditingService = service;
-  document.getElementById("modalTitle").textContent = "Edit Service";
-  document.getElementById("submitBtnText").textContent = "Update Service";
+
+  const modalTitle = document.getElementById("modalTitle");
+  const submitBtnText = document.getElementById("submitBtnText");
+  const serviceModal = document.getElementById("serviceModal");
+
+  if (modalTitle) modalTitle.textContent = "Edit Service";
+  if (submitBtnText) submitBtnText.textContent = "Update Service";
 
   // Populate form
-  document.getElementById("serviceId").value = service.service_id;
-  document.getElementById("serviceCategory").value = service.service_category;
-  document.getElementById("subCategory").value = service.sub_category || "";
-  document.getElementById("serviceName").value = service.service_name;
-  document.getElementById("duration").value = service.current_duration_minutes;
-  document.getElementById("price").value = service.current_price;
-  document.getElementById("cleanupTime").value =
-    service.default_cleanup_minutes;
-  document.getElementById("description").value = service.description || "";
-  document.getElementById("serviceImage").value = service.service_image || "";
-  document.getElementById("isActive").checked = service.is_active
-    ? true
-    : false;
+  const serviceIdEl = document.getElementById("serviceId");
+  const serviceCategory = document.getElementById("serviceCategory");
+  const subCategory = document.getElementById("subCategory");
+  const serviceName = document.getElementById("serviceName");
+  const durationMinutes = document.getElementById("durationMinutes");
+  const price = document.getElementById("price");
+  const cleanupTime = document.getElementById("cleanupTime");
+  const description = document.getElementById("description");
+  const serviceImage = document.getElementById("serviceImage");
+
+  if (serviceIdEl) serviceIdEl.value = service.service_id;
+  if (serviceCategory) serviceCategory.value = service.service_category;
+  if (subCategory) subCategory.value = service.sub_category || "";
+  if (serviceName) serviceName.value = service.service_name;
+  if (durationMinutes) durationMinutes.value = service.current_duration_minutes;
+  if (price) price.value = service.current_price;
+  if (cleanupTime) cleanupTime.value = service.default_cleanup_minutes || 10;
+  if (description) description.value = service.description || "";
+  if (serviceImage) serviceImage.value = service.service_image || "";
 
   // Show image preview if exists
   if (service.service_image) {
-    showImagePreview(`../../images/${service.service_image}`);
+    const imageUploadArea = document.getElementById("imageUploadArea");
+    if (imageUploadArea) {
+      imageUploadArea.style.display = "none";
+    }
+    showImagePreview(
+      `../../images/${service.service_image}`,
+      service.service_image
+    );
+  } else {
+    const imageUploadArea = document.getElementById("imageUploadArea");
+    const imagePreviewContainer = document.getElementById(
+      "imagePreviewContainer"
+    );
+    if (imageUploadArea) {
+      imageUploadArea.style.display = "flex";
+    }
+    if (imagePreviewContainer) {
+      imagePreviewContainer.style.display = "none";
+    }
   }
 
   clearFormErrors();
-  document.getElementById("serviceModal").classList.add("active");
+
+  if (serviceModal) {
+    serviceModal.classList.add("active");
+  } else {
+    console.error("Service modal element not found");
+  }
 }
 
 // Close service modal
 function closeServiceModal() {
-  document.getElementById("serviceModal").classList.remove("active");
-  document.getElementById("serviceForm").reset();
+  const serviceModal = document.getElementById("serviceModal");
+  const serviceForm = document.getElementById("serviceForm");
+
+  if (serviceModal) serviceModal.classList.remove("active");
+  if (serviceForm) serviceForm.reset();
+
   clearFormErrors();
   clearImagePreview();
   currentEditingService = null;
@@ -412,14 +481,14 @@ async function handleServiceSubmit(event) {
   // Add CSRF token
   data.csrf_token = CSRF_TOKEN;
 
-  // Remove empty fields
+  // Remove empty fields (but preserve service_id for edits)
   Object.keys(data).forEach((key) => {
-    if (data[key] === "") {
+    if (data[key] === "" && key !== "service_id") {
       delete data[key];
     }
   });
 
-  const isEdit = !!data.service_id;
+  const isEdit = !!data.service_id && data.service_id !== "";
   const url = "../../api/admin/services/crud.php";
   const method = isEdit ? "PUT" : "POST";
 
@@ -449,19 +518,30 @@ async function handleServiceSubmit(event) {
             ? "Service updated successfully!"
             : "Service created successfully!"),
         icon: "success",
-        confirmButtonColor: "#c29076",  /* Brown Primary */
+        confirmButtonColor: "#c29076" /* Brown Primary */,
         timer: 2000,
         timerProgressBar: true,
       });
 
       loadServices();
     } else {
-      Swal.fire({
-        title: "Error!",
-        text: result.message || "An error occurred",
-        icon: "error",
-        confirmButtonColor: "#c29076",  /* Brown Primary */
-      });
+      // Check if there are field-specific validation errors
+      if (result.error && result.error.details) {
+        displayFormErrors(result.error.details);
+        Swal.fire({
+          title: "Validation Error",
+          text: result.error.message || "Please check the form for errors",
+          icon: "error",
+          confirmButtonColor: "#c29076" /* Brown Primary */,
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: result.error?.message || result.message || "An error occurred",
+          icon: "error",
+          confirmButtonColor: "#c29076" /* Brown Primary */,
+        });
+      }
     }
   } catch (error) {
     console.error("Error submitting form:", error);
@@ -469,66 +549,111 @@ async function handleServiceSubmit(event) {
       title: "Error!",
       text: "An error occurred while saving the service",
       icon: "error",
-      confirmButtonColor: "#c29076",  /* Brown Primary */
+      confirmButtonColor: "#c29076" /* Brown Primary */,
     });
   } finally {
     setSubmitButtonLoading(false);
   }
 }
 
-// Toggle service active status (SweetAlert2)
-async function toggleServiceStatus(serviceId) {
-  const service = allServices.find((s) => s.service_id === serviceId);
-  if (!service) return;
+// Toggle service active status
+async function toggleServiceStatus(serviceId, currentStatus) {
+  // Convert to string for comparison (service_id is VARCHAR(4))
+  const serviceIdStr = String(serviceId);
+  const service = allServices.find(
+    (s) => String(s.service_id) === serviceIdStr
+  );
+  if (!service) {
+    console.error("Service not found:", serviceId);
+    showToast("Service not found", "error");
+    return;
+  }
 
-  const action = service.is_active ? "deactivate" : "activate";
-  const actionColor = service.is_active ? "#E76F51" : "#2A9D8F";
-
-  const result = await Swal.fire({
-    title: `${action.charAt(0).toUpperCase() + action.slice(1)} Service?`,
-    html: `Are you sure you want to ${action} <strong>"${escapeHtml(
-      service.service_name
-    )}"</strong>?`,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonColor: actionColor,
-    cancelButtonColor: "#6C757D",
-    confirmButtonText: `Yes, ${action} it!`,
-    cancelButtonText: "Cancel",
-  });
-
-  if (!result.isConfirmed) return;
+  const newStatus = currentStatus === 1 ? 0 : 1;
+  const actionText = newStatus === 1 ? "activate" : "deactivate";
+  const actionPastText = newStatus === 1 ? "activated" : "deactivated";
 
   try {
+    // Show loading state
+    const button = event.target.closest("button");
+    const originalHTML = button.innerHTML;
+    button.disabled = true;
+
     const response = await fetch("../../api/admin/services/toggle_status.php", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        service_id: serviceId,
+        service_id: serviceIdStr,
         csrf_token: CSRF_TOKEN,
       }),
     });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
     const data = await response.json();
 
     if (data.success) {
-      showToast(data.message || "Status updated successfully", "success");
-      loadServices();
+      // Show success message as toast notification
+      Swal.fire({
+        text: `Service ${actionPastText}`,
+        icon: "success",
+        toast: true,
+        position: "bottom-end",
+        showConfirmButton: false,
+        timer: 1000,
+        timerProgressBar: false,
+        didOpen: (toast) => {
+          toast.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
+          toast.style.fontSize = "0.875rem";
+          toast.style.padding = "0.75rem 1rem";
+        },
+      });
+
+      // Reload services after a short delay
+      setTimeout(() => {
+        loadServices();
+      }, 1000);
     } else {
-      showToast(data.message || "An error occurred", "error");
+      button.disabled = false;
+      button.innerHTML = originalHTML;
+      Swal.fire({
+        title: "Error",
+        text: data.error?.message || `Failed to ${actionText} service`,
+        icon: "error",
+        confirmButtonColor: "#c29076",
+      });
     }
   } catch (error) {
     console.error("Error toggling service status:", error);
-    showToast("An error occurred", "error");
+    const button = event.target.closest("button");
+    if (button) {
+      button.disabled = false;
+    }
+    Swal.fire({
+      title: "Error",
+      text: `Failed to ${actionText} service. Please try again.`,
+      icon: "error",
+      confirmButtonColor: "#c29076",
+    });
   }
 }
 
 // Open delete modal (SweetAlert2)
 function openDeleteModal(serviceId) {
-  const service = allServices.find((s) => s.service_id === serviceId);
-  if (!service) return;
+  // Convert to string for comparison (service_id is VARCHAR(4))
+  const serviceIdStr = String(serviceId);
+  const service = allServices.find(
+    (s) => String(s.service_id) === serviceIdStr
+  );
+  if (!service) {
+    console.error("Service not found:", serviceId);
+    showToast("Service not found", "error");
+    return;
+  }
 
   currentDeleteService = service;
 
@@ -549,10 +674,6 @@ function openDeleteModal(serviceId) {
       confirmDelete();
     }
   });
-}
-  }
-
-  document.getElementById("deleteModal").classList.add("active");
 }
 
 // Close delete modal
@@ -577,15 +698,16 @@ async function confirmDelete() {
   });
 
   try {
-    const response = await fetch(
-      `../../api/admin/services/crud.php?id=${currentDeleteService.service_id}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    const response = await fetch("../../api/admin/services/crud.php", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        service_id: currentDeleteService.service_id,
+        csrf_token: CSRF_TOKEN,
+      }),
+    });
 
     const result = await response.json();
 
@@ -594,7 +716,7 @@ async function confirmDelete() {
         title: "Deleted!",
         text: result.message || "Service has been deleted successfully.",
         icon: "success",
-        confirmButtonColor: "#c29076",  /* Brown Primary */
+        confirmButtonColor: "#c29076" /* Brown Primary */,
       });
       closeDeleteModal();
       loadServices();
@@ -604,14 +726,14 @@ async function confirmDelete() {
           title: "Cannot Delete",
           text: result.message,
           icon: "error",
-          confirmButtonColor: "#c29076",  /* Brown Primary */
+          confirmButtonColor: "#c29076" /* Brown Primary */,
         });
       } else {
         Swal.fire({
           title: "Error!",
           text: result.message || "An error occurred",
           icon: "error",
-          confirmButtonColor: "#c29076",  /* Brown Primary */
+          confirmButtonColor: "#c29076" /* Brown Primary */,
         });
       }
     }
@@ -621,7 +743,7 @@ async function confirmDelete() {
       title: "Error!",
       text: "An error occurred while deleting the service",
       icon: "error",
-      confirmButtonColor: "#c29076",  /* Brown Primary */
+      confirmButtonColor: "#c29076" /* Brown Primary */,
     });
   }
 }
@@ -629,12 +751,33 @@ async function confirmDelete() {
 // Handle image upload
 function handleImageUpload(event) {
   const file = event.target.files[0];
-  if (!file) return;
+  if (!file) {
+    // Reset if no file selected
+    const imageUploadArea = document.getElementById("imageUploadArea");
+    const imagePreviewContainer = document.getElementById(
+      "imagePreviewContainer"
+    );
+    const fileNameDisplay = document.getElementById("fileNameDisplay");
+
+    if (imagePreviewContainer) imagePreviewContainer.style.display = "none";
+    if (imageUploadArea) imageUploadArea.style.display = "flex";
+    if (fileNameDisplay) fileNameDisplay.textContent = "No file chosen";
+    return;
+  }
 
   // Validate file type
-  const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+  const validTypes = [
+    "image/jpeg",
+    "image/jpg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+  ];
   if (!validTypes.includes(file.type)) {
-    showToast("Please select a valid image file (JPG or PNG)", "error");
+    showToast(
+      "Please select a valid image file (JPEG, PNG, GIF, or WebP)",
+      "error"
+    );
     event.target.value = "";
     return;
   }
@@ -646,42 +789,66 @@ function handleImageUpload(event) {
     return;
   }
 
+  // Update file name display
+  const fileNameDisplay = document.getElementById("fileNameDisplay");
+  if (fileNameDisplay) {
+    fileNameDisplay.textContent = file.name;
+  }
+
   // Show preview
   const reader = new FileReader();
   reader.onload = function (e) {
-    showImagePreview(e.target.result);
-    // Store filename in hidden input
-    document.getElementById("serviceImage").value = file.name;
+    showImagePreview(e.target.result, file.name);
   };
   reader.readAsDataURL(file);
 }
 
 // Show image preview
-function showImagePreview(src) {
-  const preview = document.getElementById("imagePreview");
-  const img = document.getElementById("previewImg");
+function showImagePreview(src, fileName) {
+  const previewContainer = document.getElementById("imagePreviewContainer");
+  const imageUploadArea = document.getElementById("imageUploadArea");
+  const img = document.getElementById("imagePreview");
+  const previewFileName = document.getElementById("previewFileName");
 
-  if (preview && img) {
+  if (img) {
     img.src = src;
-    preview.style.display = "block";
+  }
+  if (previewFileName && fileName) {
+    previewFileName.textContent = fileName;
+  }
+  if (previewContainer) {
+    previewContainer.style.display = "block";
+  }
+  if (imageUploadArea) {
+    imageUploadArea.style.display = "none";
   }
 }
 
 // Clear image preview
 function clearImagePreview() {
-  const preview = document.getElementById("imagePreview");
-  const img = document.getElementById("previewImg");
-  const fileInput = document.getElementById("serviceImageFile");
+  const previewContainer = document.getElementById("imagePreviewContainer");
+  const imageUploadArea = document.getElementById("imageUploadArea");
+  const img = document.getElementById("imagePreview");
+  const fileInput = document.getElementById("serviceImage");
+  const fileNameDisplay = document.getElementById("fileNameDisplay");
+  const previewFileName = document.getElementById("previewFileName");
 
-  if (preview) preview.style.display = "none";
+  if (previewContainer) previewContainer.style.display = "none";
+  if (imageUploadArea) imageUploadArea.style.display = "flex";
   if (img) img.src = "";
   if (fileInput) fileInput.value = "";
-  document.getElementById("serviceImage").value = "";
+  if (fileNameDisplay) fileNameDisplay.textContent = "No file chosen";
+  if (previewFileName) previewFileName.textContent = "";
 }
 
 // Remove image
 function removeImage() {
   clearImagePreview();
+  // Also clear the file input
+  const fileInput = document.getElementById("serviceImage");
+  if (fileInput) {
+    fileInput.value = "";
+  }
 }
 
 // Reset filters
@@ -689,17 +856,29 @@ function resetFilters() {
   document.getElementById("searchInput").value = "";
   document.getElementById("categoryFilter").value = "";
   const statusFilter = document.getElementById("statusFilter");
-  if (statusFilter) statusFilter.value = "all";
-  const activeOnlyFilter = document.getElementById("activeOnlyFilter");
-  if (activeOnlyFilter) activeOnlyFilter.checked = false;
+  if (statusFilter) statusFilter.value = "";
   filterServices();
 }
 
 // Display form errors
 function displayFormErrors(errors) {
+  // Map field names to element IDs
+  const fieldToElementId = {
+    service_category: "serviceCategory",
+    sub_category: "subCategory",
+    service_name: "serviceName",
+    current_duration_minutes: "durationMinutes",
+    current_price: "price",
+    default_cleanup_minutes: "cleanupTime",
+    description: "description",
+    service_image: "serviceImage",
+    service_id: "serviceId",
+  };
+
   Object.keys(errors).forEach((field) => {
     const errorElement = document.getElementById(`error-${field}`);
-    const inputElement = document.getElementById(field.replace("_", ""));
+    const elementId = fieldToElementId[field] || field;
+    const inputElement = document.getElementById(elementId);
 
     if (errorElement) {
       errorElement.textContent = errors[field];

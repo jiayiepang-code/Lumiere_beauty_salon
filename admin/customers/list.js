@@ -8,7 +8,23 @@ const itemsPerPage = 10;
 document.addEventListener("DOMContentLoaded", function () {
     loadCustomers();
     setupEventListeners();
+    checkSessionStatus();
 });
+
+function checkSessionStatus() {
+    const statusElement = document.querySelector('[data-session-status]');
+    if (statusElement) {
+        const type = statusElement.dataset.type;
+        const message = statusElement.dataset.message;
+        
+        Swal.fire({
+            icon: type,
+            title: type === 'success' ? 'Success' : 'Error',
+            text: message,
+            confirmButtonColor: '#c29076'
+        });
+    }
+}
 
 function setupEventListeners() {
     // Search input
@@ -32,6 +48,15 @@ function setupEventListeners() {
             }
         });
     }
+    
+    const editModal = document.getElementById("editModal");
+    if (editModal) {
+        editModal.addEventListener("click", function (e) {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+    }
 }
 
 function loadCustomers() {
@@ -43,24 +68,48 @@ function loadCustomers() {
     emptyState.style.display = "none";
     table.style.display = "none";
     
-    fetch('../../api/admin/customers/list.php')
+    console.log('Fetching customers from API...');
+    
+    fetch('../../api/admin/customers/list.php', { credentials: 'same-origin' })
         .then(response => {
-            if (!response.ok) {
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
+            // Clone response to read it twice (once for logging, once for JSON parsing)
+            return response.clone().text().then(text => {
+                console.log('Raw response:', text);
+                try {
+                    const data = JSON.parse(text);
+                    console.log('Parsed response:', data);
+                    return { ok: response.ok, status: response.status, data: data };
+                } catch (e) {
+                    console.error('JSON parse error:', e);
+                    throw new Error('Invalid JSON response');
+                }
+            });
+        })
+        .then(result => {
+            if (!result.ok) {
+                console.error('API returned error status:', result.status);
+                if (result.data && result.data.error) {
+                    console.error('Error details:', result.data.error);
+                    throw new Error(result.data.error.message || 'API request failed');
+                }
                 throw new Error('Network response was not ok');
             }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                allCustomers = data.customers;
+            
+            if (result.data.success) {
+                console.log('Successfully loaded', result.data.count, 'customers');
+                allCustomers = result.data.customers;
                 filterCustomers();
             } else {
-                showToast(data.error || 'Failed to load customers', 'error');
+                console.error('API returned success=false:', result.data.error);
+                showToast(result.data.error || 'Failed to load customers', 'error');
             }
         })
         .catch(error => {
-            console.error('Error:', error);
-            showToast('Error loading customers', 'error');
+            console.error('Error loading customers:', error);
+            showToast('Error loading customers: ' + error.message, 'error');
             loadingState.style.display = "none";
             emptyState.style.display = "block";
         })
@@ -74,7 +123,8 @@ function filterCustomers() {
     const sortValue = document.getElementById("sortFilter").value;
     
     let filtered = allCustomers.filter(customer => {
-        const searchString = `${customer.first_name} ${customer.last_name} ${customer.email} ${customer.phone}`.toLowerCase();
+        const email = customer.email || customer.customer_email || '';
+        const searchString = `${customer.first_name} ${customer.last_name} ${email} ${customer.phone}`.toLowerCase();
         return searchString.includes(searchTerm);
     });
     
@@ -82,16 +132,15 @@ function filterCustomers() {
     filtered.sort((a, b) => {
         switch (sortValue) {
             case 'name_asc':
-                return (a.first_name + a.last_name).localeCompare(b.first_name + b.last_name);
+                return (a.last_name + a.first_name).localeCompare(b.last_name + b.first_name);
             case 'name_desc':
-                return (b.first_name + b.last_name).localeCompare(a.first_name + a.last_name);
+                return (b.last_name + b.first_name).localeCompare(a.last_name + a.first_name);
             case 'bookings_desc':
-                return b.total_bookings - a.total_bookings;
+                return (b.total_bookings || 0) - (a.total_bookings || 0);
             case 'recent_desc':
-                // Handle null dates
-                if (!a.last_visit) return 1;
-                if (!b.last_visit) return -1;
-                return new Date(b.last_visit) - new Date(a.last_visit);
+                const dateA = a.created_at ? new Date(a.created_at) : new Date(0);
+                const dateB = b.created_at ? new Date(b.created_at) : new Date(0);
+                return dateB - dateA;
             default:
                 return 0;
         }
@@ -129,16 +178,14 @@ function renderTable(customers) {
     pageItems.forEach(customer => {
         const tr = document.createElement("tr");
         
-        const lastVisit = customer.last_visit 
-            ? new Date(customer.last_visit).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) 
-            : '<span style="color: #999;">Never</span>';
-            
-        const totalSpent = parseFloat(customer.total_spent || 0).toFixed(2);
+        const dateRegistered = customer.created_at 
+            ? new Date(customer.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) 
+            : 'N/A';
         
         tr.innerHTML = `
             <td>
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #666;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #c29076, #b18776); display: flex; align-items: center; justify-content: center; font-weight: 600; color: white;">
                         ${customer.first_name.charAt(0)}${customer.last_name.charAt(0)}
                     </div>
                     <div>
@@ -146,37 +193,35 @@ function renderTable(customers) {
                     </div>
                 </div>
             </td>
+            <td style="color: #666;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px; color: #999;">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                ${escapeHtml(customer.email || customer.customer_email)}
+            </td>
+            <td style="color: #666;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px; color: #999;">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+                ${escapeHtml(customer.phone)}
+            </td>
+            <td style="color: #666; font-size: 14px;">${dateRegistered}</td>
             <td>
-                <div style="font-size: 13px;">
-                    <div style="margin-bottom: 4px;">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px; color: #999;">
-                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                            <polyline points="22,6 12,13 2,6"></polyline>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-sm btn-secondary" onclick="openEditModal('${escapeHtml(customer.email || customer.customer_email)}')" title="Edit Customer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
                         </svg>
-                        ${escapeHtml(customer.email)}
-                    </div>
-                    <div>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px; color: #999;">
-                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteCustomer('${escapeHtml(customer.email || customer.customer_email)}', '${escapeHtml(customer.first_name)} ${escapeHtml(customer.last_name)}')" title="Delete Customer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                         </svg>
-                        ${escapeHtml(customer.phone)}
-                    </div>
+                    </button>
                 </div>
-            </td>
-            <td>
-                <span style="display: inline-block; padding: 4px 12px; background: #f0f9ff; color: #0369a1; border-radius: 12px; font-size: 13px; font-weight: 500;">
-                    ${customer.total_bookings} bookings
-                </span>
-            </td>
-            <td style="font-weight: 500;">$${totalSpent}</td>
-            <td style="color: #666; font-size: 14px;">${lastVisit}</td>
-            <td>
-                <button class="btn btn-sm btn-secondary" onclick="viewCustomer('${escapeHtml(customer.email)}')" title="View Details">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                        <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                </button>
             </td>
         `;
         tbody.appendChild(tr);
@@ -306,7 +351,8 @@ function viewCustomer(email) {
         </div>
     `;
     
-    modal.style.display = "block";
+    // Show modal with flex for proper centering
+    modal.style.display = "flex";
     
     // Fetch recent bookings for this customer
     fetch(`../../api/admin/bookings/list.php?customer_email=${encodeURIComponent(email)}`)
@@ -339,20 +385,207 @@ function closeCustomerModal() {
     document.getElementById("customerModal").style.display = "none";
 }
 
+function openEditModal(email) {
+    const customer = allCustomers.find(c => (c.email || c.customer_email) === email);
+    if (!customer) {
+        showToast('Customer not found', 'error');
+        return;
+    }
+    
+    // Populate form
+    document.getElementById('edit_customer_email').value = customer.email || customer.customer_email;
+    document.getElementById('edit_first_name').value = customer.first_name;
+    document.getElementById('edit_last_name').value = customer.last_name;
+    document.getElementById('edit_phone').value = customer.phone;
+    document.getElementById('reset_password_checkbox').checked = false;
+    document.getElementById('password_group').style.display = 'none';
+    document.getElementById('edit_password').value = '';
+    document.getElementById('edit_password').removeAttribute('required');
+    
+    // Show modal with flex for proper centering
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').style.display = 'none';
+    document.getElementById('editForm').reset();
+}
+
+function togglePasswordReset() {
+    const checkbox = document.getElementById('reset_password_checkbox');
+    const passwordGroup = document.getElementById('password_group');
+    const passwordInput = document.getElementById('edit_password');
+    
+    if (checkbox.checked) {
+        passwordGroup.style.display = 'block';
+        passwordInput.setAttribute('required', 'required');
+    } else {
+        passwordGroup.style.display = 'none';
+        passwordInput.removeAttribute('required');
+        passwordInput.value = '';
+    }
+}
+
+function saveCustomer(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const data = {
+        customer_email: formData.get('customer_email'),
+        first_name: formData.get('first_name'),
+        last_name: formData.get('last_name'),
+        phone: formData.get('phone')
+    };
+    
+    // Include password if reset checkbox is checked
+    if (document.getElementById('reset_password_checkbox').checked) {
+        const password = formData.get('password');
+        if (password) {
+            data.password = password;
+        }
+    }
+    
+    // Add CSRF token
+    data.csrf_token = CSRF_TOKEN;
+    
+    // Show loading
+    Swal.fire({
+        title: 'Saving...',
+        text: 'Please wait',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    fetch('../../api/admin/customers/update.php', {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: result.message || 'Customer updated successfully',
+                confirmButtonColor: '#c29076'
+            }).then(() => {
+                closeEditModal();
+                loadCustomers(); // Reload the table
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: result.error?.message || 'Failed to update customer',
+                confirmButtonColor: '#c29076'
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'An error occurred while updating the customer',
+            confirmButtonColor: '#c29076'
+        });
+    });
+}
+
+function deleteCustomer(email, fullName) {
+    Swal.fire({
+        title: 'Delete Customer?',
+        html: `Are you sure you want to permanently delete <strong>${fullName}</strong>?<br><br>This action cannot be undone.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading
+            Swal.fire({
+                title: 'Deleting...',
+                text: 'Please wait',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+            
+            fetch('../../api/admin/customers/delete.php', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    customer_email: email,
+                    csrf_token: CSRF_TOKEN
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted',
+                        text: result.message || 'Customer deleted successfully',
+                        confirmButtonColor: '#c29076'
+                    }).then(() => {
+                        loadCustomers(); // Reload the table
+                    });
+                } else {
+                    // Check if error is due to existing bookings
+                    if (result.error?.code === 'HAS_BOOKINGS') {
+                        Swal.fire({
+                            icon: 'info',
+                            title: 'Cannot Delete',
+                            text: result.error.message,
+                            confirmButtonColor: '#c29076'
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: result.error?.message || 'Failed to delete customer',
+                            confirmButtonColor: '#c29076'
+                        });
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while deleting the customer',
+                    confirmButtonColor: '#c29076'
+                });
+            });
+        }
+    });
+}
+
 function exportCustomers() {
     // Simple CSV export
     let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "First Name,Last Name,Email,Phone,Total Bookings,Total Spent,Last Visit\n";
+    csvContent += "First Name,Last Name,Email,Phone,Date Registered\n";
     
     allCustomers.forEach(c => {
         const row = [
             c.first_name,
             c.last_name,
-            c.email,
+            c.email || c.customer_email,
             c.phone,
-            c.total_bookings,
-            c.total_spent,
-            c.last_visit || ''
+            c.created_at || ''
         ].map(item => `"${item}"`).join(",");
         csvContent += row + "\n";
     });
@@ -360,10 +593,12 @@ function exportCustomers() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "customers_export.csv");
+    link.setAttribute("download", `customers_export_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    showToast('Customer list exported successfully', 'success');
 }
 
 // Utility functions

@@ -78,10 +78,9 @@ include '../includes/header.php';
 
     /* Constrain container width for better readability */
     .container-fluid {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding-left: 1.5rem;
-        padding-right: 1.5rem;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
         }
 
         .staff-header {
@@ -463,91 +462,85 @@ include '../includes/header.php';
         }
     }
 
-    /* Modal Styling - Center on page */
+    /* Modal Styling - Clean and Simple */
     #staffModal.modal {
         display: none;
-            position: fixed;
+        position: fixed;
         top: 0;
         left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
         z-index: 2000;
-        overflow-y: auto;
+        align-items: center;
+        justify-content: center;
         padding: 2rem 1rem;
     }
 
-    #staffModal.modal.show {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-    }
-
-    #staffModal .modal-dialog {
-        margin: auto;
-        max-width: 700px;
-        width: 100%;
-        position: relative;
+    #staffModal.modal.active {
         display: flex;
-        align-items: center;
-        min-height: calc(100% - 4rem);
     }
 
     #staffModal .modal-content {
-            background: white;
+        background: white;
         border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-        overflow: hidden;
         width: 100%;
-        margin: auto;
+        max-width: 700px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        animation: modalSlideIn 0.3s ease;
+    }
+
+    @keyframes modalSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     #staffModal .modal-header {
-        padding: 1.5rem 2rem;
-        background: linear-gradient(135deg, var(--primary-color), #9e7364);
-        color: white;
-        border: none;
+        padding: 24px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
+        align-items: center;
     }
 
-    #staffModal .modal-title {
-        font-size: 1.5rem;
-        font-weight: 700;
+    #staffModal .modal-header h3 {
+        font-size: 20px;
+        color: var(--text-dark);
         margin: 0;
+        font-weight: 600;
     }
-    
-    /* Close button - Cross icon */
-    .btn-close-custom {
+
+    #staffModal .modal-close {
         background: none;
         border: none;
-        padding: 0.5rem;
+        font-size: 28px;
+        color: #999;
         cursor: pointer;
-        color: white;
-        opacity: 0.9;
-        transition: opacity 0.2s ease, background-color 0.2s ease;
+        padding: 0;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
         border-radius: 4px;
-        flex-shrink: 0;
+        transition: all 0.2s ease;
     }
-    
-    .btn-close-custom:hover {
-        opacity: 1;
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-    
-    .btn-close-custom svg {
-        width: 20px;
-        height: 20px;
+
+    #staffModal .modal-close:hover {
+        background: #f0f0f0;
+        color: var(--text-dark);
     }
 
     #staffModal .modal-body {
-        padding: 1.5rem 2rem;
+        padding: 24px;
         max-height: calc(100vh - 220px);
         overflow-y: auto;
     }
@@ -584,12 +577,11 @@ include '../includes/header.php';
     }
 
     #staffModal .modal-footer {
-        padding: 1.5rem 2rem;
-        border-top: 1px solid var(--border-light);
+        padding: 20px 24px;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
         display: flex;
         justify-content: flex-end;
-        gap: 1rem;
-        background-color: #fafafa;
+        gap: 12px;
     }
 
     /* Form control styling */
@@ -843,20 +835,20 @@ include '../includes/header.php';
             padding: 1rem;
         }
 
-        #staffModal .modal-dialog {
+        #staffModal .modal-content {
             max-width: 100%;
-            min-height: calc(100% - 2rem);
+            max-height: calc(100vh - 2rem);
         }
 
         #staffModal .modal-header,
         #staffModal .modal-body,
         #staffModal .modal-footer {
             padding: 1.5rem;
-            }
         }
+    }
     </style>
 
-<div class="container-fluid py-4">
+<div class="container-fluid">
     <!-- Header Section -->
     <div class="staff-header mb-4">
         <div>
@@ -1169,22 +1161,13 @@ include '../includes/header.php';
 </div>
 
 <!-- Staff Form Modal (Create/Edit) -->
-<div class="modal fade" id="staffModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-color), #9e7364); color: white; border: none;">
-                <div>
-                    <h5 class="modal-title" id="modalTitle">Add Staff Member</h5>
-                    <p class="mb-0" style="font-size: 0.875rem; opacity: 0.9; margin-top: 0.25rem;" id="modalDescription">Fill in the details to add a new team member</p>
-                </div>
-                <button type="button" class="btn-close-custom" data-bs-dismiss="modal" onclick="closeStaffModal()" aria-label="Close">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="modal-body">
+<div id="staffModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">Add Staff Member</h3>
+            <button class="modal-close" onclick="closeStaffModal()">&times;</button>
+        </div>
+        <div class="modal-body">
                 <form id="staffForm" enctype="multipart/form-data">
                     <input type="hidden" id="isEdit" name="is_edit" value="0">
                     
@@ -1306,12 +1289,18 @@ include '../includes/header.php';
                         </div>
                     </div>
 
-                    <div class="modal-footer" style="border-top: 1px solid var(--border-light); padding-top: 1.5rem; margin-top: 1rem;">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="closeStaffModal()" style="padding: 0.75rem 1.5rem;">Cancel</button>
-                        <button type="submit" class="btn btn-add" id="submitButton" style="padding: 0.75rem 1.5rem;">Add Staff Member</button>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeStaffModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="submitButton">
+                            <span id="submitBtnText">Add Staff Member</span>
+                            <span id="submitBtnSpinner" style="display: none;">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                                    <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                                </svg>
+                            </span>
+                        </button>
                     </div>
                 </form>
-            </div>
         </div>
     </div>
 </div>
@@ -1391,6 +1380,41 @@ include '../includes/header.php';
     .form-check-input:checked {
         background-color: var(--primary-color);
         border-color: var(--primary-color);
+    }
+
+    /* Button styling to match services modal */
+    #staffModal .btn-primary {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    #staffModal .btn-primary:hover {
+        background: #9e7364;
+        color: white;
+    }
+
+    #staffModal .btn-secondary {
+        background: #6C757D;
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    #staffModal .btn-secondary:hover {
+        background: #5a6268;
+        color: white;
     }
 </style>
 
