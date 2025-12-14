@@ -765,6 +765,14 @@ function handleImageUpload(event) {
     return;
   }
 
+  // Get error element reference
+  const errorElement = document.getElementById("imageSizeError");
+
+  // Hide error initially
+  if (errorElement) {
+    errorElement.style.display = "none";
+  }
+
   // Validate file type
   const validTypes = [
     "image/jpeg",
@@ -784,9 +792,16 @@ function handleImageUpload(event) {
 
   // Validate file size (2MB)
   if (file.size > 2 * 1024 * 1024) {
-    showToast("Image size must be less than 2MB", "error");
+    if (errorElement) {
+      errorElement.style.display = "flex";
+    }
     event.target.value = "";
     return;
+  }
+
+  // Hide error if file is valid
+  if (errorElement) {
+    errorElement.style.display = "none";
   }
 
   // Update file name display
@@ -832,6 +847,7 @@ function clearImagePreview() {
   const fileInput = document.getElementById("serviceImage");
   const fileNameDisplay = document.getElementById("fileNameDisplay");
   const previewFileName = document.getElementById("previewFileName");
+  const errorElement = document.getElementById("imageSizeError");
 
   if (previewContainer) previewContainer.style.display = "none";
   if (imageUploadArea) imageUploadArea.style.display = "flex";
@@ -839,6 +855,7 @@ function clearImagePreview() {
   if (fileInput) fileInput.value = "";
   if (fileNameDisplay) fileNameDisplay.textContent = "No file chosen";
   if (previewFileName) previewFileName.textContent = "";
+  if (errorElement) errorElement.style.display = "none";
 }
 
 // Remove image

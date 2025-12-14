@@ -701,6 +701,8 @@ include '../includes/header.php';
     .preview-image {
         max-width: 200px;
         max-height: 200px;
+        width: 100%;
+        height: auto;
         border-radius: 8px;
         object-fit: cover;
         border: 2px solid var(--border-light);
@@ -718,10 +720,12 @@ include '../includes/header.php';
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 0.5rem;
+        gap: 10px;
         opacity: 0;
         transition: opacity 0.2s ease;
         pointer-events: none;
+        flex-wrap: wrap;
+        padding: 0.5rem;
     }
     
     .preview-wrapper:hover .preview-overlay {
@@ -730,16 +734,25 @@ include '../includes/header.php';
     }
     
     .btn-preview-action {
-        padding: 0.5rem 1rem;
+        padding: 0.4rem 0.75rem;
         border: none;
         border-radius: 6px;
-        font-size: 0.875rem;
+        font-size: 0.75rem;
         font-weight: 600;
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
+        gap: 0.4rem;
         transition: all 0.2s ease;
+        white-space: nowrap;
+        min-width: fit-content;
+        flex-shrink: 0;
+    }
+    
+    .btn-preview-action svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
     }
     
     .btn-replace {
@@ -758,6 +771,57 @@ include '../includes/header.php';
     
     .btn-remove:hover {
         background-color: #b91c1c;
+    }
+    
+    /* Responsive adjustments for small images */
+    @media (max-width: 768px) {
+        .preview-image {
+            max-width: 150px;
+            max-height: 150px;
+        }
+        
+        .btn-preview-action {
+            padding: 0.35rem 0.6rem;
+            font-size: 0.7rem;
+            gap: 0.3rem;
+        }
+        
+        .btn-preview-action svg {
+            width: 12px;
+            height: 12px;
+        }
+    }
+    
+    /* Ensure buttons are visible even on very small images */
+    .preview-wrapper {
+        min-width: 100px;
+        min-height: 100px;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .preview-image {
+        min-width: 100px;
+        min-height: 100px;
+    }
+    
+    /* Scale buttons down for smaller containers */
+    @media (max-width: 480px) {
+        .preview-overlay {
+            gap: 0.3rem;
+            padding: 0.3rem;
+        }
+        
+        .btn-preview-action {
+            padding: 0.3rem 0.5rem;
+            font-size: 0.65rem;
+            gap: 0.25rem;
+        }
+        
+        .btn-preview-action svg {
+            width: 11px;
+            height: 11px;
+        }
     }
     
     .preview-filename {
@@ -1168,7 +1232,7 @@ include '../includes/header.php';
             <button class="modal-close" onclick="closeStaffModal()">&times;</button>
         </div>
         <div class="modal-body">
-                <form id="staffForm" enctype="multipart/form-data">
+            <form id="staffForm" enctype="multipart/form-data">
                     <input type="hidden" id="isEdit" name="is_edit" value="0">
                     
                     <div class="row mb-3">
@@ -1234,6 +1298,14 @@ include '../includes/header.php';
 
                     <div class="mb-3">
                         <label class="form-label">Profile Photo</label>
+                        <div id="imageSizeError" class="image-size-error" style="display: none; margin-bottom: 0.75rem;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="8" x2="12" y2="12"></line>
+                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                            </svg>
+                            <span>Image size cannot exceed 2MB. Please choose a smaller file.</span>
+                        </div>
                         <div class="image-upload-wrapper">
                             <div class="image-upload-area" id="imageUploadArea">
                                 <div id="uploadIconContainer" class="upload-icon-container">
@@ -1415,6 +1487,38 @@ include '../includes/header.php';
     #staffModal .btn-secondary:hover {
         background: #5a6268;
         color: white;
+    }
+    
+    /* Image size error message */
+    .image-size-error {
+        background-color: #fff5f5;
+        border: 2px solid #dc2626;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #dc2626;
+        font-size: 0.875rem;
+        font-weight: 600;
+        animation: slideInError 0.3s ease-out;
+    }
+    
+    .image-size-error svg {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+    }
+    
+    @keyframes slideInError {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 

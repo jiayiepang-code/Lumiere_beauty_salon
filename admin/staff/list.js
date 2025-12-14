@@ -629,7 +629,42 @@ async function handleFormSubmit(e) {
  */
 function handleImagePreview(e) {
   const file = e.target.files[0];
+
+  // Hide error initially
+  const errorElement = document.getElementById("imageSizeError");
+  if (errorElement) {
+    errorElement.style.display = "none";
+  }
+
   if (file) {
+    // Validate file type
+    const validTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+    ];
+    if (!validTypes.includes(file.type)) {
+      Swal.fire({
+        title: "Invalid File Type",
+        text: "Please select a valid image file (JPEG, PNG, GIF, or WebP)",
+        icon: "error",
+        confirmButtonColor: "#c29076",
+      });
+      e.target.value = "";
+      return;
+    }
+
+    // Validate file size (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      if (errorElement) {
+        errorElement.style.display = "flex";
+      }
+      e.target.value = "";
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = function (event) {
       const imagePreviewContainer = document.getElementById(
@@ -677,6 +712,7 @@ function removeImage() {
   const imageUploadArea = document.getElementById("imageUploadArea");
   const staffImageInput = document.getElementById("staffImage");
   const previewFileName = document.getElementById("previewFileName");
+  const errorElement = document.getElementById("imageSizeError");
 
   if (imagePreviewContainer) {
     imagePreviewContainer.style.display = "none";
@@ -689,6 +725,9 @@ function removeImage() {
   }
   if (previewFileName) {
     previewFileName.textContent = "";
+  }
+  if (errorElement) {
+    errorElement.style.display = "none";
   }
 }
 
@@ -860,6 +899,11 @@ function displayErrors(errors) {
  * Clear all error messages
  */
 function clearErrors() {
+  // Hide image size error
+  const imageSizeError = document.getElementById("imageSizeError");
+  if (imageSizeError) {
+    imageSizeError.style.display = "none";
+  }
   const errorElements = document.querySelectorAll(".error-message");
   errorElements.forEach((el) => {
     el.textContent = "";

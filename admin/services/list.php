@@ -193,6 +193,8 @@ include '../includes/header.php';
     .preview-image {
         max-width: 200px;
         max-height: 200px;
+        width: 100%;
+        height: auto;
         border-radius: 8px;
         object-fit: cover;
         border: 2px solid var(--border-light);
@@ -205,35 +207,113 @@ include '../includes/header.php';
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0.5);
+        background-color: rgba(0, 0, 0, 0.6);
         border-radius: 8px;
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 10px;
         opacity: 0;
         transition: opacity 0.2s ease;
+        pointer-events: none;
+        flex-wrap: wrap;
+        padding: 0.5rem;
     }
     
     .preview-wrapper:hover .preview-overlay {
         opacity: 1;
+        pointer-events: auto;
     }
     
-    .btn-remove-image {
-        background: white;
+    .btn-preview-action {
+        padding: 0.4rem 0.75rem;
         border: none;
-        border-radius: 50%;
-        width: 36px;
-        height: 36px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
         display: flex;
         align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: #dc2626;
-        transition: transform 0.2s ease;
+        gap: 0.4rem;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        min-width: fit-content;
+        flex-shrink: 0;
     }
     
-    .btn-remove-image:hover {
-        transform: scale(1.1);
+    .btn-preview-action svg {
+        width: 14px;
+        height: 14px;
+        flex-shrink: 0;
+    }
+    
+    .btn-replace {
+        background-color: white;
+        color: #333;
+    }
+    
+    .btn-replace:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .btn-remove {
+        background-color: #dc2626;
+        color: white;
+    }
+    
+    .btn-remove:hover {
+        background-color: #b91c1c;
+    }
+    
+    /* Responsive adjustments for small images */
+    @media (max-width: 768px) {
+        .preview-image {
+            max-width: 150px;
+            max-height: 150px;
+        }
+        
+        .btn-preview-action {
+            padding: 0.35rem 0.6rem;
+            font-size: 0.7rem;
+            gap: 0.3rem;
+        }
+        
+        .btn-preview-action svg {
+            width: 12px;
+            height: 12px;
+        }
+    }
+    
+    /* Ensure buttons are visible even on very small images */
+    .preview-wrapper {
+        min-width: 100px;
+        min-height: 100px;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .preview-image {
+        min-width: 100px;
+        min-height: 100px;
+    }
+    
+    /* Scale buttons down for smaller containers */
+    @media (max-width: 480px) {
+        .preview-overlay {
+            gap: 0.3rem;
+            padding: 0.3rem;
+        }
+        
+        .btn-preview-action {
+            padding: 0.3rem 0.5rem;
+            font-size: 0.65rem;
+            gap: 0.25rem;
+        }
+        
+        .btn-preview-action svg {
+            width: 11px;
+            height: 11px;
+        }
     }
     
     .preview-filename {
@@ -245,6 +325,38 @@ include '../includes/header.php';
     .text-muted {
         color: #6C757D;
         font-size: 0.875rem;
+    }
+    
+    /* Image size error message */
+    .image-size-error {
+        background-color: #fff5f5;
+        border: 2px solid #dc2626;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #dc2626;
+        font-size: 0.875rem;
+        font-weight: 600;
+        animation: slideInError 0.3s ease-out;
+    }
+    
+    .image-size-error svg {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+    }
+    
+    @keyframes slideInError {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 </style>
 
@@ -377,6 +489,14 @@ include '../includes/header.php';
                 
                 <div class="form-group">
                     <label for="serviceImage">Service Image</label>
+                    <div id="imageSizeError" class="image-size-error" style="display: none; margin-bottom: 0.75rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <span>Image size cannot exceed 2MB. Please choose a smaller file.</span>
+                    </div>
                     <div class="image-upload-wrapper">
                         <div class="image-upload-area" id="imageUploadArea">
                             <div id="uploadIconContainer" class="upload-icon-container">
@@ -396,11 +516,20 @@ include '../includes/header.php';
                             <div class="preview-wrapper">
                                 <img id="imagePreview" src="" alt="Preview" class="preview-image">
                                 <div class="preview-overlay">
-                                    <button type="button" class="btn-remove-image" onclick="removeImage()" title="Remove image">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <button type="button" class="btn-preview-action btn-replace" onclick="document.getElementById('serviceImage').click();" title="Replace">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                        Replace
+                                    </button>
+                                    <button type="button" class="btn-preview-action btn-remove" onclick="removeImage()" title="Remove">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                             <line x1="18" y1="6" x2="6" y2="18"></line>
                                             <line x1="6" y1="6" x2="18" y2="18"></line>
                                         </svg>
+                                        Remove
                                     </button>
                                 </div>
                             </div>
