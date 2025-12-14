@@ -180,6 +180,32 @@ body {
     font-size: 1rem;
     cursor: pointer;
     transition: all 0.3s ease;    
+    min-width: 140px;
+    text-align: center;
+}
+
+/* Book button on team cards */
+.btn-book-again {
+    padding: 10px 18px;
+    background: #c29076;
+    color: #fff;
+    border-radius: 8px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    border: none;
+    min-width: 120px;
+    justify-content: center;
+}
+.btn-book-again:hover { filter: brightness(0.95); }
+
+/* Favorited state */
+.fav-btn.favorited {
+    background: #c29076;
+    color: #fff;
+    border-color: #c29076;
 }
 
 .custom-footer {
@@ -188,4 +214,43 @@ body {
     margin: 0;          /* Remove margins */
     padding: 40px 20px; /* Keep your internal padding */
     box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.team-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.team-card .card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.team-card .card-actions {
+  margin-top: auto;          /* key: pushes buttons to bottom */
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 14px;
+}
+
+.flip-card-back {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* center vertically */
+    align-items: center;     /* center horizontally */
+    text-align: center;      /* centre text inside */
+    height: 100%;
+    padding: 20px;
+}
+
+/* Push buttons to the bottom */
+.flip-card-back .card-actions {
+    margin-top: 12px;
+    display: flex;
+    gap: 12px;
+    justify-content: center; /* center actions */
+    align-items: center;
 }
