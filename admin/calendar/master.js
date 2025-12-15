@@ -218,16 +218,24 @@ async function loadCalendarData() {
     const staffFilter = document.getElementById("staffFilter").value;
     const statusFilter = document.getElementById("statusFilter").value;
 
-    // Format date based on current view
+    // Helper function to format date in local timezone (YYYY-MM-DD)
+    const formatLocalDate = (date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+
+    // Format date based on current view (using local timezone to avoid UTC conversion issues)
     if (currentView === "day") {
-      params.append("date", currentDate.toISOString().split("T")[0]);
+      params.append("date", formatLocalDate(currentDate));
     } else if (currentView === "week") {
       const startOfWeek = new Date(currentDate);
       startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6);
-      params.append("start_date", startOfWeek.toISOString().split("T")[0]);
-      params.append("end_date", endOfWeek.toISOString().split("T")[0]);
+      params.append("start_date", formatLocalDate(startOfWeek));
+      params.append("end_date", formatLocalDate(endOfWeek));
     } else if (currentView === "month") {
       const startOfMonth = new Date(
         currentDate.getFullYear(),
@@ -239,8 +247,8 @@ async function loadCalendarData() {
         currentDate.getMonth() + 1,
         0
       );
-      params.append("start_date", startOfMonth.toISOString().split("T")[0]);
-      params.append("end_date", endOfMonth.toISOString().split("T")[0]);
+      params.append("start_date", formatLocalDate(startOfMonth));
+      params.append("end_date", formatLocalDate(endOfMonth));
     }
 
     if (staffFilter) {
@@ -420,7 +428,8 @@ function renderWeekView() {
     )}</td>`;
 
     weekDays.forEach((day) => {
-      const dateStr = day.toISOString().split("T")[0];
+      // Format date string using local timezone to avoid UTC conversion issues
+      const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
       const key = `${dateStr}_${hour.toString().padStart(2, "0")}`;
       const bookings = bookingsByDateTime[key] || [];
 
@@ -488,7 +497,8 @@ function renderMonthView() {
   // Days of the month
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
-    const dateStr = date.toISOString().split("T")[0];
+    // Format date string using local timezone to avoid UTC conversion issues
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const bookings = bookingsByDate[dateStr] || [];
     const isToday = date.toDateString() === new Date().toDateString();
 

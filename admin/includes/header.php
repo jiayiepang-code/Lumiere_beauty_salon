@@ -25,14 +25,60 @@ $csrf_token = getCSRFToken();
     <div class="admin-layout">
         <!-- Mobile Header -->
         <div class="mobile-header">
-            <div class="sidebar-brand" style="font-size: 20px;">
-                <img src="<?php echo isset($base_path) ? $base_path : '..'; ?>/images/16.png" alt="Lumière" style="height: 30px; width: auto; vertical-align: middle;"> Admin
-            </div>
+            <!-- Hamburger Menu - Left -->
             <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
                 <span></span>
                 <span></span>
                 <span></span>
             </button>
+            
+            <!-- User Info - Center -->
+            <div class="mobile-user-center">
+                <span class="user-name-mobile"><?php echo htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']); ?></span>
+                <span class="user-role-mobile"><?php echo htmlspecialchars(ucfirst($admin['role'] ?? 'admin')); ?></span>
+            </div>
+            
+            <!-- User Avatar - Right -->
+            <div class="user-avatar-mobile">
+                <?php
+                $base_path = isset($base_path) ? $base_path : '..';
+                $imagePath = '';
+                $initials = isset($admin['first_name']) ? strtoupper(substr($admin['first_name'], 0, 1)) . strtoupper(substr($admin['last_name'], 0, 1)) : 'US';
+
+                if (!empty($admin['staff_image'])) {
+                    $originalPath = $admin['staff_image'];
+                    $filename = basename($originalPath);
+                    $extensions = ['', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
+                    $baseDir = __DIR__ . '/../../images/';
+                    $foundFile = false;
+                    foreach ($extensions as $ext) {
+                        $testFilename = $filename . $ext;
+                        $testPathRoot = $baseDir . $testFilename;
+                        if (file_exists($testPathRoot)) {
+                            $imagePath = $base_path . '/images/' . $testFilename;
+                            $foundFile = true;
+                            break;
+                        }
+                    }
+                    if (!$foundFile) {
+                        foreach ($extensions as $ext) {
+                            $testFilename = $filename . $ext;
+                            $testPathStaff = $baseDir . 'staff/' . $testFilename;
+                            if (file_exists($testPathStaff)) {
+                                $imagePath = $base_path . '/images/staff/' . $testFilename;
+                                $foundFile = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                ?>
+                <?php if (!empty($imagePath)): ?>
+                    <img src="<?php echo htmlspecialchars($imagePath); ?>" alt="<?php echo htmlspecialchars($admin['first_name']); ?>" onerror="this.style.display='none'; this.parentElement.innerHTML='<?php echo htmlspecialchars($initials); ?>';" />
+                <?php else: ?>
+                    <?php echo $initials; ?>
+                <?php endif; ?>
+            </div>
         </div>
 
         <!-- Sidebar Navigation -->
@@ -48,7 +94,7 @@ $csrf_token = getCSRFToken();
                     <div class="user-profile-header">
                         <div class="user-info-text">
                             <span class="user-name"><?php echo htmlspecialchars($admin['first_name'] . ' ' . $admin['last_name']); ?></span>
-                            <span class="user-role">Manager</span>
+                            <span class="user-role"><?php echo htmlspecialchars(ucfirst($admin['role'] ?? 'admin')); ?></span>
                         </div>
                         <div class="user-avatar-header">
                             <?php
@@ -104,3 +150,39 @@ $csrf_token = getCSRFToken();
                 </div>
             </header>
             <div class="content-body">
+                                <script>
+                // Global hamburger handler - works on all admin pages
+                (function(){
+                  function setupHamburger() {
+                    var btn = document.getElementById('hamburgerBtn');
+                    var sidebar = document.getElementById('sidebar');
+                    if(btn && sidebar){
+                      // Remove any existing listeners
+                      var newBtn = btn.cloneNode(true);
+                      btn.parentNode.replaceChild(newBtn, btn);
+                      
+                      newBtn.addEventListener('click', function(e){
+                        e.preventDefault();
+                        e.stopPropagation();
+                        sidebar.classList.toggle('active');
+                        newBtn.classList.toggle('active');
+                      });
+                      
+                      // Close sidebar when clicking outside
+                      document.addEventListener('click', function(e){
+                        if(sidebar.classList.contains('active') && 
+                           !sidebar.contains(e.target) && 
+                           !newBtn.contains(e.target)){
+                          sidebar.classList.remove('active');
+                          newBtn.classList.remove('active');
+                        }
+                      });
+                    }
+                  }
+                  
+                  if(document.readyState === 'loading'){
+                    document.addEventListener('DOMContentLoaded', setupHamburger);
+                  } else {
+                    setupHamburger();
+                  }                })();
+                </script>
