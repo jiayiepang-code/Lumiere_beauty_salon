@@ -169,7 +169,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div>
                 <h2>Staff Portal</h2>
                 <div class="logo-container">
-                    <img src="../images/16.png" class="sidebar-logo" alt="Lumière Logo">
+                    <div class="logo-oval">
+                        <img src="../images/16.png" class="sidebar-logo" alt="Lumière Logo">
+                    </div>
                 </div>
                 <p>Follow the steps to recover your account.</p>
             </div>
