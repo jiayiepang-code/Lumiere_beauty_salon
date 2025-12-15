@@ -120,5 +120,21 @@ if ($action === 'approve' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     approveLeave($pdo, $request_id, $status);
 }
 
+if ($action === 'history' && $_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Fetch leave history for the logged-in staff
+    try {
+        $stmt = $pdo->prepare("SELECT id, leave_type, start_date, end_date, half_day, reason, status, created_at, updated_at 
+                              FROM leave_requests 
+                              WHERE staff_email = ? 
+                              ORDER BY created_at DESC");
+        $stmt->execute([$staff_email]);
+        $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        respond(['success' => true, 'requests' => $requests]);
+    } catch (PDOException $e) {
+        respond(['success' => false, 'error' => 'Database error: ' . $e->getMessage()], 500);
+    }
+}
+
 respond(['success' => false, 'error' => 'Invalid action'], 400);
 

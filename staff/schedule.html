@@ -581,7 +581,15 @@ function formatDate(dateStr){
 function formatDateFromString(dateStr){
   if(!dateStr) return '';
   try {
-    const date=new Date(dateStr);
+    // If it's already in DD/MM/YYYY format, return as is
+    if (dateStr.includes('/') && dateStr.split('/').length === 3) {
+      const parts = dateStr.split('/');
+      if (parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+        return dateStr; // Already in DD/MM/YYYY format
+      }
+    }
+    // Parse ISO date (YYYY-MM-DD) format
+    const date = new Date(dateStr);
     if(isNaN(date.getTime())) return dateStr;
     const day=String(date.getDate()).padStart(2,'0');
     const month=String(date.getMonth()+1).padStart(2,'0');
@@ -737,19 +745,8 @@ async function loadMonthAppointments(){
     const monthName=new Date(year,month-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
     titleEl.textContent=`Appointments for ${monthName}`;
     
-    // Format dates in month view to dd/mm/yyyy
-    appointments.forEach(ap => {
-      if(ap.date_formatted) {
-        ap.date_formatted = formatDateFromString(ap.date_formatted);
-      }
-    });
-    
-    // Format dates in month view to dd/mm/yyyy
-    appointments.forEach(ap => {
-      if(ap.date_formatted) {
-        ap.date_formatted = formatDateFromString(ap.date_formatted);
-      }
-    });
+    // Use date_formatted directly (already in DD/MM/YYYY from PHP)
+    // No need to reformat since it's already in the correct format
     
     grid.innerHTML='';
     
@@ -773,7 +770,7 @@ async function loadMonthAppointments(){
       
       card.innerHTML=`
         <div class="appointment-header">
-          <div class="appointment-time">${ap.time_formatted} - ${formatDateFromString(ap.date_formatted || ap.date || '')}</div>
+          <div class="appointment-time">${ap.time_formatted} - ${ap.date_formatted || formatDateFromString(ap.date || '')}</div>
           <div class="appointment-status ${statusClass}">${statusText}</div>
         </div>
         <div class="appointment-details">

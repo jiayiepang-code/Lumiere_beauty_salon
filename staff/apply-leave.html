@@ -579,6 +579,116 @@
             border: 1px solid var(--error-color);
         }
 
+        /* Leave History Styles */
+        .leave-history-section {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .leave-history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .leave-history-item {
+            background: #faf8f6;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-soft);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .leave-history-item:hover {
+            box-shadow: var(--shadow-soft);
+            transform: translateY(-2px);
+        }
+
+        .leave-history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .leave-history-type {
+            font-weight: 600;
+            color: var(--staff-color);
+            font-size: 1.1rem;
+        }
+
+        .leave-status-badge {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #856404;
+            border: 1px solid #ffc107;
+        }
+
+        .status-approved {
+            background: rgba(40, 167, 69, 0.2);
+            color: #155724;
+            border: 1px solid #28a745;
+        }
+
+        .status-rejected {
+            background: rgba(220, 53, 69, 0.2);
+            color: #721c24;
+            border: 1px solid #dc3545;
+        }
+
+        .leave-history-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .leave-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .leave-detail-label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        .leave-detail-value {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .leave-history-date {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-top: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 left: -200px;
@@ -737,6 +847,21 @@
 
                     <button type="submit" class="submit-btn">Submit Request</button>
                 </form>
+
+                <!-- Leave History Section -->
+                <div class="leave-history-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
+                    <div class="page-header">
+                        <h2 class="page-title" style="font-size: 1.5rem;">Leave History</h2>
+                        <p class="page-subtitle">View your past and pending leave requests</p>
+                    </div>
+
+                    <div id="leaveHistoryContainer">
+                        <div class="empty-state" style="text-align: center; padding: 2rem; color: var(--text-light);">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 1rem;"></i>
+                            <p>Loading leave history...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -905,15 +1030,6 @@
         const successBox = document.getElementById('success-alert');
         const errorBox = document.getElementById('error-alert');
 
-        // Set minimum date to today
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').setAttribute('min', today);
-            document.getElementById('endDate').setAttribute('min', today);
-            
-            loadStaffProfile();
-            loadNotifications();
-        });
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -962,6 +1078,8 @@
                     successBox.textContent = data.message || 'Request submitted.';
                     successBox.style.display = 'block';
                     form.reset();
+                    // Reload leave history after successful submission
+                    loadLeaveHistory();
                 } else {
                     errorBox.textContent = data.error || 'Failed to submit request.';
                     errorBox.style.display = 'block';
@@ -972,6 +1090,152 @@
                 errorBox.textContent = 'System error. Please try again.';
                 errorBox.style.display = 'block';
             });
+        });
+
+        // Load and display leave history
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        function formatDateTime(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                const hours = String(date.getHours()).padStart(2, '0');
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                return `${day}/${month}/${year} ${hours}:${minutes}`;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+
+        function getStatusClass(status) {
+            const statusMap = {
+                'pending': 'status-pending',
+                'approved': 'status-approved',
+                'rejected': 'status-rejected'
+            };
+            return statusMap[status] || 'status-pending';
+        }
+
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'Pending',
+                'approved': 'Approved',
+                'rejected': 'Rejected'
+            };
+            return statusMap[status] || status;
+        }
+
+        async function loadLeaveHistory() {
+            const container = document.getElementById('leaveHistoryContainer');
+            
+            try {
+                const response = await fetch('api/leave.php?action=history');
+                const ct = response.headers.get('content-type');
+                if (!ct || !ct.includes('application/json')) {
+                    throw new Error('Invalid response format');
+                }
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load leave history');
+                }
+
+                const requests = data.requests || [];
+                container.innerHTML = '';
+
+                if (requests.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <h3>No Leave Requests</h3>
+                            <p>You haven't submitted any leave requests yet.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const historyList = document.createElement('div');
+                historyList.className = 'leave-history-list';
+
+                requests.forEach(request => {
+                    const item = document.createElement('div');
+                    item.className = 'leave-history-item';
+                    
+                    const startDate = formatDate(request.start_date);
+                    const endDate = formatDate(request.end_date);
+                    const dateRange = startDate === endDate ? startDate : `${startDate} - ${endDate}`;
+                    const submittedDate = formatDateTime(request.created_at);
+                    const updatedDate = request.updated_at && request.updated_at !== request.created_at 
+                        ? formatDateTime(request.updated_at) 
+                        : null;
+
+                    item.innerHTML = `
+                        <div class="leave-history-header">
+                            <div class="leave-history-type">${request.leave_type} Leave</div>
+                            <span class="leave-status-badge ${getStatusClass(request.status)}">
+                                ${getStatusText(request.status)}
+                            </span>
+                        </div>
+                        <div class="leave-history-details">
+                            <div class="leave-detail-item">
+                                <div class="leave-detail-label">Date Range</div>
+                                <div class="leave-detail-value">${dateRange}</div>
+                            </div>
+                            <div class="leave-detail-item">
+                                <div class="leave-detail-label">Duration</div>
+                                <div class="leave-detail-value">${request.half_day ? 'Half Day' : 'Full Day(s)'}</div>
+                            </div>
+                            <div class="leave-detail-item">
+                                <div class="leave-detail-label">Reason</div>
+                                <div class="leave-detail-value">${request.reason || 'N/A'}</div>
+                            </div>
+                        </div>
+                        <div class="leave-history-date">
+                            <i class="fas fa-clock"></i> Submitted: ${submittedDate}
+                            ${updatedDate ? `<br><i class="fas fa-sync-alt"></i> Updated: ${updatedDate}` : ''}
+                        </div>
+                    `;
+                    historyList.appendChild(item);
+                });
+
+                container.appendChild(historyList);
+            } catch (error) {
+                console.error('Error loading leave history:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading History</h3>
+                        <p>${error.message || 'Failed to load leave history. Please try again.'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Load leave history on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').setAttribute('min', today);
+            document.getElementById('endDate').setAttribute('min', today);
+            
+            loadStaffProfile();
+            loadNotifications();
+            loadLeaveHistory();
         });
     </script>
 </body>

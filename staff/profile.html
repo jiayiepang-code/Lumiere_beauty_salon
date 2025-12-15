@@ -663,7 +663,10 @@
 
                         <div class="form-group">
                             <label class="form-label" for="phone">Phone Number</label>
-                            <input type="tel" id="phone" class="form-input" value="" required>
+                            <div class="phone-wrapper" style="display: flex; align-items: center; border: 2px solid var(--border-color); border-radius: 8px; background: white; overflow: hidden;">
+                                <span class="input-prefix" style="padding: 0.75rem 1rem; background: #f8f9fa; color: var(--text-color); font-weight: 500; border-right: 2px solid var(--border-color); user-select: none; pointer-events: none;">+60</span>
+                                <input type="tel" id="phone" class="form-input phone-input" value="" style="border: none; border-radius: 0; flex: 1;" required>
+                            </div>
                         </div>
 
                         <div class="btn-group">
@@ -774,8 +777,66 @@
             }
         }
 
+        // Phone input validation and protection
+        function setupPhoneInput() {
+            const phoneInput = document.getElementById('phone');
+            if (!phoneInput) return;
+            
+            // Prevent non-numeric input
+            phoneInput.addEventListener('input', function(e) {
+                // Remove any non-numeric characters
+                let value = e.target.value.replace(/\D/g, '');
+                
+                // Prevent first digit from being 0
+                if (value.length > 0 && value[0] === '0') {
+                    value = value.substring(1); // Remove leading 0
+                }
+                
+                e.target.value = value;
+            });
+            
+            // Prevent paste of non-numeric content
+            phoneInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const paste = (e.clipboardData || window.clipboardData).getData('text');
+                const numbersOnly = paste.replace(/\D/g, '');
+                
+                // Remove leading 0 if present
+                let cleanedValue = numbersOnly.replace(/^0+/, '');
+                
+                // Get current value and combine
+                let currentValue = e.target.value.replace(/\D/g, '');
+                let newValue = currentValue + cleanedValue;
+                
+                // Remove leading 0 from final value
+                if (newValue.length > 0 && newValue[0] === '0') {
+                    newValue = newValue.substring(1);
+                }
+                
+                e.target.value = newValue;
+            });
+            
+            // Prevent typing non-numeric keys
+            phoneInput.addEventListener('keydown', function(e) {
+                // Allow: backspace, delete, tab, escape, enter, home, end, left, right arrow keys
+                if ([8, 9, 27, 13, 46, 35, 36, 37, 39].indexOf(e.keyCode) !== -1 ||
+                    // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                    (e.keyCode === 65 && e.ctrlKey === true) ||
+                    (e.keyCode === 67 && e.ctrlKey === true) ||
+                    (e.keyCode === 86 && e.ctrlKey === true) ||
+                    (e.keyCode === 88 && e.ctrlKey === true)) {
+                    return;
+                }
+                // Ensure that it is a number and stop the keypress
+                if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                    e.preventDefault();
+                }
+            });
+        }
+
         // Load staff data on page load
         document.addEventListener('DOMContentLoaded', function() {
+            setupPhoneInput();
             loadStaffData();
             loadNotifications();
         });
@@ -861,18 +922,36 @@
             document.getElementById('firstName').value = staff.first_name || '';
             document.getElementById('lastName').value = staff.last_name || '';
             document.getElementById('email').value = staff.staff_email || '';
-            document.getElementById('phone').value = staff.phone || '';
+            
+            // Handle phone number - remove +60 prefix for display
+            let phoneValue = staff.phone || '';
+            if (phoneValue.startsWith('+60')) {
+                phoneValue = phoneValue.substring(3); // Remove +60
+            } else if (phoneValue.startsWith('60')) {
+                phoneValue = phoneValue.substring(2); // Remove 60
+            }
+            // Remove leading 0 if present
+            phoneValue = phoneValue.replace(/^0+/, '');
+            document.getElementById('phone').value = phoneValue;
         }
 
         function updatePersonalInfo() {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
-            const phone = document.getElementById('phone').value.trim();
+            let phone = document.getElementById('phone').value.trim();
             
             // Basic validation
             if (!firstName || !lastName || !phone) {
                 showMessage('error', 'Please fill in all required fields.');
                 return;
+            }
+            
+            // Normalize phone: remove spaces, ensure +60 prefix
+            phone = phone.replace(/\s+/g, '');
+            if (!phone.startsWith('+60')) {
+                // Remove leading 0 if present
+                phone = phone.replace(/^0+/, '');
+                phone = '+60' + phone;
             }
             
             // Send update to API

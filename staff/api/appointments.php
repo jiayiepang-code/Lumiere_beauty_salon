@@ -21,9 +21,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 jsonResponse(['error' => 'Invalid month format. Use YYYY-MM'], 400);
             }
             // Calculate start and end dates for the month (database uses yyyy-mm-dd format)
-            $month_start = $month . '-01'; // First day of month
+            // Parse the month value to ensure correct format
+            $month_parts = explode('-', $month);
+            $year = (int)$month_parts[0];
+            $month_num = (int)$month_parts[1];
+            
+            // Validate month number
+            if ($month_num < 1 || $month_num > 12) {
+                jsonResponse(['error' => 'Invalid month number'], 400);
+            }
+            
+            // Create proper date objects to ensure correct month calculation
+            $month_start = sprintf('%04d-%02d-01', $year, $month_num);
             $month_end = date('Y-m-t', strtotime($month_start)); // Last day of month
-            $where_clause .= ' AND b.booking_date >= ? AND b.booking_date <= ?';
+            
+            // Use explicit date comparison with CAST to ensure proper comparison
+            $where_clause .= ' AND CAST(b.booking_date AS DATE) >= CAST(? AS DATE) AND CAST(b.booking_date AS DATE) <= CAST(? AS DATE)';
             $params[] = $month_start;
             $params[] = $month_end;
         } elseif ($date) {
