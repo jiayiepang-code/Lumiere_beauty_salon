@@ -23,7 +23,7 @@ function ensureLeaveTable($pdo) {
                 end_date DATE NOT NULL,
                 half_day TINYINT(1) DEFAULT 0,
                 reason TEXT,
-                status ENUM('pending','approved','rejected') DEFAULT 'pending',
+                status ENUM('pending','approved','rejected','cancelled') DEFAULT 'pending',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
                 INDEX idx_staff_email (staff_email),
@@ -118,6 +118,35 @@ if ($action === 'approve' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         respond(['success' => false, 'error' => 'Invalid request or status'], 400);
     }
     approveLeave($pdo, $request_id, $status);
+}
+
+if ($action === 'cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $request_id = isset($_POST['request_id']) ? (int)$_POST['request_id'] : 0;
+    if (!$request_id) {
+        respond(['success' => false, 'error' => 'Invalid request ID'], 400);
+    }
+
+    // Verify ownership and current status
+    $stmt = $pdo->prepare("SELECT staff_email, status FROM leave_requests WHERE id = ?");
+    $stmt->execute([$request_id]);
+    $req = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$req) {
+        respond(['success' => false, 'error' => 'Leave request not found'], 404);
+    }
+
+    if ($req['staff_email'] !== $staff_email) {
+        respond(['success' => false, 'error' => 'Unauthorized'], 403);
+    }
+
+    if ($req['status'] !== 'pending') {
+        respond(['success' => false, 'error' => 'Only pending requests can be cancelled'], 400);
+    }
+
+    $cancel = $pdo->prepare("UPDATE leave_requests SET status = 'cancelled', updated_at = NOW() WHERE id = ?");
+    $cancel->execute([$request_id]);
+
+    respond(['success' => true, 'message' => 'Leave request cancelled']);
 }
 
 if ($action === 'history' && $_SERVER['REQUEST_METHOD'] === 'GET') {

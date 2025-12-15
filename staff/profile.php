@@ -266,6 +266,17 @@ if (session_status() === PHP_SESSION_NONE) {
             display: none;
         }
 
+        /* Hide browser's default password toggle */
+        input[type="password"]::-ms-reveal,
+        input[type="password"]::-ms-clear {
+            display: none;
+        } 
+
+        input[type="password"]::-webkit-credentials-auto-fill-button,
+        input[type="password"]::-webkit-textfield-decoration-container {
+            display: none !important;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             .profile-layout {
@@ -354,13 +365,19 @@ if (session_status() === PHP_SESSION_NONE) {
 
                         <div class="form-group">
                             <label class="form-label" for="newPassword">New Password</label>
-                            <input type="password" id="newPassword" class="form-input" required>
+                            <div style="position: relative;">
+                                <input type="password" id="newPassword" class="form-input" required style="padding-right: 45px;">
+                                <i class="fas fa-eye" id="toggleNewPassword" onclick="togglePasswordVisibility('newPassword', 'toggleNewPassword')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-light);"></i>
+                            </div>
                             <div class="password-hint">Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, and one number.</div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label" for="confirmPassword">Confirm New Password</label>
-                            <input type="password" id="confirmPassword" class="form-input" required>
+                            <div style="position: relative;">
+                                <input type="password" id="confirmPassword" class="form-input" required style="padding-right: 45px;">
+                                <i class="fas fa-eye" id="toggleConfirmPassword" onclick="togglePasswordVisibility('confirmPassword', 'toggleConfirmPassword')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-light);"></i>
+                            </div>
                         </div>
 
                         <div class="btn-group">
@@ -575,6 +592,21 @@ if (session_status() === PHP_SESSION_NONE) {
             document.getElementById('currentPassword').value = '';
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmPassword').value = '';
+        }
+
+        function togglePasswordVisibility(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+    
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
         }
 
         function uploadAvatar() {

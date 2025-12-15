@@ -647,6 +647,27 @@
             border: 1px solid #dc3545;
         }
 
+        .status-cancelled {
+            background: rgba(108, 117, 125, 0.2);
+            color: #495057;
+            border: 1px solid #6c757d;
+        }
+
+        .leave-action-btn {
+            background: transparent;
+            color: #d9534f;
+            border: 1px solid #d9534f;
+            padding: 0.45rem 0.9rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .leave-action-btn:hover {
+            background: rgba(217, 83, 79, 0.1);
+        }
+
         .leave-history-details {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -1127,7 +1148,8 @@
             const statusMap = {
                 'pending': 'status-pending',
                 'approved': 'status-approved',
-                'rejected': 'status-rejected'
+                'rejected': 'status-rejected',
+                'cancelled': 'status-cancelled'
             };
             return statusMap[status] || 'status-pending';
         }
@@ -1136,9 +1158,46 @@
             const statusMap = {
                 'pending': 'Pending',
                 'approved': 'Approved',
-                'rejected': 'Rejected'
+                'rejected': 'Rejected',
+                'cancelled': 'Cancelled'
             };
             return statusMap[status] || status;
+        }
+
+        async function cancelLeaveRequest(requestId, buttonEl) {
+            if (!requestId) return;
+            const confirmCancel = confirm('Cancel this leave request?');
+            if (!confirmCancel) return;
+
+            buttonEl?.setAttribute('disabled', 'disabled');
+
+            try {
+                const formData = new FormData();
+                formData.append('request_id', requestId);
+                const res = await fetch('api/leave.php?action=cancel', {
+                    method: 'POST',
+                    body: formData
+                });
+                const ct = res.headers.get('content-type');
+                if (!ct || !ct.includes('application/json')) {
+                    throw new Error('Unexpected response from server');
+                }
+                const data = await res.json();
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to cancel request');
+                }
+                successBox.textContent = data.message || 'Leave request cancelled';
+                successBox.style.display = 'block';
+                errorBox.style.display = 'none';
+                await loadLeaveHistory();
+            } catch (err) {
+                console.error(err);
+                errorBox.textContent = err.message || 'Unable to cancel request';
+                errorBox.style.display = 'block';
+                successBox.style.display = 'none';
+            } finally {
+                buttonEl?.removeAttribute('disabled');
+            }
         }
 
         async function loadLeaveHistory() {
@@ -1184,6 +1243,7 @@
                     const updatedDate = request.updated_at && request.updated_at !== request.created_at 
                         ? formatDateTime(request.updated_at) 
                         : null;
+                    const canCancel = request.status === 'pending';
 
                     item.innerHTML = `
                         <div class="leave-history-header">
@@ -1191,6 +1251,7 @@
                             <span class="leave-status-badge ${getStatusClass(request.status)}">
                                 ${getStatusText(request.status)}
                             </span>
+                            ${canCancel ? `<button class="leave-action-btn" data-request-id="${request.id}">Cancel</button>` : ''}
                         </div>
                         <div class="leave-history-details">
                             <div class="leave-detail-item">
@@ -1236,6 +1297,15 @@
             loadStaffProfile();
             loadNotifications();
             loadLeaveHistory();
+
+            const historyContainer = document.getElementById('leaveHistoryContainer');
+            historyContainer.addEventListener('click', function(event) {
+                const target = event.target;
+                if (target.classList.contains('leave-action-btn')) {
+                    const requestId = target.getAttribute('data-request-id');
+                    cancelLeaveRequest(requestId, target);
+                }
+            });
         });
     </script>
 </body>
