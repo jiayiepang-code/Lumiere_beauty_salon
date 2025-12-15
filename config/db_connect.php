@@ -8,6 +8,9 @@
 
 require_once __DIR__ . '/config.php';
 
+// Ensure server-side datetime uses Malaysia timezone
+date_default_timezone_set('Asia/Kuala_Lumpur');
+
 /**
  * Get database connection
  * 
@@ -45,4 +48,5 @@ function getDBConnection() {
     return $conn;
 }
 ?>
+
 
