@@ -6672,3 +6672,1555 @@
 {"message":"Query succeeded","result":6,"hypothesisId":"A"}
 {"message":"Executing revenue query","hypothesisId":"D"}
 {"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":6,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}
+{"query":"SELECT COUNT from booking_service","staff_email":"kenlee@lumiere.com","start_date":"2025-12-01","current_date":"2025-12-15","hypothesisId":"A"}
+{"message":"Query succeeded","result":43,"hypothesisId":"A"}
+{"message":"Executing revenue query","hypothesisId":"D"}
+{"message":"Executing service distribution query","hypothesisId":"E"}

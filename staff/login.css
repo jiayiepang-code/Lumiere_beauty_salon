@@ -33,7 +33,28 @@ body.staff-page {
 }
 
 .auth-sidebar h2 { font-size: 28px; margin-bottom: 20px; }
-.sidebar-logo { width: 80px; margin-bottom: 20px; }
+
+.logo-container {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+}
+
+.logo-oval {
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 50% / 60%;
+    padding: 18px 26px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+}
+
+.sidebar-logo {
+    width: 110px;
+    height: auto;
+    display: block;
+}
 
 /* Main Content Styles */
 .auth-main {
