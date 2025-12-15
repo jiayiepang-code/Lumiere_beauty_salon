@@ -26,7 +26,7 @@ $csrf_token = getCSRFToken();
         <!-- Mobile Header -->
         <div class="mobile-header">
             <div class="sidebar-brand" style="font-size: 20px;">
-                <span>Lumière</span> Admin
+                <img src="<?php echo isset($base_path) ? $base_path : '..'; ?>/images/16.png" alt="Lumière" style="height: 30px; width: auto; vertical-align: middle;"> Admin
             </div>
             <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle menu">
                 <span></span>

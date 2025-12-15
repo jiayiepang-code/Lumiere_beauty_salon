@@ -34,7 +34,18 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
             </svg>
             <span>Staff Management</span>
         </a>
-        
+
+        <a href="<?php echo isset($base_path) ? $base_path : '..'; ?>/admin/leave_requests/index.php" class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], '/leave_requests/') !== false) ? 'active' : ''; ?>">
+            <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+                <path d="M8 2v4"></path>
+                <path d="M16 2v4"></path>
+                <polyline points="9 15 11.5 17.5 15 14"></polyline>
+            </svg>
+            <span>Leave Requests</span>
+        </a>
+
         <a href="<?php echo isset($base_path) ? $base_path : '..'; ?>/admin/services/list.php" class="nav-item <?php echo (strpos($_SERVER['PHP_SELF'], '/services/') !== false) ? 'active' : ''; ?>">
             <svg class="nav-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
