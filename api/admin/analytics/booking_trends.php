@@ -182,19 +182,22 @@ try {
     }
     $stmt->close();
     
-    // Calculate staff performance
+    // Calculate staff performance using Staff Leaderboard ranking system
+    // Matches Staff Module rankings - ranked by revenue_generated
     $staff_sql = "SELECT 
-                      st.first_name,
-                      st.last_name,
-                      st.staff_email,
-                      COUNT(CASE WHEN b.status = 'completed' THEN 1 END) as completed_sessions,
-                      SUM(CASE WHEN b.status = 'completed' THEN bs.quoted_price * bs.quantity ELSE 0 END) as total_revenue
-                  FROM Staff st
-                  LEFT JOIN Booking_Service bs ON st.staff_email = bs.staff_email
-                  LEFT JOIN Booking b ON bs.booking_id = b.booking_id AND b.booking_date BETWEEN ? AND ?
-                  WHERE st.is_active = 1
-                  GROUP BY st.staff_email, st.first_name, st.last_name
-                  ORDER BY completed_sessions DESC";
+                      s.staff_email,
+                      CONCAT(s.first_name, ' ', s.last_name) AS full_name,
+                      COUNT(bs.booking_service_id) AS completed_count,
+                      COALESCE(SUM(bs.quoted_price), 0) AS revenue_generated,
+                      COALESCE(SUM(bs.quoted_price), 0) * 0.10 AS commission_earned
+                  FROM Staff s
+                  LEFT JOIN Booking_Service bs ON s.staff_email = bs.staff_email 
+                      AND bs.service_status = 'completed'
+                  LEFT JOIN Booking b ON bs.booking_id = b.booking_id
+                      AND b.booking_date BETWEEN ? AND ?
+                  WHERE s.is_active = 1
+                  GROUP BY s.staff_email, s.first_name, s.last_name
+                  ORDER BY revenue_generated DESC";
     
     $stmt = $conn->prepare($staff_sql);
     $stmt->bind_param("ss", $start_date, $end_date);
@@ -204,10 +207,11 @@ try {
     $staff_performance = [];
     while ($row = $staff_result->fetch_assoc()) {
         $staff_performance[] = [
-            'staff_name' => $row['first_name'] . ' ' . $row['last_name'],
             'staff_email' => $row['staff_email'],
-            'completed_sessions' => (int)$row['completed_sessions'],
-            'total_revenue' => (float)($row['total_revenue'] ?? 0)
+            'staff_name' => $row['full_name'],
+            'completed_sessions' => (int)$row['completed_count'],
+            'total_revenue' => (float)$row['revenue_generated'],
+            'commission_earned' => (float)$row['commission_earned']
         ];
     }
     $stmt->close();

@@ -18,39 +18,80 @@ $conn = getDBConnection();
 // Query 1: Total Revenue (Current Month, Completed Bookings)
 $revenueQuery = "
     SELECT COALESCE(SUM(total_price), 0) AS total_revenue
-    FROM booking
+    FROM Booking
     WHERE status = 'completed'
-      AND MONTH(created_at) = MONTH(CURRENT_DATE())
-      AND YEAR(created_at) = YEAR(CURRENT_DATE())
+      AND MONTH(booking_date) = MONTH(CURRENT_DATE())
+      AND YEAR(booking_date) = YEAR(CURRENT_DATE())
 ";
 $revenueResult = $conn->query($revenueQuery);
+if (!$revenueResult) {
+    die("Revenue query failed: " . $conn->error);
+}
 $total_revenue = $revenueResult->fetch_assoc()['total_revenue'];
 
-// Query 2: Total Commission Paid (Current Month, Completed Services)
+// Query 2: Total Commission Paid + Commission Ratio (Current Month, Completed Services)
 // Commission = 10% of quoted_price from booking_service for completed services
 $commissionQuery = "
-    SELECT COALESCE(SUM(bs.quoted_price), 0) * 0.10 AS total_commission
-    FROM booking_service bs
-    JOIN booking b ON bs.booking_id = b.booking_id
+    SELECT 
+        COALESCE(SUM(bs.quoted_price), 0) * 0.10 AS total_commission,
+        (SUM(bs.quoted_price) * 0.10) / NULLIF(SUM(b.total_price), 0) * 100 AS commission_ratio
+    FROM Booking_Service bs
+    JOIN Booking b ON bs.booking_id = b.booking_id
     WHERE bs.service_status = 'completed'
-      AND MONTH(b.created_at) = MONTH(CURRENT_DATE())
-      AND YEAR(b.created_at) = YEAR(CURRENT_DATE())
+      AND MONTH(b.booking_date) = MONTH(CURRENT_DATE())
+      AND YEAR(b.booking_date) = YEAR(CURRENT_DATE())
 ";
 $commissionResult = $conn->query($commissionQuery);
-$total_commission = $commissionResult->fetch_assoc()['total_commission'];
+if (!$commissionResult) {
+    die("Commission query failed: " . $conn->error);
+}
+$commissionData = $commissionResult->fetch_assoc();
+$total_commission = $commissionData['total_commission'];
+$commission_ratio = $commissionData['commission_ratio'] ?? 0;
 
 // Query 3: Total Booking Volume (Current Month, All Statuses)
 $volumeQuery = "
     SELECT COUNT(*) AS total_volume
-    FROM booking
-    WHERE MONTH(created_at) = MONTH(CURRENT_DATE())
-      AND YEAR(created_at) = YEAR(CURRENT_DATE())
+    FROM Booking
+    WHERE MONTH(booking_date) = MONTH(CURRENT_DATE())
+      AND YEAR(booking_date) = YEAR(CURRENT_DATE())
 ";
 $volumeResult = $conn->query($volumeQuery);
+if (!$volumeResult) {
+    die("Volume query failed: " . $conn->error);
+}
 $total_volume = $volumeResult->fetch_assoc()['total_volume'];
 
 // Get current month name for display
 $current_month = date('F Y');
+
+// ========== STAFF LEADERBOARD (Performance Ranking) ==========
+// Query: Staff Performance Ranking matching Staff Module's ranking system
+$leaderboardQuery = "
+    SELECT 
+        s.staff_email,
+        CONCAT(s.first_name, ' ', s.last_name) AS full_name,
+        COUNT(bs.booking_service_id) AS completed_count,
+        COALESCE(SUM(bs.quoted_price), 0) AS revenue_generated,
+        COALESCE(SUM(bs.quoted_price), 0) * 0.10 AS commission_earned
+    FROM Staff s
+    LEFT JOIN Booking_Service bs ON s.staff_email = bs.staff_email 
+        AND bs.service_status = 'completed'
+    LEFT JOIN Booking b ON bs.booking_id = b.booking_id
+        AND MONTH(b.booking_date) = MONTH(CURRENT_DATE())
+        AND YEAR(b.booking_date) = YEAR(CURRENT_DATE())
+    WHERE s.is_active = 1
+    GROUP BY s.staff_email, s.first_name, s.last_name
+    ORDER BY revenue_generated DESC
+";
+$leaderboardResult = $conn->query($leaderboardQuery);
+if (!$leaderboardResult) {
+    die("Leaderboard query failed: " . $conn->error);
+}
+$staff_leaderboard = [];
+while ($row = $leaderboardResult->fetch_assoc()) {
+    $staff_leaderboard[] = $row;
+}
 
 $conn->close();
 
@@ -118,7 +159,7 @@ include '../includes/header.php';
                 <div class="summary-info">
                     <h3>Commission Paid</h3>
                     <p class="summary-value">RM <?php echo number_format($total_commission, 2); ?></p>
-                    <p class="summary-label">10% commission rate</p>
+                    <p class="summary-label">10% rate (<?php echo number_format($commission_ratio, 1); ?>% of revenue)</p>
                 </div>
             </div>
 
@@ -137,6 +178,57 @@ include '../includes/header.php';
     </div>
 
     <div id="analytics-content" style="display: none;">
+        <!-- ========== STAFF LEADERBOARD (Current Month) ========== -->
+        <div class="staff-leaderboard-section">
+            <h2 class="section-title">Staff Performance Leaderboard <span class="month-badge"><?php echo $current_month; ?></span></h2>
+            <p class="section-subtitle">Ranked by revenue generated - matching Staff Module rankings</p>
+            
+            <div class="leaderboard-card">
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px;">Rank</th>
+                            <th>Staff Name</th>
+                            <th style="text-align: center;">Completed Services</th>
+                            <th style="text-align: right;">Revenue Generated</th>
+                            <th style="text-align: right;">Commission Earned</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($staff_leaderboard)): ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: #888; padding: 40px;">
+                                    No staff performance data available for this month
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($staff_leaderboard as $index => $staff): ?>
+                                <tr class="leaderboard-row">
+                                    <td>
+                                        <div class="rank-badge rank-<?php echo $index + 1; ?>">
+                                            #<?php echo $index + 1; ?>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="staff-name"><?php echo htmlspecialchars($staff['full_name']); ?></div>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="metric-value"><?php echo number_format($staff['completed_count']); ?></span>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <span class="metric-value">RM <?php echo number_format($staff['revenue_generated'], 2); ?></span>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <span class="metric-value commission">RM <?php echo number_format($staff['commission_earned'], 2); ?></span>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- KPI Cards - New Design -->
         <div class="kpi-cards-grid">
             <div class="kpi-card">
@@ -414,6 +506,103 @@ include '../includes/header.php';
     font-size: 12px;
     color: #aaa;
     margin: 0;
+}
+
+/* ========== STAFF LEADERBOARD SECTION ========== */
+.staff-leaderboard-section {
+    margin-bottom: 32px;
+}
+
+.leaderboard-card {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.leaderboard-table thead {
+    background: #fafafa;
+}
+
+.leaderboard-table th {
+    padding: 14px 24px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.leaderboard-table td {
+    padding: 18px 24px;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #f5f5f5;
+    vertical-align: middle;
+}
+
+.leaderboard-row:hover {
+    background: #fafafa;
+}
+
+.leaderboard-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.rank-badge.rank-1 {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.rank-badge.rank-2 {
+    background: linear-gradient(135deg, #C0C0C0 0%, #A8A8A8 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(192, 192, 192, 0.3);
+}
+
+.rank-badge.rank-3 {
+    background: linear-gradient(135deg, #CD7F32 0%, #B8732D 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
+}
+
+.rank-badge:not(.rank-1):not(.rank-2):not(.rank-3) {
+    background: #f5f5f5;
+    color: #666;
+}
+
+.staff-name {
+    font-weight: 500;
+    color: #2d2d2d;
+}
+
+.metric-value {
+    font-weight: 600;
+    color: #2d2d2d;
+}
+
+.metric-value.commission {
+    color: #4CAF50;
 }
 
 /* ========== SUSTAINABILITY SECTION ========== */

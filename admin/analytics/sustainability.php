@@ -12,366 +12,495 @@ $base_path = '../..';
 // Include database connection
 require_once '../../config/db_connect.php';
 
-// ========== SUSTAINABILITY METRICS (IDLE HOURS) ==========
-$conn = getDBConnection();
+// ========== MONTH/YEAR FILTER LOGIC ==========
+$selected_month = isset($_GET['month']) ? trim($_GET['month']) : '';
+$selected_year = isset($_GET['year']) ? trim($_GET['year']) : '';
 
-// Query 1: Total Staff Capacity (Minutes) - Current Month
-// Calculate sum of scheduled time from staff_schedule where status is 'working' or 'off'
-$capacityQuery = "
-    SELECT COALESCE(SUM(TIMESTAMPDIFF(MINUTE, start_time, end_time)), 0) AS total_capacity_minutes
-    FROM staff_schedule
-    WHERE (status = 'working' OR status = 'off')
-      AND MONTH(work_date) = MONTH(CURRENT_DATE())
-      AND YEAR(work_date) = YEAR(CURRENT_DATE())
-";
-$capacityResult = $conn->query($capacityQuery);
-$total_capacity_minutes = $capacityResult->fetch_assoc()['total_capacity_minutes'];
+// Validate month: must be numeric 01-12
+if (empty($selected_month) || !is_numeric($selected_month) || $selected_month < 1 || $selected_month > 12) {
+    $selected_month = date('m'); // Current month
+} else {
+    $selected_month = str_pad((int)$selected_month, 2, '0', STR_PAD_LEFT); // Format as 01-12
+}
 
-// Query 2: Total Utilized Time (Minutes) - Current Month
-// Sum of (quoted_duration_minutes + quoted_cleanup_minutes) for confirmed/completed bookings
-$utilizedQuery = "
-    SELECT COALESCE(SUM(bs.quoted_duration_minutes + bs.quoted_cleanup_minutes), 0) AS total_utilized_minutes
-    FROM booking_service bs
-    JOIN booking b ON bs.booking_id = b.booking_id
-    WHERE (b.status = 'confirmed' OR b.status = 'completed')
-      AND MONTH(b.created_at) = MONTH(CURRENT_DATE())
-      AND YEAR(b.created_at) = YEAR(CURRENT_DATE())
-";
-$utilizedResult = $conn->query($utilizedQuery);
-$total_utilized_minutes = $utilizedResult->fetch_assoc()['total_utilized_minutes'];
+// Validate year: must be numeric 2020-2030
+if (empty($selected_year) || !is_numeric($selected_year) || $selected_year < 2020 || $selected_year > 2030) {
+    $selected_year = (int)date('Y'); // Current year
+} else {
+    $selected_year = (int)$selected_year;
+}
 
-// Calculate Idle Hours and Utilization Rate
-$total_idle_minutes = $total_capacity_minutes - $total_utilized_minutes;
-$total_idle_hours = $total_idle_minutes / 60;
-$total_scheduled_hours = $total_capacity_minutes / 60;
-$total_booked_hours = $total_utilized_minutes / 60;
+// Initialize variables
+$total_active_staff = 0;
+$services_delivered = 0;
+$total_scheduled_hours = 0.00;
+$total_booked_hours = 0.00;
+$idle_hours = 0.00;
+$global_utilization_rate = 0.00;
+$staff_breakdown = [];
+$top_performer_message = '';
+$lowest_performer_message = '';
+$smart_suggestion = '';
+$error_message = '';
 
-// Calculate Utilization Rate (avoid division by zero)
-$utilization_rate = $total_capacity_minutes > 0 
-    ? ($total_utilized_minutes / $total_capacity_minutes) * 100 
-    : 0;
+try {
+    $conn = getDBConnection();
 
-// Get current month name for display
-$current_month = date('F Y');
+    // ========== CARD 1: TOTAL ACTIVE STAFF ==========
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM Staff WHERE is_active = 1");
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $total_active_staff = (int)$row['count'];
+    }
+    $stmt->close();
 
-$conn->close();
+    // ========== CARD 2: SERVICES DELIVERED ==========
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) as count 
+        FROM Booking 
+        WHERE status IN ('confirmed', 'completed') 
+        AND MONTH(booking_date) = ? 
+        AND YEAR(booking_date) = ?
+    ");
+    $stmt->bind_param("si", $selected_month, $selected_year);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $services_delivered = (int)$row['count'];
+    }
+    $stmt->close();
+
+    // ========== CARD 3: TOTAL SCHEDULED HOURS (CAPACITY) ==========
+    $stmt = $conn->prepare("
+        SELECT SUM(TIME_TO_SEC(TIMEDIFF(end_time, start_time))) / 3600 as total_hours
+        FROM Staff_Schedule 
+        WHERE MONTH(work_date) = ? 
+        AND YEAR(work_date) = ?
+    ");
+    $stmt->bind_param("si", $selected_month, $selected_year);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $total_scheduled_hours = (float)($row['total_hours'] ?? 0.00);
+    }
+    $stmt->close();
+
+    // ========== CARD 4: BOOKED HOURS (UTILIZED TIME) ==========
+    $stmt = $conn->prepare("
+        SELECT SUM((quoted_duration_minutes + quoted_cleanup_minutes)) / 60 as total_hours
+        FROM Booking_Service bs
+        JOIN Booking b ON bs.booking_id = b.booking_id
+        WHERE b.status IN ('completed', 'confirmed')
+        AND MONTH(b.booking_date) = ? 
+        AND YEAR(b.booking_date) = ?
+    ");
+    $stmt->bind_param("si", $selected_month, $selected_year);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $total_booked_hours = (float)($row['total_hours'] ?? 0.00);
+    }
+    $stmt->close();
+
+    // ========== CARD 5: IDLE HOURS ==========
+    $idle_hours = $total_scheduled_hours - $total_booked_hours;
+    if ($idle_hours < 0) {
+        $idle_hours = 0.00; // Prevent negative values
+    }
+
+    // ========== CARD 6: GLOBAL UTILIZATION RATE ==========
+    if ($total_scheduled_hours > 0) {
+        $global_utilization_rate = ($total_booked_hours / $total_scheduled_hours) * 100;
+    } else {
+        $global_utilization_rate = 0.00;
+    }
+
+    // ========== STAFF BREAKDOWN TABLE ==========
+    $stmt = $conn->prepare("
+        SELECT 
+            st.staff_email,
+            st.first_name,
+            st.last_name,
+            COALESCE(SUM(TIMESTAMPDIFF(MINUTE, ss.start_time, ss.end_time) / 60), 0) as scheduled_hours,
+            COALESCE(SUM((bs.quoted_duration_minutes + bs.quoted_cleanup_minutes) / 60), 0) as booked_hours
+        FROM Staff st
+        LEFT JOIN Staff_Schedule ss ON st.staff_email = ss.staff_email 
+            AND MONTH(ss.work_date) = ? 
+            AND YEAR(ss.work_date) = ?
+        LEFT JOIN Booking_Service bs ON st.staff_email = bs.staff_email
+        LEFT JOIN Booking b ON bs.booking_id = b.booking_id 
+            AND MONTH(b.booking_date) = ? 
+            AND YEAR(b.booking_date) = ?
+            AND b.status IN ('completed', 'confirmed')
+        WHERE st.is_active = 1
+        GROUP BY st.staff_email, st.first_name, st.last_name
+    ");
+    $stmt->bind_param("sisi", $selected_month, $selected_year, $selected_month, $selected_year);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        $scheduled = (float)$row['scheduled_hours'];
+        $booked = (float)$row['booked_hours'];
+        $idle = $scheduled - $booked;
+        if ($idle < 0) {
+            $idle = 0.00;
+        }
+        $utilization = ($scheduled > 0) ? ($booked / $scheduled) * 100 : 0;
+        
+        $staff_breakdown[] = [
+            'name' => htmlspecialchars($row['first_name'] . ' ' . $row['last_name'], ENT_QUOTES, 'UTF-8'),
+            'scheduled' => $scheduled,
+            'booked' => $booked,
+            'idle' => $idle,
+            'utilization' => $utilization
+        ];
+    }
+    $stmt->close();
+
+    // Sort by utilization descending
+    usort($staff_breakdown, function($a, $b) {
+        return $b['utilization'] <=> $a['utilization'];
+    });
+
+    // ========== OPTIMIZATION INSIGHTS LOGIC ==========
+    // Top Performer
+    foreach ($staff_breakdown as $staff) {
+        if ($staff['scheduled'] > 0) {
+            $top_performer_message = "Efficiency Win: " . $staff['name'] . " maintains " . number_format($staff['utilization'], 2) . "% utilization. Consider prioritizing high-value bookings for them.";
+            break;
+        }
+    }
+
+    // Lowest Performer
+    $lowest_performer = null;
+    for ($i = count($staff_breakdown) - 1; $i >= 0; $i--) {
+        if ($staff_breakdown[$i]['scheduled'] > 0) {
+            $lowest_performer = $staff_breakdown[$i];
+            break;
+        }
+    }
+    if ($lowest_performer) {
+        $lowest_performer_message = "Opportunity: " . $lowest_performer['name'] . " has " . number_format($lowest_performer['idle'], 2) . " idle hours. Consider adjusting their roster or running a promo for their specialty.";
+    }
+
+    // Smart Suggestion
+    if ($global_utilization_rate < 50) {
+        $smart_suggestion = "Consider reducing shifts or cross-training staff.";
+    } elseif ($global_utilization_rate >= 50 && $global_utilization_rate <= 90) {
+        $smart_suggestion = "Balanced efficiency. Maintain current scheduling.";
+    } else {
+        $smart_suggestion = "High utilization. Consider hiring help to prevent burnout.";
+    }
+
+    $conn->close();
+
+} catch (Exception $e) {
+    error_log("Sustainability Analytics Error: " . $e->getMessage());
+    $error_message = "An error occurred while loading data. Please try again.";
+    if ($conn) {
+        $conn->close();
+    }
+}
+
+// Format month name for display
+$month_names = ['01' => 'January', '02' => 'February', '03' => 'March', '04' => 'April', 
+                '05' => 'May', '06' => 'June', '07' => 'July', '08' => 'August', 
+                '09' => 'September', '10' => 'October', '11' => 'November', '12' => 'December'];
+$current_month_display = $month_names[$selected_month] . ' ' . $selected_year;
+
+// Determine progress bar color for utilization
+$progress_bar_color = 'blue';
+if ($global_utilization_rate > 75) {
+    $progress_bar_color = 'green';
+} elseif ($global_utilization_rate < 60) {
+    $progress_bar_color = 'orange';
+}
+
+// Flag for red display of idle hours
+$idle_hours_red = ($idle_hours > ($total_scheduled_hours * 0.5));
 
 // Include header
 include '../includes/header.php';
 ?>
 
-<!-- Toast Notification -->
-<div id="toast" class="toast"></div>
+<!-- Font Awesome v6 -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <div class="analytics-page">
     <div class="analytics-header">
         <div>
             <h1 class="analytics-title">Sustainability Analytics</h1>
-            <p class="analytics-subtitle">Monitor resource utilization and idle hours</p>
+            <p class="analytics-subtitle">Monitor operational efficiency and staff utilization for ESG reporting</p>
         </div>
-        <div class="header-actions">
-                <button id="export-pdf" class="btn btn-outline">
-                    <i class="fas fa-download"></i> Export Report
-                </button>
-                <div class="date-filter-group">
-                    <div class="btn-group">
-                        <button class="btn btn-outline period-btn active" data-period="monthly">Monthly</button>
-                        <button class="btn btn-outline period-btn" data-period="weekly">Weekly</button>
-                        <button class="btn btn-outline period-btn" data-period="daily">Daily</button>
-                    </div>
-                    <div class="date-range-picker">
-                        <input type="date" id="start-date" class="form-control" placeholder="Start Date">
-                        <span class="separator">to</span>
-                        <input type="date" id="end-date" class="form-control" placeholder="End Date">
-                        <button id="apply-range" class="btn btn-primary">Apply</button>
-                    </div>
-                </div>
+        <form method="GET" action="" class="date-filter-form">
+            <select name="month" id="month-select" class="form-control">
+                <?php for ($m = 1; $m <= 12; $m++): 
+                    $month_val = str_pad($m, 2, '0', STR_PAD_LEFT);
+                    $selected = ($month_val == $selected_month) ? 'selected' : '';
+                ?>
+                    <option value="<?php echo $month_val; ?>" <?php echo $selected; ?>>
+                        <?php echo $month_names[$month_val]; ?>
+                    </option>
+                <?php endfor; ?>
+            </select>
+            <select name="year" id="year-select" class="form-control">
+                <?php for ($y = 2020; $y <= 2030; $y++): 
+                    $selected = ($y == $selected_year) ? 'selected' : '';
+                ?>
+                    <option value="<?php echo $y; ?>" <?php echo $selected; ?>>
+                        <?php echo $y; ?>
+                    </option>
+                <?php endfor; ?>
+            </select>
+            <button type="submit" class="btn btn-primary">Apply</button>
+        </form>
+    </div>
+
+    <?php if ($error_message): ?>
+        <div class="alert alert-danger">
+            <p><?php echo htmlspecialchars($error_message, ENT_QUOTES, 'UTF-8'); ?></p>
+        </div>
+    <?php endif; ?>
+
+    <?php if (empty($staff_breakdown) && $total_scheduled_hours == 0): ?>
+        <div class="alert alert-info">
+            <p>No data available for selected period.</p>
+        </div>
+    <?php else: ?>
+
+    <!-- ========== TOP GRID - 6 METRICS CARDS ========== -->
+    <div class="metrics-grid">
+        <!-- Card 1: Total Active Staff -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: rgba(33, 150, 243, 0.1); color: #2196F3;">
+                <i class="fas fa-users"></i>
             </div>
-        </div>
-
-        <div id="loading" class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading sustainability data...</p>
-        </div>
-
-        <div id="error-container"></div>
-
-        <!-- ========== CURRENT MONTH SUSTAINABILITY METRICS ========== -->
-        <div class="month-summary-section">
-            <h2 class="section-title">Sustainability <span class="month-badge"><?php echo $current_month; ?></span></h2>
-            <p class="section-subtitle">Monitor resource utilization and efficiency</p>
-            <div class="summary-cards-grid sustainability-grid">
-                <!-- Total Scheduled Hours Card -->
-                <div class="summary-card">
-                    <div class="summary-icon" style="background-color: rgba(255, 193, 7, 0.1); color: #FFC107;">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="summary-info">
-                        <h3>Total Scheduled Hours</h3>
-                        <p class="summary-value"><?php echo number_format($total_scheduled_hours, 0); ?>h</p>
-                        <p class="summary-label">Total staff capacity</p>
-                    </div>
-                </div>
-
-                <!-- Booked Hours Card -->
-                <div class="summary-card">
-                    <div class="summary-icon" style="background-color: rgba(139, 195, 74, 0.1); color: #8BC34A;">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="summary-info">
-                        <h3>Booked Hours</h3>
-                        <p class="summary-value"><?php echo number_format($total_booked_hours, 0); ?>h</p>
-                        <p class="summary-label trend-indicator positive">
-                            <i class="fas fa-arrow-up"></i> 5%
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Idle Hours Card -->
-                <div class="summary-card">
-                    <div class="summary-icon" style="background-color: rgba(255, 152, 0, 0.1); color: #FF9800;">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <div class="summary-info">
-                        <h3>Idle Hours</h3>
-                        <p class="summary-value"><?php echo number_format($total_idle_hours, 0); ?>h</p>
-                        <p class="summary-label trend-indicator positive">
-                            <i class="fas fa-arrow-down"></i> 8%
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Utilization Rate Card -->
-                <div class="summary-card">
-                    <div class="summary-icon" style="background-color: rgba(212, 165, 116, 0.1); color: #D4A574;">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <div class="summary-info">
-                        <h3>Utilization Rate</h3>
-                        <p class="summary-value"><?php echo number_format($utilization_rate, 1); ?>%</p>
-                        <div class="utilization-bar">
-                            <div class="utilization-fill" style="width: <?php echo min($utilization_rate, 100); ?>%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <div class="metric-value"><?php echo $total_active_staff; ?></div>
+            <div class="metric-label">Active Staff</div>
         </div>
 
-        <div id="analytics-content" style="display: none;">
-            <!-- KPI Cards -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background-color: rgba(33, 150, 243, 0.1); color: #2196F3;">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>Scheduled Hours</h3>
-                        <p class="stat-value" id="scheduled-hours">0 hrs</p>
-                        <p class="stat-label">Total staff capacity</p>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon" style="background-color: rgba(76, 175, 80, 0.1); color: #4CAF50;">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>Booked Hours</h3>
-                        <p class="stat-value" id="booked-hours">0 hrs</p>
-                        <p class="stat-label">Actual service time</p>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon" style="background-color: rgba(255, 152, 0, 0.1); color: #FF9800;">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>Idle Hours</h3>
-                        <p class="stat-value" id="idle-hours">0 hrs</p>
-                        <p class="stat-label">Unutilized capacity</p>
-                    </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon" style="background-color: rgba(139, 71, 137, 0.1); color: #8B4789;">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3>Utilization Rate</h3>
-                        <p class="stat-value" id="utilization-rate">0%</p>
-                        <p class="stat-label">Efficiency score</p>
-                    </div>
-                </div>
+        <!-- Card 2: Services Delivered -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: rgba(76, 175, 80, 0.1); color: #4CAF50;">
+                <i class="fas fa-check-circle"></i>
             </div>
+            <div class="metric-value"><?php echo $services_delivered; ?></div>
+            <div class="metric-label">Services Delivered</div>
+        </div>
 
-            <!-- Charts Row -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h2>Idle Hours Trend</h2>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="height: 350px;">
-                        <canvas id="idle-hours-chart"></canvas>
-                    </div>
-                </div>
+        <!-- Card 3: Total Scheduled Hours -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: rgba(255, 193, 7, 0.1); color: #FFC107;">
+                <i class="fas fa-calendar-alt"></i>
             </div>
+            <div class="metric-value"><?php echo number_format($total_scheduled_hours, 2); ?>h</div>
+            <div class="metric-label">Scheduled Hours</div>
+        </div>
 
-            <!-- Staff Breakdown Table -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>Staff Utilization Breakdown</h2>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Staff Member</th>
-                                    <th>Scheduled Hours</th>
-                                    <th>Booked Hours</th>
-                                    <th>Idle Hours</th>
-                                    <th>Utilization</th>
-                                </tr>
-                            </thead>
-                            <tbody id="staff-breakdown-body">
-                                <!-- Populated by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        <!-- Card 4: Booked Hours -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: rgba(139, 195, 74, 0.1); color: #8BC34A;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="metric-value"><?php echo number_format($total_booked_hours, 2); ?>h</div>
+            <div class="metric-label">Booked Hours</div>
+        </div>
+
+        <!-- Card 5: Idle Hours -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: rgba(255, 152, 0, 0.1); color: #FF9800;">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div class="metric-value" style="<?php echo $idle_hours_red ? 'color: #F44336;' : ''; ?>">
+                <?php echo number_format($idle_hours, 2); ?>h
+            </div>
+            <div class="metric-label">Idle Hours</div>
+        </div>
+
+        <!-- Card 6: Utilization Rate -->
+        <div class="metric-card">
+            <div class="metric-icon" style="background-color: rgba(212, 165, 116, 0.1); color: #D4A574;">
+                <i class="fas fa-percentage"></i>
+            </div>
+            <div class="metric-value"><?php echo number_format($global_utilization_rate, 2); ?>%</div>
+            <div class="metric-label">Utilization Rate</div>
+            <div class="utilization-bar">
+                <div class="utilization-fill utilization-<?php echo $progress_bar_color; ?>" 
+                     style="width: <?php echo min($global_utilization_rate, 100); ?>%;"></div>
             </div>
         </div>
     </div>
+
+    <!-- ========== MIDDLE SECTION - STAFF BREAKDOWN TABLE ========== -->
+    <div class="staff-breakdown-section">
+        <h2 class="section-title">Staff Utilization Breakdown</h2>
+        <div class="table-responsive">
+            <table class="staff-table">
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Scheduled (h)</th>
+                        <th>Booked (h)</th>
+                        <th>Idle (h)</th>
+                        <th>Utilization</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($staff_breakdown)): ?>
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #666;">No staff data available for selected period.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($staff_breakdown as $staff): 
+                            $idle_red = ($staff['idle'] > 4);
+                            $util_color = 'blue';
+                            if ($staff['utilization'] > 80) {
+                                $util_color = 'green';
+                            } elseif ($staff['utilization'] < 60) {
+                                $util_color = 'orange';
+                            }
+                        ?>
+                            <tr>
+                                <td><?php echo $staff['name']; ?></td>
+                                <td><?php echo number_format($staff['scheduled'], 2); ?></td>
+                                <td><?php echo number_format($staff['booked'], 2); ?></td>
+                                <td style="<?php echo $idle_red ? 'color: #F44336; font-weight: 600;' : ''; ?>">
+                                    <?php echo number_format($staff['idle'], 2); ?>
+                                </td>
+                                <td>
+                                    <div class="utilization-cell">
+                                        <div class="utilization-bar-small">
+                                            <div class="utilization-fill-small utilization-<?php echo $util_color; ?>" 
+                                                 style="width: <?php echo min($staff['utilization'], 100); ?>%;"></div>
+                                        </div>
+                                        <span class="utilization-text"><?php echo number_format($staff['utilization'], 2); ?>%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ========== BOTTOM SECTION - OPTIMIZATION INSIGHTS ========== -->
+    <div class="insights-section">
+        <div class="insights-grid">
+            <?php if ($top_performer_message): ?>
+                <div class="alert alert-success">
+                    <h4>🏆 Efficiency Win</h4>
+                    <p><?php echo htmlspecialchars($top_performer_message, ENT_QUOTES, 'UTF-8'); ?></p>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($lowest_performer_message): ?>
+                <div class="alert alert-warning">
+                    <h4>💡 Optimization Opportunity</h4>
+                    <p><?php echo htmlspecialchars($lowest_performer_message, ENT_QUOTES, 'UTF-8'); ?></p>
+                </div>
+            <?php endif; ?>
+        </div>
+        
+        <?php if ($smart_suggestion): ?>
+            <div class="alert alert-info">
+                <h4>📈 Efficiency Analysis</h4>
+                <p><?php echo htmlspecialchars($smart_suggestion, ENT_QUOTES, 'UTF-8'); ?></p>
+            </div>
+        <?php endif; ?>
+    </div>
+
+    <?php endif; ?>
 </div>
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- Page Specific JS -->
-<script src="sustainability.js"></script>
-
 <style>
-.date-filter-group {
+/* ========== ANALYTICS PAGE STYLES ========== */
+.analytics-page {
+    padding: 0;
+}
+
+.analytics-header {
     display: flex;
-    gap: 15px;
+    justify-content: space-between;
     align-items: center;
+    margin-bottom: 32px;
     flex-wrap: wrap;
+    gap: 16px;
 }
 
-.btn-group {
-    display: flex;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.btn-group .btn {
-    border: none;
-    border-radius: 0;
-    border-right: 1px solid #ddd;
-    padding: 8px 16px;
-}
-
-.btn-group .btn:last-child {
-    border-right: none;
-}
-
-.btn-group .btn.active {
-    background-color: #8B4789;
-    color: white;
-}
-
-.date-range-picker {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    background: white;
-    padding: 5px 10px;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-}
-
-.date-range-picker input {
-    border: 1px solid #eee;
-    padding: 5px;
-    border-radius: 4px;
-}
-
-.utilization-badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.utilization-high {
-    background-color: rgba(76, 175, 80, 0.1);
-    color: #4CAF50;
-}
-
-.utilization-medium {
-    background-color: rgba(255, 152, 0, 0.1);
-    color: #FF9800;
-}
-
-.utilization-low {
-    background-color: rgba(244, 67, 54, 0.1);
-    color: #F44336;
-}
-
-/* Month Summary Section */
-.month-summary-section {
-    margin-bottom: 30px;
-    animation: slideUp 0.6s ease-out;
-}
-
-.section-title {
-    font-size: 1.75rem;
+.analytics-title {
+    font-size: 28px;
     font-weight: 600;
-    color: #1a1a1a;
-    margin-bottom: 8px;
+    color: #2d2d2d;
+    margin-bottom: 4px;
+}
+
+.analytics-subtitle {
+    color: #888;
+    font-size: 14px;
+    margin: 0;
+}
+
+.date-filter-form {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
-.month-badge {
-    background: linear-gradient(135deg, #D4A574, #C4956A);
+.date-filter-form .form-control {
+    padding: 10px 16px;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.date-filter-form .btn-primary {
+    padding: 10px 20px;
+    background: #D4A574;
+    border: none;
+    border-radius: 8px;
     color: white;
-    padding: 4px 16px;
-    border-radius: 20px;
-    font-size: 0.9rem;
+    font-size: 14px;
     font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
 }
 
-.section-subtitle {
-    color: #666;
-    font-size: 1rem;
-    margin-bottom: 20px;
+.date-filter-form .btn-primary:hover {
+    background: #C4956A;
 }
 
-.summary-cards-grid {
+/* ========== METRICS GRID ========== */
+.metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 32px;
 }
 
-.summary-card {
+.metric-card {
     background: white;
     border-radius: 12px;
     padding: 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     border: 1px solid #f0f0f0;
+    text-align: center;
 }
 
-.summary-card:hover {
+.metric-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
-.summary-icon {
+.metric-icon {
     width: 56px;
     height: 56px;
     border-radius: 12px;
@@ -379,47 +508,21 @@ include '../includes/header.php';
     align-items: center;
     justify-content: center;
     font-size: 24px;
-    margin-bottom: 16px;
+    margin: 0 auto 16px;
 }
 
-.summary-info h3 {
-    font-size: 0.875rem;
-    color: #666;
-    font-weight: 500;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.summary-value {
+.metric-value {
     font-size: 2rem;
     font-weight: 700;
     color: #1a1a1a;
     margin-bottom: 8px;
 }
 
-.summary-label {
+.metric-label {
     font-size: 0.875rem;
     color: #999;
-}
-
-.trend-indicator {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-weight: 600;
-}
-
-.trend-indicator.positive {
-    color: #4CAF50;
-}
-
-.trend-indicator.negative {
-    color: #F44336;
-}
-
-.sustainability-grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .utilization-bar {
@@ -428,14 +531,237 @@ include '../includes/header.php';
     background-color: #e0e0e0;
     border-radius: 4px;
     overflow: hidden;
-    margin-top: 8px;
+    margin-top: 12px;
 }
 
 .utilization-fill {
     height: 100%;
-    background: linear-gradient(90deg, #D4A574, #C4956A);
     border-radius: 4px;
     transition: width 1s ease-out;
+}
+
+.utilization-fill.utilization-green {
+    background: linear-gradient(90deg, #4CAF50, #66BB6A);
+}
+
+.utilization-fill.utilization-orange {
+    background: linear-gradient(90deg, #FF9800, #FFB74D);
+}
+
+.utilization-fill.utilization-blue {
+    background: linear-gradient(90deg, #2196F3, #64B5F6);
+}
+
+/* ========== STAFF BREAKDOWN SECTION ========== */
+.staff-breakdown-section {
+    margin-bottom: 32px;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d2d2d;
+    margin-bottom: 20px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
+}
+
+.staff-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.staff-table thead {
+    background: #fafafa;
+}
+
+.staff-table th {
+    padding: 14px 24px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.staff-table td {
+    padding: 16px 24px;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.staff-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.staff-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.utilization-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.utilization-bar-small {
+    flex: 1;
+    height: 6px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.utilization-fill-small {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease-out;
+}
+
+.utilization-fill-small.utilization-green {
+    background: #4CAF50;
+}
+
+.utilization-fill-small.utilization-orange {
+    background: #FF9800;
+}
+
+.utilization-fill-small.utilization-blue {
+    background: #2196F3;
+}
+
+.utilization-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+    min-width: 50px;
+    text-align: right;
+}
+
+/* ========== INSIGHTS SECTION ========== */
+.insights-section {
+    margin-bottom: 32px;
+}
+
+.insights-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 20px 24px;
+    border-radius: 12px;
+    border: 1px solid;
+    background: white;
+}
+
+.alert h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.alert p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.alert-success {
+    border-color: #4CAF50;
+    background-color: #f1f8f4;
+    color: #2e7d32;
+}
+
+.alert-success h4 {
+    color: #1b5e20;
+}
+
+.alert-warning {
+    border-color: #FF9800;
+    background-color: #fff8e1;
+    color: #e65100;
+}
+
+.alert-warning h4 {
+    color: #bf360c;
+}
+
+.alert-info {
+    border-color: #2196F3;
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.alert-info h4 {
+    color: #0d47a1;
+}
+
+.alert-danger {
+    border-color: #F44336;
+    background-color: #ffebee;
+    color: #c62828;
+    margin-bottom: 20px;
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 1024px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .analytics-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .date-filter-form {
+        width: 100%;
+    }
+    
+    .date-filter-form .form-control {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .staff-table {
+        font-size: 13px;
+    }
+    
+    .staff-table th,
+    .staff-table td {
+        padding: 12px 16px;
+    }
+    
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
 }
 </style>
 
