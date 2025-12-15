@@ -14,7 +14,6 @@ $staffQuery = "SELECT
     s.last_name, 
     s.role, 
     s.staff_image, 
-    s.bio,
     GROUP_CONCAT(DISTINCT sv.service_name ORDER BY ss.proficiency_level DESC, sv.service_name SEPARATOR ' & ') as primary_services,
     GROUP_CONCAT(DISTINCT sv.service_category ORDER BY sv.service_category SEPARATOR ', ') as service_categories
 FROM staff s
@@ -54,7 +53,7 @@ $staffImageMap = [
 $staffPrimaryServicesMap = [
     'Jay' => 'Haircuts & Hair Styling',
     'Mei' => 'Hair Styling & Hair Colouring',
-    'Ken' => 'Technical Cuts & Hair Treatments',
+    'Ken' => 'Haircuts & Hair Treatments',
     'Chloe' => 'Anti-Aging & Brightening',
     'Sarah' => 'Deep Cleansing & Hydrating',
     'Nisha' => 'Aromatherapy Massage & Hot Stone Massage',
@@ -173,7 +172,8 @@ require_once '../includes/header.php';
                     $staffEmail = $member['staff_email'];
                     $staffName = htmlspecialchars($member['first_name']);
                     $fullName = htmlspecialchars($member['first_name'] . ' ' . $member['last_name']);
-                    $bio = htmlspecialchars($member['bio'] ?? 'Professional staff member');
+                    // Use mapped primary services if available, otherwise use from database, or default message
+                    $bio = $staffPrimaryServicesMap[$staffName] ?? htmlspecialchars($member['primary_services'] ?? 'Professional staff member');
                     
                     // Use mapped primary services if available, otherwise use from database
                     $primaryServices = $staffPrimaryServicesMap[$staffName] ?? htmlspecialchars($member['primary_services'] ?? 'Various Services');

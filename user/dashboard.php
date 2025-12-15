@@ -193,18 +193,26 @@ $staffPrimaryServicesMap = [
 
 // Load favourite staff for this customer (if table exists)
 try {
-    $favQuery = "SELECT f.staff_email, st.first_name, st.last_name, st.staff_image, st.bio,
+    $favQuery = "SELECT f.staff_email, st.first_name, st.last_name, st.staff_image,
         GROUP_CONCAT(DISTINCT sv.service_name ORDER BY sv.service_name SEPARATOR ' & ') as primary_services
         FROM customer_favourites f
         JOIN staff st ON f.staff_email = st.staff_email
         LEFT JOIN staff_service ss ON st.staff_email = ss.staff_email AND ss.is_active = 1
         LEFT JOIN service sv ON ss.service_id = sv.service_id AND sv.is_active = 1
         WHERE f.customer_email = ?
-        GROUP BY f.staff_email";
+        GROUP BY f.staff_email, st.first_name, st.last_name, st.staff_image";
     $favStmt = $db->prepare($favQuery);
     $favStmt->execute([$customerEmail]);
     $favorites = $favStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // #region agent log
+    @file_put_contents(__DIR__ . '/../.cursor/debug.log', json_encode(['location' => 'dashboard.php:206', 'message' => 'Favorites query executed', 'data' => ['customer_email' => $customerEmail, 'favorites_count' => count($favorites), 'favorites' => array_map(function($f) { return ['staff_email' => $f['staff_email'], 'name' => ($f['first_name'] ?? '') . ' ' . ($f['last_name'] ?? '')]; }, $favorites)], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND | LOCK_EX);
+    // #endregion
 } catch (Exception $e) {
+    // #region agent log
+    @file_put_contents(__DIR__ . '/../.cursor/debug.log', json_encode(['location' => 'dashboard.php:211', 'message' => 'Favorites query failed', 'data' => ['customer_email' => $customerEmail, 'error' => $e->getMessage()], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND | LOCK_EX);
+    // #endregion
+    error_log('Dashboard favorites error: ' . $e->getMessage());
     $favorites = [];
 }
 
@@ -834,9 +842,8 @@ foreach($bookings as $booking) {
                         $services = implode(' & ', array_slice($serviceArray, 0, 2));
                     }
 
-                    // Get bio
-                    $bio = $staff['bio'] ?? '';
-                    $bio = trim($bio) !== '' ? $bio : 'Professional staff member';
+                    // Get bio - not available in database, use default
+                    $bio = 'Professional staff member';
                     
                     // Display full name
                     $displayName = $firstName;

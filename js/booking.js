@@ -234,7 +234,7 @@ function updateSummary() {
         if(selectedTime) {
             let totDur = 0; selectedServices.forEach(id => { if(sData[id]) totDur += parseInt(sData[id].duration); });
             const end = calculateEndTime(selectedTime, totDur);
-            html += `<div class="mt-1" style="color: #c29076;"><i class="fas fa-clock me-2"></i>${selectedTime} - ${end} <span class="text-muted small">(${totDur} mins)</span></div>`;
+            html += `<div class="mt-1" style="color: #c29076; font-family: 'Segoe UI', sans-serif;"><i class="fas fa-clock me-2"></i>${selectedTime} - ${end} <span class="text-muted small">(${totDur} mins)</span></div>`;
         } else { html += `<div class="text-muted small mt-1">Select a time</div>`; }
         html += `</div>`;
     }
@@ -250,7 +250,7 @@ function updateSummary() {
         
         if(currentStart) {
             let end = calculateEndTime(currentStart, dur);
-            timeDisplay = `<span class="badge bg-white text-dark border">${currentStart} - ${end}</span>`;
+            timeDisplay = `<span class="badge bg-white text-dark border" style="font-family: 'Segoe UI', sans-serif;">${currentStart} - ${end}</span>`;
             currentStart = end; 
         }
 
@@ -275,6 +275,20 @@ function updateSummary() {
             }
         }
 
+        // Format service display name: show "SubCategory (ServiceName)" if sub_category exists, otherwise just service name
+        let serviceDisplayName = s.name;
+        if (s.sub_category && s.sub_category.trim() !== '' && s.sub_category.toLowerCase() !== 'general') {
+            serviceDisplayName = `${s.sub_category} (${s.name})`;
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:279',message:'Service display formatted with sub_category',data:{serviceId:sid,serviceName:s.name,subCategory:s.sub_category,displayName:serviceDisplayName},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'display'})}).catch(()=>{});
+            // #endregion
+        } else {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:285',message:'Service display using service name only',data:{serviceId:sid,serviceName:s.name,subCategory:s.sub_category || 'none',displayName:serviceDisplayName},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'display'})}).catch(()=>{});
+            // #endregion
+        }
+        
         // GRID LAYOUT FOR ALIGNMENT
         html += `
             <div class="d-flex flex-column mb-2 border-bottom pb-2">
@@ -282,7 +296,7 @@ function updateSummary() {
                     <div class="row g-0">
                         <div class="col-8">
                             <div class="d-flex align-items-center mb-1">
-                                <span class="fw-bold text-dark me-2">${idx+1}. ${s.name}</span>
+                                <span class="fw-bold text-dark me-2"><span style="font-family: 'Segoe UI', sans-serif;">${idx+1}.</span> ${serviceDisplayName}</span>
                                 <a href="javascript:void(0)" class="text-secondary edit-service-btn" data-service-id="${sid}" title="Edit service" style="cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all 0.2s;">
                                     <i class="fas fa-pen small" style="font-size: 0.8em;"></i>
                                 </a>
@@ -291,7 +305,7 @@ function updateSummary() {
                             <div>${timeDisplay}</div>
                         </div>
                         <div class="col-4 text-end">
-                            <span class="fw-bold text-dark">RM ${parseFloat(s.price).toFixed(2)}</span>
+                            <span class="fw-bold text-dark" style="font-family: 'Segoe UI', sans-serif;">RM ${parseFloat(s.price).toFixed(2)}</span>
                         </div>
                     </div>
                 </div>
@@ -594,13 +608,81 @@ function openStaffModal(sid) {
             }
             
             if (shouldInclude) {
-                // Check if this staff member has this service in their primary services (for suggested badge)
-                const isSuggested = suggestedStaffEmails.includes(member.staff_id) || 
-                                   suggestedStaffEmails.includes(member.staff_email) ||
-                                   suggestedStaffEmails.some(email => 
-                                       String(email).toLowerCase() === String(member.staff_id).toLowerCase() ||
-                                       String(email).toLowerCase() === String(member.staff_email).toLowerCase()
-                                   );
+                // Check if this staff member should be suggested for this service
+                let isSuggested = false;
+                
+                // PRIMARY METHOD: Use staffServiceMap (service_id based mapping) - this is the most accurate
+                // This matches staff to services based on the database staff_service table using service_id
+                if (suggestedStaffEmails.length > 0) {
+                    isSuggested = suggestedStaffEmails.includes(member.staff_id) || 
+                                 suggestedStaffEmails.includes(member.staff_email) ||
+                                 suggestedStaffEmails.some(email => 
+                                     String(email).toLowerCase() === String(member.staff_id).toLowerCase() ||
+                                     String(email).toLowerCase() === String(member.staff_email).toLowerCase()
+                                 );
+                    
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:598',message:'Using staffServiceMap (service_id match)',data:{staffName:member.first_name,staffId:member.staff_id,staffEmail:member.staff_email,serviceId:sid,isSuggested:isSuggested,suggestedStaffEmails:suggestedStaffEmails},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+                    // #endregion
+                }
+                
+                // FALLBACK METHOD: Only use primary_services string matching if staffServiceMap is not available
+                // This uses exact service name matching with word boundaries to prevent false positives
+                if (!isSuggested) {
+                    const staffPrimaryServices = member.primary_services || '';
+                    
+                    if (staffPrimaryServices && service.name) {
+                        // Normalize service name for comparison (remove extra spaces, lowercase)
+                        const serviceNameNormalized = service.name.toLowerCase().trim();
+                        
+                        // Normalize primary services string
+                        const primaryServicesLower = staffPrimaryServices.toLowerCase().trim();
+                        
+                        // Split primary_services by common separators (&, comma, etc.) and check each part
+                        const serviceParts = primaryServicesLower.split(/[&,]/).map(s => s.trim()).filter(s => s.length > 0);
+                        
+                        // Check if service name matches any of the primary service parts
+                        // Only suggest if the exact service name is found in primary_services (strict matching)
+                        isSuggested = serviceParts.some(part => {
+                            const partTrimmed = part.trim();
+                            
+                            // Exact match (e.g., "anti-aging facial" === "anti-aging facial")
+                            if (partTrimmed === serviceNameNormalized) {
+                                // #region agent log
+                                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:625',message:'Fallback: Exact match found',data:{part:partTrimmed,serviceNameNormalized:serviceNameNormalized,staffName:member.first_name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+                                // #endregion
+                                return true;
+                            }
+                            
+                            // Check if part contains the full service name as a complete phrase with word boundaries
+                            // This handles cases like "Anti-Aging Facial" in "Anti-Aging Facial Treatment"
+                            // But NOT "Facial" matching "Anti-Aging Facial" (prevents false positives)
+                            const index = partTrimmed.indexOf(serviceNameNormalized);
+                            if (index !== -1) {
+                                // Check word boundaries - make sure it's not a partial word match
+                                const beforeChar = index > 0 ? partTrimmed[index - 1] : ' ';
+                                const afterIndex = index + serviceNameNormalized.length;
+                                const afterChar = afterIndex < partTrimmed.length ? partTrimmed[afterIndex] : ' ';
+                                
+                                // Only match if surrounded by word boundaries (space, dash, or start/end)
+                                if ((beforeChar === ' ' || beforeChar === '-' || index === 0) &&
+                                    (afterChar === ' ' || afterChar === '-' || afterChar === ',' || afterIndex === partTrimmed.length)) {
+                                    // #region agent log
+                                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:642',message:'Fallback: Phrase match with word boundaries',data:{part:partTrimmed,serviceNameNormalized:serviceNameNormalized,staffName:member.first_name},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+                                    // #endregion
+                                    return true;
+                                }
+                            }
+                            
+                            return false;
+                        });
+                        
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.js:658',message:'Fallback string matching result',data:{isSuggested:isSuggested,staffName:member.first_name,serviceName:service.name,serviceId:sid},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'E'})}).catch(()=>{});
+                        // #endregion
+                    }
+                }
+                
                 staffList.push({
                     member: member,
                     role: dbRole,

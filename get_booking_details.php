@@ -88,7 +88,7 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
 
 <style>
 .booking-details-modal {
-    font-family: sans-serif;
+    font-family: "Segoe UI", sans-serif;
 }
 .booking-details-section {
     margin-bottom: 1.5rem;
@@ -97,6 +97,7 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
     font-weight: 600;
     margin-bottom: 1rem;
     color: #333;
+    font-family: "Segoe UI", sans-serif;
 }
 .booking-info-row {
     display: flex;
@@ -107,9 +108,11 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
 .booking-info-label {
     font-weight: 600;
     color: #555;
+    font-family: "Segoe UI", sans-serif;
 }
 .booking-info-value {
     color: #333;
+    font-family: "Segoe UI", sans-serif;
 }
 .status-badge-modal {
     padding: 0.25rem 0.75rem;
@@ -138,10 +141,12 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
     font-weight: 600;
     color: #555;
     border-bottom: 2px solid #dee2e6;
+    font-family: "Segoe UI", sans-serif;
 }
 .services-table td {
     padding: 0.75rem;
     border-bottom: 1px solid #dee2e6;
+    font-family: "Segoe UI", sans-serif;
 }
 .total-summary {
     margin-top: 1.5rem;
@@ -168,6 +173,7 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
     border-radius: 4px;
     margin-top: 0.5rem;
     font-weight: 700;
+    font-family: "Segoe UI", sans-serif;
 }
 .booking-timestamp {
     text-align: center;
@@ -182,7 +188,7 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
 <div class="booking-details-modal">
     <div class="row">
         <div class="col-md-6 booking-details-section">
-            <h6><strong>Booking Information</strong></h6>
+            <h6><strong>Customer Details</strong></h6>
             <div class="booking-info-row">
                 <span class="booking-info-label">Reference ID:</span>
                 <span class="booking-info-value"><?php echo htmlspecialchars($referenceId); ?></span>
@@ -210,7 +216,7 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
         </div>
         
         <div class="col-md-6 booking-details-section">
-            <h6><strong>Appointment Details</strong></h6>
+            <h6><strong>Booking Details</strong></h6>
             <div class="booking-info-row">
                 <span class="booking-info-label">Date:</span>
                 <span class="booking-info-value"><?php echo date('d M Y', strtotime($booking['booking_date'])); ?></span>

@@ -177,12 +177,12 @@ $currentUrlEncoded = urlencode($currentUrl);
             </div>
 
             <div class="service-box stagger" onclick="window.location.href='services.php?category=facial'">
-                <img src="../images/11.png" class="service-img" alt="Facial">
+                <img src="../images/s3.jpg" class="service-img" alt="Facial">
                 <div class="service-overlay">facial</div>
             </div>
 
             <div class="service-box stagger" onclick="window.location.href='services.php?category=manicure'">
-                <img src="../images/8.png" class="service-img" alt="Manicure">
+                <img src="../images/s.jpg" class="service-img" alt="Manicure">
                 <div class="service-overlay">manicure</div>
             </div>
 

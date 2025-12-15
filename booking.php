@@ -61,8 +61,20 @@ try {
     error_log("Booking.php: Failed to fetch services - " . $e->getMessage());
 }
 
-// FETCH STAFF
-$query = "SELECT staff_email, first_name, last_name, role, is_active FROM staff WHERE is_active = 1 ORDER BY role, first_name";
+// FETCH STAFF with primary services
+$query = "SELECT 
+    s.staff_email, 
+    s.first_name, 
+    s.last_name, 
+    s.role, 
+    s.is_active,
+    GROUP_CONCAT(DISTINCT sv.service_name ORDER BY ss.proficiency_level DESC, sv.service_name SEPARATOR ' & ') as primary_services
+FROM staff s
+LEFT JOIN staff_service ss ON s.staff_email = ss.staff_email AND ss.is_active = 1
+LEFT JOIN service sv ON ss.service_id = sv.service_id AND sv.is_active = 1
+WHERE s.is_active = 1
+GROUP BY s.staff_email
+ORDER BY s.role, s.first_name";
 try {
     $stmt = $db->prepare($query);
     $stmt->execute();
@@ -1145,7 +1157,8 @@ require_once 'includes/header.php';
                 'name' => $s['service_name'],
                 'duration' => (int)$s['duration_minutes'],
                 'price' => (float)$s['price'],
-                'category' => $s['category_name'] ?? ''
+                'category' => $s['category_name'] ?? '',
+                'sub_category' => $s['sub_category'] ?? ''
             ];
         }
     }
