@@ -12,6 +12,7 @@ include "../includes/header.php";
 
     <link rel="stylesheet" href="/Lumiere_beauty_salon/css/style.css">
     <link rel="stylesheet" href="/Lumiere_beauty_salon/css/home.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="services.css">
 </head>

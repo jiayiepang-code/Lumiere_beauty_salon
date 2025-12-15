@@ -3,21 +3,33 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Segoe UI", "Didot", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body,
+html {
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 body {
-    padding-top: 100px;
-    min-height: 100vh;
-    background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
-    color: #555;
+    padding-top: 100px !important;
+    min-height: 100vh !important;
+    background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff) !important;
+    color: #555 !important;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 /* ========== PAGE WRAPPER ========== */
 .page-wrapper {
     width: 100%;
     min-height: 100vh;
-    background: #ffffff;
+    background: transparent !important; /* Allow body gradient to show through */
+}
+
+/* Services Header Section */
+.services-header {
+    background: transparent !important; /* Use body gradient background */
+    padding: 20px 0;
+    margin-bottom: 20px;
 }   
 
 /* ========== HEADER ========== */
@@ -35,13 +47,6 @@ body {
     z-index: 1000;
 }
 
-/* so content won't hide under header */
-body {
-    min-height: 100vh;
-    background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
-    color: #555;
-    padding-top: 90px;  /* adjust if header taller/shorter */
-}
 
 .header-logo {
     height: 60px;      /* adjust size */
@@ -229,7 +234,7 @@ body {
 .service-section-box {
     display: flex;
     gap: 30px;
-    background-color: #fbf5f1;
+    background-color: #ffffff !important;
     border-radius: 16px;
     padding: 20px;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
@@ -240,11 +245,12 @@ body {
 
 .services-title {
     text-align: center;
-    font-size: 32px;
+    font-size: 40px;
     font-weight: 700;
     color: #c29076;
     margin-top: 25px;
     margin-left: 20px;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .services-subtitle {
@@ -252,8 +258,8 @@ body {
     margin-left: 20px;
     font-size: 16px;
     color: #aa8b7d;
-    margin-bottom: 22px;
-
+    margin-bottom: 15px;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .service-row {
@@ -291,6 +297,7 @@ body {
     font-size: 36px;
     color: #c29076;
     margin-bottom: 10px;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .service-text-box h3 {
@@ -298,6 +305,7 @@ body {
     color: #6d5b54;
     margin-top: 8px;
     margin-bottom: 4px;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 
@@ -305,6 +313,7 @@ body {
     font-size: 18px;
     color: #6d5b54;
     line-height: 1.6;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 /* Price List Header */
@@ -316,6 +325,7 @@ body {
     border-bottom: 2px solid #6d5b54;
     display: inline-block;
     padding-bottom: 2px;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 /* Price Items */
@@ -323,6 +333,7 @@ body {
     font-size: 17px;
     color: #6d5b54;
     margin: 4px 0;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 /*Category button*/
@@ -330,7 +341,7 @@ body {
     display: flex;
     justify-content: center;
     gap: 20px;
-    margin: 20px 0;
+    margin: 15px 0 20px 0;
     position: relative;
     z-index: 999;
 }
@@ -349,6 +360,7 @@ body {
     border: 1px solid #c29076;
     cursor: pointer;
     transition: all 0.3s ease;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .service-cat:hover, .service-cat.active {
@@ -371,12 +383,14 @@ body {
     border-bottom: 2px solid #a78d84; /* Underline effect */
     display: inline-block;
     padding-bottom: 5px;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 /* Custom layout for the price items */
 .service-prices.custom-layout {
     font-size: 18px;
     color: #6d5b54;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .price-item {
@@ -384,15 +398,17 @@ body {
     justify-content: space-between; /* Pushes the name and price to opposite sides */
     margin: 10px 0;
     padding-right: 150px; /* Add some space on the right side */
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .price-value {
     font-weight: bold;
-    color: #6d5b54; 
+    color: #6d5b54;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .service-subsection-box {
-    background: #fff;
+    background: #fff !important;
     padding: 25px;
     border-radius: 16px;
     margin: 25px 0;
@@ -404,10 +420,19 @@ body {
     color: #c29076;
     margin-bottom: 10px;
     font-weight: 700;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .subsection-description {
     font-size: 17px;
     color: #6d5b54;
     margin-bottom: 15px;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+/* Global font override to ensure all text uses the correct font */
+body *,
+body *::before,
+body *::after {
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }

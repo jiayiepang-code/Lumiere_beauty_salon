@@ -4,7 +4,7 @@ body {
     background-attachment: fixed; /* Keeps the gradient in place when you scroll */
     min-height: 100vh;
     margin: 0;
-    font-family: 'Poppins', sans-serif; /* Ensures font matches the rest of the site */
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 /* ========== 1. HEADER SECTION ========== */
@@ -14,7 +14,7 @@ body {
 }
 
 .team-header-section h1 {
-    font-family: 'HandwritingFont', sans-serif; /* Replace with your actual font */
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
     font-size: 2.5rem;
     color: #4a3b32;
     margin-bottom: 20px;
@@ -133,7 +133,7 @@ body {
     font-size: 1.8rem;
     margin: 10px 0;
     color: #4a3b32;
-    font-family: 'HandwritingFont', sans-serif; /* Use your font here */
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
 }
 
 .primary-service {

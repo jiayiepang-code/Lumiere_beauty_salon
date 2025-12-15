@@ -129,6 +129,7 @@ require_once 'includes/header.php';
         backdrop-filter: blur(10px) !important;
         z-index: 1000 !important;
         box-shadow: 0 4px 18px rgba(0,0,0,0.06) !important;
+        font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     body.booking-page .main-header .main-nav {
@@ -137,6 +138,7 @@ require_once 'includes/header.php';
         font-size: 16px !important;
         justify-content: center !important;
         flex: 1 !important;
+        font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     /* Target header nav links specifically to override Bootstrap */
@@ -149,6 +151,7 @@ require_once 'includes/header.php';
         padding-bottom: 4px !important;
         font-size: 16px !important;
         font-weight: 500 !important;
+        font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
         background: none !important;
         border: none !important;
         cursor: pointer !important;
@@ -230,6 +233,7 @@ require_once 'includes/header.php';
         color: #8a766e !important;
         text-decoration: none !important;
         font-size: 15px !important;
+        font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
         transition: background 0.2s ease !important;
         background: transparent !important;
         border: none !important;
@@ -302,7 +306,7 @@ require_once 'includes/header.php';
     }
     
     body.booking-page .main-header button {
-        font-family: inherit !important;
+        font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     
     /* Ensure dropdown menu doesn't get Bootstrap nav styles */
@@ -315,11 +319,7 @@ require_once 'includes/header.php';
         padding: 0 !important;
     }
     
-    /* Font family for header to match index page */
-    body.booking-page .main-header,
-    body.booking-page .main-header .main-nav,
-    body.booking-page .main-header .main-nav a,
-    body.booking-page .main-header .main-nav .nav-link,
+    /* Book Now button font to match index page */
     body.booking-page .main-header .book-btn {
         font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
@@ -331,11 +331,13 @@ require_once 'includes/header.php';
         vertical-align: baseline !important;
     }
     
-    /* Full page background */
+    /* Full page background and font to match index page */
     body.booking-page {
         background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff) !important;
         min-height: 100vh !important;
         padding-top: 90px !important; /* Space for fixed header */
+        font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif !important;
+        color: #555 !important;
     }
     
     body.booking-page .page-wrapper {
@@ -352,7 +354,7 @@ require_once 'includes/header.php';
         display: flex !important;
         justify-content: center;
         align-items: center;
-        gap: 25px !important;
+        gap: 100px !important;
         margin-bottom: 2rem;
         padding: 20px 0;
         width: 100%;
@@ -360,21 +362,61 @@ require_once 'includes/header.php';
         overflow: visible;
     }
     
+    /* Override any conflicting styles from external stylesheets */
+    .container .step-indicator > .step + .step {
+        margin-left: 0 !important;
+    }
+    
+    .container .step-indicator .step:not(:last-child) {
+        margin-right: 0 !important;
+    }
+    
     .container .step-indicator .step {
         display: flex !important;
-        align-items: center;
-        gap: 10px !important;
+        align-items: center !important;
+        gap: 18px !important;
         opacity: 0.5;
         transition: opacity 0.3s;
         white-space: nowrap;
-        margin: 0 !important;
-        flex-shrink: 0;
-        min-width: fit-content;
-        position: relative;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+        flex-basis: auto !important;
+        min-width: fit-content !important;
+        max-width: none !important;
+        position: static !important;
         background: transparent !important;
         border: none !important;
         padding: 0 !important;
         box-shadow: none !important;
+        flex-direction: row !important;
+        width: auto !important;
+        isolation: isolate !important;
+    }
+    
+    /* Override any margin rules that could interfere with gap spacing */
+    .container .step-indicator .step:first-child {
+        margin-left: 0 !important;
+    }
+    
+    .container .step-indicator .step:last-child {
+        margin-right: 0 !important;
+    }
+    
+    /* Force override any external CSS gap rules - ensures equal spacing between ALL steps */
+    body .container .step-indicator,
+    body .booking-page-bg .container .step-indicator,
+    body .container .step-indicator.step-indicator {
+        gap: 100px !important; /* Equal gap: Services→Staff, Staff→Date & Time, Date & Time→Review */
+    }
+    
+    body .container .step-indicator .step,
+    body .booking-page-bg .container .step-indicator .step {
+        gap: 18px !important; /* Internal gap between number circle and text label for each step */
+        margin: 0 !important; /* Override any margin rules from external stylesheets */
     }
     
     .container .step-indicator .step span {
@@ -409,6 +451,10 @@ require_once 'includes/header.php';
     .container .step-indicator .step-number {
         width: 42px !important;
         height: 42px !important;
+        min-width: 42px !important;
+        min-height: 42px !important;
+        max-width: 42px !important;
+        max-height: 42px !important;
         border-radius: 50% !important;
         background: #e6d9c8 !important;
         color: #7a6c64 !important;
@@ -418,9 +464,27 @@ require_once 'includes/header.php';
         font-weight: 700 !important;
         font-size: 18px !important;
         flex-shrink: 0 !important;
+        flex-grow: 0 !important;
         margin-right: 0 !important;
-        position: relative;
+        margin-left: 0 !important;
+        position: relative !important;
         border: none !important;
+        box-sizing: border-box !important;
+        line-height: 1 !important;
+        text-align: center !important;
+        z-index: 2 !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        padding: 0 !important;
+    }
+    
+    /* Remove any pseudo-elements from step-number */
+    .container .step-indicator .step-number::before,
+    .container .step-indicator .step-number::after {
+        display: none !important;
+        content: none !important;
     }
     
     .container .step-indicator .step.active .step-number {
@@ -433,24 +497,66 @@ require_once 'includes/header.php';
         color: #fff !important;
     }
     
-    /* Prevent text truncation and ensure proper display */
-    .container .step-indicator .step * {
+    /* Ensure span text is separate from step-number - identical for all steps */
+    .container .step-indicator .step span {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        display: inline-block !important;
+        position: relative !important;
+        white-space: nowrap !important;
         overflow: visible !important;
         text-overflow: clip !important;
+        flex-shrink: 0 !important;
+        flex-grow: 0 !important;
+        z-index: 1 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: auto !important;
+        min-width: auto !important;
+        max-width: none !important;
     }
     
-    /* Ensure step 3 "Date & Time" displays on one line */
-    #step-3-indicator span {
+    /* Ensure all steps have identical spacing - critical for equal gaps */
+    .container .step-indicator .step,
+    #step-1-indicator,
+    #step-2-indicator,
+    #step-3-indicator,
+    #step-4-indicator {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+    
+    /* Ensure all step spans have identical spacing */
+    .container .step-indicator .step span,
+    #step-1-indicator span,
+    #step-2-indicator span,
+    #step-3-indicator span,
+    #step-4-indicator span {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
         white-space: nowrap !important;
+        display: inline-block !important;
+    }
+    
+    /* Ensure step 3 "Date & Time" displays on one line without affecting spacing */
+    #step-3-indicator span {
         max-width: none !important;
-        text-align: center;
-        line-height: 1.3;
+        text-align: left !important;
+        line-height: 1.2 !important;
     }
     
     /* Responsive adjustments for smaller screens */
     @media (max-width: 768px) {
         .container .step-indicator {
-            gap: 15px !important;
+            gap: 30px !important;
+        }
+        
+        .container .step-indicator .step {
+            gap: 12px !important;
         }
         
         .container .step-indicator .step span {

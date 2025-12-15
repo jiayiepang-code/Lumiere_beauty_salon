@@ -39,7 +39,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif
 }
 
 body {
