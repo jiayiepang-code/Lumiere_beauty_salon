@@ -41,12 +41,17 @@ function initializeYearFilter() {
   const yearFilter = document.getElementById("yearFilter");
   if (!yearFilter) return;
 
-  const currentYear = new Date().getFullYear();
-  for (let year = currentYear - 2; year <= currentYear + 2; year++) {
+  const nowYear = new Date().getFullYear();
+  // Generate a wider range to improve flexibility
+  const startYear = nowYear - 5;
+  const endYear = nowYear + 5;
+
+  yearFilter.innerHTML = "";
+  for (let year = startYear; year <= endYear; year++) {
     const option = document.createElement("option");
     option.value = year;
     option.textContent = year;
-    if (year === currentYear) {
+    if (year === nowYear) {
       option.selected = true;
     }
     yearFilter.appendChild(option);
@@ -111,6 +116,32 @@ async function fetchLeaveRequests() {
 
     allRequests = data.requests || [];
     const stats = data.stats || {};
+
+    // If API provides available_years, rebuild the year dropdown dynamically
+    if (Array.isArray(data.available_years) && data.available_years.length > 0) {
+      const yearFilter = document.getElementById("yearFilter");
+      if (yearFilter) {
+        const prevSelected = parseInt(yearFilter.value || currentYear, 10);
+        yearFilter.innerHTML = "";
+        data.available_years.forEach((y) => {
+          const option = document.createElement("option");
+          option.value = y;
+          option.textContent = y;
+          yearFilter.appendChild(option);
+        });
+        // Prefer keeping currentYear if present; otherwise select last available
+        if (data.available_years.includes(prevSelected)) {
+          yearFilter.value = String(prevSelected);
+          currentYear = prevSelected;
+        } else if (data.available_years.includes(currentYear)) {
+          yearFilter.value = String(currentYear);
+        } else {
+          const fallback = data.available_years[data.available_years.length - 1];
+          yearFilter.value = String(fallback);
+          currentYear = fallback;
+        }
+      }
+    }
 
     // Update stats based on current filter
     updateStatsForMonth(stats);
@@ -461,8 +492,9 @@ function escapeHtml(value) {
 
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
-  initializeYearFilter();
+  // Set month first, year will be populated from API if available
   setCurrentMonth();
+  initializeYearFilter();
   fetchLeaveRequests();
 
   // Search input handler

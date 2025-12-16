@@ -6,26 +6,48 @@
         // Store CSRF token for API requests
         const csrfToken = '<?php echo $csrf_token; ?>';
         
-        // Mobile menu toggle
-        const hamburgerBtn = document.getElementById('hamburgerBtn');
-        const sidebar = document.getElementById('sidebar');
-        
-        if (hamburgerBtn) {
-            hamburgerBtn.addEventListener('click', () => {
-                sidebar.classList.toggle('active');
-                hamburgerBtn.classList.toggle('active');
-            });
-            
-            // Close sidebar when clicking outside on mobile
-            document.addEventListener('click', (e) => {
-                if (window.innerWidth <= 768) {
-                    if (!sidebar.contains(e.target) && !hamburgerBtn.contains(e.target)) {
-                        sidebar.classList.remove('active');
-                        hamburgerBtn.classList.remove('active');
-                    }
+        // Mobile menu toggle - consolidated handler
+        (function() {
+            function setupHamburgerMenu() {
+                const hamburgerBtn = document.getElementById('hamburgerBtn');
+                const sidebar = document.getElementById('sidebar');
+                
+                if (!hamburgerBtn || !sidebar) {
+                    return;
                 }
-            });
-        }
+                
+                // Remove any existing listeners by cloning the button
+                const newBtn = hamburgerBtn.cloneNode(true);
+                hamburgerBtn.parentNode.replaceChild(newBtn, hamburgerBtn);
+                
+                // Add click handler
+                newBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    sidebar.classList.toggle('active');
+                    newBtn.classList.toggle('active');
+                });
+                
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', function(e) {
+                    if (window.innerWidth <= 768) {
+                        if (sidebar.classList.contains('active') && 
+                            !sidebar.contains(e.target) && 
+                            !newBtn.contains(e.target)) {
+                            sidebar.classList.remove('active');
+                            newBtn.classList.remove('active');
+                        }
+                    }
+                });
+            }
+            
+            // Setup when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupHamburgerMenu);
+            } else {
+                setupHamburgerMenu();
+            }
+        })();
         
         // Logout handler with SweetAlert2 confirmation
         async function handleLogout() {

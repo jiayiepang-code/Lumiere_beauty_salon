@@ -9,7 +9,6 @@ let currentDeleteService = null;
 document.addEventListener("DOMContentLoaded", function () {
   loadServices();
   setupEventListeners();
-  setupMobileMenu();
 });
 
 // Setup event listeners
@@ -76,18 +75,6 @@ function setupEventListeners() {
   }
 }
 
-// Setup mobile menu toggle
-function setupMobileMenu() {
-  const hamburgerBtn = document.getElementById("hamburgerBtn");
-  const sidebar = document.getElementById("sidebar");
-
-  if (hamburgerBtn && sidebar) {
-    hamburgerBtn.addEventListener("click", function () {
-      sidebar.classList.toggle("active");
-      hamburgerBtn.classList.toggle("active");
-    });
-  }
-}
 
 // Logout handler (SweetAlert2)
 async function handleLogout() {
@@ -223,16 +210,19 @@ function renderServices(services) {
   const table = document.getElementById("servicesTable");
   const emptyState = document.getElementById("emptyState");
   const loadingState = document.getElementById("loadingState");
+  const tableResponsive = document.querySelector(".table-responsive");
 
   if (loadingState) loadingState.style.display = "none";
 
   if (services.length === 0) {
     if (table) table.style.display = "none";
+    if (tableResponsive) tableResponsive.style.display = "none";
     if (emptyState) emptyState.style.display = "block";
     return;
   }
 
   if (table) table.style.display = "table";
+  if (tableResponsive) tableResponsive.style.display = "block";
   if (emptyState) emptyState.style.display = "none";
 
   if (!tableBody) return;
@@ -342,9 +332,11 @@ function showLoading() {
   const loadingState = document.getElementById("loadingState");
   const table = document.getElementById("servicesTable");
   const emptyState = document.getElementById("emptyState");
+  const tableResponsive = document.querySelector(".table-responsive");
 
   if (loadingState) loadingState.style.display = "block";
   if (table) table.style.display = "none";
+  if (tableResponsive) tableResponsive.style.display = "none";
   if (emptyState) emptyState.style.display = "none";
 }
 
@@ -353,9 +345,11 @@ function showEmptyState() {
   const loadingState = document.getElementById("loadingState");
   const table = document.getElementById("servicesTable");
   const emptyState = document.getElementById("emptyState");
+  const tableResponsive = document.querySelector(".table-responsive");
 
   if (loadingState) loadingState.style.display = "none";
   if (table) table.style.display = "none";
+  if (tableResponsive) tableResponsive.style.display = "none";
   if (emptyState) emptyState.style.display = "block";
 }
 

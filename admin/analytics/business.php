@@ -80,7 +80,7 @@ $leaderboardQuery = "
     LEFT JOIN Booking b ON bs.booking_id = b.booking_id
         AND MONTH(b.booking_date) = MONTH(CURRENT_DATE())
         AND YEAR(b.booking_date) = YEAR(CURRENT_DATE())
-    WHERE s.is_active = 1
+    WHERE s.is_active = 1 AND s.role != 'admin'
     GROUP BY s.staff_email, s.first_name, s.last_name
     ORDER BY revenue_generated DESC
 ";
@@ -827,10 +827,6 @@ include '../includes/header.php';
 }
 
 @media (max-width: 1024px) {
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-    
     .summary-cards-grid {
         grid-template-columns: 1fr;
     }

@@ -21,15 +21,17 @@ try {
     $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
     $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
     
-    // Validate month (1-12) and year (2020-2030)
+    // Validate month (1-12) and year with flexible bounds
     if ($month < 1 || $month > 12) {
         $month = (int)date('m');
     }
-    if ($year < 2020 || $year > 2030) {
+    // Allow a wide range of years to keep filters flexible
+    // Clamp to a reasonable range if needed
+    if ($year < 1970 || $year > 2100) {
         $year = (int)date('Y');
     }
 
-    // Pending requests
+    // Pending requests filtered by selected month/year
     $sql = "
         SELECT 
             lr.id,
@@ -46,13 +48,17 @@ try {
         FROM leave_requests lr
         JOIN staff s ON lr.staff_email = s.staff_email
         WHERE lr.status = 'pending'
+          AND MONTH(lr.start_date) = ?
+          AND YEAR(lr.start_date) = ?
         ORDER BY lr.created_at ASC
     ";
-
-    $result = $conn->query($sql);
-    if (!$result) {
+    $stmtPendingList = $conn->prepare($sql);
+    if (!$stmtPendingList) {
         throw new Exception('Query failed: ' . $conn->error);
     }
+    $stmtPendingList->bind_param('ii', $month, $year);
+    $stmtPendingList->execute();
+    $result = $stmtPendingList->get_result();
 
     $requests = [];
     while ($row = $result->fetch_assoc()) {
@@ -126,10 +132,24 @@ try {
         $stmt->close();
     }
 
+    // Build available years from data for a flexible year dropdown
+    $availableYears = [];
+    $yearsRes = $conn->query("SELECT MIN(YEAR(start_date)) AS min_year, MAX(YEAR(start_date)) AS max_year FROM leave_requests");
+    if ($yearsRes && $yearsRow = $yearsRes->fetch_assoc()) {
+        $minYear = (int)$yearsRow['min_year'];
+        $maxYear = (int)$yearsRow['max_year'];
+        if ($minYear > 0 && $maxYear > 0 && $minYear <= $maxYear) {
+            for ($y = $minYear; $y <= $maxYear; $y++) {
+                $availableYears[] = $y;
+            }
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'requests' => $requests,
-        'stats' => $stats
+        'stats' => $stats,
+        'available_years' => $availableYears
     ]);
 } catch (Exception $e) {
     http_response_code(500);

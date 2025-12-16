@@ -313,17 +313,17 @@ function renderCalendar() {
   }
 }
 
-// Render day view - Vertical timeline 9 AM - 8 PM
+// Render day view - Vertical timeline 10 AM - 10 PM
 function renderDayView() {
   const calendarView = document.getElementById("calendarView");
 
-  // Generate time slots from 9:00 AM to 8:00 PM (20:00)
+  // Generate time slots from 10:00 AM to 10:00 PM (22:00)
   const timeSlots = [];
-  for (let hour = 9; hour <= 20; hour++) {
+  for (let hour = 10; hour <= 22; hour++) {
     timeSlots.push(`${hour.toString().padStart(2, "0")}:00`);
   }
 
-  let html = '<div class="calendar-day-timeline">';
+  let html = '<div class="calendar-day-timeline" id="dayTimelineContainer">';
 
   timeSlots.forEach((time) => {
     // Find all bookings that overlap with this hour
@@ -341,7 +341,7 @@ function renderDayView() {
 
     if (slotBookings.length > 0) {
       slotBookings.forEach((booking) => {
-        const statusColor = getStatusColor(booking.status);
+        const statusClass = getStatusClass(booking.status);
         const customer = escapeHtml(
           booking.customer_name ||
             booking.customer_first_name + " " + booking.customer_last_name
@@ -351,16 +351,46 @@ function renderDayView() {
           services.length > 0
             ? escapeHtml(services[0].service_name)
             : "Service";
+        const durationMinutes = calculateDurationMinutes(
+          booking.start_time,
+          booking.expected_finish_time
+        );
+        const durationDisplay = durationMinutes !== "" ? `${durationMinutes} min` : "-";
+        const statusLabel = escapeHtml(
+          (booking.status || "available").replace(/-/g, " ").toUpperCase()
+        );
 
         html += `
-          <div class="booking-block" 
-               style="border-left: 4px solid ${statusColor};"
-               onclick="viewBookingDetails('${booking.booking_id}')">
-            <div class="booking-block-customer">${customer}</div>
-            <div class="booking-block-time">${formatTime(
-              booking.start_time
-            )} - ${formatTime(booking.expected_finish_time)}</div>
-            <div class="booking-block-service">${serviceName}</div>
+          <div class="admin-calendar-event ${statusClass}" role="button" tabindex="0" onclick="viewBookingDetails('${booking.booking_id}')">
+            <div class="event-main">
+              <div class="event-header">
+                <div class="event-datetime">${formatTime(
+                  booking.start_time
+                )} - ${formatDate(booking.booking_date)}</div>
+                <span class="status-pill ${statusClass}">${statusLabel}</span>
+              </div>
+              <div class="event-fields">
+                <div class="event-field">
+                  <span class="event-label">Customer</span>
+                  <span class="event-value">${customer}</span>
+                </div>
+                <div class="event-field">
+                  <span class="event-label">Service</span>
+                  <span class="event-value">${serviceName}</span>
+                </div>
+                <div class="event-field">
+                  <span class="event-label">Duration</span>
+                  <span class="event-value">${durationDisplay}</span>
+                </div>
+              </div>
+            </div>
+            <div class="event-action-cue" aria-hidden="true" title="Click to view details">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </div>
           </div>`;
       });
     }
@@ -372,6 +402,95 @@ function renderDayView() {
 
   html += "</div>";
   calendarView.innerHTML = html;
+  
+  // Add real-time timeline indicator after rendering
+  addRealTimeIndicator();
+}
+
+// Add real-time timeline indicator
+function addRealTimeIndicator() {
+  // Only show on today's date
+  const today = new Date();
+  const viewingDate = new Date(currentDate);
+  const isToday = today.toDateString() === viewingDate.toDateString();
+  
+  if (!isToday) return;
+  
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTimeInMinutes = currentHour * 60 + currentMinute;
+  
+  // Check if current time is within viewing hours (10 AM - 10 PM)
+  const startHour = 10;
+  const endHour = 22;
+  const startTimeInMinutes = startHour * 60;
+  const endTimeInMinutes = endHour * 60;
+  
+  if (currentTimeInMinutes < startTimeInMinutes || currentTimeInMinutes > endTimeInMinutes) {
+    return; // Current time is outside viewing hours
+  }
+  
+  // Find the timeline container
+  const timelineContainer = document.getElementById("dayTimelineContainer");
+  if (!timelineContainer) return;
+  
+  // Make timeline container relative positioned
+  timelineContainer.style.position = "relative";
+  
+  // Find all timeline rows to calculate position
+  const timelineRows = timelineContainer.querySelectorAll(".timeline-row");
+  if (timelineRows.length === 0) return;
+  
+  // Calculate which row the current time falls into and the position within that row
+  const totalSlots = 13; // 10 AM to 10 PM = 13 hours
+  const slotIndex = Math.floor((currentTimeInMinutes - startTimeInMinutes) / 60);
+  const minutesIntoSlot = (currentTimeInMinutes - startTimeInMinutes) % 60;
+  const slotPercent = (minutesIntoSlot / 60) * 100;
+  
+  // Get the row element
+  if (slotIndex >= timelineRows.length) return;
+  const targetRow = timelineRows[slotIndex];
+  const rowRect = targetRow.getBoundingClientRect();
+  const containerRect = timelineContainer.getBoundingClientRect();
+  
+  // Calculate absolute position within the container
+  const rowTop = targetRow.offsetTop;
+  const rowHeight = rowRect.height;
+  const absoluteTop = rowTop + (rowHeight * slotPercent / 100);
+  const totalHeight = timelineContainer.scrollHeight;
+  const positionPercent = (absoluteTop / totalHeight) * 100;
+  
+  // Create indicator element
+  const indicator = document.createElement("div");
+  indicator.className = "real-time-indicator";
+  indicator.style.cssText = `
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: ${positionPercent}%;
+    height: 2px;
+    background: #c29076;
+    z-index: 100;
+    pointer-events: none;
+  `;
+  
+  // Create dot
+  const dot = document.createElement("div");
+  dot.style.cssText = `
+    position: absolute;
+    left: 78px;
+    top: -4px;
+    width: 10px;
+    height: 10px;
+    background: #c29076;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px #c29076;
+  `;
+  indicator.appendChild(dot);
+  
+  timelineContainer.appendChild(indicator);
 }
 
 // Render week view - Horizontal table with days as columns, time as rows
@@ -400,9 +519,9 @@ function renderWeekView() {
     bookingsByDateTime[key].push(booking);
   });
 
-  // Generate time slots (9 AM - 8 PM)
+  // Generate time slots (10 AM - 10 PM)
   const timeSlots = [];
-  for (let hour = 9; hour <= 20; hour++) {
+  for (let hour = 10; hour <= 22; hour++) {
     timeSlots.push(hour);
   }
 
@@ -582,21 +701,20 @@ function renderStaffSchedules() {
 
   let html = "";
   staffSchedulesData.forEach((schedule) => {
+    const statusClass = schedule.status === "working" ? "status-working" : "status-off";
     html += `
-            <div class="staff-schedule-card">
-                <div class="staff-name">${escapeHtml(schedule.staff_name)}</div>
-                <div class="schedule-time">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    ${formatTime(schedule.start_time)} - ${formatTime(
-      schedule.end_time
-    )}
+            <div class="staff-schedule-card ${statusClass}">
+                <div class="staff-schedule-info">
+                    <div class="staff-name">${escapeHtml(schedule.staff_name)}</div>
+                    <div class="schedule-time">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        ${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}
+                    </div>
                 </div>
-                <span class="schedule-status ${schedule.status}">${
-      schedule.status
-    }</span>
+                <span class="schedule-status-badge ${statusClass}">${schedule.status === "working" ? "Working" : "Off"}</span>
             </div>
         `;
   });
@@ -894,6 +1012,21 @@ function filterByDate(date) {
 }
 
 // Utility functions
+function calculateDurationMinutes(startTime, endTime) {
+  if (!startTime || !endTime) return "";
+  const [startHour, startMinute] = startTime.split(":").map(Number);
+  const [endHour, endMinute] = endTime.split(":").map(Number);
+  if (
+    Number.isNaN(startHour) ||
+    Number.isNaN(startMinute) ||
+    Number.isNaN(endHour) ||
+    Number.isNaN(endMinute)
+  ) {
+    return "";
+  }
+  return Math.max(0, endHour * 60 + endMinute - (startHour * 60 + startMinute));
+}
+
 function formatTime(time) {
   if (!time) return "";
   const [hours, minutes] = time.split(":");
@@ -916,14 +1049,20 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function getStatusClass(status) {
+  if (!status) return "status-available";
+  return `status-${String(status).toLowerCase().replace(/\s+/g, "-")}`;
+}
+
 function getStatusColor(status) {
   const colors = {
-    confirmed: "#4CAF50",
-    completed: "#2196F3",
-    cancelled: "#F44336",
-    "no-show": "#F44336",
+    confirmed: "#69B578",
+    completed: "#4A90E2",
+    cancelled: "#D0021B", // Red for cancelled
+    "no-show": "#9E9E9E", // Grey for no-show
+    available: "#A0A0A0",
   };
-  return colors[status] || "#9E9E9E";
+  return colors[status] || colors.available;
 }
 
 function showNotification(message, type = "info") {

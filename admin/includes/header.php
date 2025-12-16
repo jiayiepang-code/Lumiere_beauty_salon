@@ -150,39 +150,3 @@ $csrf_token = getCSRFToken();
                 </div>
             </header>
             <div class="content-body">
-                                <script>
-                // Global hamburger handler - works on all admin pages
-                (function(){
-                  function setupHamburger() {
-                    var btn = document.getElementById('hamburgerBtn');
-                    var sidebar = document.getElementById('sidebar');
-                    if(btn && sidebar){
-                      // Remove any existing listeners
-                      var newBtn = btn.cloneNode(true);
-                      btn.parentNode.replaceChild(newBtn, btn);
-                      
-                      newBtn.addEventListener('click', function(e){
-                        e.preventDefault();
-                        e.stopPropagation();
-                        sidebar.classList.toggle('active');
-                        newBtn.classList.toggle('active');
-                      });
-                      
-                      // Close sidebar when clicking outside
-                      document.addEventListener('click', function(e){
-                        if(sidebar.classList.contains('active') && 
-                           !sidebar.contains(e.target) && 
-                           !newBtn.contains(e.target)){
-                          sidebar.classList.remove('active');
-                          newBtn.classList.remove('active');
-                        }
-                      });
-                    }
-                  }
-                  
-                  if(document.readyState === 'loading'){
-                    document.addEventListener('DOMContentLoaded', setupHamburger);
-                  } else {
-                    setupHamburger();
-                  }                })();
-                </script>

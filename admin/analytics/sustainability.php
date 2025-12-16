@@ -133,7 +133,7 @@ try {
             AND MONTH(b.booking_date) = ? 
             AND YEAR(b.booking_date) = ?
             AND b.status IN ('completed', 'confirmed')
-        WHERE st.is_active = 1
+        WHERE st.is_active = 1 AND st.role != 'admin'
         GROUP BY st.staff_email, st.first_name, st.last_name
     ");
     $stmt->bind_param("sisi", $selected_month, $selected_year, $selected_month, $selected_year);
@@ -168,7 +168,7 @@ try {
     // Top Performer
     foreach ($staff_breakdown as $staff) {
         if ($staff['scheduled'] > 0) {
-            $top_performer_message = "Efficiency Win: " . $staff['name'] . " maintains " . number_format($staff['utilization'], 2) . "% utilization. Consider prioritizing high-value bookings for them.";
+            $top_performer_message = $staff['name'] . " maintains " . number_format($staff['utilization'], 2) . "% utilization. Consider prioritizing high-value bookings for them.";
             break;
         }
     }
@@ -182,7 +182,7 @@ try {
         }
     }
     if ($lowest_performer) {
-        $lowest_performer_message = "Opportunity: " . $lowest_performer['name'] . " has " . number_format($lowest_performer['idle'], 2) . " idle hours. Consider adjusting their roster or running a promo for their specialty.";
+        $lowest_performer_message = $lowest_performer['name'] . " has " . number_format($lowest_performer['idle'], 2) . " idle hours. Consider adjusting their roster or running a promo for their specialty.";
     }
 
     // Smart Suggestion
@@ -232,7 +232,7 @@ include '../includes/header.php';
     <div class="analytics-header">
         <div>
             <h1 class="analytics-title">Sustainability Analytics</h1>
-            <p class="analytics-subtitle">Monitor operational efficiency and staff utilization for ESG reporting</p>
+            <p class="analytics-subtitle">Monitor operational efficiency and staff utilization for ESG reporting (Monthly only)</p>
         </div>
         <form method="GET" action="" class="date-filter-form">
             <select name="month" id="month-select" class="form-control">
@@ -274,62 +274,181 @@ include '../includes/header.php';
     <div class="metrics-grid">
         <!-- Card 1: Total Active Staff -->
         <div class="metric-card">
-            <div class="metric-icon" style="background-color: rgba(33, 150, 243, 0.1); color: #2196F3;">
-                <i class="fas fa-users"></i>
+            <div class="card-header">
+                <div class="metric-icon blue-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <div class="card-info-btn" data-tooltip="Total number of active staff members available for bookings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
             </div>
             <div class="metric-value"><?php echo $total_active_staff; ?></div>
             <div class="metric-label">Active Staff</div>
+            <div class="metric-description">Total staff available for bookings</div>
         </div>
 
         <!-- Card 2: Services Delivered -->
         <div class="metric-card">
-            <div class="metric-icon" style="background-color: rgba(76, 175, 80, 0.1); color: #4CAF50;">
-                <i class="fas fa-check-circle"></i>
+            <div class="card-header">
+                <div class="metric-icon green-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <div class="card-info-btn" data-tooltip="Count of confirmed and completed services during the period">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
             </div>
             <div class="metric-value"><?php echo $services_delivered; ?></div>
             <div class="metric-label">Services Delivered</div>
+            <div class="metric-description">Completed & confirmed bookings</div>
         </div>
 
         <!-- Card 3: Total Scheduled Hours -->
         <div class="metric-card">
-            <div class="metric-icon" style="background-color: rgba(255, 193, 7, 0.1); color: #FFC107;">
-                <i class="fas fa-calendar-alt"></i>
+            <div class="card-header">
+                <div class="metric-icon amber-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </div>
+                <div class="card-info-btn" data-tooltip="Total capacity hours = Sum of all staff working hours assigned">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
             </div>
             <div class="metric-value"><?php echo number_format($total_scheduled_hours, 2); ?>h</div>
             <div class="metric-label">Scheduled Hours</div>
+            <div class="metric-description">Total staff capacity planned</div>
         </div>
 
         <!-- Card 4: Booked Hours -->
         <div class="metric-card">
-            <div class="metric-icon" style="background-color: rgba(139, 195, 74, 0.1); color: #8BC34A;">
-                <i class="fas fa-clock"></i>
+            <div class="card-header">
+                <div class="metric-icon lime-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div class="card-info-btn" data-tooltip="Total hours actually used = Sum of service duration + cleanup time">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
             </div>
             <div class="metric-value"><?php echo number_format($total_booked_hours, 2); ?>h</div>
             <div class="metric-label">Booked Hours</div>
+            <div class="metric-description">Staff hours actually used</div>
         </div>
 
         <!-- Card 5: Idle Hours -->
         <div class="metric-card">
-            <div class="metric-icon" style="background-color: rgba(255, 152, 0, 0.1); color: #FF9800;">
-                <i class="fas fa-hourglass-half"></i>
+            <div class="card-header">
+                <div class="metric-icon orange-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 22h14"></path>
+                        <path d="M5 2h14"></path>
+                        <path d="M17 22V6a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v16"></path>
+                        <path d="M7 16h10"></path>
+                    </svg>
+                </div>
+                <div class="card-info-btn" data-tooltip="Unused capacity = Scheduled Hours - Booked Hours">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
             </div>
             <div class="metric-value" style="<?php echo $idle_hours_red ? 'color: #F44336;' : ''; ?>">
                 <?php echo number_format($idle_hours, 2); ?>h
             </div>
             <div class="metric-label">Idle Hours</div>
+            <div class="metric-description">Wasted capacity potential</div>
         </div>
 
         <!-- Card 6: Utilization Rate -->
         <div class="metric-card">
-            <div class="metric-icon" style="background-color: rgba(212, 165, 116, 0.1); color: #D4A574;">
-                <i class="fas fa-percentage"></i>
+            <div class="card-header">
+                <div class="metric-icon brown-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                </div>
+                <div class="card-info-btn" data-tooltip="Efficiency % = (Booked Hours / Scheduled Hours) × 100">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
             </div>
             <div class="metric-value"><?php echo number_format($global_utilization_rate, 2); ?>%</div>
             <div class="metric-label">Utilization Rate</div>
+            <div class="metric-description">Staff productivity efficiency</div>
             <div class="utilization-bar">
                 <div class="utilization-fill utilization-<?php echo $progress_bar_color; ?>" 
                      style="width: <?php echo min($global_utilization_rate, 100); ?>%;"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- ========== OPTIMIZATION INSIGHTS SECTION ========== -->
+    <div class="insights-section">
+        <div class="insights-grid">
+            <?php if ($top_performer_message): ?>
+                <div class="alert alert-success">
+                    <div class="alert-header">
+                        <i class="fas fa-star"></i>
+                        <h4>Efficiency Win</h4>
+                    </div>
+                    <p><?php echo htmlspecialchars($top_performer_message, ENT_QUOTES, 'UTF-8'); ?></p>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($lowest_performer_message): ?>
+                <div class="alert alert-warning">
+                    <div class="alert-header">
+                        <i class="fas fa-lightbulb"></i>
+                        <h4>Optimization Opportunity</h4>
+                    </div>
+                    <p><?php echo htmlspecialchars($lowest_performer_message, ENT_QUOTES, 'UTF-8'); ?></p>
+                </div>
+            <?php endif; ?>
+            
+            <?php if ($smart_suggestion): ?>
+                <div class="alert alert-info">
+                    <div class="alert-header">
+                        <i class="fas fa-chart-line"></i>
+                        <h4>Efficiency Analysis</h4>
+                    </div>
+                    <p><?php echo htmlspecialchars($smart_suggestion, ENT_QUOTES, 'UTF-8'); ?></p>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -384,32 +503,6 @@ include '../includes/header.php';
                 </tbody>
             </table>
         </div>
-    </div>
-
-    <!-- ========== BOTTOM SECTION - OPTIMIZATION INSIGHTS ========== -->
-    <div class="insights-section">
-        <div class="insights-grid">
-            <?php if ($top_performer_message): ?>
-                <div class="alert alert-success">
-                    <h4>🏆 Efficiency Win</h4>
-                    <p><?php echo htmlspecialchars($top_performer_message, ENT_QUOTES, 'UTF-8'); ?></p>
-                </div>
-            <?php endif; ?>
-            
-            <?php if ($lowest_performer_message): ?>
-                <div class="alert alert-warning">
-                    <h4>💡 Optimization Opportunity</h4>
-                    <p><?php echo htmlspecialchars($lowest_performer_message, ENT_QUOTES, 'UTF-8'); ?></p>
-                </div>
-            <?php endif; ?>
-        </div>
-        
-        <?php if ($smart_suggestion): ?>
-            <div class="alert alert-info">
-                <h4>📈 Efficiency Analysis</h4>
-                <p><?php echo htmlspecialchars($smart_suggestion, ENT_QUOTES, 'UTF-8'); ?></p>
-            </div>
-        <?php endif; ?>
     </div>
 
     <?php endif; ?>
@@ -481,48 +574,204 @@ include '../includes/header.php';
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    margin-bottom: 32px;
+    gap: 24px;
+    margin-bottom: 40px;
 }
 
 .metric-card {
     background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid #f0f0f0;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #D4A574, #D4A574);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+}
+
+.metric-card:hover::before {
+    transform: scaleX(1);
 }
 
 .metric-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    border-color: #e0e0e0;
 }
 
-.metric-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 12px;
+.card-header {
     display: flex;
-    align-items: center;
     justify-content: center;
-    font-size: 24px;
-    margin: 0 auto 16px;
-}
-
-.metric-value {
-    font-size: 2rem;
-    font-weight: 700;
-    color: #1a1a1a;
+    align-items: center;
+    position: relative;
     margin-bottom: 8px;
 }
 
+.metric-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    transition: all 0.3s ease;
+}
+
+.metric-icon svg {
+    width: 32px;
+    height: 32px;
+}
+
+.metric-card:hover .metric-icon {
+    transform: scale(1.08) rotate(3deg);
+}
+
+.metric-icon.blue-icon {
+    background: linear-gradient(135deg, rgba(33, 150, 243, 0.12), rgba(33, 150, 243, 0.04));
+    color: #2196F3;
+    border: 1.5px solid rgba(33, 150, 243, 0.2);
+}
+
+.metric-icon.green-icon {
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.12), rgba(76, 175, 80, 0.04));
+    color: #4CAF50;
+    border: 1.5px solid rgba(76, 175, 80, 0.2);
+}
+
+.metric-icon.amber-icon {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.12), rgba(255, 193, 7, 0.04));
+    color: #FFC107;
+    border: 1.5px solid rgba(255, 193, 7, 0.2);
+}
+
+.metric-icon.lime-icon {
+    background: linear-gradient(135deg, rgba(139, 195, 74, 0.12), rgba(139, 195, 74, 0.04));
+    color: #8BC34A;
+    border: 1.5px solid rgba(139, 195, 74, 0.2);
+}
+
+.metric-icon.orange-icon {
+    background: linear-gradient(135deg, rgba(255, 152, 0, 0.12), rgba(255, 152, 0, 0.04));
+    color: #FF9800;
+    border: 1.5px solid rgba(255, 152, 0, 0.2);
+}
+
+.metric-icon.brown-icon {
+    background: linear-gradient(135deg, rgba(212, 165, 116, 0.12), rgba(212, 165, 116, 0.04));
+    color: #D4A574;
+    border: 1.5px solid rgba(212, 165, 116, 0.2);
+}
+
+.card-info-btn {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(212, 165, 116, 0.1);
+    color: #D4A574;
+    font-size: 14px;
+    cursor: help;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(212, 165, 116, 0.2);
+    z-index: 5;
+}
+
+.card-info-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.card-info-btn:hover {
+    background: rgba(212, 165, 116, 0.2);
+    transform: scale(1.1);
+}
+
+.card-info-btn::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    text-align: center;
+}
+
+.card-info-btn::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #333;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1001;
+}
+
+.card-info-btn:hover::after,
+.card-info-btn:hover::before {
+    opacity: 1;
+}
+
+.metric-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1;
+    letter-spacing: -0.5px;
+}
+
 .metric-label {
-    font-size: 0.875rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #333;
+    text-transform: capitalize;
+    letter-spacing: 0;
+    margin-top: 4px;
+}
+
+.metric-description {
+    font-size: 0.85rem;
     color: #999;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    line-height: 1.4;
+    margin-top: 4px;
+    padding-top: 0;
 }
 
 .utilization-bar {
@@ -654,34 +903,51 @@ include '../includes/header.php';
 
 .insights-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
     margin-bottom: 20px;
 }
 
 .alert {
-    padding: 20px 24px;
+    padding: 16px 18px;
     border-radius: 12px;
-    border: 1px solid;
+    border: 1.5px solid;
     background: white;
+    transition: all 0.2s ease;
+}
+
+.alert-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.alert-header i {
+    font-size: 16px;
+    flex-shrink: 0;
 }
 
 .alert h4 {
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
-    margin: 0 0 8px 0;
+    margin: 0;
 }
 
 .alert p {
     margin: 0;
-    font-size: 14px;
-    line-height: 1.6;
+    font-size: 12px;
+    line-height: 1.4;
 }
 
 .alert-success {
     border-color: #4CAF50;
     background-color: #f1f8f4;
     color: #2e7d32;
+}
+
+.alert-success .alert-header i {
+    color: #1b5e20;
 }
 
 .alert-success h4 {
@@ -694,6 +960,10 @@ include '../includes/header.php';
     color: #e65100;
 }
 
+.alert-warning .alert-header i {
+    color: #bf360c;
+}
+
 .alert-warning h4 {
     color: #bf360c;
 }
@@ -702,6 +972,10 @@ include '../includes/header.php';
     border-color: #2196F3;
     background-color: #e3f2fd;
     color: #1565c0;
+}
+
+.alert-info .alert-header i {
+    color: #0d47a1;
 }
 
 .alert-info h4 {
@@ -722,7 +996,7 @@ include '../includes/header.php';
     }
     
     .insights-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -745,6 +1019,10 @@ include '../includes/header.php';
         grid-template-columns: 1fr;
     }
     
+    .insights-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .table-responsive {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
@@ -757,10 +1035,6 @@ include '../includes/header.php';
     .staff-table th,
     .staff-table td {
         padding: 12px 16px;
-    }
-    
-    .insights-grid {
-        grid-template-columns: 1fr;
     }
 }
 </style>

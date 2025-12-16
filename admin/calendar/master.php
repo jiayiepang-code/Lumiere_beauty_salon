@@ -66,12 +66,12 @@ include '../includes/header.php';
                 <span style="font-size: 13px; color: #666;">Completed</span>
             </div>
             <div class="legend-item" style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 12px; height: 12px; border-radius: 50%; background: #F44336;"></div>
-                <span style="font-size: 13px; color: #666;">Cancelled/No-show</span>
+                <div style="width: 12px; height: 12px; border-radius: 50%; background: #D0021B;"></div>
+                <span style="font-size: 13px; color: #666;">Cancelled</span>
             </div>
             <div class="legend-item" style="display: flex; align-items: center; gap: 8px;">
                 <div style="width: 12px; height: 12px; border-radius: 50%; background: #9E9E9E;"></div>
-                <span style="font-size: 13px; color: #666;">Available</span>
+                <span style="font-size: 13px; color: #666;">No-show</span>
             </div>
         </div>
         

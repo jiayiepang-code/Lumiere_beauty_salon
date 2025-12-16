@@ -195,7 +195,7 @@ try {
                       AND bs.service_status = 'completed'
                   LEFT JOIN Booking b ON bs.booking_id = b.booking_id
                       AND b.booking_date BETWEEN ? AND ?
-                  WHERE s.is_active = 1
+                  WHERE s.is_active = 1 AND s.role != 'admin'
                   GROUP BY s.staff_email, s.first_name, s.last_name
                   ORDER BY revenue_generated DESC";
     

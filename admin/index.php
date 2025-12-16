@@ -152,45 +152,9 @@ include 'includes/header.php';
 <!-- Today's Appointments -->
 <div class="dashboard-section">
     <h2 class="section-title">Today's Appointments</h2>
-    <div class="appointments-list">
-        <div class="appointment-item">
-            <div class="appointment-avatar">AW</div>
-            <div class="appointment-info">
-                <h4>Amanda Wong</h4>
-                <p>Signature Blowout</p>
-            </div>
-            <div class="appointment-time">
-                <span class="time">10:00 - 10:45</span>
-                <span class="staff-name">Sarah Chen</span>
-            </div>
-            <span class="status-badge confirmed">confirmed</span>
-        </div>
-
-        <div class="appointment-item">
-            <div class="appointment-avatar">LT</div>
-            <div class="appointment-info">
-                <h4>Lisa Tan</h4>
-                <p>Balayage Highlights, Signature Blowout</p>
-            </div>
-            <div class="appointment-time">
-                <span class="time">11:00 - 14:45</span>
-                <span class="staff-name">Sarah Chen</span>
-            </div>
-            <span class="status-badge confirmed">confirmed</span>
-        </div>
-
-        <div class="appointment-item">
-            <div class="appointment-avatar">RL</div>
-            <div class="appointment-info">
-                <h4>Rachel Lim</h4>
-                <p>Gel Manicure</p>
-            </div>
-            <div class="appointment-time">
-                <span class="time">09:00 - 10:00</span>
-                <span class="staff-name">Aisha Rahman</span>
-            </div>
-            <span class="status-badge completed">completed</span>
-        </div>
+    <div class="appointments-list" id="appointments-list-container">
+        <!-- Loading state - will be replaced by JavaScript -->
+        <div class="loading-spinner">Loading appointments...</div>
     </div>
 </div>
 
@@ -199,67 +163,27 @@ include 'includes/header.php';
     <!-- Recent Activity -->
     <div class="dashboard-section">
         <h2 class="section-title">Recent Activity</h2>
-        <div class="activity-list">
-            <div class="activity-item">
-                <div class="activity-dot"></div>
-                <div class="activity-content">
-                    <h5>New booking</h5>
-                    <p>Amanda Wong - Signature Blowout</p>
-                </div>
-                <span class="activity-time">10 mins ago</span>
-            </div>
-
-            <div class="activity-item">
-                <div class="activity-dot"></div>
-                <div class="activity-content">
-                    <h5>Completed</h5>
-                    <p>Rachel Lim - Gel Manicure</p>
-                </div>
-                <span class="activity-time">1 hour ago</span>
-            </div>
-
-            <div class="activity-item">
-                <div class="activity-dot"></div>
-                <div class="activity-content">
-                    <h5>Cancellation</h5>
-                    <p>Michelle Yap - Precision Haircut</p>
-                </div>
-                <span class="activity-time">2 hours ago</span>
-            </div>
+        <div class="activity-list" id="activity-list-container">
+            <!-- Loading state - will be replaced by JavaScript -->
+            <div class="loading-spinner">Loading activity...</div>
         </div>
     </div>
 
     <!-- Top Services Today -->
     <div class="dashboard-section">
         <h2 class="section-title">Top Services Today</h2>
-        <div class="services-list">
-            <div class="service-item">
-                <h5>Signature Blowout</h5>
-                <div class="service-bar">
-                    <div class="bar-fill" style="width: 80%;"></div>
-                </div>
-                <span class="service-count">8</span>
-            </div>
-
-            <div class="service-item">
-                <h5>Gel Manicure</h5>
-                <div class="service-bar">
-                    <div class="bar-fill" style="width: 60%;"></div>
-                </div>
-                <span class="service-count">6</span>
-            </div>
-
-            <div class="service-item">
-                <h5>Balayage Highlights</h5>
-                <div class="service-bar">
-                    <div class="bar-fill" style="width: 40%;"></div>
-                </div>
-                <span class="service-count">4</span>
-            </div>
+        <div class="services-list" id="services-list-container">
+            <!-- Loading state - will be replaced by JavaScript -->
+            <div class="loading-spinner">Loading services...</div>
         </div>
     </div>
 </div>
 
+<script>
+    // Pass base path to dashboard.js
+    const DASHBOARD_BASE_PATH = '<?php echo isset($base_path) ? $base_path : ".."; ?>';
+</script>
+<script src="js/dashboard.js"></script>
 <?php
 // Include footer
 include 'includes/footer.php';
