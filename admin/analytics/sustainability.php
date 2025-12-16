@@ -174,6 +174,7 @@ try {
         
         $staff_breakdown[] = [
             'name' => htmlspecialchars($row['first_name'] . ' ' . $row['last_name'], ENT_QUOTES, 'UTF-8'),
+            'staff_email' => $row['staff_email'],
             'scheduled' => $scheduled,
             'booked' => $booked,
             'idle' => $idle,
@@ -215,6 +216,39 @@ try {
         $smart_suggestion = "Balanced efficiency. Maintain current scheduling.";
     } else {
         $smart_suggestion = "High utilization. Consider hiring help to prevent burnout.";
+    }
+
+    // ========== STAFF SCHEDULE SUMMARY DATA ==========
+    $schedule_summary = [];
+    foreach ($staff_breakdown as $staff) {
+        // Query for schedule details
+        $stmt = $conn->prepare("
+            SELECT 
+                COUNT(DISTINCT work_date) as days_worked,
+                COUNT(DISTINCT CASE WHEN status = 'leave' THEN work_date END) as leave_days
+            FROM Staff_Schedule
+            WHERE staff_email = ?
+            AND MONTH(work_date) = ?
+            AND YEAR(work_date) = ?
+        ");
+        $stmt->bind_param("sii", $staff['staff_email'], $selected_month, $selected_year);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $schedule_data = $result->fetch_assoc();
+        $stmt->close();
+        
+        $days_worked = (int)($schedule_data['days_worked'] ?? 0);
+        $leave_days = (int)($schedule_data['leave_days'] ?? 0);
+        $avg_hours = $days_worked > 0 ? $staff['scheduled'] / $days_worked : 0;
+        
+        $schedule_summary[] = [
+            'name' => $staff['name'],
+            'email' => $staff['staff_email'],
+            'scheduled' => $staff['scheduled'],
+            'days_worked' => $days_worked,
+            'leave_days' => $leave_days,
+            'avg_hours' => $avg_hours
+        ];
     }
 
     $conn->close();
@@ -522,6 +556,60 @@ include '../includes/header.php';
                                     </div>
                                 </td>
                             </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ========== STAFF WORK SCHEDULE SECTION ========== -->
+    <div class="staff-schedule-section" id="staff-work-schedule">
+        <div class="section-header">
+            <h2 class="section-title">Staff Work Schedule - <?php echo $current_month_display; ?></h2>
+            <?php
+            $last_day = date('t', strtotime($selected_year . '-' . $selected_month . '-01'));
+            $start_date = $selected_year . '-' . $selected_month . '-01';
+            $end_date = $selected_year . '-' . $selected_month . '-' . str_pad($last_day, 2, '0', STR_PAD_LEFT);
+            ?>
+            <a href="../calendar/master.php?view=month&start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>#staff-schedule" 
+               class="btn btn-secondary">
+                <i class="fas fa-calendar"></i> View Full Schedule in Master Calendar
+            </a>
+        </div>
+        
+        <div class="schedule-summary-table-wrapper">
+            <table class="schedule-summary-table">
+                <thead>
+                    <tr>
+                        <th>Staff Member</th>
+                        <th>Total Scheduled Hours</th>
+                        <th>Days Worked</th>
+                        <th>Leave Days</th>
+                        <th>Average Hours/Day</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($schedule_summary)): ?>
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: #666;">No schedule data available for selected period.</td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($schedule_summary as $summary): ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($summary['name'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?php echo number_format($summary['scheduled'], 2); ?>h</td>
+                            <td><?php echo $summary['days_worked']; ?></td>
+                            <td><?php echo $summary['leave_days']; ?></td>
+                            <td><?php echo number_format($summary['avg_hours'], 2); ?>h</td>
+                            <td>
+                                <a href="../calendar/master.php?view=month&start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>&staff_email=<?php echo urlencode($summary['email']); ?>#staff-schedule" 
+                                   class="schedule-link-btn">
+                                    <i class="fas fa-external-link-alt"></i> View Schedule
+                                </a>
+                            </td>
+                        </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </tbody>
@@ -1023,6 +1111,99 @@ include '../includes/header.php';
     margin-bottom: 20px;
 }
 
+/* ========== STAFF WORK SCHEDULE SECTION ========== */
+.staff-schedule-section {
+    margin-top: 40px;
+    margin-bottom: 32px;
+}
+
+.staff-schedule-section .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.staff-schedule-section .btn-secondary {
+    padding: 10px 20px;
+    background: #D4A574;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.staff-schedule-section .btn-secondary:hover {
+    background: #C4956A;
+    color: white;
+}
+
+.schedule-summary-table-wrapper {
+    overflow-x: auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
+}
+
+.schedule-summary-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.schedule-summary-table th {
+    padding: 14px 24px;
+    text-align: left;
+    background: #fafafa;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: #666;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.schedule-summary-table td {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 14px;
+    color: #333;
+}
+
+.schedule-summary-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.schedule-summary-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.schedule-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: #D4A574;
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: background 0.2s ease;
+}
+
+.schedule-link-btn:hover {
+    background: #C4956A;
+    color: white;
+}
+
 /* ========== RESPONSIVE DESIGN ========== */
 @media (max-width: 1024px) {
     .metrics-grid {
@@ -1071,6 +1252,27 @@ include '../includes/header.php';
     .staff-table th,
     .staff-table td {
         padding: 12px 16px;
+    }
+    
+    .staff-schedule-section .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .staff-schedule-section .btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .schedule-summary-table th,
+    .schedule-summary-table td {
+        padding: 12px 16px;
+        font-size: 13px;
+    }
+    
+    .schedule-link-btn {
+        padding: 5px 10px;
+        font-size: 12px;
     }
 }
 </style>

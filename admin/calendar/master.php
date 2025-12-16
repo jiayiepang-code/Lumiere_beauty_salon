@@ -94,7 +94,7 @@ include '../includes/header.php';
         </div>
         
         <div class="staff-schedule-section" id="staffScheduleSection" style="display: none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-            <h3 style="margin-bottom: 15px;">Staff Schedules</h3>
+            <h3 style="margin-bottom: 15px;" id="staff-schedule">Staff Schedules</h3>
             <div class="staff-schedule-grid" id="staffScheduleGrid">
                 <!-- Staff schedules will be dynamically generated -->
             </div>
@@ -114,6 +114,194 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
+<style>
+/* ========== STAFF SCHEDULE TIMELINE VIEW STYLES ========== */
+.staff-schedule-grid {
+    display: block;
+}
+
+.staff-schedule-timeline {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f0f0;
+    overflow-x: auto;
+}
+
+.timeline-header {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 12px;
+    position: sticky;
+    left: 0;
+    background: white;
+    z-index: 10;
+}
+
+.timeline-staff-label {
+    min-width: 150px;
+    max-width: 150px;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    color: #666;
+    background: #fafafa;
+    border-right: 1px solid #e0e0e0;
+    position: sticky;
+    left: 0;
+    z-index: 11;
+}
+
+.timeline-days {
+    display: flex;
+    flex: 1;
+}
+
+.timeline-day-header {
+    min-width: 50px;
+    width: 50px;
+    padding: 12px 8px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 12px;
+    color: #666;
+    background: #fafafa;
+    border-right: 1px solid #e0e0e0;
+}
+
+.timeline-row {
+    display: flex;
+    border-bottom: 1px solid #f0f0f0;
+    min-height: 60px;
+}
+
+.timeline-row:last-child {
+    border-bottom: none;
+}
+
+.timeline-staff-name {
+    min-width: 150px;
+    max-width: 150px;
+    padding: 16px;
+    font-weight: 500;
+    font-size: 14px;
+    color: #333;
+    background: #fafafa;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+}
+
+.timeline-day-cell {
+    min-width: 50px;
+    width: 50px;
+    padding: 4px;
+    border-right: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: relative;
+}
+
+.timeline-day-cell.today {
+    background: #fff9e6;
+}
+
+.timeline-block {
+    border-radius: 4px;
+    padding: 4px 6px;
+    font-size: 10px;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-height: 20px;
+}
+
+.timeline-block:hover {
+    opacity: 0.8;
+}
+
+.timeline-block.timeline-working {
+    background: linear-gradient(135deg, #D4A574, #C4956A);
+    color: white;
+    font-weight: 500;
+}
+
+.timeline-block.timeline-leave {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+    color: white;
+    font-weight: 500;
+}
+
+.timeline-block.timeline-empty {
+    background: transparent;
+    min-height: 20px;
+}
+
+.timeline-block-time {
+    font-size: 9px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.timeline-block-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-align: center;
+}
+
+/* Scrollbar styling for timeline */
+.staff-schedule-timeline::-webkit-scrollbar {
+    height: 8px;
+}
+
+.staff-schedule-timeline::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.staff-schedule-timeline::-webkit-scrollbar-thumb {
+    background: #D4A574;
+    border-radius: 4px;
+}
+
+.staff-schedule-timeline::-webkit-scrollbar-thumb:hover {
+    background: #C4956A;
+}
+
+@media (max-width: 768px) {
+    .timeline-staff-label,
+    .timeline-staff-name {
+        min-width: 120px;
+        max-width: 120px;
+        font-size: 12px;
+    }
+    
+    .timeline-day-header,
+    .timeline-day-cell {
+        min-width: 40px;
+        width: 40px;
+    }
+    
+    .timeline-block-time {
+        font-size: 8px;
+    }
+    
+    .timeline-block-label {
+        font-size: 8px;
+    }
+}
+</style>
 
 <script src="master.js"></script>
 

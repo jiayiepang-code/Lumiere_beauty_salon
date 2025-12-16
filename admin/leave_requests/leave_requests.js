@@ -107,9 +107,10 @@ async function fetchLeaveRequests() {
   try {
     // Construct URL with query parameters
     const monthParam = currentMonth === 0 ? "" : currentMonth;
-    const apiUrl = monthParam === "" 
-      ? `${LEAVE_REQUESTS_API_BASE}/list.php?year=${currentYear}`
-      : `${LEAVE_REQUESTS_API_BASE}/list.php?month=${monthParam}&year=${currentYear}`;
+    const apiUrl =
+      monthParam === ""
+        ? `${LEAVE_REQUESTS_API_BASE}/list.php?year=${currentYear}`
+        : `${LEAVE_REQUESTS_API_BASE}/list.php?month=${monthParam}&year=${currentYear}`;
 
     const response = await fetch(apiUrl, {
       credentials: "same-origin",
@@ -528,7 +529,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const yearFilter = document.getElementById("yearFilter");
 
       if (monthFilter) {
-        currentMonth = monthFilter.value === "" ? 0 : parseInt(monthFilter.value, 10);
+        currentMonth =
+          monthFilter.value === "" ? 0 : parseInt(monthFilter.value, 10);
       }
       if (yearFilter) {
         currentYear = parseInt(yearFilter.value, 10);

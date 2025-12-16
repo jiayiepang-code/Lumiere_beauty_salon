@@ -573,7 +573,15 @@ include '../includes/header.php';
                 </svg>
             </div>
             <h3 style="margin-bottom: 10px; color: #1f2937;">Delete Service?</h3>
-            <p style="color: #6b7280; margin-bottom: 25px;">Are you sure you want to delete <strong id="deleteServiceName"></strong>? This action cannot be undone.</p>
+            <p style="color: #6b7280; margin-bottom: 10px;">Are you sure you want to permanently delete <strong id="deleteServiceName"></strong>?</p>
+            <p style="color: #E76F51; font-weight: 500; margin-bottom: 10px; font-size: 0.95em;">This action is permanent and can impact reports and linked bookings.</p>
+            <p style="color: #6b7280; font-size: 0.9em; margin-bottom: 10px; margin-top: 15px;"><strong>Consequences:</strong></p>
+            <ul style="color: #6b7280; font-size: 0.9em; margin: 0 0 15px 20px; line-height: 1.6;">
+              <li>Revenue-by-service and trends may lose attribution.</li>
+              <li>Past booking lines may show missing service details if fully removed.</li>
+              <li>Future bookings (if any) must be cancelled or reassigned.</li>
+              <li>Database links that reference this service can break if permanently deleted.</li>
+            </ul>
             
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <button class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>

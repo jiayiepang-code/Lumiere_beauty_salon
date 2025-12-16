@@ -653,9 +653,19 @@ function openDeleteModal(serviceId) {
 
   Swal.fire({
     title: "Delete Service?",
-    html: `Are you sure you want to permanently delete <strong>"${escapeHtml(
-      service.service_name
-    )}"</strong>?<br><br><span style="color:#E76F51;">This action cannot be undone.</span>`,
+    html: `<div style="text-align: left;">
+      <p style="margin-bottom: 15px;">Are you sure you want to permanently delete <strong>"${escapeHtml(
+        service.service_name
+      )}"</strong>?</p>
+      <p style="margin-bottom: 15px; color: #E76F51; font-weight: 500;">This action is permanent and can impact reports and linked bookings.</p>
+      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;"><strong>Consequences:</strong></p>
+      <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; color: #666; line-height: 1.6;">
+        <li>Revenue-by-service and trends may lose attribution.</li>
+        <li>Past booking lines may show missing service details if fully removed.</li>
+        <li>Future bookings (if any) must be cancelled or reassigned.</li>
+        <li>Database links that reference this service can break if permanently deleted.</li>
+      </ul>
+    </div>`,
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#E76F51",
@@ -679,65 +689,120 @@ function closeDeleteModal() {
 async function confirmDelete() {
   if (!currentDeleteService) return;
 
-  // Show loading
-  Swal.fire({
-    title: "Deleting...",
-    text: "Please wait while we delete the service.",
-    allowOutsideClick: false,
-    allowEscapeKey: false,
-    showConfirmButton: false,
-    didOpen: () => {
-      Swal.showLoading();
+  // Step 1: Prompt for password
+  const { value: password } = await Swal.fire({
+    title: "Confirm Your Password",
+    input: "password",
+    inputLabel: "For security, please enter your admin password",
+    inputPlaceholder: "Enter your password",
+    inputAttributes: { autocapitalize: "off", autocorrect: "off" },
+    showCancelButton: true,
+    confirmButtonText: "Verify & Continue",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#c29076",
+    cancelButtonColor: "#6C757D",
+    inputValidator: (value) => {
+      if (!value) {
+        return "Password is required";
+      }
     },
   });
 
+  if (!password) return; // User cancelled
+
+  // Step 2: Call re-auth endpoint
   try {
-    const response = await fetch("../../api/admin/services/crud.php", {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
+    const reauthRes = await fetch("../../api/admin/security/reauth.php", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        service_id: currentDeleteService.service_id,
         csrf_token: CSRF_TOKEN,
+        password: password,
       }),
     });
 
-    const result = await response.json();
+    const reauth = await reauthRes.json();
 
-    if (result.success) {
+    if (!reauth.success) {
       Swal.fire({
-        title: "Deleted!",
-        text: result.message || "Service has been deleted successfully.",
-        icon: "success",
+        title: "Authorization Failed",
+        text: reauth.error?.message || "Incorrect password. Please try again.",
+        icon: "error",
+        confirmButtonColor: "#c29076",
+      });
+      return;
+    }
+
+    // Step 3: Proceed with delete - Show loading
+    Swal.fire({
+      title: "Deleting...",
+      text: "Please wait while we delete the service.",
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
+
+    try {
+      const response = await fetch("../../api/admin/services/crud.php", {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service_id: currentDeleteService.service_id,
+          csrf_token: CSRF_TOKEN,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        Swal.fire({
+          title: "Deleted!",
+          text: result.message || "Service has been deleted successfully.",
+          icon: "success",
+          confirmButtonColor: "#c29076" /* Brown Primary */,
+        });
+        closeDeleteModal();
+        loadServices();
+      } else {
+        if (result.has_bookings) {
+          Swal.fire({
+            title: "Cannot Delete",
+            text: result.message,
+            icon: "error",
+            confirmButtonColor: "#c29076" /* Brown Primary */,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: result.message || "An error occurred",
+            icon: "error",
+            confirmButtonColor: "#c29076" /* Brown Primary */,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      Swal.fire({
+        title: "Error!",
+        text: "An error occurred while deleting the service",
+        icon: "error",
         confirmButtonColor: "#c29076" /* Brown Primary */,
       });
-      closeDeleteModal();
-      loadServices();
-    } else {
-      if (result.has_bookings) {
-        Swal.fire({
-          title: "Cannot Delete",
-          text: result.message,
-          icon: "error",
-          confirmButtonColor: "#c29076" /* Brown Primary */,
-        });
-      } else {
-        Swal.fire({
-          title: "Error!",
-          text: result.message || "An error occurred",
-          icon: "error",
-          confirmButtonColor: "#c29076" /* Brown Primary */,
-        });
-      }
     }
   } catch (error) {
-    console.error("Error deleting service:", error);
+    console.error("Error verifying password:", error);
     Swal.fire({
-      title: "Error!",
-      text: "An error occurred while deleting the service",
+      title: "Error",
+      text: "Failed to verify password. Please try again.",
       icon: "error",
-      confirmButtonColor: "#c29076" /* Brown Primary */,
+      confirmButtonColor: "#c29076",
     });
   }
 }

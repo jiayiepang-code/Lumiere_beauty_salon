@@ -164,17 +164,78 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Initialize calendar
 async function initializeCalendar() {
-  // Set initial date to today
-  currentDate = new Date();
+  // Read URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const startDateParam = urlParams.get('start_date');
+  const endDateParam = urlParams.get('end_date');
+  const staffEmailParam = urlParams.get('staff_email');
+  const statusParam = urlParams.get('status');
+  const viewParam = urlParams.get('view');
+  
+  // Set initial date from URL or default to today
+  if (startDateParam) {
+    currentDate = new Date(startDateParam + 'T12:00:00');
+  } else {
+    currentDate = new Date();
+  }
+  
+  // Set view from URL or default to day
+  if (viewParam && ['day', 'week', 'month'].includes(viewParam)) {
+    currentView = viewParam;
+  } else {
+    currentView = 'day';
+  }
+  
+  // Update view buttons
+  document.getElementById('viewDay').classList.toggle('active', currentView === 'day');
+  document.getElementById('viewWeek').classList.toggle('active', currentView === 'week');
+  document.getElementById('viewMonth').classList.toggle('active', currentView === 'month');
+  
+  // Update button styles
+  ['viewDay', 'viewWeek', 'viewMonth'].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (btn.classList.contains('active')) {
+      btn.style.background = 'white';
+      btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+    } else {
+      btn.style.background = 'transparent';
+      btn.style.boxShadow = 'none';
+    }
+  });
 
   // Load staff list for filter
   await loadStaffList();
+  
+  // Set filters from URL
+  if (staffEmailParam) {
+    const staffFilter = document.getElementById('staffFilter');
+    if (staffFilter) {
+      staffFilter.value = staffEmailParam;
+    }
+  }
+  
+  if (statusParam) {
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+      statusFilter.value = statusParam;
+    }
+  }
 
   // Load calendar data
   await loadCalendarData();
 
   // Update current date display
   updateDateDisplay();
+  
+  // Scroll to staff schedule section if anchor is present
+  if (window.location.hash === '#staff-schedule') {
+    setTimeout(() => {
+      const section = document.getElementById('staffScheduleSection');
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 500);
+  }
 }
 
 // Load staff list for filter dropdown
@@ -711,11 +772,106 @@ function renderStaffSchedules() {
 
   section.style.display = "block";
 
-  let html = "";
-  staffSchedulesData.forEach((schedule) => {
-    const statusClass =
-      schedule.status === "working" ? "status-working" : "status-off";
-    html += `
+  // Timeline view for monthly view
+  if (currentView === "month") {
+    // Get month information
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    
+    // Group schedules by staff and by date
+    const schedulesByStaff = {};
+    const schedulesByDate = {};
+    
+    staffSchedulesData.forEach((schedule) => {
+      const staffKey = schedule.staff_email || schedule.staff_name;
+      const workDate = schedule.work_date || schedule.date || schedule.booking_date;
+      const dateObj = new Date(workDate + "T12:00:00");
+      const dayOfMonth = dateObj.getDate();
+      
+      // Only include schedules for the current month
+      if (dateObj.getFullYear() === year && dateObj.getMonth() === month) {
+        // Group by staff
+        if (!schedulesByStaff[staffKey]) {
+          schedulesByStaff[staffKey] = {
+            staff_name: schedule.staff_name,
+            schedules: {}
+          };
+        }
+        
+        // Group by day (in case multiple schedules per day)
+        if (!schedulesByStaff[staffKey].schedules[dayOfMonth]) {
+          schedulesByStaff[staffKey].schedules[dayOfMonth] = [];
+        }
+        schedulesByStaff[staffKey].schedules[dayOfMonth].push(schedule);
+      }
+    });
+
+    // Build timeline HTML
+    let html = '<div class="staff-schedule-timeline">';
+    
+    // Header row with day numbers
+    html += '<div class="timeline-header">';
+    html += '<div class="timeline-staff-label">Staff</div>';
+    html += '<div class="timeline-days">';
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(year, month, day);
+      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+      html += `<div class="timeline-day-header" title="${dayName}">${day}</div>`;
+    }
+    html += '</div></div>';
+    
+    // Staff rows
+    Object.values(schedulesByStaff).forEach((staffData) => {
+      html += '<div class="timeline-row">';
+      html += `<div class="timeline-staff-name">${escapeHtml(staffData.staff_name)}</div>`;
+      html += '<div class="timeline-days">';
+      
+      for (let day = 1; day <= daysInMonth; day++) {
+        const daySchedules = staffData.schedules[day] || [];
+        const dateObj = new Date(year, month, day);
+        const isToday = dateObj.toDateString() === new Date().toDateString();
+        
+        html += `<div class="timeline-day-cell ${isToday ? 'today' : ''}">`;
+        
+        if (daySchedules.length > 0) {
+          daySchedules.forEach((schedule) => {
+            const statusClass = schedule.status === "working" ? "status-working" : "status-leave";
+            const isLeave = schedule.status === "leave";
+            
+            if (isLeave) {
+              html += `<div class="timeline-block timeline-leave" title="On Leave - ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}">
+                <span class="timeline-block-label">Leave</span>
+              </div>`;
+            } else {
+              const startTime = formatTime(schedule.start_time);
+              const endTime = formatTime(schedule.end_time);
+              html += `<div class="timeline-block timeline-working" title="${startTime} - ${endTime} - ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}">
+                <span class="timeline-block-time">${startTime}</span>
+                <span class="timeline-block-time">${endTime}</span>
+              </div>`;
+            }
+          });
+        } else {
+          html += '<div class="timeline-block timeline-empty"></div>';
+        }
+        
+        html += '</div>';
+      }
+      
+      html += '</div></div>';
+    });
+    
+    html += '</div>';
+    grid.innerHTML = html;
+  } else {
+    // Original rendering for day/week view
+    let html = "";
+    staffSchedulesData.forEach((schedule) => {
+      const statusClass =
+        schedule.status === "working" ? "status-working" : "status-off";
+      html += `
             <div class="staff-schedule-card ${statusClass}">
                 <div class="staff-schedule-info">
                     <div class="staff-name">${escapeHtml(
@@ -727,18 +883,19 @@ function renderStaffSchedules() {
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                         ${formatTime(schedule.start_time)} - ${formatTime(
-      schedule.end_time
-    )}
+        schedule.end_time
+      )}
                     </div>
                 </div>
                 <span class="schedule-status-badge ${statusClass}">${
-      schedule.status === "working" ? "Working" : "Off"
-    }</span>
+        schedule.status === "working" ? "Working" : "Off"
+      }</span>
             </div>
         `;
-  });
+    });
 
-  grid.innerHTML = html;
+    grid.innerHTML = html;
+  }
 }
 
 // View booking details

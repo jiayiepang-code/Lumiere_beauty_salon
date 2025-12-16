@@ -41,6 +41,19 @@ try {
         ErrorHandler::sendError(ErrorHandler::INVALID_CSRF_TOKEN, 'Invalid CSRF token', null, 403);
     }
     
+    // Check if password re-authentication is valid (required for delete)
+    if (!isset($_SESSION['reauth_ok_until']) || time() > $_SESSION['reauth_ok_until']) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => [
+                'code' => 'REAUTH_REQUIRED',
+                'message' => 'Please confirm your password to proceed with deletion.'
+            ]
+        ]);
+        exit;
+    }
+    
     // Validate required fields
     if (empty($input['staff_email'])) {
         ErrorHandler::handleValidationError(['staff_email' => 'Email is required']);
@@ -98,6 +111,10 @@ try {
             $stmt->close();
             $conn->close();
             
+            // Clear reauth flag after successful delete
+            unset($_SESSION['reauth_ok_until']);
+            unset($_SESSION['reauth_action']);
+            
             http_response_code(200);
             echo json_encode([
                 'success' => true,
@@ -123,6 +140,10 @@ try {
         if ($stmt->execute()) {
             $stmt->close();
             $conn->close();
+            
+            // Clear reauth flag after successful delete
+            unset($_SESSION['reauth_ok_until']);
+            unset($_SESSION['reauth_action']);
             
             http_response_code(200);
             echo json_encode([

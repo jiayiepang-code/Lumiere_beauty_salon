@@ -266,6 +266,20 @@ try {
                 ErrorHandler::sendError(ErrorHandler::VALIDATION_ERROR, 'Service ID is required', ['service_id' => 'Service ID is required'], 400);
             }
             
+            // Check if password re-authentication is valid (required for delete)
+            if (!isset($_SESSION['reauth_ok_until']) || time() > $_SESSION['reauth_ok_until']) {
+                http_response_code(401);
+                echo json_encode([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'REAUTH_REQUIRED',
+                        'message' => 'Please confirm your password to proceed with deletion.'
+                    ]
+                ]);
+                $conn->close();
+                exit;
+            }
+            
             $service_id = $input['service_id'];
             
             // Check if service exists (service_id is VARCHAR(4))
@@ -324,6 +338,10 @@ try {
             if ($stmt->execute()) {
                 $stmt->close();
                 $conn->close();
+                
+                // Clear reauth flag after successful delete
+                unset($_SESSION['reauth_ok_until']);
+                unset($_SESSION['reauth_action']);
                 
                 http_response_code(200);
                 echo json_encode([

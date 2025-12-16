@@ -774,9 +774,19 @@ function openDeleteModal(staffEmail) {
 
   Swal.fire({
     title: "Delete Staff Member?",
-    html: `Are you sure you want to delete <strong>${escapeHtml(
-      member.name
-    )}</strong>?<br><br>This action cannot be undone.`,
+    html: `<div style="text-align: left;">
+      <p style="margin-bottom: 15px;">Are you sure you want to delete <strong>${escapeHtml(
+        member.name
+      )}</strong>?</p>
+      <p style="margin-bottom: 15px; color: #E76F51; font-weight: 500;">This action is permanent and can impact reports and linked bookings.</p>
+      <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;"><strong>Consequences:</strong></p>
+      <ul style="margin: 0; padding-left: 20px; font-size: 0.9em; color: #666; line-height: 1.6;">
+        <li>Historical reports/leaderboards may lose attribution for this staff.</li>
+        <li>Past bookings may show missing staff details if fully removed.</li>
+        <li>Future bookings may need reassignment or cancellation.</li>
+        <li>Database links that reference this staff can break if permanently deleted.</li>
+      </ul>
+    </div>`,
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#E76F51",
@@ -796,43 +806,98 @@ function openDeleteModal(staffEmail) {
 async function confirmDelete() {
   if (!currentStaffEmail) return;
 
+  // Step 1: Prompt for password
+  const { value: password } = await Swal.fire({
+    title: "Confirm Your Password",
+    input: "password",
+    inputLabel: "For security, please enter your admin password",
+    inputPlaceholder: "Enter your password",
+    inputAttributes: { autocapitalize: "off", autocorrect: "off" },
+    showCancelButton: true,
+    confirmButtonText: "Verify & Continue",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#c29076",
+    cancelButtonColor: "#6C757D",
+    inputValidator: (value) => {
+      if (!value) {
+        return "Password is required";
+      }
+    },
+  });
+
+  if (!password) return; // User cancelled
+
+  // Step 2: Call re-auth endpoint
   try {
-    const response = await fetch("../../api/admin/staff/delete.php", {
-      method: "DELETE",
+    const reauthRes = await fetch("../../api/admin/security/reauth.php", {
+      method: "POST",
       credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         csrf_token: CSRF_TOKEN,
-        staff_email: currentStaffEmail,
+        password: password,
       }),
     });
 
-    const data = await response.json();
+    const reauth = await reauthRes.json();
 
-    if (data.success) {
+    if (!reauth.success) {
       Swal.fire({
-        title: "Deleted!",
-        text: data.message || "Staff member has been deleted.",
-        icon: "success",
+        title: "Authorization Failed",
+        text: reauth.error?.message || "Incorrect password. Please try again.",
+        icon: "error",
         confirmButtonColor: "#c29076",
-      }).then(() => {
-        location.reload(); // Reload to show updated data
       });
-    } else {
+      return;
+    }
+
+    // Step 3: Proceed with delete
+    try {
+      const response = await fetch("../../api/admin/staff/delete.php", {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          csrf_token: CSRF_TOKEN,
+          staff_email: currentStaffEmail,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        Swal.fire({
+          title: "Deleted!",
+          text: data.message || "Staff member has been deleted.",
+          icon: "success",
+          confirmButtonColor: "#c29076",
+        }).then(() => {
+          location.reload();
+        });
+      } else {
+        Swal.fire({
+          title: "Error",
+          text: data.error?.message || "Failed to delete staff",
+          icon: "error",
+          confirmButtonColor: "#c29076",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting staff:", error);
       Swal.fire({
         title: "Error",
-        text: data.error?.message || "Failed to delete staff",
+        text: "Failed to delete staff. Please try again.",
         icon: "error",
         confirmButtonColor: "#c29076",
       });
     }
   } catch (error) {
-    console.error("Error deleting staff:", error);
+    console.error("Error verifying password:", error);
     Swal.fire({
       title: "Error",
-      text: "Failed to delete staff. Please try again.",
+      text: "Failed to verify password. Please try again.",
       icon: "error",
       confirmButtonColor: "#c29076",
     });
