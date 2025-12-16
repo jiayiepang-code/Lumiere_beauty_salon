@@ -1,4 +1,6 @@
 <?php
+// Use a distinct session name for admin to allow parallel logins
+session_name('admin_session');
 session_start();
 ?>
 <!DOCTYPE html>
@@ -63,7 +65,8 @@ session_start();
 
 </div>
 
-<script src="../js/script.js"></script>
+<!-- Load admin-specific login logic (defines validateAdminLogin, formatPhoneNumber, togglePass) -->
+<script src="./login.js"></script>
 </body>
 </html>
  

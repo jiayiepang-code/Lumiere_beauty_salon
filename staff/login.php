@@ -1,6 +1,8 @@
 <?php
 // Prevent stray output
 ob_start();
+// Use a distinct session name for staff to allow parallel logins
+session_name('staff_session');
 session_start();
 // PATH FIX: Point directly to config folder (No dots needed)
 require_once '../config/database.php';
@@ -157,7 +159,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 
-<script src="../js/script.js"></script>
+<!-- Load staff-specific login logic (defines validateStaffLogin, helpers) -->
+<script src="./login.js"></script>
 </body>
 </html>
 
