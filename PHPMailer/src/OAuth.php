@@ -128,12 +128,10 @@ class OAuth implements OAuthTokenProvider
             $this->oauthToken = $this->getToken();
         }
 
+        $tokenStr = method_exists($this->oauthToken, 'getToken') ? $this->oauthToken->getToken() : (string) $this->oauthToken;
+
         return base64_encode(
-            'user=' .
-            $this->oauthUserEmail .
-            "\001auth=Bearer " .
-            $this->oauthToken .
-            "\001\001"
+            'user=' . $this->oauthUserEmail . "\001auth=Bearer " . $tokenStr . "\001\001"
         );
     }
 }

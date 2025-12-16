@@ -3,129 +3,827 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Dashboard - Lumière Salon</title>
-    <link rel="stylesheet" href="staff.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Lumière - Staff Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --staff-color: #968073;
+            --accent-pink: #f2cbd7;
+            --success-color: #5cb85c;
+            --error-color: #d9534f;
+            --text-color: #5c4e4b;
+            --text-light: #8a8a95;
+            --border-color: #e6d9d2;
+            --bg-gradient: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
+            --shadow-soft: 0 4px 20px rgba(150, 128, 115, 0.1);
+            --radius-soft: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .logo-img {
+            width: 120px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .logo {
+            display: none; /* Hide text logo, show only image */
+        }
+
+        .nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            margin-left: 2rem;
+        }
+
+        .nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 0.25rem 0;
+            transition: color 0.2s ease;
+        }
+
+        .nav a::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: -6px;
+            width: 100%;
+            height: 2px;
+            background: var(--staff-color);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.25s ease;
+        }
+
+        .nav a:hover,
+        .nav a.active {
+            color: var(--staff-color);
+        }
+
+        .nav a:hover::after,
+        .nav a.active::after {
+            transform: scaleX(1);
+        }
+
+        .profile-section {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .notification-wrapper{
+            position:relative;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            width:40px;
+            height:40px;
+            border-radius:50%;
+            cursor:pointer;
+            transition:background .2s ease, transform .2s ease;
+        }
+        .notification-wrapper:hover{
+            background:#f4efeb;
+            transform:translateY(-1px);
+        }
+        .notification-bell{
+            font-size:1.1rem;
+            color:var(--text-color);
+        }
+        .notification-badge{
+            position:absolute;
+            top:6px;
+            right:6px;
+            background:#d9534f;
+            color:#fff;
+            border-radius:999px;
+            padding:2px 6px;
+            font-size:.7rem;
+            font-weight:700;
+            line-height:1;
+        }
+        .notification-dropdown{
+            position:absolute;
+            top:48px;
+            right:0;
+            background:#fff;
+            border:1px solid var(--border-color);
+            border-radius:var(--radius-soft);
+            box-shadow:var(--shadow-soft);
+            width:300px;
+            max-height:360px;
+            overflow-y:auto;
+            display:none;
+            z-index:900;
+        }
+        .notification-dropdown.active{display:block;}
+        .notification-header{
+            padding:0.75rem 1rem;
+            border-bottom:1px solid var(--border-color);
+            font-weight:600;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        .notification-list{list-style:none;margin:0;padding:0;}
+        .notification-item{
+            padding:0.85rem 1rem;
+            border-bottom:1px solid var(--border-color);
+            display:flex;
+            gap:0.6rem;
+        }
+        .notification-item:last-child{border-bottom:none;}
+        .notification-dot{
+            width:10px;
+            height:10px;
+            border-radius:50%;
+            background:#d9534f;
+            margin-top:5px;
+            flex-shrink:0;
+        }
+        .notification-content{
+            display:flex;
+            flex-direction:column;
+            gap:0.2rem;
+            font-size:0.95rem;
+            color:var(--text-color);
+        }
+        .notification-time{
+            font-size:0.8rem;
+            color:var(--text-light);
+        }
+        .notification-empty{
+            padding:1rem;
+            text-align:center;
+            color:var(--text-light);
+            font-size:0.95rem;
+        }
+
+        .profile-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.35rem 0.6rem;
+            border-radius: 999px;
+            transition: background 0.2s ease, transform 0.2s ease;
+        }
+
+        .profile-trigger:hover {
+            background: #f4efeb;
+            transform: translateY(-1px);
+        }
+
+        .avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: var(--staff-color);
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
+
+        .avatar.has-image img {
+            display: block;
+        }
+
+        .avatar.has-image .avatar-initials {
+            display: none;
+        }
+
+        .avatar-initials {
+            letter-spacing: 0.5px;
+        }
+
+        .profile-meta {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+
+        .profile-name {
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: capitalize;
+        }
+
+        .profile-role {
+            font-size: 0.9rem;
+            color: var(--staff-color);
+            background: var(--accent-pink);
+            padding: 0.1rem 0.5rem;
+            border-radius: 999px;
+            font-weight: 600;
+            width: fit-content;
+        }
+
+        .profile-dropdown {
+            position: absolute;
+            top: 55px;
+            right: 0;
+            background: white;
+            border-radius: var(--radius-soft);
+            box-shadow: var(--shadow-soft);
+            padding: 1rem;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            border: 1px solid var(--border-color);
+        }
+
+        .profile-dropdown.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+            color: var(--staff-color);
+        }
+        .profile-icon{
+            width:40px;
+            height:40px;
+            border-radius:50%;
+            background:var(--staff-color);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            color:#fff;
+            font-size:1.1rem;
+            cursor:pointer;
+            transition:all .2s ease;
+        }
+        .profile-icon:hover{
+            transform:translateY(-1px);
+            box-shadow:var(--shadow-soft);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 0.5rem 0 0.75rem;
+        }
+
+        .dropdown-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0.75rem 0.75rem;
+        }
+
+        .dropdown-header .avatar {
+            width: 48px;
+            height: 48px;
+        }
+
+        .dropdown-names {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dropdown-names .profile-name {
+            font-size: 1rem;
+        }
+
+        .logout-item {
+            color: var(--error-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 3rem 0;
+        }
+
+        .welcome-section {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .welcome-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--staff-color);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(150, 128, 115, 0.15);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--staff-color), #b8957b);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--staff-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .card-description {
+            color: var(--text-light);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            flex: 1;
+        }
+
+        .card-action {
+            background: var(--staff-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin-top: auto;
+            width: 100%;
+        }
+
+        .card-action:hover {
+            background: #7a6a5f;
+            transform: translateY(-2px);
+        }
+
+        /* Stats Section */
+        .stats-section {
+            background: white;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-color);
+        }
+
+        .stats-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            color: var(--staff-color);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            /* Changed to 3 columns to match the remaining 3 statistics */
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1.5rem;
+            border-radius: var(--radius-soft);
+            background: #faf8f6;
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--staff-color);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                /* Adjusted stats grid for mobile view */
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
-
-    <div class="dashboard-container">
-        
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <img src="../images/16.png" alt="Logo" class="logo">
-                <h3>Staff Portal</h3>
-            </div>
-
-            <ul class="nav-links">
-                <li class="active"><a href="#"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li><a href="#"><i class="fas fa-calendar-alt"></i> Schedule</a></li>
-                <li><a href="#"><i class="fas fa-users"></i> Clients</a></li>
-                <li><a href="#"><i class="fas fa-history"></i> History</a></li>
-            </ul>
-
-            <div class="sidebar-footer">
-                <div class="user-profile">
-                    <img src="../images/role-staff.png" alt="Staff">
-                    <div>
-                        <p class="user-name">Sarah Lee</p>
-                        <p class="user-role">Senior Stylist</p>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                    <div class="brand">
+                        <img src="../images/16.png" alt="Lumière logo" class="logo-img">
+                        <div class="logo">Lumière</div>
                     </div>
-                </div>
-                <button class="logout-btn" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i>
-                </button>
+                    <nav class="nav">
+                        <a href="dashboard.html" class="active">Home</a>
+                        <a href="schedule.html">Schedule</a>
+                        <a href="history.html">History</a>
+                        <a href="performance.html">Performance</a>
+                        <a href="apply-leave.html">Leave</a>
+                    </nav>
+                    <div class="profile-section">
+                        <div class="notification-wrapper" onclick="toggleNotifications(event)">
+                            <i class="fas fa-bell notification-bell"></i>
+                            <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <div class="notification-header">
+                                    <span>Notifications</span>
+                                    <span id="notificationCountText">0</span>
+                                </div>
+                                <ul class="notification-list" id="notificationList"></ul>
+                                <div class="notification-empty" id="notificationEmpty">No new notifications</div>
+                            </div>
+                        </div>
+                        <div class="profile-icon" onclick="toggleProfileDropdown()">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="profile-dropdown" id="profileDropdown">
+                            <div class="dropdown-header">
+                                <div class="avatar" id="dropdownAvatar">
+                                    <img id="dropdownAvatarImg" alt="Staff profile">
+                                    <span class="avatar-initials" id="dropdownAvatarPlaceholder">ST</span>
+                                </div>
+                                <div class="dropdown-names">
+                                    <span class="profile-name" id="dropdownName">Staff</span>
+                                    <span class="profile-role">Staff</span>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item" onclick="window.location.href='profile.html'">
+                                <i class="fas fa-user"></i>
+                                <span>My Profile</span>
+                            </div>
+                            <div class="dropdown-item" onclick="window.location.href='apply-leave.html'">
+                                <i class="fas fa-calendar-minus"></i>
+                                <span>Apply Leave</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item logout-item" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </div>
+                        </div>
+                    </div>
             </div>
-        </aside>
+        </div>
+    </header>
 
-        <main class="main-content">
+    <main class="main-content">
+        <div class="container">
+            <section class="welcome-section">
+                <h1 class="welcome-title" id="welcomeTitle">Welcome back!</h1>
+                <p class="welcome-subtitle">Manage your appointments, track your performance, and provide exceptional service to your clients.</p>
+            </section>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card" onclick="window.location.href='schedule.html'">
+                    <div class="card-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3 class="card-title">Schedule</h3>
+                    <p class="card-description">View and manage your appointments, update booking statuses, and stay organized with your client schedule.</p>
+                    <button class="card-action">View Schedule</button>
+                </div>
+
+                <div class="dashboard-card" onclick="window.location.href='performance.html'">
+                    <div class="card-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h3 class="card-title">Performance</h3>
+                    <p class="card-description">Track your monthly performance metrics, view completed appointments, and monitor your revenue generation.</p>
+                    <button class="card-action">View Performance</button>
+                </div>
+
+                <div class="dashboard-card" onclick="window.location.href='history.html'">
+                    <div class="card-icon">
+                        <i class="fas fa-history"></i>
+                    </div>
+                    <h3 class="card-title">History</h3>
+                    <p class="card-description">View your completed service sessions and track your past appointments history.</p>
+                    <button class="card-action">View History</button>
+                </div>
+            </div>
+
+            <section class="stats-section">
+                <h2 class="stats-title">Today's Overview</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-number" id="todayTotal">8</span>
+                        <span class="stat-label">Today's Appointments</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="todayCompleted">6</span>
+                        <span class="stat-label">Completed</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number" id="todayRemaining">2</span>
+                        <span class="stat-label">Remaining</span>
+                    </div>
+                    </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        function toggleProfileDropdown(event) {
+            event?.stopPropagation();
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        function toggleNotifications(event){
+            event?.stopPropagation();
+            const dropdown=document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        function setNotifications(notifications){
+            const badge=document.getElementById('notificationBadge');
+            const list=document.getElementById('notificationList');
+            const empty=document.getElementById('notificationEmpty');
+            const countText=document.getElementById('notificationCountText');
+
+            list.innerHTML='';
+            const unread=notifications.length;
+            countText.textContent=`${unread} new`;
+
+            if(unread>0){
+                badge.style.display='inline-block';
+                badge.textContent=unread>9?'9+':unread;
+                empty.style.display='none';
+                notifications.forEach(n=>{
+                    const li=document.createElement('li');
+                    li.className='notification-item';
+                    li.innerHTML=`
+                        <div class="notification-dot"></div>
+                        <div class="notification-content">
+                            <div>${n.message}</div>
+                            <div class="notification-time">${n.time}</div>
+                        </div>`;
+                    list.appendChild(li);
+                });
+            }else{
+                badge.style.display='none';
+                empty.style.display='block';
+            }
+        }
+
+        async function loadNotifications(){
+            try {
+                const response = await fetch('api/dashboard.php');
+                if (!response.ok) throw new Error('Failed to fetch notifications');
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Failed to fetch notifications');
+                
+                const notifications = data.notifications || [];
+                setNotifications(notifications);
+            } catch (error) {
+                console.warn('Error loading notifications:', error.message);
+                setNotifications([]);
+            }
+        }
+
+        async function loadDashboardStats() {
+            try {
+                const response = await fetch('api/dashboard.php');
+                if (!response.ok) throw new Error('Failed to fetch stats');
+                
+                const data = await response.json();
+                if (!data.success) throw new Error(data.error || 'Failed to fetch stats');
+                
+                const stats = data.stats || {};
+                document.getElementById('todayTotal').textContent = stats.today_total || 0;
+                document.getElementById('todayCompleted').textContent = stats.today_completed || 0;
+                document.getElementById('todayRemaining').textContent = stats.today_remaining || 0;
+            } catch (error) {
+                console.warn('Error loading dashboard stats:', error.message);
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const profileSection = document.querySelector('.profile-section');
+            const dropdown = document.getElementById('profileDropdown');
+            const notifyDropdown=document.getElementById('notificationDropdown');
             
-            <header>
-                <div>
-                    <h1>Good Morning, Sarah! ☀️</h1>
-                    <p>Here is your schedule for today.</p>
-                </div>
-                <div class="date-display" id="currentDate">Mon, 25 Nov</div>
-            </header>
+            if (!profileSection.contains(event.target)) {
+                dropdown.classList.remove('active');
+                notifyDropdown.classList.remove('active');
+            }
+        });
 
-            <div class="stats-grid">
-                <div class="card">
-                    <div class="card-info">
-                        <h3>8</h3>
-                        <p>Appointments</p>
-                    </div>
-                    <div class="card-icon" style="background:#e8f5e9; color:#2e7d32;">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-info">
-                        <h3>3</h3>
-                        <p>Pending</p>
-                    </div>
-                    <div class="card-icon" style="background:#fff3e0; color:#ef6c00;">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-info">
-                        <h3>12</h3>
-                        <p>Total Clients</p>
-                    </div>
-                    <div class="card-icon" style="background:#e3f2fd; color:#1565c0;">
-                        <i class="fas fa-user-friends"></i>
-                    </div>
-                </div>
-            </div>
+        async function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    const response = await fetch('api/logout.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        // Redirect to login page
+                        window.location.href = 'login.html';
+                    } else {
+                        alert('Logout failed. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    // Even if API fails, redirect to login
+                    window.location.href = 'login.html';
+                }
+            }
+        }
 
-            <div class="table-section">
-                <h2>Today's Appointments</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>Client Name</th>
-                            <th>Service</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>10:00 AM</td>
-                            <td>Alice Wong</td>
-                            <td>Haircut & Styling</td>
-                            <td><span class="status confirmed">Confirmed</span></td>
-                            <td><button class="btn-action">View</button></td>
-                        </tr>
-                        <tr>
-                            <td>11:30 AM</td>
-                            <td>Jessica Tan</td>
-                            <td>Manicure Gel</td>
-                            <td><span class="status pending">Pending</span></td>
-                            <td><button class="btn-action">Accept</button></td>
-                        </tr>
-                        <tr>
-                            <td>02:00 PM</td>
-                            <td>Ravi Kumar</td>
-                            <td>Deep Tissue Massage</td>
-                            <td><span class="status confirmed">Confirmed</span></td>
-                            <td><button class="btn-action">View</button></td>
-                        </tr>
-                        <tr>
-                            <td>04:00 PM</td>
-                            <td>Siti Aminah</td>
-                            <td>Facial Treatment</td>
-                            <td><span class="status completed">Completed</span></td>
-                            <td><button class="btn-action">View</button></td>
-                        </tr>
-                    </tbody>
-                </table> 
-            </div>
+        function resolveStaffImage(imagePath) {
+            if (!imagePath) return '';
+            if (imagePath.startsWith('http')) return imagePath;
+            if (imagePath.startsWith('/')) return '..' + imagePath;
+            if (imagePath.startsWith('staff/')) return '../' + imagePath;
+            return imagePath;
+        }
 
-        </main>
-    </div>
+        function getInitials(name) {
+            return name
+                .split(' ')
+                .filter(Boolean)
+                .map(part => part[0])
+                .join('')
+                .slice(0, 2)
+                .toUpperCase() || 'ST';
+        }
 
-    <script src="staff.js"></script>
+        function updateAvatar(avatarId, imgId, placeholderId, imagePath, initials) {
+            const avatar = document.getElementById(avatarId);
+            const img = document.getElementById(imgId);
+            const placeholder = document.getElementById(placeholderId);
+            if (!avatar || !img || !placeholder) return;
+
+            if (imagePath) {
+                img.src = resolveStaffImage(imagePath);
+                img.alt = 'Staff profile picture';
+                avatar.classList.add('has-image');
+            } else {
+                avatar.classList.remove('has-image');
+            }
+
+            placeholder.textContent = initials;
+        }
+
+        function setProfileName(name) {
+            const safeName = name || 'Staff';
+            const welcomeEl = document.getElementById('welcomeTitle');
+            if (welcomeEl) welcomeEl.textContent = `Welcome back, ${safeName}!`;
+            const dropdownNameEl = document.getElementById('dropdownName');
+            if (dropdownNameEl) dropdownNameEl.textContent = safeName;
+        }
+
+        async function loadStaffProfile() {
+            const fallbackName = 'Staff';
+            try {
+                const response = await fetch('api/staff.php');
+                if (!response.ok) throw new Error('Unable to fetch staff profile');
+
+                const data = await response.json();
+                if (!data.success || !data.staff) throw new Error('No staff data');
+
+                const { first_name, last_name, staff_image } = data.staff;
+                const fullName = [first_name, last_name].filter(Boolean).join(' ') || fallbackName;
+                const initials = getInitials(fullName);
+
+                setProfileName(fullName);
+                updateAvatar('dropdownAvatar', 'dropdownAvatarImg', 'dropdownAvatarPlaceholder', staff_image, initials);
+            } catch (error) {
+                console.warn(error.message);
+                const initials = getInitials(fallbackName);
+                setProfileName(fallbackName);
+                updateAvatar('dropdownAvatar', 'dropdownAvatarImg', 'dropdownAvatarPlaceholder', '', initials);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStaffProfile();
+            loadDashboardStats();
+            loadNotifications();
+        });
+    </script>
 </body>
 </html>

@@ -1,70 +1,118 @@
 /* ========================
    1. FORM SWITCHING & NAVIGATION
    ======================== */
+
 let currentStep = 1;
 
 // Switch to Customer Login
 function showLogin() {
-    // Hide register form
+    // 1. Show Login Form, Hide others
     document.getElementById('authForm').style.display = 'none';
-
-    // Show user login form
     document.getElementById('loginForm').style.display = 'block';
 
-    // Show the floating buttons (optional)
-    document.querySelector('.floating-btn-group').style.display = 'flex';
+    // 2. Update Tabs (The Underline)
+    // NOTE: Ensure your HTML <a> tags have id="tab-register" and id="tab-login"
+    const tabReg = document.getElementById('tab-register');
+    const tabLog = document.getElementById('tab-login');
+    
+    if (tabReg) tabReg.classList.remove('active');
+    if (tabLog) tabLog.classList.add('active');
+
+    // 3. Show floating buttons (Staff/Admin)
+    const floatGroup = document.querySelector('.floating-btn-group');
+    if (floatGroup) floatGroup.style.display = 'flex';
 }
 
 // Switch to Customer Register
 function showRegister() {
-    hideAllForms();
+    // 1. Show Register Form, Hide others
+    document.getElementById('loginForm').style.display = 'none';
     document.getElementById('authForm').style.display = 'block';
-    document.querySelector('.floating-btn-group').style.display = 'flex';
+
+    // 2. Update Tabs (The Underline)
+    const tabReg = document.getElementById('tab-register');
+    const tabLog = document.getElementById('tab-login');
+
+    if (tabLog) tabLog.classList.remove('active');
+    if (tabReg) tabReg.classList.add('active');
+
+    // 3. Show floating buttons
+    const floatGroup = document.querySelector('.floating-btn-group');
+    if (floatGroup) floatGroup.style.display = 'flex';
+    
+    // 4. Reset to Step 1
     goToStep(1);
 }
 
 // Switch to Staff Portal
 function showStaffLogin() {
-    hideAllForms();
-    document.getElementById('staffForm').style.display = 'block';
-    document.querySelector('.floating-btn-group').style.display = 'none';
+    // Navigate to separate Staff Login page
+    window.location.href = "../staff/login.php";
 }
 
 // Switch to Admin Portal
 function showAdminLogin() {
-    hideAllForms();
-    document.getElementById('adminForm').style.display = 'block';
-    document.querySelector('.floating-btn-group').style.display = 'none';
+    // Navigate to separate Admin Login page
+    window.location.href = "../admin/login.php";
 }
 
-// Return Button Logic
-function returnToCustomer() { showRegister(); }
-
-// Hide everything
-function hideAllForms() {
-    document.getElementById('authForm').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'none';
-}
-// Step navigation
+// Step navigation for Register Stepper
 function goToStep(step) {
+    // Remove active class from all steps
     document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active-step'));
-    document.getElementById(`step-group-${step}`).classList.add('active-step');
-    document.getElementById('stepCount').innerText = step;
+    
+    // Add active class to target step
+    const targetStep = document.getElementById(`step-group-${step}`);
+    if (targetStep) targetStep.classList.add('active-step');
+    
+    // Update text "Step X of 4"
+    const stepCount = document.getElementById('stepCount');
+    if (stepCount) stepCount.innerText = step;
+    
+    // If moving to step 2, disable Next Step button until password is strong
+    if (step === 2) {
+        const nextStepBtn = document.querySelector('#step-group-2 .submit-btn');
+        if (nextStepBtn) {
+            nextStepBtn.disabled = true;
+            nextStepBtn.style.opacity = '0.5';
+            nextStepBtn.style.cursor = 'not-allowed';
+            // Reset password strength check
+            isPasswordStrong = false;
+            passwordStrength = 'weak';
+        }
+    }
+    
     updateStepperVisuals(step);
     currentStep = step;
 }
 
+// Updates the circles (1-2-3-4) at the top
 function updateStepperVisuals(step) {
     for (let i = 1; i <= 4; i++) {
         const circle = document.getElementById(`circle-${i}`);
+        if (!circle) continue;
+
         circle.classList.remove('step-active', 'step-done');
-        circle.innerHTML = `<span class="step-number">${i}</span>`;
+        
+        // Get or create the step-number span
+        let stepNumber = circle.querySelector('.step-number');
+        if (!stepNumber) {
+            stepNumber = document.createElement('span');
+            stepNumber.className = 'step-number';
+            circle.appendChild(stepNumber);
+        }
 
         if (i < step) {
+            // Completed steps get a checkmark
             circle.classList.add('step-done');
-            circle.innerHTML = `<i class="fas fa-check"></i>`;
+            stepNumber.textContent = '✔';
         } else if (i === step) {
+            // Current step gets highlighted
             circle.classList.add('step-active');
+            stepNumber.textContent = i;
+        } else {
+            // Future steps show number
+            stepNumber.textContent = i;
         }
     }
 }
@@ -93,7 +141,7 @@ function validateStep1() {
     // Check if length is valid (9 to 12 digits)
     if (cleanPhone.length < 9 || cleanPhone.length > 12) {
         errorBox.style.display = 'block';
-        errorBox.innerText = "Invalid phone number length. Please enter valid digits.";
+        errorBox.innerText = "Invalid phone number length.";
         return;
     }
 
@@ -102,126 +150,168 @@ function validateStep1() {
     goToStep(2);
 }
 
-// STEP 2
+// STEP 2: Email & Password
 function validateStep2() {
     const email = document.getElementById('email');
     const pass = document.getElementById('password');
+    const confirmPass = document.getElementById('confirmPassword');
     const errorBox = document.getElementById('step2Error');
-    const strengthText = document.getElementById('strengthText').innerText;
-
-    if (!email.checkValidity()) return email.reportValidity();
-    if (pass.value === "") return pass.reportValidity();
-
-    if (strengthText !== "Strong") {
+    
+    // Browser default validation check
+    if (!email.checkValidity()) {
+        return email.reportValidity();
+    }
+    if (pass.value === "") {
         errorBox.style.display = 'block';
-        errorBox.innerText = "Password requirements not met.";
+        errorBox.innerText = "Please enter a password.";
+        return;
+    }
+    if (confirmPass.value === "") {
+        errorBox.style.display = 'block';
+        errorBox.innerText = "Please confirm your password.";
+        return;
+    }
+
+    // Check password strength - must be STRONG (all 5 rules met)
+    if (!isPasswordStrong || passwordStrength !== 'strong') {
+        errorBox.style.display = 'block';
+        errorBox.innerText = "Password must be STRONG. Please ensure all password requirements are met: at least 8 characters, one uppercase letter, one lowercase letter, one number, and one symbol.";
+        return;
+    }
+
+    // Check if passwords match
+    if (pass.value !== confirmPass.value) {
+        errorBox.style.display = 'block';
+        errorBox.innerText = "Password and Confirm Password do not match.";
+        return;
+    }
+
+    errorBox.style.display = 'none';
+    goToStep(3);
+
+    // Focus on CAPTCHA input if exists
+    setTimeout(() => {
+        const c = document.getElementById('registerCaptchaInput');
+        if (c) c.focus();
+    }, 300);
+}
+
+// STEP 3: CAPTCHA Verification & Register
+function validateStep3() {
+    const captchaInput = document.getElementById('registerCaptchaInput');
+    const errorBox = document.getElementById('step3Error');
+    const codeEl = document.getElementById('registerCaptchaCode');
+
+    if (!captchaInput || !codeEl) {
+        // Fallback: if elements missing, just move on
+        goToStep(4);
+        return;
+    }
+
+    // Case-sensitive CAPTCHA validation
+    const expected = String(codeEl.dataset.code || '').trim();
+    const entered = captchaInput.value.trim();
+
+    if (entered === '') {
+        errorBox.style.display = 'block';
+        errorBox.innerText = "Please enter the CAPTCHA.";
+        return;
+    }
+
+    if (entered !== expected) {
+        errorBox.style.display = 'block';
+        errorBox.innerText = "Incorrect CAPTCHA. Please check the case of letters.";
         return;
     }
 
     errorBox.style.display = 'none';
 
-    const btn = document.querySelector('#step-group-2 .submit-btn');
-    const oldText = btn.innerText;
-    btn.innerText = "Sending OTP...";
+    // ✅ SIMULATE REGISTRATION SUCCESS
+    goToStep(4); // Show "Registration Successful" view
 
+    // AFTER 2 SECONDS, SWITCH TO LOGIN FORM with prefilled phone
     setTimeout(() => {
-        btn.innerText = oldText;
-        goToStep(3);
-        setTimeout(() => document.getElementById('otp1').focus(), 400);
-    }, 1000);
-}
-
-// STEP 3: OTP Verification & Finalize Register
-function validateStep3() {
-    const loader = document.getElementById('loader');
-    loader.style.display = 'block';
-
-    // Simulate OTP Network Request
-    setTimeout(() => {
-        loader.style.display = 'none';
-        goToStep(4); // Show "Registration Successful" screen
-
-        // AFTER 2 SECONDS, SWITCH TO LOGIN FORM
-        setTimeout(() => {
-            // 1. Get the phone number they just registered with
-            const registeredPhone = document.getElementById('phone').value;
-            
-            // 2. Pre-fill the Login Phone field for them (Better UX)
-            document.getElementById('loginPhone').value = registeredPhone;
-
-            // 3. Switch to the Login View
-            showLogin(); 
-            
-            // Optional: Alert them
-            // alert("Registration complete! Please log in.");
-        }, 2000);
-    }, 1500);
+        const registeredPhone = document.getElementById('phone').value;
+        const loginPhone = document.getElementById('loginPhone');
+        if (loginPhone) {
+            loginPhone.value = registeredPhone;
+        }
+        showLogin();
+    }, 2000);
 }
 
 /* ========================
    3. PASSWORD SYSTEM
    ======================== */
 
-// eye toggle for user
+// Register Password Toggle
 function togglePassword() {
     const input = document.getElementById('password');
     const icon = document.getElementById('passwordToggle');
+    toggleInputType(input, icon);
+}
 
+// Confirm Password Toggle
+function toggleConfirmPassword() {
+    const input = document.getElementById("confirmPassword");
+    const icon = document.getElementById("confirmPasswordToggle");
+    toggleInputType(input, icon);
+}
+
+// Login Password Toggle
+function toggleLoginPassword() {
+    const input = document.getElementById("loginPassword");
+    const icon = document.getElementById("loginPasswordToggle");
+    toggleInputType(input, icon);
+}
+
+// Helper to switch type and icon
+function toggleInputType(input, icon) {
+    if (!input) return;
+    
     if (input.type === "password") {
         input.type = "text";
-        icon.src = "../images/73.png";
+        if (icon) icon.src = "../images/73.png"; // Change to 'Eye Slash' or Open Eye
     } else {
         input.type = "password";
-        icon.src = "../images/74.png";
+        if (icon) icon.src = "../images/74.png"; // Change to 'Eye' or Closed Eye
     }
 }
 
-// Admin & staff login password eye icon
-function togglePass(inputId) {
-    const input = document.getElementById(inputId);
-    const icon = input.parentElement.querySelector('.password-toggle');
-
-    if (input.type === "password") {
-        // 1. Show Password
-        input.type = "text";
-        
-        // 2. Change Icon to Eye Slash (73.png)
-        // This clever trick replaces only the filename, keeping the path perfect
-        icon.src = icon.src.replace('74.png', '73.png'); 
-        
-    } else {
-        // 1. Hide Password
-        input.type = "password";
-        
-        // 2. Change Icon back to Eye (74.png)
-        icon.src = icon.src.replace('73.png', '74.png'); 
-    }
-}
-
-// Popup Logic
+// Password Hints Popup Logic
 const passwordInput = document.getElementById("password");
 const passwordHints = document.getElementById("passwordHints");
 
-passwordInput.addEventListener("focus", () => {
-    passwordHints.style.display = "block";
-});
+if (passwordInput && passwordHints) {
+    passwordInput.addEventListener("focus", () => {
+        passwordHints.style.display = "block";
+    });
 
-document.addEventListener("click", (e) => {
-    if (!passwordInput.contains(e.target) && !passwordHints.contains(e.target)) {
-        passwordHints.style.display = "none";
-    }
-});
+    document.addEventListener("click", (e) => {
+        // Hide hints if clicking outside input and hints box
+        if (!passwordInput.contains(e.target) && !passwordHints.contains(e.target)) {
+            passwordHints.style.display = "none";
+        }
+    });
+}
 
-// Strength Updates
+// Global variable to store password strength
+let passwordStrength = 'weak';
+let isPasswordStrong = false;
+
+// Password Strength Checker
 function checkPasswordRules() {
     const password = passwordInput.value;
     const bar = document.getElementById('strengthBar');
     const text = document.getElementById('strengthText');
+    const strengthContainer = document.querySelector('.password-strength');
+    const nextStepBtn = document.querySelector('#step-group-2 .submit-btn');
 
-    // 🔥 Always show the bar & strength label when typing
-    document.querySelector('.password-strength').style.display = "block";
-    text.style.display = "block";
+    // Show bars
+    if (strengthContainer) strengthContainer.style.display = "block";
+    if (text) text.style.display = "block";
 
+    // Rules
     const ruleLength = document.getElementById("ruleLength");
     const ruleUpper = document.getElementById("ruleUpper");
     const ruleLower = document.getElementById("ruleLower");
@@ -234,41 +324,74 @@ function checkPasswordRules() {
     let hasNumber = /\d/.test(password);
     let hasSpecial = /[@$!%*?&_]/.test(password);
 
-    ruleLength.classList.toggle("valid", hasLength);
-    ruleUpper.classList.toggle("valid", hasUpper);
-    ruleLower.classList.toggle("valid", hasLower);
-    ruleNumber.classList.toggle("valid", hasNumber);
-    ruleSpecial.classList.toggle("valid", hasSpecial);
+    // Toggle checkmark/color classes
+    if(ruleLength) ruleLength.classList.toggle("valid", hasLength);
+    if(ruleUpper) ruleUpper.classList.toggle("valid", hasUpper);
+    if(ruleLower) ruleLower.classList.toggle("valid", hasLower);
+    if(ruleNumber) ruleNumber.classList.toggle("valid", hasNumber);
+    if(ruleSpecial) ruleSpecial.classList.toggle("valid", hasSpecial);
 
     let validCount = hasLength + hasUpper + hasLower + hasNumber + hasSpecial;
 
+    // Reset Classes
     bar.className = 'password-strength-bar';
+
+    // Check if ALL 5 rules are met (strong password)
+    isPasswordStrong = validCount === 5;
 
     if (validCount <= 1) {
         bar.style.width = '25%';
         bar.classList.add('strength-weak');
         text.innerText = "Weak";
         text.style.color = "#d9534f";
+        passwordStrength = 'weak';
     } else if (validCount === 2) {
         bar.style.width = '50%';
         bar.classList.add('strength-fair');
         text.innerText = "Fair";
         text.style.color = "#f0ad4e";
+        passwordStrength = 'fair';
     } else if (validCount === 3) {
         bar.style.width = '75%';
         bar.classList.add('strength-good');
         text.innerText = "Good";
         text.style.color = "#5bc0de";
-    } else if (validCount >= 4) {
+        passwordStrength = 'good';
+    } else if (validCount === 4) {
+        bar.style.width = '90%';
+        bar.classList.add('strength-good');
+        text.innerText = "Good";
+        text.style.color = "#5bc0de";
+        passwordStrength = 'good';
+    } else if (validCount === 5) {
         bar.style.width = '100%';
         bar.classList.add('strength-strong');
         text.innerText = "Strong";
         text.style.color = "#5cb85c";
+        passwordStrength = 'strong';
+    }
+
+    // Enable/disable Next Step button based on password strength
+    if (nextStepBtn) {
+        if (isPasswordStrong) {
+            nextStepBtn.disabled = false;
+            nextStepBtn.style.opacity = '1';
+            nextStepBtn.style.cursor = 'pointer';
+        } else {
+            nextStepBtn.disabled = true;
+            nextStepBtn.style.opacity = '0.5';
+            nextStepBtn.style.cursor = 'not-allowed';
+        }
     }
 }
 
+// Remember Me Checkbox
+function toggleCheckbox(box) {
+    box.classList.toggle("checked");
+}
+
 /* ========================
-   4. UTILITIES
+   4. UTILITIES & LOGINS
    ======================== */
 
 // --- PHONE NUMBER FORMATTER ---
@@ -276,19 +399,16 @@ function formatPhoneNumber(input) {
     // 1. Remove all non-numbers and remove leading '0'
     let value = input.value.replace(/\D/g, '').replace(/^0+/, '');
 
-    // 2. Limit to 11 digits (max Malaysian mobile length without 0)
+    // 2. Limit to 11 digits
     if (value.length > 11) {
         value = value.substring(0, 11);
     }
 
     // 3. Apply Formatting (XX XXX XXXX)
     let formattedValue = value;
-    
     if (value.length > 5) {
-        // If long enough, format as: 12 345 6789
         formattedValue = value.substring(0, 2) + " " + value.substring(2, 5) + " " + value.substring(5);
     } else if (value.length > 2) {
-        // If medium length, format as: 12 345
         formattedValue = value.substring(0, 2) + " " + value.substring(2);
     }
 
@@ -296,68 +416,47 @@ function formatPhoneNumber(input) {
     input.value = formattedValue;
 }
 
-function toggleLoginPassword() {
-    const input = document.getElementById("loginPassword");
-    input.type = input.type === "password" ? "text" : "password";
-}
-
-function toggleStaffPassword() {
-    const input = document.getElementById("staffPass");
-    input.type = input.type === "password" ? "text" : "password";
-}
-
-function toggleAdminPassword() {
-    const input = document.getElementById("adminPass");
-    input.type = input.type === "password" ? "text" : "password";
-}
-
-function toggleCheckbox(el) { el.classList.toggle('checked'); }
-
-function handleOtpInput(input, nextId) {
-    if (input.value.length === 1 && nextId) {
-        document.getElementById(nextId).focus();
-    }
-}
-
 // CUSTOMER LOGIN LOGIC
 function validateCustomerLogin() {
-    const phone = document.getElementById('loginPhone').value;
-    const pass = document.getElementById('loginPassword').value;
+    const phone = document.getElementById('loginPhone').value.trim();
+    const pass = document.getElementById('loginPassword').value.trim();
 
+    // 1. Basic validation
     if (!phone || !pass) {
         alert("Please enter your phone and password.");
         return;
     }
 
-    // 1. Simulate Login Check (You can add real logic later)
-    
-    // 2. REDIRECT to the Dashboard folder
-    // Make sure you have the folder "user" and file "dashboard.html" created!
-    window.location.href = "user/dashboard.html"; 
-}
+    // 2. Get redirect target from hidden input
+    const redirectInput = document.getElementById('redirectUrl');
+    let targetUrl = "../user/home.php"; // fallback
 
-function validateStaffLogin() {
-    const id = document.getElementById('staffId').value;
-    const pass = document.getElementById('staffPass').value;
-
-    if (id === "" || pass === "") {
-        alert("Please enter Staff ID and Password.");
-        return;
+    if (redirectInput && redirectInput.value) {
+        targetUrl = redirectInput.value;
     }
 
-    // Change this to your homepage
-    window.location.href = "home.html"; 
+    // 3. A successful login
+    fetch("login-handler.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `phone=${phone}&password=${pass}`
+})
+.then(res => res.json())
+.then(data => {
+    if (data.success) {
+        window.location.href = targetUrl;
+    } else {
+        alert(data.message);
+    }
+});
 }
 
-function validateAdminLogin() {
-    const id = document.getElementById("adminId").value;
-    const pass = document.getElementById("adminPass").value;
-
-    if (!id || !pass) {
-        alert("Please enter Admin ID and Password.");
-        return;
+// CAPTCHA Refresh
+function refreshRegisterCaptcha(event) {
+    if (event) {
+        event.preventDefault();     // Stop form submit
+        event.stopPropagation();    
     }
-
-    // Change this to your homepage
-    window.location.href = "home.html";
+    // Reload page to generate new CAPTCHA via PHP
+    window.location.reload();
 }

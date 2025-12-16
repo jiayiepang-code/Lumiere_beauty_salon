@@ -1,0 +1,926 @@
+/* ===========================
+   HOME PAGE BASE RESET / BODY
+   =========================== */
+
+body {
+    margin: 0;
+    padding: 0;
+    /* OVERRIDE style.css for home page: */
+    display: block;          /* was flex from style.css */
+    overflow-x: hidden;      /* allow vertical scroll */
+    overflow-y: auto;
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
+    color: #555;
+    font-family: "Snell Roundhand","Playfair Display","Lato","Segoe UI","Didot", cursive, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Wrapper */
+.page-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+}
+
+/* ===========================
+   HEADER + NAV
+   =========================== */
+
+.main-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 18px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.06);
+}
+
+/* So content won't hide under header */
+body {
+    padding-top: 90px;   /* matches header height */
+}
+
+.logo-area {
+    display: flex;
+    align-items: center;
+}
+
+.header-logo {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+}
+
+.main-nav {
+    display: flex;
+    gap: 40px;
+    font-size: 16px;
+    justify-content: center;
+    flex: 1;
+}
+
+.nav-link,
+.dropdown-toggle {
+    text-decoration: none;
+    color: #6b5043;
+    position: relative;
+    padding-bottom: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.nav-link.active,
+.nav-link:hover,
+.dropdown-toggle:hover {
+    color: #c29076;
+}
+
+/* Underline for regular nav links (not dropdown) */
+.nav-link:not(.dropdown-toggle).active::after,
+.nav-link:not(.dropdown-toggle):hover::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 26px;
+    height: 2px;
+    border-radius: 999px;
+    background: #c29076;
+}
+
+/* Dropdown arrow for Meet The Team - always visible */
+.dropdown-toggle::after {
+    content: " ▾";
+    display: inline-block;
+    margin-left: 4px;
+    font-size: 0.9em;
+    position: relative;
+    background: none !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    left: auto !important;
+    bottom: auto !important;
+}
+
+/* Ensure dropdown arrow stays visible on hover */
+.dropdown-toggle:hover::after {
+    content: " ▾" !important;
+    display: inline-block !important;
+    margin-left: 4px;
+    font-size: 0.9em;
+    position: relative !important;
+    background: none !important;
+    width: auto !important;
+    height: auto !important;
+    border-radius: 0 !important;
+    left: auto !important;
+    bottom: auto !important;
+}
+
+/* Dropdown container */
+.nav-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 26px;
+    left: 0;
+    background: white;
+    border: 1px solid #e6d9d2;
+    border-radius: 10px;
+    padding: 12px 0;
+    width: 190px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    display: none;
+    z-index: 1050;
+}
+
+/* Show menu on hover */
+.nav-dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 10px 16px;
+    color: #8a766e;
+    text-decoration: none;
+    font-size: 15px;
+    transition: background 0.2s ease;
+}
+
+.dropdown-menu a:hover {
+    background: #f5ece8;
+    color: #c29076;
+}
+
+/* BOOK NOW BUTTON */
+.book-btn {
+    padding: 12px 32px;
+    background: #c29076;
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 16px;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.book-btn:hover {
+    background: #ad7c65;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+
+/* PROFILE BUTTON + ICON */
+.profile-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+}
+
+/* Profile button as link */
+a.profile-btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.header-profile-img {
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    filter: invert(63%) sepia(11%) saturate(1319%) hue-rotate(338deg) brightness(92%) contrast(86%);
+    transition: transform 0.2s ease;
+}
+
+.profile-btn:hover .header-profile-img,
+a.profile-btn:hover .header-profile-img {
+    transform: scale(1.1);
+}
+
+/* Profile panel hover support */
+.profile-btn {
+    position: relative;
+}
+
+/* Show panel on hover (CSS fallback, JS handles the main logic) */
+.profile-btn:hover ~ .profile-panel,
+.profile-panel:hover {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) !important;
+    pointer-events: auto !important;
+}
+
+/* ===========================
+   PROFILE PANEL
+   =========================== */
+/* Profile panel styles are defined in style.css for consistency across all pages */
+/* Only keeping the open state if it differs from style.css */
+
+.panel-close {
+    border: none;
+    background: transparent;
+    float: right;
+    font-size: 16px;
+    cursor: pointer;
+    color: #c29076;
+}
+
+.panel-content h2 {
+    font-size: 18px;
+    margin: 4px 0 10px;
+    color: #c29076;
+}
+
+/* Avatar + name row */
+.panel-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    gap: 15px;
+}
+
+.avatar-circle {
+    width: 50px;
+    height: 50px;
+    background-color: #c29076; /* Your Theme Brown */
+    color: #ffffff;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 50px; /* Vertically center text */
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #e6d9d2;
+    margin-right: 15px; /* Space between circle and name */
+}
+
+.user-details h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #5c4e4b;
+}
+
+.user-role-badge {
+    font-size: 12px;
+    color: #8a8a95;
+    background: #f5f5f5;
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+/* Panel menu */
+.panel-menu {
+    list-style: none;
+    margin: 18px 0;
+    padding: 0;
+}
+
+.panel-menu li + li {
+    margin-top: 6px;
+}
+
+.panel-menu a {
+    text-decoration: none;
+    color: #7c6a65;
+    font-size: 14px;
+}
+
+.panel-menu a:hover {
+    color: #c29076;
+}
+
+/* Divider line */
+.panel-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 16px 0;
+}
+
+/* Logout button */
+.panel-logout {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: #d9534f;
+    padding: 10px 5px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.panel-logout:hover {
+    background-color: #fff5f5;
+    color: #c9302c;
+}
+
+.logout-img {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    object-fit: contain;
+    filter: invert(49%) sepia(19%) saturate(1996%) hue-rotate(314deg) brightness(91%) contrast(88%);
+    transition: transform 0.2s ease;
+}
+
+.panel-logout:hover .logout-img {
+    transform: translateX(-3px);
+}
+
+/* ===========================
+   HERO SECTION
+   =========================== */
+
+.hero {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background: url('../images/3.png') center/cover no-repeat;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    animation: heroFade 1.8s ease forwards;
+    box-shadow: 0 20px 40px -20px rgba(0,0,0,0.08);
+}
+
+@keyframes heroFade {
+    from {
+        opacity: 0;
+        transform: scale(1.03);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 0 20px;
+    margin-top: 180px;
+}
+
+.hero-title {
+    font-size: 48px;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 2px;
+    text-shadow: 0 4px 15px rgba(0,0,0,0.25);
+}
+
+/* Hero button */
+.hero-btn {
+    margin-top: 18px;
+    padding: 12px 30px;
+    background: #ffffff;
+    color: #6d5b54;
+    border: 1px solid #d8c1b5;
+    border-radius: 999px;
+    font-size: 15px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.hero-btn:hover {
+    background: #c29076;
+    color: #ffffff;
+    border-color: #c29076;
+}
+
+/* ===========================
+   TOP SERVICES SECTION
+   =========================== */
+
+.top-services-section {
+    padding: 30px 30px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.section-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #c29076;
+    margin-bottom: 8px;
+    margin-left: 8px;
+}
+
+.section-subtitle {
+    text-align: left;
+    margin-left: 8px;
+    font-size: 16px;
+    color: #aa8b7d;
+    margin-bottom: 22px;
+}
+
+.service-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 22px;
+}
+
+.service-box {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    cursor: pointer;
+    height: 210px;
+    box-shadow: 0 12px 25px rgba(0,0,0,0.08);
+}
+
+.service-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s ease;
+}
+
+.service-box:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 18px 35px rgba(0,0,0,0.18);
+}
+
+
+.service-overlay {
+    position: absolute;
+    bottom: 15px;
+    left: 18px;
+    font-size: 24px;
+    color: white;
+    font-weight: 300;
+    text-transform: uppercase;
+    text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* ===========================
+   AWARD + FACILITY SHOWCASE
+   =========================== */
+
+.award-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: #c29076;
+    text-align: center;
+    margin-bottom: 6px;
+}
+
+.award-subtitle {
+    text-align: center;
+    color: #9e857a;
+    font-size: 16px;
+    margin-bottom: 24px;
+}
+
+.facility-showcase {
+    padding: 30px 30px;
+    margin-top: 30px;
+}
+
+.facility-slider-wrapper {
+    position: relative;
+    width: 90%;           /* wider so arrows have room */
+    margin: 0 auto;
+    padding: 0 80px;      /* gives space for arrows */
+}
+
+/* Scroll row controlling area */
+.facility-slider-section {
+    text-align: center;
+    padding: 40px 0 70px;
+}
+
+/* Slider Container */
+.facility-slider-container {
+    position: relative;
+    width: 90%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* Slides */
+.facility-slides {
+    position: relative;
+    width: 100%;
+}
+
+.facility-slide {
+    display: none;
+    opacity: 0;
+    transition: opacity .5s ease;
+}
+
+.facility-slide.active {
+    display: block;
+    opacity: 1;
+}
+
+/* Fade animation */
+.facility-slide.fade-out {
+    opacity: 0;
+}
+
+.slide-images {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin: 0 auto;
+}
+
+.slide-images img {
+    width: 45%;
+    height: 270px;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.slide-images img:hover {
+    transform: scale(1.03);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+    transition: all 0.4s ease;
+}
+
+/* Room title */
+.slide-room-title {
+    margin-top: 18px;
+    font-size: 28px;
+    font-weight: 600;
+    color: #c29076;
+}
+
+/* Arrows */
+.fac-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: white;
+    border: none;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    font-size: 32px;
+    cursor: pointer;
+    color: #c29076;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transition: all .3s ease;
+    z-index: 20;
+}
+
+.fac-arrow:hover {
+    background: #c29076;
+    color: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.fac-arrow.left {
+    left: -50px;
+}
+
+.fac-arrow.right {
+    right: -50px;
+}
+
+/* ===========================
+   FEEDBACK SECTION
+   =========================== */
+
+.feedback-section {
+    padding: 30px 80px;
+    background: #f5ece8;
+    margin-top: 20px;
+}
+
+.feedback-title {
+    font-size: 32px;
+    color: #c29076;
+    margin-bottom: 20px;
+    font-weight: 700;
+    text-align: left;
+}
+
+/* Feedback cards wrapper */
+.feedback-wrapper {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+.feedback-card {
+    min-width: 250px;
+    flex-grow: 1;
+    background: white;
+    padding: 25px 25px;
+    border-radius: 16px;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feedback-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stars {
+    color: #ff8c00;
+    font-size: 18px;
+    margin-bottom: 12px;
+}
+
+.feedback-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #5c4e4b;
+    margin-bottom: 8px;
+}
+
+.feedback-text {
+    font-size: 14px;
+    color: #7c6a65;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+/* ===========================
+   BOOKING SECTION
+   =========================== */
+
+.booking-section {
+    padding: 90px 0;
+    text-align: center;
+    background: #fff8f4;
+    width: 100%; /* Added to ensure full width */
+    display: block; /* Added safety */
+}
+
+.booking-box {
+    max-width: 650px;
+    margin: 0 auto; /* explicit center */
+    padding: 0 20px; /* Prevent text touching edges on small screens */
+}
+
+.booking-box h2 {
+    font-size: 34px;
+    font-weight: 700;
+    color: #8a5e4d;
+    margin-bottom: 14px;
+    margin-top: 0;
+}
+
+.booking-box p {
+    font-size: 18px;
+    color: #6b5a55;
+    margin-bottom: 30px;
+}
+
+/* Book now button */
+.booking-btn {
+    display: inline-block; /* Fixes alignment if flexbox is messing it up */
+    padding: 14px 38px;
+    background-color: #c48a6f;
+    color: white;
+    font-size: 18px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    text-decoration: none; /* In case you use <a> tag instead of <button> */
+}
+
+.booking-btn:hover {
+    background-color: #b07860;
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+/* ============================
+   SCROLL ANIMATIONS
+   ============================ */
+
+.reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s ease-out;
+}
+
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Optional slide-from-left */
+.reveal-left {
+    opacity: 0;
+    transform: translateX(-50px);
+    transition: all 0.9s ease-out;
+}
+
+.reveal-left.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Optional slide-from-right */
+.reveal-right {
+    opacity: 0;
+    transform: translateX(50px);
+    transition: all 0.9s ease-out;
+}
+
+.reveal-right.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.stagger {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: all 0.8s ease-out;
+}
+
+.stagger.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ================= FOOTER STYLES ================= */
+
+/* Main Footer Container */
+.custom-footer {
+    background-color: #3e302b; /* Dark Coffee Color */
+    color: #f3e5e1;            /* Light Beige Text */
+    padding: 60px 80px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap; /* Allows stacking on smaller screens */
+    gap: 40px;
+    font-family: 'Poppins', sans-serif; /* Or your site's font */
+    margin-top: auto; /* Pushes footer to bottom if page is short */
+}
+
+/* --- Columns Layout --- */
+.footer-left, 
+.footer-center, 
+.footer-right {
+    flex: 1; /* All columns take equal width */
+    min-width: 250px; /* Prevents them from getting too squashed */
+}
+
+/* --- Headings --- */
+.footer-brand-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: #d4a373; /* Gold/Bronze accent color */
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
+.custom-footer h4 {
+    font-size: 18px;
+    color: #fff;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #d4a373;
+    display: inline-block;
+    padding-bottom: 5px;
+}
+
+/* --- Text & Links --- */
+.custom-footer p {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #e0d0cc;
+    margin: 5px 0;
+}
+
+.footer-copyright {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 10px;
+}
+
+/* --- Logo --- */
+.footer-big-logo {
+    width: 180px; /* Increased size from 80px */
+    height: auto;
+    display: block;
+}
+
+/* --- Social Icons (Circles) --- */
+.footer-social-icons {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.footer-social-circle {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 45px; /* Slightly larger circle */
+    height: 45px;
+    border-radius: 50%;
+    background-color: #5c4b45;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid #7c6a65;
+}
+
+.footer-social-circle img {
+    width: 22px; /* Size of the icon inside the circle */
+    height: 22px;
+    object-fit: contain;
+    transition: all 0.3s ease;
+}
+
+.footer-social-circle:hover {
+    background-color: #d4a373; /* Gold on hover */
+    transform: translateY(-3px); /* Slight lift effect */
+    border-color: #d4a373;
+}
+
+/* Change icon color on hover using a filter */
+.footer-social-circle:hover img {
+    filter: brightness(0.2); /* Darkens the icon on hover */
+}
+
+/* ================= RESPONSIVE (Mobile) ================= */
+@media (max-width: 768px) {
+    .custom-footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .footer-left, .footer-center, .footer-right {
+        margin-bottom: 30px;
+    }
+
+    /* Center the social icons on mobile */
+    .footer-social-icons {
+        justify-content: center;
+    }
+    
+    /* Center the logo on mobile */
+    .footer-big-logo {
+        margin: 0 auto 10px auto;
+    }
+}
+
+/* ================= RESPONSIVE (Mobile) ================= */
+@media (max-width: 768px) {
+    .custom-footer {
+        flex-direction: column;
+        text-align: center;
+        padding: 40px 20px;
+    }
+
+    .footer-left, .footer-center, .footer-right {
+        margin-bottom: 30px;
+    }
+
+    /* Center the social icons on mobile */
+    .footer-social-icons {
+        justify-content: center;
+    }
+    
+    /* Center the logo on mobile */
+    .footer-big-logo {
+        margin: 0 auto 10px auto;
+    }
+}
