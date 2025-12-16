@@ -866,11 +866,21 @@
                         <input type="checkbox" id="halfDay">
                         <label for="halfDay">Half-day</label>
                     </div>
+                    
+                    <div class="form-row" id="halfDayTimeGroup" style="display:none;">
+                        <div class="form-group">
+                            <label class="form-label" for="halfDayStartTime">Start Time</label>
+                            <input type="time" id="halfDayStartTime" class="form-control" value="10:00">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="halfDayEndTime">End Time</label>
+                            <input type="time" id="halfDayEndTime" class="form-control" value="14:00">
+                        </div>
+                    </div>
 
                     <button type="submit" class="submit-btn">Submit Request</button>
                 </form>
 
-                <!-- Leave History Section -->
                 <div class="leave-history-section" style="margin-top: 3rem; padding-top: 2rem; border-top: 2px solid var(--border-color);">
                     <div class="page-header">
                         <h2 class="page-title" style="font-size: 1.5rem;">Leave History</h2>
@@ -1063,6 +1073,12 @@
             const endDate = document.getElementById('endDate').value;
             const reason = document.getElementById('reason').value.trim();
             const halfDay = document.getElementById('halfDay').checked;
+            
+            // UPDATED: Get specific start/end times
+            const halfDayStartTime = document.getElementById('halfDayStartTime').value; 
+            const halfDayEndTime = document.getElementById('halfDayEndTime').value;
+            
+            const isSingleDay = startDate && endDate && startDate === endDate;
 
             if (!type || !startDate || !endDate || !reason) {
                 errorBox.textContent = 'Please complete all required fields.';
@@ -1071,11 +1087,38 @@
             }
 
             // Date validation
-            if (new Date(endDate) < new Date(startDate)) {
+            const startDateTime = new Date(startDate);
+            const endDateTime = new Date(endDate);
+
+            if (endDateTime < startDateTime) {
                 errorBox.textContent = 'End date cannot be before start date.';
                 errorBox.style.display = 'block';
                 return;
             }
+            
+            // Validation for single-day half-day leave times
+            if (isSingleDay && halfDay) {
+                if (!halfDayStartTime || !halfDayEndTime) {
+                    errorBox.textContent = 'Please select both start time and end time for your half-day leave.';
+                    errorBox.style.display = 'block';
+                    return;
+                }
+                
+                // Simple time order validation (HH:MM format comparison)
+                if (halfDayStartTime >= halfDayEndTime) {
+                    errorBox.textContent = 'Start time must be before end time for half-day leave.';
+                    errorBox.style.display = 'block';
+                    return;
+                }
+            }
+            
+            // Prevent half-day submission for multiple days
+            if (!isSingleDay && halfDay) {
+                errorBox.textContent = 'Half-day leave is only permitted for a single day.';
+                errorBox.style.display = 'block';
+                return;
+            }
+
 
             const formData = new FormData();
             formData.append('leave_type', type);
@@ -1083,6 +1126,16 @@
             formData.append('end_date', endDate);
             formData.append('reason', reason);
             formData.append('half_day', halfDay ? '1' : '0');
+            
+            // UPDATED: Append specific start/end times only if it's a single half-day
+            if (isSingleDay && halfDay) {
+                formData.append('half_day_start_time', halfDayStartTime);
+                formData.append('half_day_end_time', halfDayEndTime);
+            } else {
+                formData.append('half_day_start_time', '');
+                formData.append('half_day_end_time', '');
+            }
+
 
             fetch('api/leave.php?action=request', {
                 method: 'POST',
@@ -1100,6 +1153,7 @@
                     successBox.textContent = data.message || 'Request submitted.';
                     successBox.style.display = 'block';
                     form.reset();
+                    toggleHalfDayTimeSelection(); // Reset visibility
                     // Reload leave history after successful submission
                     loadLeaveHistory();
                 } else {
@@ -1201,6 +1255,48 @@
             }
         }
 
+        // UPDATED: Function to control the visibility of the half-day time selection
+        function toggleHalfDayTimeSelection() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const halfDayChecked = document.getElementById('halfDay').checked;
+            const halfDayTimeGroup = document.getElementById('halfDayTimeGroup');
+            const halfDayStartTimeInput = document.getElementById('halfDayStartTime');
+            const halfDayEndTimeInput = document.getElementById('halfDayEndTime');
+            
+            // Only show if it's a single day and halfDay is checked
+            const isSingleDay = startDate && endDate && startDate === endDate;
+            
+            if (isSingleDay && halfDayChecked) {
+                halfDayTimeGroup.style.display = 'flex'; // Use flex for form-row
+                halfDayStartTimeInput.setAttribute('required', 'required');
+                halfDayEndTimeInput.setAttribute('required', 'required');
+            } else {
+                halfDayTimeGroup.style.display = 'none';
+                halfDayStartTimeInput.removeAttribute('required');
+                halfDayEndTimeInput.removeAttribute('required');
+                
+                // Optional: Reset values when hidden for cleanup
+                // halfDayStartTimeInput.value = '10:00';
+                // halfDayEndTimeInput.value = '14:00';
+            }
+            
+            // Disable half-day checkbox if it is not a single day
+            if (startDate && endDate && startDate !== endDate) {
+                if (halfDayChecked) {
+                    halfDayCheckbox.checked = false; // Uncheck it if user selects range
+                }
+                halfDayCheckbox.disabled = true;
+            } else {
+                halfDayCheckbox.disabled = false;
+            }
+
+            // Re-run the visibility check if the checkbox state was reset
+            if (halfDayCheckbox.checked !== halfDayChecked) {
+                toggleHalfDayTimeSelection(); 
+            }
+        }
+
         async function loadLeaveHistory() {
             const container = document.getElementById('leaveHistoryContainer');
             
@@ -1245,6 +1341,12 @@
                         ? formatDateTime(request.updated_at) 
                         : null;
                     const canCancel = request.status === 'pending';
+                    
+                    // UPDATED: Include half_day_time (HH:MM - HH:MM) in duration display
+                    const durationValue = request.half_day 
+                        ? `Half Day (${request.half_day_time || 'N/A'})` 
+                        : 'Full Day(s)';
+
 
                     item.innerHTML = `
                         <div class="leave-history-header">
@@ -1261,7 +1363,7 @@
                             </div>
                             <div class="leave-detail-item">
                                 <div class="leave-detail-label">Duration</div>
-                                <div class="leave-detail-value">${request.half_day ? 'Half Day' : 'Full Day(s)'}</div>
+                                <div class="leave-detail-value">${durationValue}</div>
                             </div>
                             <div class="leave-detail-item">
                                 <div class="leave-detail-label">Reason</div>
@@ -1292,12 +1394,25 @@
         // Load leave history on page load
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().split('T')[0];
-            document.getElementById('startDate').setAttribute('min', today);
-            document.getElementById('endDate').setAttribute('min', today);
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+            const halfDayCheckbox = document.getElementById('halfDay');
+            
+            startDateInput.setAttribute('min', today);
+            endDateInput.setAttribute('min', today);
             
             loadStaffProfile();
             loadNotifications();
             loadLeaveHistory();
+
+            // ADDED: Attach event listeners for the new function
+            startDateInput.addEventListener('change', toggleHalfDayTimeSelection);
+            endDateInput.addEventListener('change', toggleHalfDayTimeSelection);
+            halfDayCheckbox.addEventListener('change', toggleHalfDayTimeSelection);
+            
+            // Initial call to ensure correct state on load
+            toggleHalfDayTimeSelection();
+
 
             const historyContainer = document.getElementById('leaveHistoryContainer');
             historyContainer.addEventListener('click', function(event) {

@@ -31,6 +31,14 @@ function ensureLeaveTable($pdo) {
                 INDEX idx_date (start_date, end_date)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
     $pdo->exec($sql);
+    
+    // ADDED: Check and add half_day_time column if it doesn't exist
+    try {
+        // Attempt to add the column after 'half_day'
+        $pdo->exec("ALTER TABLE leave_requests ADD COLUMN half_day_time VARCHAR(50) NULL AFTER half_day");
+    } catch (PDOException $e) {
+        // If the column already exists (Error 1060), or other failure, we ignore it.
+    }
 }
 
 // Ensure Staff_Schedule rows exist for a date range; create defaults 10:00-22:00 with status working
@@ -89,6 +97,14 @@ if ($action === 'request' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $start_date = isset($_POST['start_date']) ? $_POST['start_date'] : '';
     $end_date   = isset($_POST['end_date']) ? $_POST['end_date'] : '';
     $half_day   = isset($_POST['half_day']) && $_POST['half_day'] == '1' ? 1 : 0;
+    
+    // UPDATED: Capture start and end time specifically
+    $start_time = isset($_POST['half_day_start_time']) ? trim($_POST['half_day_start_time']) : NULL;
+    $end_time = isset($_POST['half_day_end_time']) ? trim($_POST['half_day_end_time']) : NULL;
+    
+    // Calculate the value for the half_day_time column: format "HH:MM - HH:MM"
+    $half_day_time = ($half_day == 1 && $start_time && $end_time) ? "{$start_time} - {$end_time}" : NULL; // UPDATED
+
     $reason     = isset($_POST['reason']) ? trim($_POST['reason']) : '';
 
     if (empty($leave_type) || empty($start_date) || empty($end_date) || empty($reason)) {
@@ -100,9 +116,10 @@ if ($action === 'request' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        $stmt = $pdo->prepare("INSERT INTO leave_requests (staff_email, leave_type, start_date, end_date, half_day, reason)
-                               VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$staff_email, $leave_type, $start_date, $end_date, $half_day, $reason]);
+        // INSERT statement remains the same, using the calculated $half_day_time
+        $stmt = $pdo->prepare("INSERT INTO leave_requests (staff_email, leave_type, start_date, end_date, half_day, half_day_time, reason)
+                               VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$staff_email, $leave_type, $start_date, $end_date, $half_day, $half_day_time, $reason]);
 
         respond(['success' => true, 'message' => 'Leave request submitted. Pending approval.']);
     } catch (PDOException $e) {
@@ -152,7 +169,8 @@ if ($action === 'cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 if ($action === 'history' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     // Fetch leave history for the logged-in staff
     try {
-        $stmt = $pdo->prepare("SELECT id, leave_type, start_date, end_date, half_day, reason, status, created_at, updated_at 
+        // SELECT statement remains the same, retrieving half_day_time
+        $stmt = $pdo->prepare("SELECT id, leave_type, start_date, end_date, half_day, half_day_time, reason, status, created_at, updated_at 
                               FROM leave_requests 
                               WHERE staff_email = ? 
                               ORDER BY created_at DESC");
@@ -166,4 +184,3 @@ if ($action === 'history' && $_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 respond(['success' => false, 'error' => 'Invalid action'], 400);
-
