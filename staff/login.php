@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (password_verify($password, $row['password'])) {
                 // Check if account is active
                 if ($row['is_active'] != 1) {
-                    echo json_encode(['status' => 'error', 'message' => 'Account is deactivated. Please contact support.']);
+                    echo json_encode(['success' => false, 'error' => 'Account is deactivated. Please contact support.']);
                     exit;
                 }
 
@@ -68,6 +68,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 // Set session variables
                 $_SESSION['staff_logged_in'] = true;
+                // Set staff_id to staff_email to match API expectations
+                $_SESSION['staff_id'] = $row['staff_email'];
                 $_SESSION['staff_email'] = $row['staff_email'];
                 $_SESSION['staff_phone'] = $phoneNormalized;
                 $_SESSION['staff_name'] = $fullName;
@@ -81,16 +83,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Regenerate session ID for security
                 session_regenerate_id(true);
 
-                echo json_encode(['status' => 'success']);
+                echo json_encode(['success' => true]);
             } else {
-                echo json_encode(['status' => 'error', 'message' => 'Incorrect password.']);
+                echo json_encode(['success' => false, 'error' => 'Incorrect password.']);
             }
         } else {
-            echo json_encode(['status' => 'error', 'message' => 'Phone number not found or not authorized for staff access.']);
+            echo json_encode(['success' => false, 'error' => 'Phone number not found or not authorized for staff access.']);
         }
     } catch (Exception $e) {
         error_log('Staff login error: ' . $e->getMessage());
-        echo json_encode(['status' => 'error', 'message' => 'System error: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'error' => 'System error: ' . $e->getMessage()]);
     }
     exit;
 }
