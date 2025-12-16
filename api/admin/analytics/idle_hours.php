@@ -8,7 +8,7 @@ session_start();
 header('Content-Type: application/json');
 
 // Include database connection
-require_once '../../../php/connection.php';
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 
 // Check authentication

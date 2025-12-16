@@ -5,7 +5,7 @@ ini_set('session.use_strict_mode', 1);
 session_start();
 header('Content-Type: application/json');
 
-require_once '../../../php/connection.php';
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 
 if (!isAdminAuthenticated() || !checkSessionTimeout()) {

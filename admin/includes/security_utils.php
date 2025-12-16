@@ -296,8 +296,8 @@ function setSecureHeaders() {
     // Enable XSS protection
     header('X-XSS-Protection: 1; mode=block');
     
-    // Content Security Policy (adjust as needed)
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:;");
+    // Content Security Policy (allow CDN connections for Bootstrap/Chart.js maps and scripts)
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://cdn.jsdelivr.net;");
     
     // Referrer Policy
     header('Referrer-Policy: strict-origin-when-cross-origin');

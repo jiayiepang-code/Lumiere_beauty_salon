@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 
 // Include database connection and auth check
 // Note: auth_check.php handles session start with proper configuration
-require_once '../../../php/connection.php';
+require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
 
 // Check authentication

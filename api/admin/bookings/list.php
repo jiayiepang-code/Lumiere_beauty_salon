@@ -3,7 +3,7 @@ header('Content-Type: application/json');
 
 // Include required files
 require_once '../../../admin/includes/auth_check.php'; // This handles session start
-require_once '../../../php/connection.php';
+require_once '../../../config/db_connect.php'; // Use proper DB connection
 require_once '../../../admin/includes/error_handler.php';
 
 // Check authentication
