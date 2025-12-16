@@ -59,27 +59,31 @@
         </div>
     
     </div> 
-    <script src="../js/login.js"></script>
+    <!-- Load admin-specific login logic -->
+    <script src="./login.js"></script>
     
     <script>
-        function validateAdminLogin() {
-            const id = document.getElementById("adminId").value;
-            const pass = document.getElementById("adminPass").value;
-
-            if (!id || !pass) {
-                alert("Please enter Admin credentials.");
-                return;
+        // Fallback formatPhoneNumber if login.js doesn't provide
+        if (typeof formatPhoneNumber === 'undefined') {
+            function formatPhoneNumber(input) {
+                let value = input.value.replace(/[^0-9]/g, "");
+                if (value.length > 10) value = value.substring(0, 10);
+                if (value.length > 6) {
+                    value = value.substring(0, 2) + " " + value.substring(2, 5) + " " + value.substring(5);
+                } else if (value.length > 2) {
+                    value = value.substring(0, 2) + " " + value.substring(2);
+                }
+                input.value = value;
             }
-            // In real app, verify with PHP here.
-            alert("Login Successful! Redirecting...");
-            // window.location.href = "dashboard.html"; 
         }
-
-        // Reuse the password toggle logic
-        function togglePassword() {
-            const input = document.getElementById("adminPass");
-            if (input.type === "password") input.type = "text";
-            else input.type = "password";
+        
+        // Fallback togglePass if login.js doesn't provide
+        if (typeof togglePass === 'undefined') {
+            function togglePass(inputId) {
+                const input = document.getElementById(inputId);
+                if (input.type === "password") input.type = "text";
+                else input.type = "password";
+            }
         }
     </script>
 
