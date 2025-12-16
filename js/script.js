@@ -271,6 +271,25 @@ function toggleLoginPassword() {
     toggleInputType(input, icon);
 }
 
+// Staff Password Toggle
+function togglePass(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    const icon = input.parentElement.querySelector('.password-toggle');
+    if (!icon) return;
+    
+    if (input.type === "password") {
+        // Show password - change to open eye icon
+        input.type = "text";
+        icon.src = icon.src.replace('74.png', '73.png');
+    } else {
+        // Hide password - change to closed eye icon
+        input.type = "password";
+        icon.src = icon.src.replace('73.png', '74.png');
+    }
+}
+
 // Helper to switch type and icon
 function toggleInputType(input, icon) {
     if (!input) return;
@@ -459,6 +478,54 @@ function validateCustomerLogin() {
             const fallback = 'user/index.php';
             const target = redirectField && redirectField.value ? redirectField.value : fallback;
             window.location.href = target;
+        } else {
+            alert(data.message || 'Login failed.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("System error. Please try again.");
+    });
+}
+
+// STAFF LOGIN LOGIC
+function validateStaffLogin() {
+    var phone = document.getElementById('staffId').value;
+    var password = document.getElementById('staffPass').value;
+
+    // Basic validation
+    if (!phone || !password) {
+        alert("Please enter phone and password.");
+        return;
+    }
+
+    // Create standard form data
+    var formData = new FormData();
+    formData.append('phone', phone);
+    formData.append('password', password);
+
+    // Post to the current page (staff/login.php handles both GET and POST)
+    fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData 
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Invalid JSON response:', text);
+                throw new Error('Invalid response from server: ' + text);
+            }
+        });
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            // Redirect to staff dashboard
+            window.location.href = 'dashboard.html';
         } else {
             alert(data.message || 'Login failed.');
         }

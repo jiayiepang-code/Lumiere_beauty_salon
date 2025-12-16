@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once 'config/database.php';
+require 'mailer.php';
 
 header('Content-Type: application/json');
 
@@ -412,6 +413,57 @@ try {
     $db->commit();
     
     error_log('Booking completed successfully: ' . $bookingId);
+    
+    // Send confirmation email
+    try {
+        // Get customer details
+        $customerQuery = "SELECT first_name, last_name FROM customer WHERE customer_email = ? LIMIT 1";
+        $customerStmt = $db->prepare($customerQuery);
+        $customerStmt->execute([$customerEmail]);
+        $customer = $customerStmt->fetch(PDO::FETCH_ASSOC);
+        $customerName = ($customer ? trim(($customer['first_name'] ?? '') . ' ' . ($customer['last_name'] ?? '')) : 'Customer');
+        
+        // Build services list for email
+        $servicesList = '';
+        foreach($serviceAssignments as $idx => $svc) {
+            $servicesList .= '<li>' . htmlspecialchars($svc['service_name']) . ' - ' . htmlspecialchars($svc['staff_name']) . ' (RM ' . number_format($svc['price'], 2) . ')</li>';
+        }
+        
+        // Email subject and body
+        $subject = 'Booking Confirmation - ' . $bookingId;
+        $emailBody = '<div style="font-family: Roboto, Arial, sans-serif; background: #f4f8fb; padding: 32px 0;">
+            <div style="max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 32px 24px;">
+                <h2 style="color: #1976d2; margin-bottom: 16px; text-align: center;">Lumière Beauty Salon</h2>
+                <h3 style="color: #333; margin-bottom: 24px;">Booking Confirmed!</h3>
+                <p style="color: #333; font-size: 1rem; margin-bottom: 16px;">Dear ' . htmlspecialchars($customerName) . ',</p>
+                <p style="color: #333; font-size: 1rem; margin-bottom: 24px;">Your booking has been confirmed. Here are the details:</p>
+                
+                <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                    <p style="margin: 0 0 12px 0;"><strong>Booking ID:</strong> ' . htmlspecialchars($bookingId) . '</p>
+                    <p style="margin: 0 0 12px 0;"><strong>Date:</strong> ' . date('l, d M Y', strtotime($input['date'])) . '</p>
+                    <p style="margin: 0 0 12px 0;"><strong>Time:</strong> ' . date('h:i A', strtotime($input['time'])) . ' - ' . date('h:i A', strtotime($endDateTime->format('Y-m-d H:i:s'))) . '</p>
+                    <p style="margin: 0 0 12px 0;"><strong>Services:</strong></p>
+                    <ul style="margin: 0 0 12px 0; padding-left: 20px;">' . $servicesList . '</ul>
+                    <p style="margin: 0;"><strong>Total:</strong> RM ' . number_format($totalPrice, 2) . '</p>
+                </div>
+                
+                <p style="color: #888; font-size: 0.95rem; margin-top: 24px;">You will receive a reminder email 24 hours before your appointment.</p>
+                <p style="color: #888; font-size: 0.95rem; margin-top: 16px;">If you need to cancel or reschedule, please contact us at least 24 hours in advance.</p>
+                <p style="color: #888; font-size: 0.95rem; margin-top: 32px;">Thank you for choosing Lumière Beauty Salon!<br><br>— Lumière Beauty Salon Team</p>
+            </div>
+        </div>';
+        
+        $emailResult = sendMail($customerEmail, $subject, $emailBody);
+        if ($emailResult !== true) {
+            error_log('Confirmation email failed for booking ' . $bookingId . ': ' . $emailResult);
+            // Don't fail the booking if email fails
+        } else {
+            error_log('Confirmation email sent successfully for booking ' . $bookingId);
+        }
+    } catch (Exception $emailEx) {
+        error_log('Exception sending confirmation email for booking ' . $bookingId . ': ' . $emailEx->getMessage());
+        // Don't fail the booking if email fails
+    }
     
     // Return success response
     echo json_encode([

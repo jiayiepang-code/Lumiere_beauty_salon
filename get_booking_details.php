@@ -190,7 +190,7 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
         <div class="col-md-6 booking-details-section">
             <h6><strong>Customer Details</strong></h6>
             <div class="booking-info-row">
-                <span class="booking-info-label">Reference ID:</span>
+                <span class="booking-info-label">Booking ID:</span>
                 <span class="booking-info-value"><?php echo htmlspecialchars($referenceId); ?></span>
             </div>
             <div class="booking-info-row">

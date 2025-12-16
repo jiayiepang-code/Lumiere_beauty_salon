@@ -351,12 +351,19 @@ function renderCalendar() {
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const today = new Date(); today.setHours(0,0,0,0);
+    
+    // Calculate maximum booking date (30 days from today)
+    const maxDate = new Date(today);
+    maxDate.setDate(today.getDate() + 30);
+    maxDate.setHours(23,59,59,999);
+    
     for(let i=0; i<firstDay; i++) grid.append(`<div></div>`);
     for(let i=1; i<=daysInMonth; i++) {
         const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
         const checkDate = new Date(dateStr); checkDate.setHours(0,0,0,0);
         let classes = 'calendar-date';
         if(checkDate < today) classes += ' disabled';
+        if(checkDate > maxDate) classes += ' disabled'; // Disable dates beyond 30 days
         if(dateStr === selectedDate) classes += ' selected';
         const dayEl = $(`<div class="${classes}">${i}</div>`);
         if(!classes.includes('disabled')) {
@@ -370,9 +377,24 @@ function renderCalendar() {
     }
 }
 function changeMonth(dir) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const maxDate = new Date(today);
+    maxDate.setDate(today.getDate() + 30);
+    
     currentMonth += dir;
     if(currentMonth < 0) { currentMonth = 11; currentYear--; }
     if(currentMonth > 11) { currentMonth = 0; currentYear++; }
+    
+    // Check if the month we're navigating to is beyond 30 days
+    const targetMonthStart = new Date(currentYear, currentMonth, 1);
+    if(targetMonthStart > maxDate) {
+        // Revert the change
+        currentMonth -= dir;
+        if(currentMonth < 0) { currentMonth = 11; currentYear--; }
+        if(currentMonth > 11) { currentMonth = 0; currentYear++; }
+        return; // Don't render if we can't go that far
+    }
+    
     renderCalendar();
 }
 

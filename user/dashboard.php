@@ -2,6 +2,9 @@
 session_start();
 require_once '../config/database.php';
 
+// Determine which dashboard section should be active (overview, bookings, profile, favourites, help)
+$currentSection = isset($_GET['section']) && $_GET['section'] !== '' ? $_GET['section'] : 'overview';
+
 // If not logged in → redirect
 if (!isset($_SESSION['customer_phone'])) {
     header("Location: ../login.php");
@@ -268,16 +271,57 @@ foreach($bookings as $booking) {
 
 // Separate upcoming and past bookings
 $today = date('Y-m-d');
-$upcomingBookings = [];
-$pastBookings = [];
+$upcomingBookingsAll = [];
+$pastBookingsAll = [];
+
+// Get filter parameters
+$upcomingFilterMonth = isset($_GET['upcoming_month']) && $_GET['upcoming_month'] !== '' ? $_GET['upcoming_month'] : null;
+$historyFilterMonth = isset($_GET['history_month']) && $_GET['history_month'] !== '' ? $_GET['history_month'] : null;
+$historyFilterStatus = isset($_GET['history_status']) && $_GET['history_status'] !== '' ? $_GET['history_status'] : null;
 
 foreach($bookings as $booking) {
     // Upcoming: only confirmed bookings with future dates
     if ($booking['booking_date'] >= $today && strtolower($booking['status']) === 'confirmed') {
-        $upcomingBookings[] = $booking;
+        $upcomingBookingsAll[] = $booking;
     } else {
         // History: all other bookings (past dates, cancelled, completed, etc.)
-        // This ensures confirmed bookings only appear in upcoming section, not in history
+        $pastBookingsAll[] = $booking;
+    }
+}
+
+// Apply filters
+$upcomingBookings = [];
+foreach($upcomingBookingsAll as $booking) {
+    if ($upcomingFilterMonth) {
+        $bookingMonth = date('Y-m', strtotime($booking['booking_date']));
+        if ($bookingMonth === $upcomingFilterMonth) {
+            $upcomingBookings[] = $booking;
+        }
+    } else {
+        $upcomingBookings[] = $booking;
+    }
+}
+
+$pastBookings = [];
+foreach($pastBookingsAll as $booking) {
+    $includeInHistory = true;
+    
+    // Apply monthly filter for history
+    if ($historyFilterMonth) {
+        $bookingMonth = date('Y-m', strtotime($booking['booking_date']));
+        if ($bookingMonth !== $historyFilterMonth) {
+            $includeInHistory = false;
+        }
+    }
+    
+    // Apply status filter for history
+    if ($includeInHistory && $historyFilterStatus && $historyFilterStatus !== 'all') {
+        if (strtolower($booking['status']) !== strtolower($historyFilterStatus)) {
+            $includeInHistory = false;
+        }
+    }
+    
+    if ($includeInHistory) {
         $pastBookings[] = $booking;
     }
 }
@@ -322,11 +366,41 @@ foreach($bookings as $booking) {
         <!-- bookings moved into main to avoid layout constraints in sidebar -->
 
         <ul class="dash-nav">
-            <li><a href="#" onclick="switchSection('overview', this)" class="active">Overview</a></li>
-            <li><a href="#" onclick="switchSection('bookings', this)">My Bookings</a></li>
-            <li><a href="#" onclick="switchSection('profile', this)">My Profile</a></li>
-            <li><a href="#" onclick="switchSection('favourites', this)">Favourites Staff</a></li>
-            <li><a href="#" onclick="switchSection('help', this)">Help & Support</a></li>
+            <li>
+                <a href="#"
+                   onclick="switchSection('overview', this)"
+                   class="<?php echo $currentSection === 'overview' ? 'active' : ''; ?>">
+                    Overview
+                </a>
+            </li>
+            <li>
+                <a href="#"
+                   onclick="switchSection('bookings', this)"
+                   class="<?php echo $currentSection === 'bookings' ? 'active' : ''; ?>">
+                    My Bookings
+                </a>
+            </li>
+            <li>
+                <a href="#"
+                   onclick="switchSection('profile', this)"
+                   class="<?php echo $currentSection === 'profile' ? 'active' : ''; ?>">
+                    My Profile
+                </a>
+            </li>
+            <li>
+                <a href="#"
+                   onclick="switchSection('favourites', this)"
+                   class="<?php echo $currentSection === 'favourites' ? 'active' : ''; ?>">
+                    Favourites Staff
+                </a>
+            </li>
+            <li>
+                <a href="#"
+                   onclick="switchSection('help', this)"
+                   class="<?php echo $currentSection === 'help' ? 'active' : ''; ?>">
+                    Help &amp; Support
+                </a>
+            </li>
         </ul>
 
         <div class="sidebar-footer">
@@ -341,7 +415,7 @@ foreach($bookings as $booking) {
     <main class="dash-main">
 
         <!-- ========== SECTION 1: DASHBOARD OVERVIEW ========== -->
-        <div id="section-overview" class="dash-section active">
+        <div id="section-overview" class="dash-section <?php echo $currentSection === 'overview' ? 'active' : ''; ?>">
             <h1 class="favourites-title" style="margin-bottom: 30px;">Dashboard Overview</h1>
 
             <?php
@@ -359,11 +433,18 @@ foreach($bookings as $booking) {
                     $completedCount++;
                 }
                 
-                // Find next upcoming appointment
+                // Find next upcoming appointment (closest date to today)
                 if (($booking['status'] === 'confirmed') && $bookingDate >= $today) {
-                    if (!$nextAppointment || $bookingDate < new DateTime($nextAppointment['booking_date'])) {
+                    if (!$nextAppointment) {
                         $nextAppointment = $booking;
                         $upcomingAppointment = $booking;
+                    } else {
+                        $currentNextDate = new DateTime($nextAppointment['booking_date']);
+                        // Compare dates to find the closest one
+                        if ($bookingDate < $currentNextDate) {
+                            $nextAppointment = $booking;
+                            $upcomingAppointment = $booking;
+                        }
                     }
                 }
             }
@@ -563,7 +644,7 @@ foreach($bookings as $booking) {
         </div>
 
         <!-- ========== SECTION: ALL BOOKINGS (separate page) ========== -->
-        <div id="section-bookings" class="dash-section">
+        <div id="section-bookings" class="dash-section <?php echo $currentSection === 'bookings' ? 'active' : ''; ?>">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1 class="bookings-page-title mb-0">Your Bookings</h1>
                 <?php if (!empty($upcomingBookings)): ?>
@@ -574,13 +655,26 @@ foreach($bookings as $booking) {
             </div>
 
             <div class="dashboard-header rounded-3 mb-3">
-                <h3 class="section-title mb-0 ps-4">
-                    <i class="fas fa-calendar-alt me-2"></i>Upcoming Bookings
-                    <span class="badge bg-primary ms-2"><?php echo count($upcomingBookings); ?></span>
-                </h3>
-                <?php if (count($upcomingBookings) > 3): ?>
-                    <a href="#" id="toggle-view-all-link" class="view-all-link" style="margin-left:12px;">View all</a>
-                <?php endif; ?>
+                <div class="d-flex justify-content-between align-items-center">
+                    <h3 class="section-title mb-0 ps-4 d-flex align-items-center gap-3">
+                        <span>
+                            <i class="fas fa-calendar-alt me-2"></i>Upcoming Bookings
+                            <span class="badge bg-primary ms-2"><?php echo count($upcomingBookings); ?></span>
+                        </span>
+                        <a href="#" id="toggle-view-all-link" class="view-all-action small text-decoration-none" onclick="toggleViewAllBookings(event)" style="color: #c29076; font-weight: 600;">
+                            View all
+                        </a>
+                    </h3>
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="upcoming-month-filter" class="mb-0 small text-muted">Filter by month:</label>
+                        <input type="month" id="upcoming-month-filter" class="form-control form-control-sm" style="width: auto;" value="<?php echo $upcomingFilterMonth ? htmlspecialchars($upcomingFilterMonth) : ''; ?>" onchange="filterUpcomingBookings(this.value)">
+                        <?php if ($upcomingFilterMonth): ?>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="filterUpcomingBookings('')" title="Clear filter">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
 
             <?php if(empty($upcomingBookings)): ?>
@@ -605,31 +699,28 @@ foreach($bookings as $booking) {
                                 </div>
                                 <div class="card-body">
                                     <div class="mb-3">
-                                        <h6 class="text-muted mb-2"><i class="fas fa-calendar me-2"></i>Date & Time</h6>
-                                        <p class="mb-0 fw-semibold"><?php echo date('l, d M Y', strtotime($booking['booking_date'])); ?></p>
-                                        <p class="mb-0 text-muted small"><?php echo date('h:i A', strtotime($booking['start_time'])); ?> - <?php echo date('h:i A', strtotime($booking['expected_finish_time'])); ?></p>
+                                        <h6 class="mb-2 fw-bold" style="color: #000;"><i class="fas fa-calendar me-2"></i>Date & Time</h6>
+                                        <p class="mb-0" style="font-family: 'Segoe UI', sans-serif; color: #6c757d; font-size: 1.1rem;"><?php echo date('l, d M Y', strtotime($booking['booking_date'])); ?></p>
+                                        <p class="mb-0 small" style="font-family: 'Segoe UI', sans-serif; color: #6c757d;"><?php echo date('h:i A', strtotime($booking['start_time'])); ?> - <?php echo date('h:i A', strtotime($booking['expected_finish_time'])); ?></p>
                                     </div>
                                     <div class="mb-3">
-                                        <h6 class="text-muted mb-2"><i class="fas fa-scissors me-2"></i>Services <span class="badge bg-secondary ms-1"><?php echo $booking['service_count']; ?></span></h6>
-                                        <div class="service-list">
+                                        <h6 class="mb-2 fw-bold" style="color: #000;"><i class="fas fa-scissors me-2"></i>Services</h6>
+                                        <ul class="list-unstyled small mb-0">
                                             <?php 
                                             $services = $bookingServices[$booking['booking_id']];
                                             $totalServices = count($services);
                                             $displayServices = array_slice($services, 0, 2);
                                             foreach($displayServices as $service): ?>
-                                                <div class="service-item">
-                                                    <strong><?php echo htmlspecialchars($service['service_name']); ?></strong>
-                                                    <div class="small text-muted"><i class="fas fa-clock"></i> <?php echo $service['quoted_duration_minutes']; ?> min <?php if($service['staff_first_name']): ?> | <i class="fas fa-user"></i> <?php echo htmlspecialchars($service['staff_first_name'] . ' ' . $service['staff_last_name']); ?><?php endif; ?></div>
-                                                </div>
+                                                <li style="font-family: 'Segoe UI', sans-serif; color: #6c757d;">• <?php echo htmlspecialchars($service['service_name']); ?></li>
                                             <?php endforeach; ?>
-                                            <?php if($totalServices > 2): ?>
-                                                <div class="mt-2">
-                                                    <a href="#" class="text-decoration-none fw-semibold" style="color: #c29076;" onclick="viewDetails('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>'); return false;">
-                                                        <i class="fas fa-chevron-down me-1"></i>View More (<?php echo ($totalServices - 2); ?> more)
-                                                    </a>
-                                                </div>
-                                            <?php endif; ?>
-                                        </div>
+                                        </ul>
+                                        <?php if($totalServices > 2): ?>
+                                            <div class="mt-2">
+                                                <a href="#" class="text-decoration-none fw-semibold" style="color: #c29076;" onclick="viewDetails('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>'); return false;">
+                                                    <i class="fas fa-chevron-down me-1"></i>View More (<?php echo ($totalServices - 2); ?> more)
+                                                </a>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                                         <span class="text-muted">Total:</span>
@@ -646,49 +737,91 @@ foreach($bookings as $booking) {
                 </div>
             <?php endif; ?>
 
-            <?php if(!empty($pastBookings)): ?>
-            <div class="mt-5">
-            <div class="booking-history-header">
-              <h3 class="section-title">
-                <i class="fas fa-history me-2"></i>Bookings History
-                <span class="badge bg-secondary ms-2"><?php echo count($pastBookings); ?></span>
-              </h3>
-              <?php if (count($pastBookings) > 3): ?>
-                  <a href="#" id="toggle-history-view-all-link" class="view-all-link" style="margin-left:12px;">View all</a>
-              <?php endif; ?>
-            </div>
-                <div class="bookings-grid booking-history-grid mt-3">
-                    <?php foreach($pastBookings as $booking): ?>
-                        <div class="booking-history-item">
-                            <div class="card booking-card h-100" style="opacity: 0.95;">
-                                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold"><?php echo htmlspecialchars($booking['booking_id']); ?></span>
-                                    <span class="status-badge status-<?php echo $booking['status']; ?>"><?php echo ucfirst($booking['status']); ?></span>
-                                </div>
-                                <div class="card-body">
-                                    <div class="mb-3"><h6 class="text-muted mb-2"><i class="fas fa-calendar me-2"></i>Date & Time</h6><p class="mb-0"><?php echo date('d M Y', strtotime($booking['booking_date'])); ?></p><p class="mb-0 small text-muted"><?php echo date('h:i A', strtotime($booking['start_time'])); ?></p></div>
-                                    <div class="mb-3"><h6 class="text-muted mb-2"><i class="fas fa-scissors me-2"></i>Services</h6><ul class="list-unstyled small mb-0"><?php foreach($bookingServices[$booking['booking_id']] as $service): ?><li>• <?php echo htmlspecialchars($service['service_name']); ?></li><?php endforeach; ?></ul></div>
-                                    <div class="border-top pt-2"><strong>RM <?php echo number_format($booking['total_price'], 2); ?></strong></div>
-                                </div>
-                                <div class="card-footer bg-white">
-                                    <button class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="viewDetails('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-eye"></i> View Details</button>
-                                    <?php if(strtolower($booking['status']) === 'completed'): ?>
-                                        <button class="btn btn-sm btn-outline-success w-100" onclick="openCommentModal('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-comment"></i> Add Comment</button>
-                                    <?php endif; ?>
+            <div id="booking-history-section" class="mt-5">
+                <div class="booking-history-header d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="section-title mb-0 d-flex align-items-center gap-3">
+                        <span>
+                            <i class="fas fa-history me-2"></i>Bookings History
+                            <span class="badge bg-secondary ms-2"><?php echo count($pastBookings); ?></span>
+                        </span>
+                        <a href="#" id="toggle-history-view-all-link" class="view-all-action small text-decoration-none" onclick="toggleHistoryViewAll(event)" style="color: #c29076; font-weight: 600;">
+                            View all
+                        </a>
+                    </h3>
+                    <div class="d-flex align-items-center gap-2">
+                        <label for="history-month-filter" class="mb-0 small text-muted">Month:</label>
+                        <input type="month" id="history-month-filter" class="form-control form-control-sm" style="width: auto;" value="<?php echo $historyFilterMonth ? htmlspecialchars($historyFilterMonth) : ''; ?>" onchange="filterHistoryBookings()">
+                        <label for="history-status-filter" class="mb-0 small text-muted">Status:</label>
+                        <select id="history-status-filter" class="form-select form-select-sm" style="width: auto;" onchange="filterHistoryBookings()">
+                            <option value="all" <?php echo (!$historyFilterStatus || $historyFilterStatus === 'all') ? 'selected' : ''; ?>>All</option>
+                            <option value="cancelled" <?php echo $historyFilterStatus === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                            <option value="completed" <?php echo $historyFilterStatus === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                        </select>
+                        <?php if ($historyFilterMonth || ($historyFilterStatus && $historyFilterStatus !== 'all')): ?>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="clearHistoryFilters()" title="Clear filters">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+
+                <?php if (empty($pastBookings)): ?>
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fas fa-history"></i></div>
+                        <h3>No booking history yet</h3>
+                        <?php if ($historyFilterMonth || ($historyFilterStatus && $historyFilterStatus !== 'all')): ?>
+                            <p class="text-muted mb-0">No bookings match the selected month or status.</p>
+                        <?php else: ?>
+                            <p class="text-muted mb-0">You don't have any past bookings yet.</p>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="bookings-grid booking-history-grid mt-3">
+                        <?php foreach($pastBookings as $booking): ?>
+                            <div class="booking-history-item">
+                                <div class="card booking-card h-100" style="opacity: 0.95;">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold" style="color: #c29076;"><?php echo htmlspecialchars($booking['booking_id']); ?></span>
+                                        <span class="status-badge status-<?php echo $booking['status']; ?>"><?php echo ucfirst($booking['status']); ?></span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <h6 class="mb-2 fw-bold" style="color: #000;"><i class="fas fa-calendar me-2"></i>Date & Time</h6>
+                                            <p class="mb-0" style="font-family: 'Segoe UI', sans-serif; color: #6c757d; font-size: 1.1rem;"><?php echo date('l, d M Y', strtotime($booking['booking_date'])); ?></p>
+                                            <p class="mb-0 small" style="font-family: 'Segoe UI', sans-serif; color: #6c757d;"><?php echo date('h:i A', strtotime($booking['start_time'])); ?></p>
+                                        </div>
+                                        <div class="mb-3">
+                                            <h6 class="mb-2 fw-bold" style="color: #000;"><i class="fas fa-scissors me-2"></i>Services</h6>
+                                            <ul class="list-unstyled small mb-0">
+                                                <?php foreach($bookingServices[$booking['booking_id']] as $service): ?>
+                                                    <li style="font-family: 'Segoe UI', sans-serif; color: #6c757d;">• <?php echo htmlspecialchars($service['service_name']); ?></li>
+                                                <?php endforeach; ?>
+                                            </ul>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                            <span class="text-muted">Total:</span>
+                                            <strong class="fs-5" style="color: #c29076;">RM <?php echo number_format($booking['total_price'], 2); ?></strong>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-white d-flex gap-2" style="padding: 1rem;">
+                                        <button class="btn btn-sm btn-outline-primary booking-action-btn" style="flex: 1 1 0; min-width: 0; padding: 0.5rem 1rem; border: 1px solid #0d6efd; color: #0d6efd;" onclick="viewDetails('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-eye"></i> View Details</button>
+                                        <?php if(strtolower($booking['status']) === 'completed'): ?>
+                                            <button class="btn btn-sm btn-outline-success booking-action-btn" style="flex: 1 1 0; min-width: 0; padding: 0.5rem 1rem; border: 1px solid #198754; color: #198754;" onclick="openCommentModal('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-comment"></i> Add Comment</button>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
 
 
 
         </div>
 
         <!-- ========== SECTION 2: PROFILE ========== -->
-        <div id="section-profile" class="dash-section">
+        <div id="section-profile" class="dash-section <?php echo $currentSection === 'profile' ? 'active' : ''; ?>">
             <h1 class="favourites-title" style="margin-bottom: 30px;">My Profile</h1>
 
             <!-- Personal Information Card -->
@@ -789,7 +922,7 @@ foreach($bookings as $booking) {
         </div>
 
         <!-- ========== SECTION 4: FAVOURITES STAFF ========== -->
-<div id="section-favourites" class="dash-section">
+        <div id="section-favourites" class="dash-section <?php echo $currentSection === 'favourites' ? 'active' : ''; ?>">
 
     <h1 class="favourites-title">My Favourite Staff</h1>
 
@@ -893,7 +1026,7 @@ foreach($bookings as $booking) {
 </div>
         <!-- ========== SECTION 5: HELP & SUPPORT ========== -->
         <!-- FAQ Section -->
-        <div id="section-help" class="dash-section">
+        <div id="section-help" class="dash-section <?php echo $currentSection === 'help' ? 'active' : ''; ?>">
 
             <h1 class="favourites-title">Help & Support</h1>
             <div class="faq-card">
@@ -1030,6 +1163,66 @@ foreach($bookings as $booking) {
 </div>
 
 <script src="dashboard.js"></script>
+<script>
+function filterUpcomingBookings(month) {
+    const url = new URL(window.location);
+    if (month) {
+        url.searchParams.set('upcoming_month', month);
+    } else {
+        url.searchParams.delete('upcoming_month');
+    }
+    // Ensure we stay on the My Bookings tab after reload
+    url.searchParams.set('section', 'bookings');
+    // Preserve history filters
+    const historyMonth = document.getElementById('history-month-filter')?.value;
+    const historyStatus = document.getElementById('history-status-filter')?.value;
+    if (historyMonth) url.searchParams.set('history_month', historyMonth);
+    if (historyStatus && historyStatus !== 'all') url.searchParams.set('history_status', historyStatus);
+    window.location.href = url.toString();
+}
+
+function filterHistoryBookings() {
+    const url = new URL(window.location);
+    const month = document.getElementById('history-month-filter')?.value;
+    const status = document.getElementById('history-status-filter')?.value;
+    
+    if (month) {
+        url.searchParams.set('history_month', month);
+    } else {
+        url.searchParams.delete('history_month');
+    }
+    
+    if (status && status !== 'all') {
+        url.searchParams.set('history_status', status);
+    } else {
+        url.searchParams.delete('history_status');
+    }
+    
+    // Preserve upcoming filter
+    const upcomingMonth = document.getElementById('upcoming-month-filter')?.value;
+    if (upcomingMonth) url.searchParams.set('upcoming_month', upcomingMonth);
+    // Ensure we stay on the My Bookings tab after reload
+    url.searchParams.set('section', 'bookings');
+    // Scroll directly to booking history after reload
+    url.hash = 'booking-history-section';
+    window.location.href = url.toString();
+}
+
+function clearHistoryFilters() {
+    const url = new URL(window.location);
+    url.searchParams.delete('history_month');
+    url.searchParams.delete('history_status');
+    
+    // Preserve upcoming filter
+    const upcomingMonth = document.getElementById('upcoming-month-filter')?.value;
+    if (upcomingMonth) url.searchParams.set('upcoming_month', upcomingMonth);
+    // Ensure we stay on the My Bookings tab after reload
+    url.searchParams.set('section', 'bookings');
+    // Scroll directly to booking history after reload
+    url.hash = 'booking-history-section';
+    window.location.href = url.toString();
+}
+</script>
 
 </body>
 </html>

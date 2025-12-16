@@ -555,10 +555,23 @@ require_once 'includes/header.php';
     }
     
     /* Ensure step 3 "Date & Time" displays on one line without affecting spacing */
+    #step-3-indicator {
+        display: flex !important;
+        align-items: center !important;
+        gap: 18px !important;
+        flex-shrink: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
     #step-3-indicator span {
         max-width: none !important;
         text-align: left !important;
         line-height: 1.2 !important;
+        white-space: nowrap !important;
+        display: inline-block !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
     
     /* Responsive adjustments for smaller screens */

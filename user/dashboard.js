@@ -499,17 +499,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initialize bookings view (show only first 3 by default)
-    const toggleLink = document.getElementById('toggle-view-all-link');
-    if (toggleLink) {
-        toggleLink.addEventListener('click', function(e){ toggleViewAllBookings(e); });
-    }
+    // Note: click handling is done via inline onclick in the HTML to avoid double-toggling
     if (typeof updateBookingItemsVisibility === 'function') updateBookingItemsVisibility();
     
     // Initialize booking history view (show only first 3 by default)
-    const historyToggleLink = document.getElementById('toggle-history-view-all-link');
-    if (historyToggleLink) {
-        historyToggleLink.addEventListener('click', function(e){ toggleHistoryViewAll(e); });
-    }
+    // Note: click handling is done via inline onclick in the HTML to avoid double-toggling
     if (typeof updateHistoryItemsVisibility === 'function') updateHistoryItemsVisibility();
 });
 
@@ -534,8 +528,44 @@ function updateViewAllUI() {
 function updateBookingItemsVisibility() {
     const grid = document.querySelector('#section-bookings .bookings-grid');
     if (!grid) return;
-    const items = grid.querySelectorAll('.booking-item');
+
+    // Use direct children to be extra-safe and ensure we include all cards
+    const items = Array.from(grid.children);
+    const toggle = document.getElementById('toggle-view-all-link');
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            sessionId:'debug-session',
+            runId:'pre-fix',
+            hypothesisId:'H1',
+            location:'dashboard.js:updateBookingItemsVisibility',
+            message:'Upcoming visibility update',
+            data:{
+                itemCount:items.length,
+                hasExpandedClass:grid.classList.contains('expanded')
+            },
+            timestamp:Date.now()
+        })
+    }).catch(()=>{});
+    // #endregion
+
+    // If 3 or fewer items, always show all and hide the toggle link
+    if (items.length <= 3) {
+        items.forEach(item => {
+            item.style.display = 'flex';
+        });
+        if (toggle) {
+            toggle.textContent = 'View all';
+            toggle.style.display = 'none';
+        }
+        return;
+    }
+
     const expanded = grid.classList.contains('expanded');
+
     items.forEach((item, idx) => {
         if (!expanded && idx >= 3) {
             item.style.display = 'none';
@@ -543,24 +573,83 @@ function updateBookingItemsVisibility() {
             item.style.display = 'flex';
         }
     });
-    const toggle = document.getElementById('toggle-view-all-link');
-    if (toggle) toggle.textContent = expanded ? 'Show fewer' : 'View all';
+
+    if (toggle) {
+        toggle.style.display = 'inline-flex';
+        toggle.textContent = expanded ? 'Show fewer' : 'View all';
+    }
 }
 
 function toggleViewAllBookings(e) {
     if (e) e.preventDefault();
     const grid = document.querySelector('#section-bookings .bookings-grid');
     if (!grid) return;
+
+    const before = grid.classList.contains('expanded');
+
     grid.classList.toggle('expanded');
     updateBookingItemsVisibility();
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            sessionId:'debug-session',
+            runId:'pre-fix',
+            hypothesisId:'H2',
+            location:'dashboard.js:toggleViewAllBookings',
+            message:'Toggle upcoming view-all clicked',
+            data:{
+                wasExpandedBefore:before,
+                isExpandedAfter:grid.classList.contains('expanded')
+            },
+            timestamp:Date.now()
+        })
+    }).catch(()=>{});
+    // #endregion
 }
 
 // Booking history toggle: show only first 3 items by default, toggle to show all
 function updateHistoryItemsVisibility() {
     const grid = document.querySelector('#section-bookings .booking-history-grid');
     if (!grid) return;
-    const items = grid.querySelectorAll('.booking-history-item');
+
+    const items = Array.from(grid.children);
+    const toggle = document.getElementById('toggle-history-view-all-link');
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            sessionId:'debug-session',
+            runId:'pre-fix',
+            hypothesisId:'H3',
+            location:'dashboard.js:updateHistoryItemsVisibility',
+            message:'History visibility update',
+            data:{
+                itemCount:items.length,
+                hasExpandedClass:grid.classList.contains('expanded')
+            },
+            timestamp:Date.now()
+        })
+    }).catch(()=>{});
+    // #endregion
+
+    if (items.length <= 3) {
+        items.forEach(item => {
+            item.style.display = 'flex';
+        });
+        if (toggle) {
+            toggle.textContent = 'View all';
+            toggle.style.display = 'none';
+        }
+        return;
+    }
+
     const expanded = grid.classList.contains('expanded');
+
     items.forEach((item, idx) => {
         if (!expanded && idx >= 3) {
             item.style.display = 'none';
@@ -568,16 +657,41 @@ function updateHistoryItemsVisibility() {
             item.style.display = 'flex';
         }
     });
-    const toggle = document.getElementById('toggle-history-view-all-link');
-    if (toggle) toggle.textContent = expanded ? 'Show fewer' : 'View all';
+
+    if (toggle) {
+        toggle.style.display = 'inline-flex';
+        toggle.textContent = expanded ? 'Show fewer' : 'View all';
+    }
 }
 
 function toggleHistoryViewAll(e) {
     if (e) e.preventDefault();
     const grid = document.querySelector('#section-bookings .booking-history-grid');
     if (!grid) return;
+
+    const before = grid.classList.contains('expanded');
+
     grid.classList.toggle('expanded');
     updateHistoryItemsVisibility();
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+            sessionId:'debug-session',
+            runId:'pre-fix',
+            hypothesisId:'H4',
+            location:'dashboard.js:toggleHistoryViewAll',
+            message:'Toggle history view-all clicked',
+            data:{
+                wasExpandedBefore:before,
+                isExpandedAfter:grid.classList.contains('expanded')
+            },
+            timestamp:Date.now()
+        })
+    }).catch(()=>{});
+    // #endregion
 }
 
 // Ensure initial state for view-all controls on load

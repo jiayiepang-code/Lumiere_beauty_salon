@@ -55,7 +55,7 @@ session_start();
             <button type="button" class="submit-btn" style="background: #A26E60;" onclick="validateAdminLogin()">ADMIN LOGIN</button>
 
             <div class="switch-form">
-                <a href="../user/login.php">Back to Customer Site</a>
+                <a href="../login.php">Back to Customer Site</a>
             </div>
 
         </form>

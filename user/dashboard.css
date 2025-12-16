@@ -415,6 +415,10 @@ input:checked + .slider:before { transform: translateX(24px); }
         flex: 1;
         width: 100%;
 }
+        .booking-card {
+            display: flex;
+            flex-direction: column;
+        }
         .bookings-grid .card .card-body { flex: 1; }
         .bookings-grid > div { min-width: 0; }
         .booking-card { min-height: 300px; }
@@ -1515,4 +1519,109 @@ input:checked + .slider:before { transform: translateX(24px); }
 .booking-action-btn:hover {
     opacity: 0.9;
     transform: translateY(-1px);
+}
+
+/* =========================================
+   RESPONSIVE LAYOUT TWEAKS
+   ========================================= */
+
+/* Medium screens (tablets) */
+@media (max-width: 992px) {
+    .dashboard-container {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .dash-sidebar {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .sidebar-header {
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .avatar-circle-lg {
+        width: 56px;
+        height: 56px;
+        font-size: 22px;
+        margin: 0;
+    }
+
+    .dash-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-left: 16px;
+    }
+
+    .dash-main {
+        padding: 24px 20px;
+    }
+
+    #section-bookings {
+        max-width: 100%;
+    }
+}
+
+/* Small screens (phones) */
+@media (max-width: 576px) {
+    .dash-main {
+        padding: 18px 14px;
+    }
+
+    .bookings-page-title {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-header .section-title {
+        font-size: 1.3rem;
+        padding-left: 0;
+    }
+
+    .bookings-header,
+    .booking-history-header,
+    .dashboard-header > .d-flex {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .bookings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .booking-card {
+        min-height: 0;
+    }
+
+    .empty-state {
+        padding: 2.5rem 1.75rem;
+    }
+
+    .dash-sidebar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .dash-nav {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 10px;
+        overflow-x: auto;
+    }
+
+    .dash-nav a {
+        padding: 8px 10px;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
 }
