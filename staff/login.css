@@ -1,0 +1,131 @@
+/* Standard Reset */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+
+/* Main Layout */
+body.staff-page {
+    background-color: #f5f7fa;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-container {
+    display: flex;
+    width: 900px;
+    height: 550px;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+/* Sidebar Styles */
+.auth-sidebar {
+    width: 40%;
+    /* Gradient extracted from your original HTML */
+    background: linear-gradient(135deg, #aa9385 0%, #968073 50%, #6b5b52 100%);
+    color: white;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.auth-sidebar h2 { font-size: 28px; margin-bottom: 20px; }
+
+.logo-container {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+}
+
+.logo-oval {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50% / 60%;
+    padding: 20px 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-logo {
+    width: 120px;
+    height: auto;
+    display: block;
+}
+
+/* Main Content Styles */
+.auth-main {
+    width: 60%;
+    padding: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.form-header h1 { color: #968073; margin-bottom: 5px; }
+.form-header p { color: #888; margin-bottom: 30px; }
+
+/* Input Styles */
+.form-group { margin-bottom: 20px; }
+.phone-wrapper, .input-wrapper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+}
+.input-prefix { color: #888; margin-right: 10px; font-weight: bold; }
+.form-control {
+    border: none;
+    outline: none;
+    width: 100%;
+    font-size: 16px;
+    color: #333;
+}
+
+/* Button & Links */
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: #968073;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    margin-top: 10px;
+}
+.submit-btn:hover { background: #7a6a5f; }
+.switch-form { margin-top: 20px; text-align: center; }
+.switch-form a { color: #968073; text-decoration: none; font-size: 14px; }
+
+/* Error Alert Box */
+.error-alert {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid #f5c6cb;
+}
+.input-icon { width: 20px; margin-right: 10px; }
+.password-toggle { width: 20px; cursor: pointer; }
+
+/* Hide native password reveal button (Edge/IE) so only our eye icon shows */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+/* Hide potential auto-fill icons in some browsers */
+input[type="password"]::-webkit-credentials-auto-fill-button {
+    visibility: hidden;
+    display: none;
+}

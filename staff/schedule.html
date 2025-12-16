@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Schedule - Lumière</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        /* CSS to accommodate the fixed sidebar */
+        .main-content {
+            padding: 2rem 0; /* General padding */
+            margin-left: 200px; /* Space for the default-width sidebar */
+            transition: margin-left 0.3s;
+        }
+
+        /* Fix the header alignment when sidebar is present */
+        .header {
+            margin-left: 200px; /* Match the main content margin */
+            width: calc(100% - 200px);
+            transition: margin-left 0.3s, width 0.3s;
+        }
+
+        :root {
+            --staff-color: #968073;
+            --accent-pink: #f2cbd7;
+            --success-color: #5cb85c;
+            --error-color: #d9534f;
+            --text-color: #5c4e4b;
+            --text-light: #8a8a95;
+            --border-color: #e6d9d2;
+            --bg-gradient: linear-gradient(180deg, #f5e9e4, #faf5f2, #ffffff);
+            --shadow-soft: 0 4px 20px rgba(150, 128, 115, 0.1);
+            --radius-soft: 12px;
+            --status-green: #28a745;
+            --status-blue: #007bff;
+            --status-red: #dc3545;
+            --status-grey: #6c757d;
+        }
+        /* card border colours */
+        .appointment-card.green{border-left-color:var(--status-green);}
+        .appointment-card.blue{border-left-color:var(--status-blue);}
+        .appointment-card.red{border-left-color:var(--status-red);}
+        .appointment-card.grey{border-left-color:var(--status-grey);}
+        
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:var(--bg-gradient);color:var(--text-color);min-height:100vh;}
+        .container{max-width:1200px;margin:0 auto;padding:0 20px;}
+        /* ---------- SIDEBAR ---------- */
+        #nav-toggle{display:none;}
+        .sidebar{position:fixed;left:0;top:0;height:100%;width:200px;background:#fff;border-right:1px solid var(--border-color);padding-top:60px;transition:.3s;z-index:150;display:flex;flex-direction:column;justify-content:space-between;}
+        .sidebar ul{list-style:none;padding:0;margin:0;flex:1;}
+        .sidebar li a{display:flex;align-items:center;gap:.75rem;padding:1rem 1.5rem;color:var(--text-color);text-decoration:none;}
+        .sidebar li.active a,.sidebar li a:hover{background:#faf8f6;color:var(--staff-color);}
+        .sidebar-logout{display:flex;align-items:center;gap:.75rem;padding:1rem 1.5rem;color:#d9534f;text-decoration:none;border-top:1px solid var(--border-color);cursor:pointer;transition:all .3s ease;}
+        .sidebar-logout:hover{background:#fff5f5;color:#c9302c;}
+        .sidebar-logout i{color:#d9534f;}
+        .sidebar-logout:hover i{color:#c9302c;}
+        
+        .toggle-btn{
+            position:absolute;
+            right:-40px;
+            top:15px;
+            background:var(--staff-color);
+            color:#fff;
+            width:32px;
+            height:32px;
+            border-radius:4px;
+            display:none;
+            place-items:center;
+            cursor:pointer;
+        }
+        
+        /* ---------- HEADER ---------- */
+        .header{background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border-color);padding:1rem 0;position:sticky;top:0;z-index:100;margin-left:200px;width:calc(100% - 200px);transition:margin-left .3s, width .3s;}
+        .header-content{display:flex;justify-content:space-between;align-items:center;}
+        .brand{display:flex;align-items:center;gap:.6rem;}
+        .logo-img{width:120px;height:auto;object-fit:contain;}
+        .logo{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--staff-color);cursor:pointer;display:none;}
+        .nav{display:flex;gap:1.5rem;align-items:center;margin-left:2rem;}
+        .nav a{color:var(--text-color);text-decoration:none;font-weight:500;position:relative;padding:.25rem 0;transition:color .2s ease;}
+        .nav a::after{content:'';position:absolute;left:0;bottom:-6px;width:100%;height:2px;background:var(--staff-color);transform:scaleX(0);transform-origin:left;transition:transform .25s ease;}
+        .nav a:hover,.nav a.active{color:var(--staff-color);}
+        .nav a:hover::after,.nav a.active::after{transform:scaleX(1);}
+        .profile-section{position:relative;display:flex;align-items:center;gap:.75rem;}
+        .notification-wrapper{position:relative;display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;cursor:pointer;transition:background .2s ease, transform .2s ease;}
+        .notification-wrapper:hover{background:#f4efeb;transform:translateY(-1px);}
+        .notification-bell{font-size:1.1rem;color:var(--text-color);}
+        .notification-badge{position:absolute;top:6px;right:6px;background:#d9534f;color:#fff;border-radius:999px;padding:2px 6px;font-size:.7rem;font-weight:700;line-height:1;}
+        .notification-dropdown{position:absolute;top:48px;right:0;background:#fff;border:1px solid var(--border-color);border-radius:var(--radius-soft);box-shadow:var(--shadow-soft);width:300px;max-height:360px;overflow-y:auto;display:none;z-index:900;}
+        .notification-dropdown.active{display:block;}
+        .notification-header{padding:.75rem 1rem;border-bottom:1px solid var(--border-color);font-weight:600;display:flex;justify-content:space-between;align-items:center;}
+        .notification-list{list-style:none;margin:0;padding:0;}
+        .notification-item{padding:.85rem 1rem;border-bottom:1px solid var(--border-color);display:flex;gap:.6rem;}
+        .notification-item:last-child{border-bottom:none;}
+        .notification-dot{width:10px;height:10px;border-radius:50%;background:#d9534f;margin-top:5px;flex-shrink:0;}
+        .notification-content{display:flex;flex-direction:column;gap:.2rem;font-size:.95rem;color:var(--text-color);}
+        .notification-time{font-size:.8rem;color:var(--text-light);}
+        .notification-empty{padding:1rem;text-align:center;color:var(--text-light);font-size:.95rem;}
+        .profile-icon{width:40px;height:40px;border-radius:50%;background:var(--staff-color);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.1rem;cursor:pointer;transition:all .2s ease;}
+        .profile-icon:hover{transform:translateY(-1px);box-shadow:var(--shadow-soft);}
+        .avatar{width:45px;height:45px;border-radius:50%;background:var(--staff-color);display:grid;place-items:center;overflow:hidden;color:#fff;font-weight:600;text-transform:uppercase;}
+        .avatar img{width:100%;height:100%;object-fit:cover;display:none;}
+        .avatar.has-image img{display:block;}
+        .avatar.has-image .avatar-initials{display:none;}
+        .avatar-initials{letter-spacing:.5px;}
+        .profile-meta{display:flex;flex-direction:column;line-height:1.2;}
+        .profile-name{font-weight:600;color:var(--text-color);text-transform:capitalize;}
+        .profile-role{font-size:.9rem;color:var(--staff-color);background:var(--accent-pink);padding:.1rem .5rem;border-radius:999px;font-weight:600;width:fit-content;}
+        .profile-dropdown{position:absolute;top:55px;right:0;background:#fff;border-radius:var(--radius-soft);box-shadow:var(--shadow-soft);padding:1rem;min-width:200px;display:none;z-index:1000;border:1px solid var(--border-color);}
+        .profile-dropdown.active{display:block;}
+        .dropdown-item{padding:.75rem 1rem;border-radius:8px;cursor:pointer;transition:all .3s ease;display:flex;align-items:center;gap:.75rem;}
+        .dropdown-item:hover{background:#f8f9fa;color:var(--staff-color);}
+        .dropdown-divider{height:1px;background:var(--border-color);margin:.5rem 0 .75rem;}
+        .dropdown-header{display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem .75rem;}
+        .dropdown-header .avatar{width:48px;height:48px;}
+        .dropdown-names{display:flex;flex-direction:column;}
+        .dropdown-names .profile-name{font-size:1rem;}
+        .logout-item{color:var(--error-color);}
+        
+        .header-content{display:flex;justify-content:space-between;align-items:center;}
+        .logo{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700;color:var(--staff-color);cursor:pointer;}
+        .profile-section{position:relative;}
+        .profile-icon{width:45px;height:45px;border-radius:50%;background:var(--staff-color);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;cursor:pointer;transition:all .3s ease;}
+        .profile-icon:hover{transform:scale(1.05);box-shadow:var(--shadow-soft);}
+        .profile-dropdown{position:absolute;top:55px;right:0;background:#fff;border-radius:var(--radius-soft);box-shadow:var(--shadow-soft);padding:1rem;min-width:200px;display:none;z-index:1000;}
+        .profile-dropdown.active{display:block;}
+        .dropdown-item{padding:.75rem 1rem;border-radius:8px;cursor:pointer;transition:all .3s ease;display:flex;align-items:center;gap:.75rem;}
+        .dropdown-item:hover{background:#f8f9fa;color:var(--staff-color);}
+        
+        /* --- Schedule Container Style (Matches index.html .stats-section) --- */
+        .schedule-container {
+            background: white;
+            border-radius: var(--radius-soft);
+            padding: 2rem;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid var(--border-color);
+        }
+        
+        /* ----- Spacing Adjustments ----- */
+        .page-header{margin-bottom:1.5rem;}
+        .date-picker-section{margin-bottom:1.5rem;}
+        
+        /* ----- legend ----- */
+        .legend{display:flex;gap:1.5rem;flex-wrap:wrap;margin-top:.5rem; margin-bottom: 0.5rem;} /* Added spacing below legend */
+        .legend-item{display:flex;align-items:center;gap:.5rem;font-size:.9rem;}
+        .legend-color{width:16px;height:16px;border-radius:50%;}
+        .legend-color.green{background:var(--status-green);}
+        .legend-color.blue{background:var(--status-blue);}
+        .legend-color.red{background:var(--status-red);}
+        .legend-color.grey{background:var(--status-grey);}
+        
+        /* ---------- APPOINTMENT CONTENT (Removed outer card style from inner section) ---------- */
+        .appointments-section{
+            padding: 0; /* Removed padding */
+            box-shadow: none; /* Removed shadow */
+            border: none; /* Removed border */
+            background: none; /* Removed background */
+            border-radius: 0;
+        }
+        .appointments-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;}
+        .appointments-title{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--staff-color);}
+        .date-picker-container{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;}
+        .date-input{padding:.75rem 1rem;border:2px solid var(--border-color);border-radius:8px;font-size:1rem;transition:all .3s ease;background:#fff;}
+        .date-input:focus{outline:none;border-color:var(--staff-color);box-shadow:0 0 0 3px rgba(150,128,115,.1);}
+        .btn-primary{background:var(--staff-color);color:#fff;border:none;padding:.75rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:500;transition:all .3s ease;}
+        .btn-primary:hover{background:#7a6a5f;transform:translateY(-2px);}
+        .appointments-grid{display:grid;gap:1rem;}
+        .appointment-card{background:#faf8f6;border-radius:var(--radius-soft);padding:1.5rem;border-left:4px solid;transition:all .3s ease;cursor:pointer;}
+        .appointment-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-soft);}
+        .appointment-card.green{border-left-color:var(--status-green);}
+        .appointment-card.blue{border-left-color:var(--status-blue);}
+        .appointment-card.red{border-left-color:var(--status-red);}
+        .appointment-card.grey{border-left-color:var(--status-grey);}
+        .appointment-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem;}
+        .appointment-time{font-weight:600;color:var(--staff-color);font-size:1.1rem;}
+        .appointment-status{padding:.25rem .75rem;border-radius:20px;font-size:.8rem;font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+        .status-confirmed{background:rgba(40,167,69,.1);color:var(--status-green);}
+        .status-completed{background:rgba(0,123,255,.1);color:var(--status-blue);}
+        .status-cancelled{background:rgba(220,53,69,.1);color:var(--status-red);}
+        .status-no_show{background:rgba(108,117,125,.1);color:var(--status-grey);}
+        .status-available{background:rgba(108,117,125,.1);color:var(--status-grey);}
+        .appointment-details{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;}
+        .detail-item{display:flex;flex-direction:column;gap:.25rem;}
+        .detail-label{font-size:.9rem;color:var(--text-light);font-weight:500;}
+        .detail-value{font-weight:500;color:var(--text-color);}
+        .appointment-actions{display:flex;gap:.5rem;margin-top:1rem;flex-wrap:wrap;}
+        .action-btn{padding:.5rem 1rem;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:500;transition:all .3s ease;}
+        .btn-complete{background:var(--status-blue);color:#fff;}
+        .btn-complete:hover{background:#025aa5;}
+        .btn-cancel{background:var(--status-red);color:#fff;}
+        .btn-cancel:hover{background:#c9302c;}
+        .btn-noshow{background:var(--status-grey);color:#fff;}
+        .btn-noshow:hover{background:#5a6268;}
+        .empty-state{text-align:center;padding:3rem;color:var(--text-light);}
+        .empty-state i{font-size:3rem;margin-bottom:1rem;opacity:.5;}
+        .view-request-btn{
+            background:transparent;
+            color:var(--staff-color);
+            border:1px solid var(--staff-color);
+            padding:.35rem .75rem;
+            border-radius:999px;
+            font-weight:600;
+            cursor:pointer;
+            transition:all .2s ease;
+        }
+        .view-request-btn:hover{
+            background:var(--staff-color);
+            color:#fff;
+        }
+        .special-request{
+            display:none;
+            margin-top:.5rem;
+            background:#fff;
+            border:1px dashed var(--border-color);
+            border-radius:8px;
+            padding:.75rem;
+            color:var(--text-color);
+            box-shadow:var(--shadow-soft);
+        }
+        .special-request.active{display:block;}
+        
+        @media(max-width:768px){
+            .date-picker-container{flex-direction:column;align-items:stretch;}
+            .appointment-header{flex-direction:column;align-items:flex-start;gap:.5rem;}
+            
+            /* Responsive: Hide sidebar and adjust main content/header */
+            .sidebar {
+                left: -200px;
+            }
+            .main-content, .header {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            /* Show toggle button on mobile */
+            .toggle-btn {
+                display: grid;
+                position: fixed;
+                left: 10px;
+                top: 15px;
+            }
+            
+            /* On mobile, open sidebar when checkbox is checked */
+            #nav-toggle:checked ~ .sidebar {
+                left: 0;
+            }
+            
+            .nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <input type="checkbox" id="nav-toggle" hidden>
+
+    <aside class="sidebar">
+      <label for="nav-toggle" class="toggle-btn"><i class="fas fa-bars"></i></label>
+      <ul>
+        <li><a href="dashboard.html"><i class="fas fa-home"></i> Home</a></li>
+        <li class="active"><a href="schedule.html"><i class="fas fa-calendar-alt"></i> Schedule</a></li>
+        <li><a href="history.html"><i class="fas fa-history"></i> History</a></li>
+        <li><a href="performance.html"><i class="fas fa-chart-line"></i> Performance</a></li>
+        <li><a href="apply-leave.html"><i class="fas fa-calendar-minus"></i> Leave</a></li>
+        <li><a href="profile.html"><i class="fas fa-user"></i> My Profile</a></li>
+      </ul>
+      <a href="#" class="sidebar-logout" onclick="logout(); return false;">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </a>
+    </aside>
+
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="brand">
+                    <img src="../images/16.png" alt="Lumière logo" class="logo-img">
+                    <div class="logo">Lumière</div>
+                </div>
+                <nav class="nav">
+                    <a href="dashboard.html">Home</a>
+                    <a href="schedule.html" class="active">Schedule</a>
+                    <a href="history.html">History</a>
+                    <a href="performance.html">Performance</a>
+                    <a href="apply-leave.html">Leave</a>
+                </nav>
+                <div class="profile-section">
+                    <div class="notification-wrapper" onclick="toggleNotifications(event)">
+                        <i class="fas fa-bell notification-bell"></i>
+                        <span class="notification-badge" id="notificationBadge" style="display:none;">0</span>
+                        <div class="notification-dropdown" id="notificationDropdown">
+                            <div class="notification-header">
+                                <span>Notifications</span>
+                                <span id="notificationCountText">0</span>
+                            </div>
+                            <ul class="notification-list" id="notificationList"></ul>
+                            <div class="notification-empty" id="notificationEmpty">No new notifications</div>
+                        </div>
+                    </div>
+                    <div class="profile-icon" onclick="toggleProfileDropdown()">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="profile-dropdown" id="profileDropdown">
+                        <div class="dropdown-header">
+                            <div class="avatar" id="dropdownAvatar">
+                                <img id="dropdownAvatarImg" alt="Staff profile">
+                                <span class="avatar-initials" id="dropdownAvatarPlaceholder">ST</span>
+                            </div>
+                            <div class="dropdown-names">
+                                <span class="profile-name" id="dropdownName">Staff</span>
+                                <span class="profile-role">Staff</span>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item" onclick="window.location.href='profile.html'">
+                            <i class="fas fa-user"></i>
+                            <span>My Profile</span>
+                        </div>
+                        <div class="dropdown-item" onclick="window.location.href='apply-leave.html'">
+                            <i class="fas fa-calendar-minus"></i>
+                            <span>Apply Leave</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item logout-item" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+<main class="main-content">
+  <div class="container">
+    
+    <div class="schedule-container">
+        
+        <div class="page-header"><h1 class="page-title">Daily Schedule</h1></div>
+
+        <section class="date-picker-section">
+          <div class="date-picker-container">
+            <label for="datePicker">Select Date:</label>
+            <input type="date" id="datePicker" class="date-input" value="2025-12-05">
+            <button class="btn-primary" onclick="loadAppointments()">Load Schedule</button>
+          </div>
+        </section>
+
+        <section class="appointments-section">
+          <div class="appointments-header">
+            <h2 class="appointments-title" id="dailyScheduleTitle">Appointments</h2>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+              <div class="legend">
+                <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
+                <div class="legend-item"><div class="legend-color red"></div><span>Cancelled</span></div>
+                <div class="legend-item"><div class="legend-color grey"></div><span>No-show</span></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="statusFilter" style="font-weight: 500; color: var(--text-color);">Filter by Status:</label>
+                <select id="statusFilter" class="date-input" style="padding: 0.5rem 1rem; cursor: pointer;" onchange="loadAppointments()">
+                  <option value="">All (Confirmed, Cancelled, No-show)</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="no_show">No-show</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="appointments-grid" id="appointmentsGrid"></div>
+        </section>
+        
+    </div>
+
+    <div class="schedule-container" style="margin-top: 2rem;">
+        <div class="page-header"><h1 class="page-title">Month Schedule</h1></div>
+
+        <section class="date-picker-section">
+          <div class="date-picker-container">
+            <label for="monthPicker">Select Month:</label>
+            <input type="month" id="monthPicker" class="date-input">
+            <button class="btn-primary" onclick="loadMonthAppointments()">Load Month Schedule</button>
+          </div>
+        </section>
+
+        <section class="appointments-section">
+          <div class="appointments-header">
+            <h2 class="appointments-title" id="monthScheduleTitle">Month Schedule</h2>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+              <div class="legend">
+                <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
+                <div class="legend-item"><div class="legend-color red"></div><span>Cancelled</span></div>
+                <div class="legend-item"><div class="legend-color grey"></div><span>No-show</span></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="monthStatusFilter" style="font-weight: 500; color: var(--text-color);">Filter by Status:</label>
+                <select id="monthStatusFilter" class="date-input" style="padding: 0.5rem 1rem; cursor: pointer;" onchange="loadMonthAppointments()">
+                  <option value="">All (Confirmed, Cancelled, No-show)</option>
+                  <option value="confirmed" selected>Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="no_show">No-show</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="appointments-grid" id="monthAppointmentsGrid"></div>
+        </section>
+        
+    </div>
+    
+
+<script>
+function toggleProfileDropdown(event) {
+    event?.stopPropagation();
+    const dropdown = document.getElementById('profileDropdown');
+    dropdown.classList.toggle('active');
+}
+
+function toggleNotifications(event){
+    event?.stopPropagation();
+    const dropdown=document.getElementById('notificationDropdown');
+    dropdown.classList.toggle('active');
+}
+
+function logout(){
+    if(confirm('Are you sure you want to logout?')){
+        window.location.href='login.html';
+    }
+}
+
+function setNotifications(notifications){
+    const badge=document.getElementById('notificationBadge');
+    const list=document.getElementById('notificationList');
+    const empty=document.getElementById('notificationEmpty');
+    const countText=document.getElementById('notificationCountText');
+
+    list.innerHTML='';
+    const unread=notifications.length;
+    countText.textContent=`${unread} new`;
+
+    if(unread>0){
+        badge.style.display='inline-block';
+        badge.textContent=unread>9?'9+':unread;
+        empty.style.display='none';
+        notifications.forEach(n=>{
+            const li=document.createElement('li');
+            li.className='notification-item';
+            li.innerHTML=`
+                <div class="notification-dot"></div>
+                <div class="notification-content">
+                    <div>${n.message}</div>
+                    <div class="notification-time">${n.time}</div>
+                </div>`;
+            list.appendChild(li);
+        });
+    }else{
+        badge.style.display='none';
+        empty.style.display='block';
+    }
+}
+
+async function loadNotifications(){
+    try {
+        const response = await fetch('api/dashboard.php');
+        if (!response.ok) throw new Error('Failed to fetch notifications');
+        
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || 'Failed to fetch notifications');
+        
+        const notifications = data.notifications || [];
+        setNotifications(notifications);
+    } catch (error) {
+        console.warn('Error loading notifications:', error.message);
+        setNotifications([]);
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const profileSection = document.querySelector('.profile-section');
+    const dropdown = document.getElementById('profileDropdown');
+    const notifyDropdown=document.getElementById('notificationDropdown');
+    
+    if (!profileSection.contains(event.target)) {
+        dropdown.classList.remove('active');
+        notifyDropdown.classList.remove('active');
+    }
+});
+
+async function logout() {
+    if (confirm('Are you sure you want to logout?')) {
+        try {
+            const response = await fetch('api/logout.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Redirect to login page
+                window.location.href = 'login.html';
+            } else {
+                alert('Logout failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Logout error:', error);
+            // Even if API fails, redirect to login
+            window.location.href = 'login.html';
+        }
+    }
+}
+
+function resolveStaffImage(imagePath) {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) return imagePath;
+    if (imagePath.startsWith('/')) return '..' + imagePath;
+    if (imagePath.startsWith('staff/')) return '../' + imagePath;
+    return imagePath;
+}
+
+function getInitials(name) {
+    return name
+        .split(' ')
+        .filter(Boolean)
+        .map(part => part[0])
+        .join('')
+        .slice(0, 2)
+        .toUpperCase() || 'ST';
+}
+
+function updateAvatar(avatarId, imgId, placeholderId, imagePath, initials) {
+    const avatar = document.getElementById(avatarId);
+    const img = document.getElementById(imgId);
+    const placeholder = document.getElementById(placeholderId);
+    if (!avatar || !img || !placeholder) return;
+
+    if (imagePath) {
+        img.src = resolveStaffImage(imagePath);
+        img.alt = 'Staff profile picture';
+        avatar.classList.add('has-image');
+    } else {
+        avatar.classList.remove('has-image');
+    }
+
+    placeholder.textContent = initials;
+}
+
+function setProfileName(name) {
+    const safeName = name || 'Staff';
+    const dropdownNameEl = document.getElementById('dropdownName');
+    if (dropdownNameEl) dropdownNameEl.textContent = safeName;
+}
+
+async function loadStaffProfile() {
+    const fallbackName = 'Staff';
+    try {
+        const response = await fetch('api/staff.php');
+        if (!response.ok) throw new Error('Unable to fetch staff profile');
+
+        const data = await response.json();
+        if (!data.success || !data.staff) throw new Error('No staff data');
+
+        const { first_name, last_name, staff_image } = data.staff;
+        const fullName = [first_name, last_name].filter(Boolean).join(' ') || fallbackName;
+        const initials = getInitials(fullName);
+
+        setProfileName(fullName);
+        updateAvatar('dropdownAvatar', 'dropdownAvatarImg', 'dropdownAvatarPlaceholder', staff_image, initials);
+    } catch (error) {
+        console.warn(error.message);
+        const initials = getInitials(fallbackName);
+        setProfileName(fallbackName);
+        updateAvatar('dropdownAvatar', 'dropdownAvatarImg', 'dropdownAvatarPlaceholder', '', initials);
+    }
+}
+
+function escapeHtml(str){
+  if(!str) return '';
+  return str.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
+}
+
+function toggleSpecialRequest(bookingId,btn){
+  const panel=document.getElementById(`special-${bookingId}`);
+  if(!panel) return;
+  const isOpen=panel.classList.toggle('active');
+  btn.textContent=isOpen?'Hide request':'View request';
+}
+
+function formatDate(dateStr){
+  if(!dateStr) return '';
+  const date=new Date(dateStr);
+  if(isNaN(date.getTime())) return dateStr; // Return original if invalid date
+  const day=String(date.getDate()).padStart(2,'0');
+  const month=String(date.getMonth()+1).padStart(2,'0');
+  const year=date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
+
+function formatDateFromString(dateStr){
+  if(!dateStr) return '';
+  try {
+    // If it's already in DD/MM/YYYY format, return as is
+    if (dateStr.includes('/') && dateStr.split('/').length === 3) {
+      const parts = dateStr.split('/');
+      if (parts[0].length === 2 && parts[1].length === 2 && parts[2].length === 4) {
+        return dateStr; // Already in DD/MM/YYYY format
+      }
+    }
+    // Parse ISO date (YYYY-MM-DD) format
+    const date = new Date(dateStr);
+    if(isNaN(date.getTime())) return dateStr;
+    const day=String(date.getDate()).padStart(2,'0');
+    const month=String(date.getMonth()+1).padStart(2,'0');
+    const year=date.getFullYear();
+    return `${day}/${month}/${year}`;
+  } catch(e) {
+    return dateStr;
+  }
+}
+
+function getStatusColorClass(status){
+  const statusMap={
+    'confirmed':'green',
+    'completed':'blue',
+    'cancelled':'red',
+    'no_show':'grey',
+    'available':'grey'
+  };
+  return statusMap[status]||'grey';
+}
+
+async function loadAppointments(){
+  const grid=document.getElementById('appointmentsGrid');
+  const dateInput=document.getElementById('datePicker');
+  const statusFilter=document.getElementById('statusFilter');
+  const date=dateInput.value;
+  const selectedStatus=statusFilter?statusFilter.value:'';
+  const titleEl=document.querySelector('.appointments-title');
+  
+  grid.innerHTML='<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>Loading...</h3></div>';
+  
+  try{
+    const response=await fetch(`api/appointments.php?date=${date}`);
+    const data=await response.json();
+    
+    if(!data.success){
+      throw new Error(data.error||'Failed to load appointments');
+    }
+    
+    let appointments=data.appointments||[];
+    
+    // Filter out completed bookings from daily schedule
+    appointments=appointments.filter(ap=>ap.status!=='completed');
+    
+    // Apply status filter if selected
+    if(selectedStatus){
+      appointments=appointments.filter(ap=>ap.status===selectedStatus);
+    }
+    
+    titleEl.textContent=`Appointments for ${formatDate(date)}`;
+    
+    grid.innerHTML='';
+    
+    if(appointments.length===0){
+      const filterText=selectedStatus?` with status "${selectedStatus}"`:'';
+      grid.innerHTML=`<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No appointments${filterText}</h3><p>There are no appointments${filterText} for this date.</p></div>`;
+      return;
+    }
+    
+    appointments.forEach((ap,index)=>{
+      const card=document.createElement('div');
+      const colorClass=getStatusColorClass(ap.status);
+      card.classList.add('appointment-card',colorClass);
+      const statusClass=`status-${ap.status}`;
+      let statusText=ap.status.charAt(0).toUpperCase()+ap.status.slice(1);
+      if(ap.status==='no_show'){
+        statusText='No Show';
+      }
+      const hasRequest=Boolean(ap.special_request);
+      const safeRequest=escapeHtml(ap.special_request);
+      const price=ap.total_price?parseFloat(ap.total_price).toFixed(2):'0.00';
+      
+      card.innerHTML=`
+        <div class="appointment-header">
+          <div class="appointment-time">${ap.time_formatted}</div>
+          <div class="appointment-status ${statusClass}">${statusText}</div>
+        </div>
+        <div class="appointment-details">
+          <div class="detail-item"><div class="detail-label">Customer</div><div class="detail-value">${escapeHtml(ap.customer_name)}</div></div>
+          <div class="detail-item"><div class="detail-label">Service</div><div class="detail-value">${escapeHtml(ap.service_names)}</div></div>
+          <div class="detail-item"><div class="detail-label">Duration</div><div class="detail-value">${ap.duration_formatted}</div></div>
+          <div class="detail-item"><div class="detail-label">Price (RM)</div><div class="detail-value">${price}</div></div>
+          <div class="detail-item">
+            <div class="detail-label">Special Request</div>
+            <div class="detail-value">
+              ${hasRequest
+                ? `<button class="view-request-btn" onclick="toggleSpecialRequest('${ap.booking_id}', this)">View request</button>
+                   <div id="special-${ap.booking_id}" class="special-request">${safeRequest}</div>`
+                : 'None'}
+            </div>
+          </div>
+        </div>
+        ${ap.status==='confirmed'?`
+        <div class="appointment-actions">
+          <button class="action-btn btn-complete" onclick="updateStatus('${ap.booking_id}','completed')">Mark Complete</button>
+          <button class="action-btn btn-cancel" onclick="updateStatus('${ap.booking_id}','cancelled')">Cancel</button>
+          <button class="action-btn btn-noshow" onclick="updateStatus('${ap.booking_id}','no_show')">No-Show</button>
+        </div>`:''}`;
+      grid.appendChild(card);
+    });
+  }catch(error){
+    console.error('Error loading appointments:',error);
+    grid.innerHTML=`<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>${error.message}</p></div>`;
+  }
+}
+
+async function updateStatus(bookingId,status){
+  try{
+    const response=await fetch('api/appointments.php',{
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({booking_id:bookingId,status:status})
+    });
+    
+    const data=await response.json();
+    
+    if(data.success){
+      alert(`Appointment status updated to: ${status}`);
+      loadAppointments();
+    }else{
+      alert(`Error: ${data.error||'Failed to update status'}`);
+    }
+  }catch(error){
+    console.error('Error updating status:',error);
+    alert('Failed to update appointment status');
+  }
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  const dateInput=document.getElementById('datePicker');
+  dateInput.value=new Date().toISOString().split('T')[0];
+  
+  const monthPicker=document.getElementById('monthPicker');
+  const today=new Date();
+  monthPicker.value=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  
+  loadAppointments();
+  // Call loadMonthAppointments() on load to apply the default 'confirmed' status
+  loadMonthAppointments(); 
+  loadStaffProfile();
+  loadNotifications();
+});
+
+async function loadMonthAppointments(){
+  const grid=document.getElementById('monthAppointmentsGrid');
+  const monthInput=document.getElementById('monthPicker');
+  const monthStatusFilter=document.getElementById('monthStatusFilter');
+  const monthValue=monthInput.value;
+  const selectedStatus=monthStatusFilter?monthStatusFilter.value:'';
+  const titleEl=document.getElementById('monthScheduleTitle');
+  
+  if(!monthValue){
+    alert('Please select a month');
+    return;
+  }
+  
+  grid.innerHTML='<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>Loading...</h3></div>';
+  
+  try{
+    const response=await fetch(`api/appointments.php?month=${monthValue}`);
+    const data=await response.json();
+    
+    if(!data.success){
+      throw new Error(data.error||'Failed to load appointments');
+    }
+    
+    let appointments=data.appointments||[];
+    
+    // Filter out completed bookings from monthly schedule
+    appointments=appointments.filter(ap=>ap.status!=='completed');
+    
+    // Apply status filter if selected
+    if(selectedStatus){
+      appointments=appointments.filter(ap=>ap.status===selectedStatus);
+    }
+    
+    const [year,month]=monthValue.split('-');
+    const monthName=new Date(year,month-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    titleEl.textContent=`Appointments for ${monthName}`;
+    
+    // Use date_formatted directly (already in DD/MM/YYYY from PHP)
+    // No need to reformat since it's already in the correct format
+    
+    grid.innerHTML='';
+    
+    if(appointments.length===0){
+      const filterText=selectedStatus?` with status "${selectedStatus}"`:'';
+      grid.innerHTML=`<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No appointments${filterText}</h3><p>There are no appointments${filterText} for this month.</p></div>`;
+      return;
+    }
+    
+    appointments.forEach((ap,index)=>{
+      const card=document.createElement('div');
+      const colorClass=getStatusColorClass(ap.status);
+      card.classList.add('appointment-card',colorClass);
+      const statusClass=`status-${ap.status}`;
+      let statusText=ap.status.charAt(0).toUpperCase()+ap.status.slice(1);
+      if(ap.status==='no_show'){
+        statusText='No Show';
+      }
+      const hasRequest=Boolean(ap.special_request);
+      const safeRequest=escapeHtml(ap.special_request);
+      const price=ap.total_price?parseFloat(ap.total_price).toFixed(2):'0.00';
+      
+      card.innerHTML=`
+        <div class="appointment-header">
+          <div class="appointment-time">${ap.time_formatted} - ${ap.date_formatted || formatDateFromString(ap.date || '')}</div>
+          <div class="appointment-status ${statusClass}">${statusText}</div>
+        </div>
+        <div class="appointment-details">
+          <div class="detail-item"><div class="detail-label">Customer</div><div class="detail-value">${escapeHtml(ap.customer_name)}</div></div>
+          <div class="detail-item"><div class="detail-label">Service</div><div class="detail-value">${escapeHtml(ap.service_names)}</div></div>
+          <div class="detail-item"><div class="detail-label">Duration</div><div class="detail-value">${ap.duration_formatted}</div></div>
+          <div class="detail-item"><div class="detail-label">Price (RM)</div><div class="detail-value">${price}</div></div>
+          <div class="detail-item">
+            <div class="detail-label">Special Request</div>
+            <div class="detail-value">
+              ${hasRequest
+                ? `<button class="view-request-btn" onclick="toggleSpecialRequest('${ap.booking_id}', this)">View request</button>
+                   <div id="special-${ap.booking_id}" class="special-request">${safeRequest}</div>`
+                : 'None'}
+            </div>
+          </div>
+        </div>
+        ${ap.status==='confirmed'?`
+        <div class="appointment-actions">
+          <button class="action-btn btn-complete" onclick="updateStatus('${ap.booking_id}','completed')">Mark Complete</button>
+          <button class="action-btn btn-cancel" onclick="updateStatus('${ap.booking_id}','cancelled')">Cancel</button>
+          <button class="action-btn btn-noshow" onclick="updateStatus('${ap.booking_id}','no_show')">No-Show</button>
+        </div>`:''}`;
+      grid.appendChild(card);
+    });
+  }catch(error){
+    console.error('Error loading month appointments:',error);
+    grid.innerHTML=`<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>${error.message}</p></div>`;
+  }
+}
+</script>
+</body>
+</html>
