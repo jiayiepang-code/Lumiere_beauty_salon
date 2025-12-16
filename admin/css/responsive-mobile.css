@@ -50,7 +50,7 @@
   /* ========== MOBILE CARD LAYOUT FOR TABLES ========== */
 
   /* ========== STAFF LIST RESPONSIVE STYLES ========== */
-  
+
   /* Staff Header - Ensure proper centering and stacking */
   .staff-header {
     flex-direction: column;
@@ -457,7 +457,7 @@
     border-radius: 12px !important;
     padding: 14px !important;
     margin-bottom: 12px !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
   }
 
   .services-table tbody td {
@@ -520,7 +520,9 @@
     max-width: 200px;
   }
 }
-  /* Convert any table to card layout on mobile */
+
+/* Convert any table to card layout on mobile */
+@media (max-width: 768px) {
   .mobile-card-table {
     display: block;
     overflow-x: visible;
