@@ -44,7 +44,7 @@ $currentUrlEncoded = urlencode($currentUrl);
 
         <!-- NAVIGATION -->
         <nav class="main-nav">
-            <a href="home.php" class="nav-link active">Home</a>
+            <a href="index.php" class="nav-link active">Home</a>
             <a href="services.php" class="nav-link">Services</a>
 
             <!-- Meet the Team dropdown -->

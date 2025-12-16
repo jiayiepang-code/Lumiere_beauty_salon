@@ -1,12 +1,44 @@
 <?php
+// #region agent log
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors, but log them
+ini_set('log_errors', 1);
+ob_start(); // Start output buffering to catch any unexpected output
+// #endregion
+
 header('Content-Type: application/json');
 
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'api/admin/bookings/list.php:7','message'=>'API endpoint called','data'=>['method'=>$_SERVER['REQUEST_METHOD']??'unknown','uri'=>$_SERVER['REQUEST_URI']??'unknown'],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+// #endregion
+
 // Include required files
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'api/admin/bookings/list.php:15','message'=>'Before require_once auth_check','data'=>['headers_sent'=>headers_sent(),'output_buffer_length'=>strlen(ob_get_contents())],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+// #endregion
 require_once '../../../admin/includes/auth_check.php'; // This handles session start
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'api/admin/bookings/list.php:18','message'=>'After require_once auth_check','data'=>['headers_sent'=>headers_sent(),'output_buffer_length'=>strlen(ob_get_contents()),'auth_status'=>function_exists('isAdminAuthenticated')?isAdminAuthenticated():'function_not_found'],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+// #endregion
 require_once '../../../config/db_connect.php'; // Use proper DB connection
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'api/admin/bookings/list.php:21','message'=>'After require_once db_connect','data'=>['headers_sent'=>headers_sent(),'output_buffer_length'=>strlen(ob_get_contents()),'db_function_exists'=>function_exists('getDBConnection')],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+// #endregion
 require_once '../../../admin/includes/error_handler.php';
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'api/admin/bookings/list.php:24','message'=>'After all require_once','data'=>['headers_sent'=>headers_sent(),'output_buffer_length'=>strlen(ob_get_contents()),'buffer_content_preview'=>substr(ob_get_contents(),0,200)],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+// Clear any unexpected output
+$unexpected_output = ob_get_clean();
+if (!empty($unexpected_output)) {
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'api/admin/bookings/list.php:27','message'=>'UNEXPECTED OUTPUT DETECTED','data'=>['output_length'=>strlen($unexpected_output),'output_preview'=>substr($unexpected_output,0,500)],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    ob_start(); // Restart buffer
+}
+// #endregion
 
 // Check authentication
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'api/admin/bookings/list.php:32','message'=>'Checking authentication','data'=>['is_authenticated'=>isAdminAuthenticated()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+// #endregion
 if (!isAdminAuthenticated()) {
     ErrorHandler::handleAuthError();
 }
@@ -22,6 +54,16 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'api/admin/bookings/list.php:40','message'=>'Before database connection','data'=>['headers_sent'=>headers_sent()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Get database connection
+    $conn = getDBConnection();
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'api/admin/bookings/list.php:45','message'=>'Database connection obtained','data'=>['conn_exists'=>isset($conn),'conn_type'=>gettype($conn)],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    
     // Get filter parameters
     $date = isset($_GET['date']) ? trim($_GET['date']) : null;
     $start_date = isset($_GET['start_date']) ? trim($_GET['start_date']) : null;
@@ -97,14 +139,36 @@ try {
     // Order by date and time
     $sql .= " ORDER BY b.booking_date DESC, b.start_time ASC";
     
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'api/admin/bookings/list.php:108','message'=>'Database connection successful','data'=>['conn_exists'=>isset($conn)],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
     // Prepare and execute query
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'api/admin/bookings/list.php:152','message'=>'Preparing SQL query','data'=>['sql_length'=>strlen($sql),'params_count'=>count($params)],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
     $stmt = $conn->prepare($sql);
+    
+    if ($stmt === false) {
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'api/admin/bookings/list.php:156','message'=>'SQL PREPARE FAILED','data'=>['error'=>$conn->error,'sql_preview'=>substr($sql,0,200)],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
+        throw new Exception("SQL prepare failed: " . $conn->error);
+    }
     
     if (!empty($params)) {
         $stmt->bind_param($types, ...$params);
     }
     
-    $stmt->execute();
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'api/admin/bookings/list.php:164','message'=>'Executing SQL query','data'=>[],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    if (!$stmt->execute()) {
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'api/admin/bookings/list.php:167','message'=>'SQL EXECUTE FAILED','data'=>['error'=>$stmt->error],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
+        throw new Exception("SQL execute failed: " . $stmt->error);
+    }
+    
     $result = $stmt->get_result();
     
     $bookings = [];
@@ -231,14 +295,47 @@ try {
     $bookings_array = array_values($bookings);
     
     // Return success response
-    http_response_code(200);
-    echo json_encode([
+    // #region agent log
+    $json_response = json_encode([
         'success' => true,
         'bookings' => $bookings_array,
         'staff_schedules' => $staff_schedules,
         'count' => count($bookings_array)
     ]);
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'api/admin/bookings/list.php:241','message'=>'Before sending JSON response','data'=>['headers_sent'=>headers_sent(),'json_length'=>strlen($json_response),'output_buffer_length'=>strlen(ob_get_contents())],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    http_response_code(200);
+    echo $json_response;
     
 } catch (Exception $e) {
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'api/admin/bookings/list.php:260','message'=>'EXCEPTION CAUGHT','data'=>['error_message'=>$e->getMessage(),'error_file'=>$e->getFile(),'error_line'=>$e->getLine(),'trace'=>$e->getTraceAsString()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Clear any output buffer before sending error
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    
     ErrorHandler::handleDatabaseError($e, 'fetching bookings');
+} catch (Error $e) {
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'api/admin/bookings/list.php:270','message'=>'FATAL ERROR CAUGHT','data'=>['error_message'=>$e->getMessage(),'error_file'=>$e->getFile(),'error_line'=>$e->getLine()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Clear any output buffer before sending error
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+    
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error' => [
+            'code' => 'FATAL_ERROR',
+            'message' => 'A fatal error occurred: ' . $e->getMessage()
+        ]
+    ]);
+    exit;
 }
