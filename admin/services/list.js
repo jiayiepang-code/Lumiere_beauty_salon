@@ -75,7 +75,6 @@ function setupEventListeners() {
   }
 }
 
-
 // Logout handler (SweetAlert2)
 async function handleLogout() {
   const result = await Swal.fire({
