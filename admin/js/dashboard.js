@@ -27,15 +27,8 @@ async function loadTodaysAppointments() {
         const today = new Date();
         const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:30','message':'Fetching appointments API','data':{url:`${API_BASE_PATH}/api/admin/bookings/list.php?date=${dateStr}`},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         const response = await fetch(`${API_BASE_PATH}/api/admin/bookings/list.php?date=${dateStr}`);
-        // #region agent log
-        const responseText = await response.text();
-        fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:34','message':'API response received','data':{status:response.status,statusText:response.statusText,contentType:response.headers.get('content-type'),responseLength:responseText.length,responsePreview:responseText.substring(0,200),isJson:responseText.trim().startsWith('{')},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        const data = JSON.parse(responseText);
+        const data = await response.json();
 
         if (!response.ok) {
             throw new Error(data.error?.message || 'Failed to load appointments');
@@ -128,15 +121,8 @@ async function loadRecentActivity() {
         const startDateStr = formatDate(startDate);
         const endDateStr = formatDate(endDate);
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:124','message':'Fetching activity API','data':{url:`${API_BASE_PATH}/api/admin/bookings/list.php?start_date=${startDateStr}&end_date=${endDateStr}`},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         const response = await fetch(`${API_BASE_PATH}/api/admin/bookings/list.php?start_date=${startDateStr}&end_date=${endDateStr}`);
-        // #region agent log
-        const responseText = await response.text();
-        fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:128','message':'Activity API response received','data':{status:response.status,contentType:response.headers.get('content-type'),responseLength:responseText.length,responsePreview:responseText.substring(0,200),isJson:responseText.trim().startsWith('{')},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        const data = JSON.parse(responseText);
+        const data = await response.json();
 
         if (!response.ok) {
             throw new Error(data.error?.message || 'Failed to load activity');
@@ -217,15 +203,8 @@ async function loadTopServicesToday() {
         const today = new Date();
         const dateStr = formatDate(today);
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:206','message':'Fetching services API','data':{url:`${API_BASE_PATH}/api/admin/bookings/list.php?date=${dateStr}`},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
         const response = await fetch(`${API_BASE_PATH}/api/admin/bookings/list.php?date=${dateStr}`);
-        // #region agent log
-        const responseText = await response.text();
-        fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'dashboard.js:210','message':'Services API response received','data':{status:response.status,contentType:response.headers.get('content-type'),responseLength:responseText.length,responsePreview:responseText.substring(0,200),isJson:responseText.trim().startsWith('{')},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
-        // #endregion
-        const data = JSON.parse(responseText);
+        const data = await response.json();
 
         if (!response.ok) {
             throw new Error(data.error?.message || 'Failed to load services');
