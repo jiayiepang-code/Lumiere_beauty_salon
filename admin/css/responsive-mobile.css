@@ -773,15 +773,7 @@
 
   /* ========== MOBILE PERFORMANCE ========== */
   /* Reduce animations on mobile for better performance */
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
+  /* Moved reduced-motion rules to combined media query after mobile block */
 
   /* ========== MOBILE SAFE AREAS (for notched devices) ========== */
   /* Support for iPhone X and similar devices */
@@ -794,23 +786,7 @@
   }
 
   /* ========== MOBILE LANDSCAPE MODE ========== */
-  @media (orientation: landscape) and (max-height: 500px) {
-    .mobile-header {
-      height: 50px;
-    }
-
-    .sidebar {
-      width: 220px;
-    }
-
-    .content-body {
-      padding: 15px;
-    }
-
-    .kpi-card {
-      padding: 15px;
-    }
-  }
+  /* Moved landscape-specific rules to combined media query after mobile block */
 
   /* ========== MOBILE SWIPE GESTURES ========== */
   /* Add visual feedback for swipeable elements */
@@ -928,6 +904,35 @@
   .mobile-bottom-nav-item svg {
     width: 24px;
     height: 24px;
+  }
+}
+
+/* Combined mobile-specific media queries extracted from nested blocks */
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) and (orientation: landscape) and (max-height: 500px) {
+  .mobile-header {
+    height: 50px;
+  }
+
+  .sidebar {
+    width: 220px;
+  }
+
+  .content-body {
+    padding: 15px;
+  }
+
+  .kpi-card {
+    padding: 15px;
   }
 }
 
