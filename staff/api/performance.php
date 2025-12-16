@@ -78,10 +78,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $metrics = [];
         
         // Total completed appointments (based on booking status)
-        // #region agent log
-        $log_data = ['query' => 'SELECT COUNT from booking_service', 'staff_email' => $staff_email, 'start_date' => $start_date, 'current_date' => $current_date, 'hypothesisId' => 'A'];
-        file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-        // #endregion
         $stmt = $pdo->prepare("SELECT COUNT(DISTINCT b.booking_id) as total 
                               FROM `booking_service` bs
                               INNER JOIN `booking` b ON bs.booking_id = b.booking_id
@@ -90,23 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         try {
             $stmt->execute([$staff_email, $start_date, $current_date]);
             $metrics['completed_appointments'] = (int)$stmt->fetchColumn();
-            // #region agent log
-            $log_data = ['message' => 'Query succeeded', 'result' => $metrics['completed_appointments'], 'hypothesisId' => 'A'];
-            file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-            // #endregion
         } catch(PDOException $e) {
-            // #region agent log
-            $log_data = ['message' => 'Query failed', 'error' => $e->getMessage(), 'sql_state' => $e->getCode(), 'hypothesisId' => 'A'];
-            file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-            // #endregion
             throw $e;
         }
         
         // Total revenue (sum of quoted_price from booking_service)
-        // #region agent log
-        $log_data = ['message' => 'Executing revenue query', 'hypothesisId' => 'D'];
-        file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-        // #endregion
         try {
             $stmt = $pdo->prepare("SELECT COALESCE(SUM(bs.quoted_price * bs.quantity), 0) as total 
                                   FROM `booking_service` bs
@@ -116,10 +100,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $stmt->execute([$staff_email, $start_date, $current_date]);
             $metrics['total_revenue'] = (float)$stmt->fetchColumn();
         } catch(PDOException $e) {
-            // #region agent log
-            $log_data = ['message' => 'Revenue query failed', 'error' => $e->getMessage(), 'hypothesisId' => 'D'];
-            file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-            // #endregion
             throw $e;
         }
         
@@ -162,10 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         }
         
         // Service distribution - filtered by timeframe or default to all records from 2024
-        // #region agent log
-        $log_data = ['message' => 'Executing service distribution query', 'hypothesisId' => 'E'];
-        file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-        // #endregion
         $service_distribution = [];
         try {
             $where_conditions = "bs.staff_email = ? AND b.status = 'completed'";
@@ -225,15 +201,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             $stmt->execute($query_params);
             $service_distribution = $stmt->fetchAll();
         } catch(PDOException $e) {
-            // #region agent log
-            $log_data = ['message' => 'Service distribution query failed', 'error' => $e->getMessage(), 'hypothesisId' => 'E'];
-            file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-            // #endregion
             throw $e;
         }
         
-        // Recent completed sessions
+        // Recent completed sessions - filter by month if provided
         $recent_activity = [];
+        $where_clause = "bs.staff_email = ? AND b.status = 'completed'";
+        $query_params = [$staff_email];
+        
+        // If month parameter is provided, filter by that month
+        if (isset($_GET['month']) && !empty($_GET['month'])) {
+            $month_str = $_GET['month'];
+            if (preg_match('/^\d{4}-\d{2}$/', $month_str)) {
+                $month_start = $month_str . '-01';
+                $month_end = date('Y-m-t', strtotime($month_start));
+                $where_clause .= " AND b.booking_date >= ? AND b.booking_date <= ?";
+                $query_params[] = $month_start;
+                $query_params[] = $month_end;
+            }
+        }
+        
         $stmt = $pdo->prepare("SELECT 
                               b.booking_id,
                               b.booking_date,
@@ -246,10 +233,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                               INNER JOIN `booking` b ON bs.booking_id = b.booking_id
                               INNER JOIN `service` s ON bs.service_id = s.service_id
                               INNER JOIN `customer` c ON b.customer_email = c.customer_email
-                              WHERE bs.staff_email = ? AND b.status = 'completed'
+                              WHERE {$where_clause}
                               ORDER BY b.booking_date DESC, b.start_time DESC
-                              LIMIT 10");
-        $stmt->execute([$staff_email]);
+                              LIMIT 100");
+        $stmt->execute($query_params);
         $recent_appointments = $stmt->fetchAll();
         
         foreach ($recent_appointments as $appointment) {
@@ -333,10 +320,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $timeframe = isset($_GET['timeframe']) ? $_GET['timeframe'] : 'monthly';
         
         if ($timeframe === 'weekly') {
-            // Last 12 weeks
+            // Last 12 weeks - calculate from current week's Monday backwards
+            // Get Monday of current week first
+            $current_monday = strtotime('monday this week');
+            
             for ($i = 11; $i >= 0; $i--) {
-                $week_start = date('Y-m-d', strtotime("monday -$i weeks"));
-                $week_end = date('Y-m-d', strtotime("sunday -$i weeks"));
+                // Calculate Monday that is $i weeks ago from current Monday
+                $week_start_timestamp = strtotime("-$i weeks", $current_monday);
+                $week_start = date('Y-m-d', $week_start_timestamp);
+                $week_end = date('Y-m-d', strtotime('+6 days', $week_start_timestamp));
                 
                 $stmt = $pdo->prepare("SELECT COUNT(DISTINCT b.booking_id) as total 
                                       FROM `booking_service` bs
@@ -347,7 +339,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $count = (int)$stmt->fetchColumn();
                 
                 $bar_chart_data[] = [
-                    'x' => date('d/m/Y', strtotime($week_start)),
+                    'x' => date('Y-m-d', $week_start_timestamp), // Use raw date for JS processing
                     'y' => $count
                 ];
             }
@@ -356,7 +348,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             for ($i = 11; $i >= 0; $i--) {
                 $month_start = date('Y-m-01', strtotime("-$i months"));
                 $month_end = date('Y-m-t', strtotime("-$i months"));
-                $month_name = date('M Y', strtotime("-$i months"));
                 
                 $stmt = $pdo->prepare("SELECT COUNT(DISTINCT b.booking_id) as total 
                                       FROM `booking_service` bs
@@ -367,7 +358,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $count = (int)$stmt->fetchColumn();
                 
                 $bar_chart_data[] = [
-                    'x' => $month_name,
+                    'x' => date('Y-m-01', strtotime("-$i months")), // Use raw date for JS processing
                     'y' => $count
                 ];
             }
@@ -388,56 +379,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $count = (int)$stmt->fetchColumn();
                 
                 $bar_chart_data[] = [
-                    'x' => (string)$year,
+                    'x' => (string)$year, // Use raw year for JS processing
                     'y' => $count
                 ];
             }
         }
         
-        // Commission data - 10% of booking price for completed bookings
+        // Commission data - 10% of booking price for completed bookings (Monthly only)
         $commission_data = [];
         if (isset($_GET['commission']) && $_GET['commission'] === 'true') {
-            $timeframe = isset($_GET['timeframe']) ? $_GET['timeframe'] : 'monthly';
-            
-            if ($timeframe === 'weekly') {
-                // Last 12 weeks
-                for ($i = 11; $i >= 0; $i--) {
-                    $week_start = date('Y-m-d', strtotime("monday -$i weeks"));
-                    $week_end = date('Y-m-d', strtotime("sunday -$i weeks"));
-                    
-                    $stmt = $pdo->prepare("SELECT COALESCE(SUM(bs.quoted_price * bs.quantity * 0.1), 0) as commission 
-                                          FROM `booking_service` bs
-                                          INNER JOIN `booking` b ON bs.booking_id = b.booking_id
-                                          WHERE bs.staff_email = ? AND b.status = 'completed' 
-                                          AND b.booking_date >= ? AND b.booking_date <= ?");
-                    $stmt->execute([$staff_email, $week_start, $week_end]);
-                    $commission = (float)$stmt->fetchColumn();
-                    
-                    $commission_data[] = [
-                        'period' => date('d/m/Y', strtotime($week_start)),
-                        'commission' => $commission
-                    ];
-                }
-            } else { // monthly
-                // Last 12 months
-                for ($i = 11; $i >= 0; $i--) {
-                    $month_start = date('Y-m-01', strtotime("-$i months"));
-                    $month_end = date('Y-m-t', strtotime("-$i months"));
-                    $month_name = date('M Y', strtotime("-$i months"));
-                    
-                    $stmt = $pdo->prepare("SELECT COALESCE(SUM(bs.quoted_price * bs.quantity * 0.1), 0) as commission 
-                                          FROM `booking_service` bs
-                                          INNER JOIN `booking` b ON bs.booking_id = b.booking_id
-                                          WHERE bs.staff_email = ? AND b.status = 'completed' 
-                                          AND b.booking_date >= ? AND b.booking_date <= ?");
-                    $stmt->execute([$staff_email, $month_start, $month_end]);
-                    $commission = (float)$stmt->fetchColumn();
-                    
-                    $commission_data[] = [
-                        'period' => $month_name,
-                        'commission' => $commission
-                    ];
-                }
+            // Last 12 months - used for scrolling chart
+            for ($i = 11; $i >= 0; $i--) {
+                $month_start = date('Y-m-01', strtotime("-$i months"));
+                $month_end = date('Y-m-t', strtotime("-$i months"));
+                $month_name = date('M Y', strtotime("-$i months"));
+                
+                $stmt = $pdo->prepare("SELECT COALESCE(SUM(bs.quoted_price * bs.quantity * 0.1), 0) as commission 
+                                      FROM `booking_service` bs
+                                      INNER JOIN `booking` b ON bs.booking_id = b.booking_id
+                                      WHERE bs.staff_email = ? AND b.status = 'completed' 
+                                      AND b.booking_date >= ? AND b.booking_date <= ?");
+                $stmt->execute([$staff_email, $month_start, $month_end]);
+                $commission = (float)$stmt->fetchColumn();
+                
+                $commission_data[] = [
+                    'period' => $month_name, // M Y format for display
+                    'commission' => $commission
+                ];
             }
         }
         
@@ -459,17 +427,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         jsonResponse($response);
         
     } catch(PDOException $e) {
-        // #region agent log
-        $log_data = ['message' => 'Performance API Exception', 'error' => $e->getMessage(), 'code' => $e->getCode(), 'file' => $e->getFile(), 'line' => $e->getLine(), 'hypothesisId' => 'B'];
-        file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-        // #endregion
         error_log("Performance API Error: " . $e->getMessage());
         jsonResponse(['error' => 'Failed to fetch performance data: ' . $e->getMessage()], 500);
     } catch(Exception $e) {
-        // #region agent log
-        $log_data = ['message' => 'Performance API General Exception', 'error' => $e->getMessage(), 'hypothesisId' => 'B'];
-        file_put_contents('c:\\xampp\\htdocs\\Lumiere-beauty-salon\\.cursor\\debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-        // #endregion
         error_log("Performance API Error: " . $e->getMessage());
         jsonResponse(['error' => 'Failed to fetch performance data: ' . $e->getMessage()], 500);
     }

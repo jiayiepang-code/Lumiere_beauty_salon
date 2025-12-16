@@ -260,8 +260,8 @@
       <ul>
         <li><a href="dashboard.html"><i class="fas fa-home"></i> Home</a></li>
         <li class="active"><a href="schedule.html"><i class="fas fa-calendar-alt"></i> Schedule</a></li>
-        <li><a href="performance.html"><i class="fas fa-chart-line"></i> Performance</a></li>
         <li><a href="history.html"><i class="fas fa-history"></i> History</a></li>
+        <li><a href="performance.html"><i class="fas fa-chart-line"></i> Performance</a></li>
         <li><a href="apply-leave.html"><i class="fas fa-calendar-minus"></i> Leave</a></li>
         <li><a href="profile.html"><i class="fas fa-user"></i> My Profile</a></li>
       </ul>
@@ -280,6 +280,7 @@
                 <nav class="nav">
                     <a href="dashboard.html">Home</a>
                     <a href="schedule.html" class="active">Schedule</a>
+                    <a href="history.html">History</a>
                     <a href="performance.html">Performance</a>
                     <a href="apply-leave.html">Leave</a>
                 </nav>
@@ -348,11 +349,21 @@
         <section class="appointments-section">
           <div class="appointments-header">
             <h2 class="appointments-title" id="dailyScheduleTitle">Appointments</h2>
-            <div class="legend">
-              <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
-              <div class="legend-item"><div class="legend-color blue"></div><span>Completed (Service finished successfully)</span></div>
-              <div class="legend-item"><div class="legend-color red"></div><span>Cancelled</span></div>
-              <div class="legend-item"><div class="legend-color grey"></div><span>No-show</span></div>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+              <div class="legend">
+                <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
+                <div class="legend-item"><div class="legend-color red"></div><span>Cancelled</span></div>
+                <div class="legend-item"><div class="legend-color grey"></div><span>No-show</span></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="statusFilter" style="font-weight: 500; color: var(--text-color);">Filter by Status:</label>
+                <select id="statusFilter" class="date-input" style="padding: 0.5rem 1rem; cursor: pointer;" onchange="loadAppointments()">
+                  <option value="">All (Confirmed, Cancelled, No-show)</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="no_show">No-show</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="appointments-grid" id="appointmentsGrid"></div>
@@ -375,11 +386,21 @@
         <section class="appointments-section">
           <div class="appointments-header">
             <h2 class="appointments-title" id="monthScheduleTitle">Month Schedule</h2>
-            <div class="legend">
-              <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
-              <div class="legend-item"><div class="legend-color blue"></div><span>Completed (Service finished successfully)</span></div>
-              <div class="legend-item"><div class="legend-color red"></div><span>Cancelled</span></div>
-              <div class="legend-item"><div class="legend-color grey"></div><span>No-show</span></div>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+              <div class="legend">
+                <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
+                <div class="legend-item"><div class="legend-color red"></div><span>Cancelled</span></div>
+                <div class="legend-item"><div class="legend-color grey"></div><span>No-show</span></div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label for="monthStatusFilter" style="font-weight: 500; color: var(--text-color);">Filter by Status:</label>
+                <select id="monthStatusFilter" class="date-input" style="padding: 0.5rem 1rem; cursor: pointer;" onchange="loadMonthAppointments()">
+                  <option value="">All (Confirmed, Cancelled, No-show)</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="no_show">No-show</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="appointments-grid" id="monthAppointmentsGrid"></div>
@@ -614,7 +635,9 @@ function getStatusColorClass(status){
 async function loadAppointments(){
   const grid=document.getElementById('appointmentsGrid');
   const dateInput=document.getElementById('datePicker');
+  const statusFilter=document.getElementById('statusFilter');
   const date=dateInput.value;
+  const selectedStatus=statusFilter?statusFilter.value:'';
   const titleEl=document.querySelector('.appointments-title');
   
   grid.innerHTML='<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>Loading...</h3></div>';
@@ -627,13 +650,23 @@ async function loadAppointments(){
       throw new Error(data.error||'Failed to load appointments');
     }
     
-    const appointments=data.appointments||[];
+    let appointments=data.appointments||[];
+    
+    // Filter out completed bookings from daily schedule
+    appointments=appointments.filter(ap=>ap.status!=='completed');
+    
+    // Apply status filter if selected
+    if(selectedStatus){
+      appointments=appointments.filter(ap=>ap.status===selectedStatus);
+    }
+    
     titleEl.textContent=`Appointments for ${formatDate(date)}`;
     
     grid.innerHTML='';
     
     if(appointments.length===0){
-      grid.innerHTML='<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No appointments scheduled</h3><p>There are no appointments for this date.</p></div>';
+      const filterText=selectedStatus?` with status "${selectedStatus}"`:'';
+      grid.innerHTML=`<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No appointments${filterText}</h3><p>There are no appointments${filterText} for this date.</p></div>`;
       return;
     }
     
@@ -722,7 +755,9 @@ document.addEventListener('DOMContentLoaded',function(){
 async function loadMonthAppointments(){
   const grid=document.getElementById('monthAppointmentsGrid');
   const monthInput=document.getElementById('monthPicker');
+  const monthStatusFilter=document.getElementById('monthStatusFilter');
   const monthValue=monthInput.value;
+  const selectedStatus=monthStatusFilter?monthStatusFilter.value:'';
   const titleEl=document.getElementById('monthScheduleTitle');
   
   if(!monthValue){
@@ -740,7 +775,16 @@ async function loadMonthAppointments(){
       throw new Error(data.error||'Failed to load appointments');
     }
     
-    const appointments=data.appointments||[];
+    let appointments=data.appointments||[];
+    
+    // Filter out completed bookings from monthly schedule
+    appointments=appointments.filter(ap=>ap.status!=='completed');
+    
+    // Apply status filter if selected
+    if(selectedStatus){
+      appointments=appointments.filter(ap=>ap.status===selectedStatus);
+    }
+    
     const [year,month]=monthValue.split('-');
     const monthName=new Date(year,month-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
     titleEl.textContent=`Appointments for ${monthName}`;
@@ -751,7 +795,8 @@ async function loadMonthAppointments(){
     grid.innerHTML='';
     
     if(appointments.length===0){
-      grid.innerHTML='<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No appointments scheduled</h3><p>There are no appointments for this month.</p></div>';
+      const filterText=selectedStatus?` with status "${selectedStatus}"`:'';
+      grid.innerHTML=`<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No appointments${filterText}</h3><p>There are no appointments${filterText} for this month.</p></div>`;
       return;
     }
     

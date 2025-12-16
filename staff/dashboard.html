@@ -396,6 +396,9 @@
             transition: all 0.3s ease;
             cursor: pointer;
             border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .dashboard-card:hover {
@@ -428,6 +431,7 @@
             color: var(--text-light);
             line-height: 1.6;
             margin-bottom: 1.5rem;
+            flex: 1;
         }
 
         .card-action {
@@ -439,6 +443,8 @@
             cursor: pointer;
             font-weight: 500;
             transition: all 0.3s ease;
+            margin-top: auto;
+            width: 100%;
         }
 
         .card-action:hover {
@@ -525,6 +531,7 @@
                     <nav class="nav">
                         <a href="dashboard.html" class="active">Home</a>
                         <a href="schedule.html">Schedule</a>
+                        <a href="history.html">History</a>
                         <a href="performance.html">Performance</a>
                         <a href="apply-leave.html">Leave</a>
                     </nav>

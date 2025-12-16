@@ -494,6 +494,22 @@
             margin-left: auto;
         }
 
+        .date-input {
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #fff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .date-input:focus {
+            outline: none;
+            border-color: var(--staff-color);
+            box-shadow: 0 0 0 3px rgba(150, 128, 115, 0.1);
+        }
+
         .empty-state {
             text-align: center;
             padding: 3rem;
@@ -530,8 +546,8 @@
       <ul>
         <li><a href="dashboard.html"><i class="fas fa-home"></i> Home</a></li>
         <li><a href="schedule.html"><i class="fas fa-calendar-alt"></i> Schedule</a></li>
-        <li><a href="performance.html"><i class="fas fa-chart-line"></i> Performance</a></li>
         <li class="active"><a href="history.html"><i class="fas fa-history"></i> History</a></li>
+        <li><a href="performance.html"><i class="fas fa-chart-line"></i> Performance</a></li>
         <li><a href="apply-leave.html"><i class="fas fa-calendar-minus"></i> Leave</a></li>
         <li><a href="profile.html"><i class="fas fa-user"></i> My Profile</a></li>
       </ul>
@@ -550,6 +566,7 @@
                 <nav class="nav">
                     <a href="dashboard.html">Home</a>
                     <a href="schedule.html">Schedule</a>
+                    <a href="history.html" class="active">History</a>
                     <a href="performance.html">Performance</a>
                     <a href="apply-leave.html">Leave</a>
                 </nav>
@@ -609,7 +626,13 @@
                 </div>
 
                 <section class="activity-section">
-                    <h2 class="activity-title">Recent Completed Sessions</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                        <h2 class="activity-title" style="margin-bottom: 0;">Completed Sessions History</h2>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <label for="monthYearFilter" style="font-weight: 500; color: var(--text-color);">Filter by Month:</label>
+                            <input type="month" id="monthYearFilter" class="date-input" style="padding: 0.5rem 1rem; cursor: pointer;" onchange="loadHistory()">
+                        </div>
+                    </div>
                     <div class="activity-list" id="activityList">
                         <!-- Activity items will be populated by JavaScript -->
                     </div>
@@ -779,10 +802,18 @@
 
         async function loadHistory() {
             const activityList = document.getElementById('activityList');
+            const monthFilter = document.getElementById('monthYearFilter');
+            const selectedMonth = monthFilter ? monthFilter.value : '';
+            
             activityList.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>Loading...</h3></div>';
             
             try {
-                const response = await fetch('api/performance.php?period=month');
+                let apiUrl = 'api/performance.php?period=month';
+                if (selectedMonth) {
+                    apiUrl += `&month=${selectedMonth}`;
+                }
+                
+                const response = await fetch(apiUrl);
                 const data = await response.json();
                 
                 if (!data.success) {
@@ -793,13 +824,16 @@
                 activityList.innerHTML = '';
                 
                 if (activities.length === 0) {
-                    activityList.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No completed sessions</h3><p>You have no completed sessions yet.</p></div>';
+                    const monthText = selectedMonth ? ` for ${formatMonthYear(selectedMonth)}` : '';
+                    activityList.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No completed sessions${monthText}</h3><p>You have no completed sessions${monthText} yet.</p></div>`;
                     return;
                 }
                 
                 activities.forEach(activity => {
                     const item = document.createElement('div');
                     item.className = 'activity-item';
+                    const formattedDate = activity.date ? formatDate(activity.date) : '';
+                    const formattedTime = activity.time ? formatTime(activity.time) : '';
                     item.innerHTML = `
                         <div class="activity-icon">
                             <i class="fas fa-check"></i>
@@ -808,7 +842,7 @@
                             <div class="activity-text">${activity.customer_name || 'Customer'}</div>
                             <div class="activity-service">${activity.service || 'Service'}</div>
                         </div>
-                        <div class="activity-time">${activity.time_ago || 'Recently'}</div>
+                        <div class="activity-time">${formattedDate} ${formattedTime}</div>
                     `;
                     activityList.appendChild(item);
                 });
@@ -817,8 +851,54 @@
                 activityList.innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>${error.message}</p></div>`;
             }
         }
+        
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const date = new Date(dateStr);
+                if (isNaN(date.getTime())) return dateStr;
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            } catch (e) {
+                return dateStr;
+            }
+        }
+        
+        function formatTime(timeStr) {
+            if (!timeStr) return '';
+            try {
+                const [hours, minutes] = timeStr.split(':');
+                const hour = parseInt(hours);
+                const ampm = hour >= 12 ? 'PM' : 'AM';
+                const displayHour = hour % 12 || 12;
+                return `${displayHour}:${minutes} ${ampm}`;
+            } catch (e) {
+                return timeStr;
+            }
+        }
+        
+        function formatMonthYear(monthStr) {
+            if (!monthStr) return '';
+            try {
+                const [year, month] = monthStr.split('-');
+                const date = new Date(year, parseInt(month) - 1);
+                return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            } catch (e) {
+                return monthStr;
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
+            // Set default month to current month
+            const monthFilter = document.getElementById('monthYearFilter');
+            if (monthFilter) {
+                const today = new Date();
+                const currentMonth = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0');
+                monthFilter.value = currentMonth;
+            }
+            
             loadHistory();
             loadStaffProfile();
             loadNotifications();
