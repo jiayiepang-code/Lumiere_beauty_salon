@@ -14,6 +14,8 @@ ini_set('display_errors', 0);
 require_once __DIR__ . '/../../../admin/includes/security_utils.php';
 configureSecureSession();
 
+// Use admin-specific session name to match auth_check.php
+session_name('admin_session');
 // Start session
 session_start();
 

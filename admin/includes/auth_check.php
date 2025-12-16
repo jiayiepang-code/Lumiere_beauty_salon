@@ -42,8 +42,8 @@ function requireAdminAuth() {
         // Store the attempted URL for redirect after login
         $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
         
-        // Redirect to login page
-        header('Location: /Lumiere-beauty-salon/admin/login.html');
+        // Redirect to login page (use login.php for backend auth)
+        header('Location: /Lumiere-beauty-salon/admin/login.php');
         exit;
     }
     
@@ -53,7 +53,7 @@ function requireAdminAuth() {
         if (time() - $_SESSION['last_activity'] > $timeout) {
             // Session expired
             session_destroy();
-            header('Location: /Lumiere-beauty-salon/admin/login.html?timeout=1');
+            header('Location: /Lumiere-beauty-salon/admin/login.php?timeout=1');
             exit;
         }
     }
