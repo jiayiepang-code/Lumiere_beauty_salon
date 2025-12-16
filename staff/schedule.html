@@ -371,7 +371,6 @@
         
     </div>
 
-    <!-- Month Schedule Section -->
     <div class="schedule-container" style="margin-top: 2rem;">
         <div class="page-header"><h1 class="page-title">Month Schedule</h1></div>
 
@@ -396,7 +395,7 @@
                 <label for="monthStatusFilter" style="font-weight: 500; color: var(--text-color);">Filter by Status:</label>
                 <select id="monthStatusFilter" class="date-input" style="padding: 0.5rem 1rem; cursor: pointer;" onchange="loadMonthAppointments()">
                   <option value="">All (Confirmed, Cancelled, No-show)</option>
-                  <option value="confirmed">Confirmed</option>
+                  <option value="confirmed" selected>Confirmed</option>
                   <option value="cancelled">Cancelled</option>
                   <option value="no_show">No-show</option>
                 </select>
@@ -748,6 +747,8 @@ document.addEventListener('DOMContentLoaded',function(){
   monthPicker.value=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
   
   loadAppointments();
+  // Call loadMonthAppointments() on load to apply the default 'confirmed' status
+  loadMonthAppointments(); 
   loadStaffProfile();
   loadNotifications();
 });
