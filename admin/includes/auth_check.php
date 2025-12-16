@@ -14,8 +14,9 @@ if (session_status() === PHP_SESSION_NONE) {
     // Configure secure session
     configureSecureSession();
     
-    // Start session
-    session_start();
+    // Use admin-specific session name for parallel logins
+session_name('admin_session');
+session_start();
     
     // Set secure headers
     setSecureHeaders();
