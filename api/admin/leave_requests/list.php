@@ -17,21 +17,21 @@ if (!isAdminAuthenticated()) {
 try {
     $conn = getDBConnection();
 
-    // Get month/year from query params or use current month/year
-    $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
+    // Get month/year from query params
+    $month = isset($_GET['month']) && $_GET['month'] !== '' ? (int)$_GET['month'] : null;
     $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
     
-    // Validate month (1-12) and year with flexible bounds
-    if ($month < 1 || $month > 12) {
-        $month = (int)date('m');
+    // Validate month (1-12) if provided
+    if ($month !== null && ($month < 1 || $month > 12)) {
+        $month = null;
     }
     // Allow a wide range of years to keep filters flexible
-    // Clamp to a reasonable range if needed
     if ($year < 1970 || $year > 2100) {
         $year = (int)date('Y');
     }
 
     // Pending requests filtered by selected month/year
+    // Build dynamic query based on whether month is provided
     $sql = "
         SELECT 
             lr.id,
@@ -48,15 +48,26 @@ try {
         FROM leave_requests lr
         JOIN staff s ON lr.staff_email = s.staff_email
         WHERE lr.status = 'pending'
-          AND MONTH(lr.start_date) = ?
-          AND YEAR(lr.start_date) = ?
-        ORDER BY lr.created_at ASC
-    ";
+          AND YEAR(lr.start_date) = ?";
+    
+    // Add month filter only if month is provided
+    if ($month !== null) {
+        $sql .= " AND MONTH(lr.start_date) = ?";
+    }
+    
+    $sql .= " ORDER BY lr.created_at ASC";
+    
     $stmtPendingList = $conn->prepare($sql);
     if (!$stmtPendingList) {
         throw new Exception('Query failed: ' . $conn->error);
     }
-    $stmtPendingList->bind_param('ii', $month, $year);
+    
+    // Bind parameters based on whether month is provided
+    if ($month !== null) {
+        $stmtPendingList->bind_param('ii', $month, $year);
+    } else {
+        $stmtPendingList->bind_param('i', $year);
+    }
     $stmtPendingList->execute();
     $result = $stmtPendingList->get_result();
 
@@ -103,23 +114,33 @@ try {
         $pendingStmt->close();
     }
 
-    // Approved/Rejected: Filtered by selected month/year
+    // Approved/Rejected: Filtered by selected month/year (or just year if no month selected)
     $stats = [
         'pending_count' => $pendingCount,
         'approved_this_month' => 0,
         'rejected_this_month' => 0
     ];
 
-    $stmt = $conn->prepare("
+    $statsSql = "
         SELECT status, COUNT(*) AS cnt
         FROM leave_requests
-        WHERE MONTH(start_date) = ? AND YEAR(start_date) = ?
-          AND status IN ('approved', 'rejected')
-        GROUP BY status
-    ");
+        WHERE YEAR(start_date) = ?";
+    
+    if ($month !== null) {
+        $statsSql .= " AND MONTH(start_date) = ?";
+    }
+    
+    $statsSql .= " AND status IN ('approved', 'rejected')
+        GROUP BY status";
+
+    $stmt = $conn->prepare($statsSql);
 
     if ($stmt) {
-        $stmt->bind_param('ii', $month, $year);
+        if ($month !== null) {
+            $stmt->bind_param('ii', $year, $month);
+        } else {
+            $stmt->bind_param('i', $year);
+        }
         $stmt->execute();
         $res = $stmt->get_result();
         while ($row = $res->fetch_assoc()) {

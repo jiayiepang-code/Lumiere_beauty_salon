@@ -72,22 +72,26 @@ function updateFilterDisplay() {
   const filterDisplay = document.getElementById("filterDisplay");
   if (!filterDisplay) return;
 
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const monthName = monthNames[currentMonth - 1];
-  filterDisplay.textContent = `Showing statistics for ${monthName} ${currentYear}`;
+  if (currentMonth === 0) {
+    filterDisplay.textContent = `Showing statistics for ${currentYear}`;
+  } else {
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    const monthName = monthNames[currentMonth - 1];
+    filterDisplay.textContent = `Showing statistics for ${monthName} ${currentYear}`;
+  }
 }
 
 async function fetchLeaveRequests() {
@@ -102,7 +106,10 @@ async function fetchLeaveRequests() {
 
   try {
     // Construct URL with query parameters
-    const apiUrl = `${LEAVE_REQUESTS_API_BASE}/list.php?month=${currentMonth}&year=${currentYear}`;
+    const monthParam = currentMonth === 0 ? "" : currentMonth;
+    const apiUrl = monthParam === "" 
+      ? `${LEAVE_REQUESTS_API_BASE}/list.php?year=${currentYear}`
+      : `${LEAVE_REQUESTS_API_BASE}/list.php?month=${monthParam}&year=${currentYear}`;
 
     const response = await fetch(apiUrl, {
       credentials: "same-origin",
@@ -118,7 +125,10 @@ async function fetchLeaveRequests() {
     const stats = data.stats || {};
 
     // If API provides available_years, rebuild the year dropdown dynamically
-    if (Array.isArray(data.available_years) && data.available_years.length > 0) {
+    if (
+      Array.isArray(data.available_years) &&
+      data.available_years.length > 0
+    ) {
       const yearFilter = document.getElementById("yearFilter");
       if (yearFilter) {
         const prevSelected = parseInt(yearFilter.value || currentYear, 10);
@@ -136,7 +146,8 @@ async function fetchLeaveRequests() {
         } else if (data.available_years.includes(currentYear)) {
           yearFilter.value = String(currentYear);
         } else {
-          const fallback = data.available_years[data.available_years.length - 1];
+          const fallback =
+            data.available_years[data.available_years.length - 1];
           yearFilter.value = String(fallback);
           currentYear = fallback;
         }
@@ -517,7 +528,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const yearFilter = document.getElementById("yearFilter");
 
       if (monthFilter) {
-        currentMonth = parseInt(monthFilter.value, 10);
+        currentMonth = monthFilter.value === "" ? 0 : parseInt(monthFilter.value, 10);
       }
       if (yearFilter) {
         currentYear = parseInt(yearFilter.value, 10);

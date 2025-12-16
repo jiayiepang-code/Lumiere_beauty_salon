@@ -14,20 +14,15 @@ require_once '../../config/db_connect.php';
 
 // ========== MONTH/YEAR FILTER LOGIC ==========
 $selected_month = isset($_GET['month']) ? trim($_GET['month']) : '';
-$selected_year = isset($_GET['year']) ? trim($_GET['year']) : '';
+$raw_year = isset($_GET['year']) ? trim($_GET['year']) : '';
+$selected_year = is_numeric($raw_year) ? (int)$raw_year : null;
+$available_years = [];
 
 // Validate month: must be numeric 01-12
 if (empty($selected_month) || !is_numeric($selected_month) || $selected_month < 1 || $selected_month > 12) {
     $selected_month = date('m'); // Current month
 } else {
     $selected_month = str_pad((int)$selected_month, 2, '0', STR_PAD_LEFT); // Format as 01-12
-}
-
-// Validate year: must be numeric 2020-2030
-if (empty($selected_year) || !is_numeric($selected_year) || $selected_year < 2020 || $selected_year > 2030) {
-    $selected_year = (int)date('Y'); // Current year
-} else {
-    $selected_year = (int)$selected_year;
 }
 
 // Initialize variables
@@ -45,6 +40,34 @@ $error_message = '';
 
 try {
     $conn = getDBConnection();
+
+    // Build available years from Booking and Staff_Schedule
+    $yearQuery = "
+        SELECT DISTINCT YEAR(booking_date) AS year FROM Booking WHERE booking_date IS NOT NULL
+        UNION
+        SELECT DISTINCT YEAR(work_date) AS year FROM Staff_Schedule WHERE work_date IS NOT NULL
+        ORDER BY year DESC
+    ";
+    $stmtYears = $conn->prepare($yearQuery);
+    if (!$stmtYears) {
+        throw new Exception('Year query failed: ' . $conn->error);
+    }
+    $stmtYears->execute();
+    $yearsResult = $stmtYears->get_result();
+    while ($row = $yearsResult->fetch_assoc()) {
+        $available_years[] = (int)$row['year'];
+    }
+    $stmtYears->close();
+
+    if (empty($available_years)) {
+        $available_years[] = (int)date('Y');
+    }
+
+    $current_year = (int)date('Y');
+    $default_year = in_array($current_year, $available_years, true) ? $current_year : $available_years[0];
+    if ($selected_year === null || !in_array($selected_year, $available_years, true)) {
+        $selected_year = $default_year;
+    }
 
     // ========== CARD 1: TOTAL ACTIVE STAFF ==========
     $stmt = $conn->prepare("SELECT COUNT(*) as count FROM Staff WHERE is_active = 1");
@@ -199,6 +222,9 @@ try {
 } catch (Exception $e) {
     error_log("Sustainability Analytics Error: " . $e->getMessage());
     $error_message = "An error occurred while loading data. Please try again.";
+    if (empty($available_years)) {
+        $available_years = [(int)date('Y')];
+    }
     if ($conn) {
         $conn->close();
     }
@@ -246,13 +272,13 @@ include '../includes/header.php';
                 <?php endfor; ?>
             </select>
             <select name="year" id="year-select" class="form-control">
-                <?php for ($y = 2020; $y <= 2030; $y++): 
+                <?php foreach ($available_years as $y): 
                     $selected = ($y == $selected_year) ? 'selected' : '';
                 ?>
                     <option value="<?php echo $y; ?>" <?php echo $selected; ?>>
                         <?php echo $y; ?>
                     </option>
-                <?php endfor; ?>
+                <?php endforeach; ?>
             </select>
             <button type="submit" class="btn btn-primary">Apply</button>
         </form>
@@ -368,11 +394,9 @@ include '../includes/header.php';
         <div class="metric-card">
             <div class="card-header">
                 <div class="metric-icon orange-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M5 22h14"></path>
-                        <path d="M5 2h14"></path>
-                        <path d="M17 22V6a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2v16"></path>
-                        <path d="M7 16h10"></path>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-label="Idle hours">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
                 </div>
                 <div class="card-info-btn" data-tooltip="Unused capacity = Scheduled Hours - Booked Hours">
@@ -571,24 +595,25 @@ include '../includes/header.php';
 }
 
 /* ========== METRICS GRID ========== */
+
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
-    margin-bottom: 40px;
+    gap: 16px;
+    margin-bottom: 28px;
 }
 
 .metric-card {
     background: white;
-    border-radius: 16px;
-    padding: 28px;
+    border-radius: 14px;
+    padding: 18px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid #f0f0f0;
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     position: relative;
     overflow: hidden;
 }
@@ -625,19 +650,19 @@ include '../includes/header.php';
 }
 
 .metric-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 14px;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 28px;
+    font-size: 24px;
     transition: all 0.3s ease;
 }
 
 .metric-icon svg {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
 }
 
 .metric-card:hover .metric-icon {
@@ -684,15 +709,15 @@ include '../includes/header.php';
     position: absolute;
     right: 0;
     top: 0;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(212, 165, 116, 0.1);
     color: #D4A574;
-    font-size: 14px;
+    font-size: 13px;
     cursor: help;
     transition: all 0.2s ease;
     border: 1px solid rgba(212, 165, 116, 0.2);
@@ -700,48 +725,51 @@ include '../includes/header.php';
 }
 
 .card-info-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
 }
 
 .card-info-btn:hover {
     background: rgba(212, 165, 116, 0.2);
-    transform: scale(1.1);
+    transform: scale(1.08);
 }
 
 .card-info-btn::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: calc(100% + 12px);
+    top: calc(100% + 10px);
     left: 50%;
     transform: translateX(-50%);
-    background: #333;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 12px;
-    white-space: nowrap;
+    background: #2d2d2d;
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    white-space: normal;
+    word-break: break-word;
+    max-width: 260px;
+    width: max-content;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    min-width: 200px;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 10;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
     text-align: center;
 }
 
 .card-info-btn::before {
     content: '';
     position: absolute;
-    bottom: calc(100% + 4px);
+    top: calc(100% + 2px);
     left: 50%;
     transform: translateX(-50%);
     border: 6px solid transparent;
-    border-top-color: #333;
+    border-bottom-color: #2d2d2d;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
-    z-index: 1001;
+    transition: opacity 0.25s ease;
+    z-index: 11;
 }
 
 .card-info-btn:hover::after,
@@ -750,11 +778,10 @@ include '../includes/header.php';
 }
 
 .metric-value {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: #1a1a1a;
     line-height: 1;
-    letter-spacing: -0.5px;
 }
 
 .metric-label {
@@ -770,17 +797,16 @@ include '../includes/header.php';
     font-size: 0.85rem;
     color: #999;
     line-height: 1.4;
-    margin-top: 4px;
-    padding-top: 0;
+    margin-top: 2px;
 }
 
 .utilization-bar {
     width: 100%;
-    height: 8px;
+    height: 6px;
     background-color: #e0e0e0;
     border-radius: 4px;
     overflow: hidden;
-    margin-top: 12px;
+    margin-top: 8px;
 }
 
 .utilization-fill {
@@ -908,19 +934,25 @@ include '../includes/header.php';
     margin-bottom: 20px;
 }
 
+@keyframes slideInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 .alert {
-    padding: 16px 18px;
+    padding: 18px 20px;
     border-radius: 12px;
     border: 1.5px solid;
-    background: white;
-    transition: all 0.2s ease;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    animation: slideInUp 0.35s ease-out;
 }
 
 .alert-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .alert-header i {
@@ -929,20 +961,22 @@ include '../includes/header.php';
 }
 
 .alert h4 {
-    font-size: 13px;
+    font-size: 1rem;
     font-weight: 600;
     margin: 0;
+    color: inherit;
 }
 
 .alert p {
     margin: 0;
-    font-size: 12px;
+    font-size: 0.85rem;
     line-height: 1.4;
+    color: inherit;
 }
 
 .alert-success {
     border-color: #4CAF50;
-    background-color: #f1f8f4;
+    background: #fff;
     color: #2e7d32;
 }
 
@@ -956,7 +990,7 @@ include '../includes/header.php';
 
 .alert-warning {
     border-color: #FF9800;
-    background-color: #fff8e1;
+    background: #fff;
     color: #e65100;
 }
 
@@ -970,7 +1004,7 @@ include '../includes/header.php';
 
 .alert-info {
     border-color: #2196F3;
-    background-color: #e3f2fd;
+    background: #fff;
     color: #1565c0;
 }
 
@@ -984,7 +1018,7 @@ include '../includes/header.php';
 
 .alert-danger {
     border-color: #F44336;
-    background-color: #ffebee;
+    background: #fff;
     color: #c62828;
     margin-bottom: 20px;
 }
@@ -993,6 +1027,7 @@ include '../includes/header.php';
 @media (max-width: 1024px) {
     .metrics-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
     }
     
     .insights-grid {
@@ -1017,6 +1052,7 @@ include '../includes/header.php';
     
     .metrics-grid {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
     
     .insights-grid {

@@ -35,6 +35,7 @@ include '../includes/header.php';
             <div style="min-width: 140px;">
                 <label for="monthFilter" style="display: block; margin-bottom: 6px; font-size: 0.875rem; font-weight: 500; color: #374151;">Month</label>
                 <select id="monthFilter" style="width: 100%; padding: 0.6rem 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; background: white; cursor: pointer;">
+                    <option value="">- unselected -</option>
                     <option value="01">January</option>
                     <option value="02">February</option>
                     <option value="03">March</option>
@@ -67,7 +68,7 @@ include '../includes/header.php';
 <div class="stats-grid" style="margin-bottom: 24px;">
     <div class="stat-card" id="card-pending-count">
         <div class="stat-info">
-            <h3>Pending Requests</h3>
+            <h3>Overall Pending Requests</h3>
             <div class="stat-value" id="pendingCount">0</div>
         </div>
         <div class="stat-icon">

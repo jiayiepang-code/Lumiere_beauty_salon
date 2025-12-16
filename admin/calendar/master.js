@@ -221,8 +221,8 @@ async function loadCalendarData() {
     // Helper function to format date in local timezone (YYYY-MM-DD)
     const formatLocalDate = (date) => {
       const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
       return `${year}-${month}-${day}`;
     };
 
@@ -355,13 +355,16 @@ function renderDayView() {
           booking.start_time,
           booking.expected_finish_time
         );
-        const durationDisplay = durationMinutes !== "" ? `${durationMinutes} min` : "-";
+        const durationDisplay =
+          durationMinutes !== "" ? `${durationMinutes} min` : "-";
         const statusLabel = escapeHtml(
           (booking.status || "available").replace(/-/g, " ").toUpperCase()
         );
 
         html += `
-          <div class="admin-calendar-event ${statusClass}" role="button" tabindex="0" onclick="viewBookingDetails('${booking.booking_id}')">
+          <div class="admin-calendar-event ${statusClass}" role="button" tabindex="0" onclick="viewBookingDetails('${
+          booking.booking_id
+        }')">
             <div class="event-main">
               <div class="event-header">
                 <div class="event-datetime">${formatTime(
@@ -402,7 +405,7 @@ function renderDayView() {
 
   html += "</div>";
   calendarView.innerHTML = html;
-  
+
   // Add real-time timeline indicator after rendering
   addRealTimeIndicator();
 }
@@ -413,54 +416,59 @@ function addRealTimeIndicator() {
   const today = new Date();
   const viewingDate = new Date(currentDate);
   const isToday = today.toDateString() === viewingDate.toDateString();
-  
+
   if (!isToday) return;
-  
+
   const now = new Date();
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
   const currentTimeInMinutes = currentHour * 60 + currentMinute;
-  
+
   // Check if current time is within viewing hours (10 AM - 10 PM)
   const startHour = 10;
   const endHour = 22;
   const startTimeInMinutes = startHour * 60;
   const endTimeInMinutes = endHour * 60;
-  
-  if (currentTimeInMinutes < startTimeInMinutes || currentTimeInMinutes > endTimeInMinutes) {
+
+  if (
+    currentTimeInMinutes < startTimeInMinutes ||
+    currentTimeInMinutes > endTimeInMinutes
+  ) {
     return; // Current time is outside viewing hours
   }
-  
+
   // Find the timeline container
   const timelineContainer = document.getElementById("dayTimelineContainer");
   if (!timelineContainer) return;
-  
+
   // Make timeline container relative positioned
   timelineContainer.style.position = "relative";
-  
+
   // Find all timeline rows to calculate position
   const timelineRows = timelineContainer.querySelectorAll(".timeline-row");
   if (timelineRows.length === 0) return;
-  
+
   // Calculate which row the current time falls into and the position within that row
   const totalSlots = 13; // 10 AM to 10 PM = 13 hours
-  const slotIndex = Math.floor((currentTimeInMinutes - startTimeInMinutes) / 60);
+  const slotIndex = Math.floor(
+    (currentTimeInMinutes - startTimeInMinutes) / 60
+  );
   const minutesIntoSlot = (currentTimeInMinutes - startTimeInMinutes) % 60;
   const slotPercent = (minutesIntoSlot / 60) * 100;
-  
+
   // Get the row element
   if (slotIndex >= timelineRows.length) return;
   const targetRow = timelineRows[slotIndex];
   const rowRect = targetRow.getBoundingClientRect();
   const containerRect = timelineContainer.getBoundingClientRect();
-  
+
   // Calculate absolute position within the container
   const rowTop = targetRow.offsetTop;
   const rowHeight = rowRect.height;
-  const absoluteTop = rowTop + (rowHeight * slotPercent / 100);
+  const absoluteTop = rowTop + (rowHeight * slotPercent) / 100;
   const totalHeight = timelineContainer.scrollHeight;
   const positionPercent = (absoluteTop / totalHeight) * 100;
-  
+
   // Create indicator element
   const indicator = document.createElement("div");
   indicator.className = "real-time-indicator";
@@ -474,7 +482,7 @@ function addRealTimeIndicator() {
     z-index: 100;
     pointer-events: none;
   `;
-  
+
   // Create dot
   const dot = document.createElement("div");
   dot.style.cssText = `
@@ -489,7 +497,7 @@ function addRealTimeIndicator() {
     box-shadow: 0 0 0 2px #c29076;
   `;
   indicator.appendChild(dot);
-  
+
   timelineContainer.appendChild(indicator);
 }
 
@@ -548,7 +556,9 @@ function renderWeekView() {
 
     weekDays.forEach((day) => {
       // Format date string using local timezone to avoid UTC conversion issues
-      const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+      const dateStr = `${day.getFullYear()}-${String(
+        day.getMonth() + 1
+      ).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
       const key = `${dateStr}_${hour.toString().padStart(2, "0")}`;
       const bookings = bookingsByDateTime[key] || [];
 
@@ -617,7 +627,9 @@ function renderMonthView() {
   for (let day = 1; day <= daysInMonth; day++) {
     const date = new Date(year, month, day);
     // Format date string using local timezone to avoid UTC conversion issues
-    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
     const bookings = bookingsByDate[dateStr] || [];
     const isToday = date.toDateString() === new Date().toDateString();
 
@@ -701,20 +713,27 @@ function renderStaffSchedules() {
 
   let html = "";
   staffSchedulesData.forEach((schedule) => {
-    const statusClass = schedule.status === "working" ? "status-working" : "status-off";
+    const statusClass =
+      schedule.status === "working" ? "status-working" : "status-off";
     html += `
             <div class="staff-schedule-card ${statusClass}">
                 <div class="staff-schedule-info">
-                    <div class="staff-name">${escapeHtml(schedule.staff_name)}</div>
+                    <div class="staff-name">${escapeHtml(
+                      schedule.staff_name
+                    )}</div>
                     <div class="schedule-time">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"></circle>
                             <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
-                        ${formatTime(schedule.start_time)} - ${formatTime(schedule.end_time)}
+                        ${formatTime(schedule.start_time)} - ${formatTime(
+      schedule.end_time
+    )}
                     </div>
                 </div>
-                <span class="schedule-status-badge ${statusClass}">${schedule.status === "working" ? "Working" : "Off"}</span>
+                <span class="schedule-status-badge ${statusClass}">${
+      schedule.status === "working" ? "Working" : "Off"
+    }</span>
             </div>
         `;
   });
