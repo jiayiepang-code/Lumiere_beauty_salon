@@ -1,252 +1,388 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lumière Login</title>
-    <link rel="stylesheet" href="../css/login.css">
-</head>
-<body>
-
-<!-- FLOATING BUTTONS: STAFF + ADMIN -->
-<div class="floating-btn-group">
-
-    <!-- STAFF -->
-    <a href="../staff/login.html" class="float-wrapper staff-btn-container" style="text-decoration:none;">
+    <link rel="stylesheet" href="../css/login.css" />
+  </head>
+  <body>
+    <!-- FLOATING BUTTONS: STAFF + ADMIN -->
+    <div class="floating-btn-group">
+      <!-- STAFF -->
+      <a
+        href="../staff/login.html"
+        class="float-wrapper staff-btn-container"
+        style="text-decoration: none"
+      >
         <div class="icon-circle">
-            <img src="../images/79.png" alt="Staff">
+          <img src="../images/79.png" alt="Staff" />
         </div>
         <span class="float-text">Staff Login</span>
-    </a>
+      </a>
 
-<!-- ADMIN -->
-    <a href="../admin/login.html" class="float-wrapper admin-btn-container" style="text-decoration:none;">
+      <!-- ADMIN -->
+      <a
+        href="../admin/login.html"
+        class="float-wrapper admin-btn-container"
+        style="text-decoration: none"
+      >
         <div class="icon-circle">
-            <img src="../images/80.png" alt="Admin">
+          <img src="../images/80.png" alt="Admin" />
         </div>
         <span class="float-text">Admin Login</span>
-    </a>
-
-</div>
+      </a>
+    </div>
     <!-- ================= LEFT SIDEBAR ================= -->
     <div class="auth-container">
-    <div class="auth-sidebar">
+      <div class="auth-sidebar">
         <div>
-            <h2>Welcome to</h2>
-            <div class="logo-container">
-                <img src="../images/16.png" class="sidebar-logo" alt="Lumière Logo">
-            </div>
-            <p>Access your account and manage your bookings.</p>
+          <h2>Welcome to</h2>
+          <div class="logo-container">
+            <img
+              src="../images/16.png"
+              class="sidebar-logo"
+              alt="Lumière Logo"
+            />
+          </div>
+          <p>Access your account and manage your bookings.</p>
         </div>
         <p>Lumière Beauty Salon</p>
-    </div>
+      </div>
 
-    <!-- ================= RIGHT SIDE (REGISTER PAGE) ================= -->
-    <div class="auth-main">
-
+      <!-- ================= RIGHT SIDE (REGISTER PAGE) ================= -->
+      <div class="auth-main">
         <!-- REGISTER FORM (4-step) -->
-        <form class="auth-form" id="authForm" onsubmit="event.preventDefault();">
+        <form
+          class="auth-form"
+          id="authForm"
+          onsubmit="event.preventDefault();"
+        >
+          <div class="form-header">
+            <h1 id="formTitle">Register</h1>
+            <p>Step <span id="stepCount">1</span> of 4</p>
+          </div>
 
-            <div class="form-header">
-                <h1 id="formTitle">Register</h1>
-                <p>Step <span id="stepCount">1</span> of 4</p>
+          <!-- STEPPER -->
+          <div class="register-stepper">
+            <div class="step step-active" id="circle-1">
+              <span class="step-number">1</span>
+            </div>
+            <div class="step" id="circle-2">
+              <span class="step-number">2</span>
+            </div>
+            <div class="step" id="circle-3">
+              <span class="step-number">3</span>
+            </div>
+            <div class="step" id="circle-4">
+              <span class="step-number">4</span>
+            </div>
+          </div>
+
+          <!-- STEP 1 -->
+          <div id="step-group-1" class="form-step active-step">
+            <div class="name-row">
+              <div class="form-group half-width">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="firstName"
+                  placeholder="First name"
+                  required
+                />
+              </div>
+              <div class="form-group half-width">
+                <input
+                  type="text"
+                  class="form-control"
+                  id="lastName"
+                  placeholder="Last name"
+                  required
+                />
+              </div>
             </div>
 
-            <!-- STEPPER -->
-            <div class="register-stepper">
-                <div class="step step-active" id="circle-1"><span class="step-number">1</span></div>
-                <div class="step" id="circle-2"><span class="step-number">2</span></div>
-                <div class="step" id="circle-3"><span class="step-number">3</span></div>
-                <div class="step" id="circle-4"><span class="step-number">4</span></div>
+            <div class="form-group">
+              <div class="phone-wrapper">
+                <span class="input-prefix">+60</span>
+                <input
+                  type="tel"
+                  class="form-control phone-input"
+                  id="phone"
+                  placeholder="12 345 6789"
+                  maxlength="13"
+                  oninput="formatPhoneNumber(this)"
+                  required
+                />
+              </div>
             </div>
 
-            <!-- STEP 1 -->
-            <div id="step-group-1" class="form-step active-step">
+            <div class="error-message" id="step1Error"></div>
 
-                <div class="name-row">
-                    <div class="form-group half-width">
-                        <input type="text" class="form-control" id="firstName" placeholder="First name" required>
-                    </div>
-                    <div class="form-group half-width">
-                        <input type="text" class="form-control" id="lastName" placeholder="Last name" required>
-                    </div>
-                </div>
+            <button type="button" class="submit-btn" onclick="validateStep1()">
+              Next Step
+            </button>
 
-                <div class="form-group">
-                  <div class="phone-wrapper">
-                    <span class="input-prefix">+60</span>
-                    <input type="tel" 
-                class="form-control phone-input" 
-                id="phone" 
-                placeholder="12 345 6789" 
-                maxlength="13" 
-                oninput="formatPhoneNumber(this)" 
-                required>
-                   </div>
-                </div>
+            <div class="switch-form">
+              Already have an account?
+              <a href="#" onclick="showLogin()">Login</a>
+            </div>
+          </div>
 
-                <div class="error-message" id="step1Error"></div>
-
-                <button type="button" class="submit-btn" onclick="validateStep1()">Next Step</button>
-
-                <div class="switch-form">
-                    Already have an account? 
-                    <a href="#" onclick="showLogin()">Login</a>
-                </div>
+          <!-- STEP 2 -->
+          <div id="step-group-2" class="form-step">
+            <div class="form-group">
+              <div class="input-wrapper">
+                <img src="../images/72.png" class="input-icon" />
+                <input
+                  type="email"
+                  class="form-control indent-icon"
+                  id="email"
+                  placeholder="Email address"
+                  required
+                />
+              </div>
             </div>
 
-            <!-- STEP 2 -->
-            <div id="step-group-2" class="form-step">
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <img src="../images/72.png" class="input-icon">
-                        <input type="email" class="form-control indent-icon" id="email" placeholder="Email address" required>
-                    </div>
-                </div>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <img src="../images/75.png" class="input-icon" />
+                <input
+                  type="password"
+                  class="form-control indent-icon"
+                  id="password"
+                  placeholder="Password"
+                  required
+                  oninput="checkPasswordRules()"
+                />
+                <img
+                  src="../images/74.png"
+                  class="password-toggle"
+                  id="passwordToggle"
+                  onclick="togglePassword()"
+                />
+              </div>
 
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <img src="../images/75.png" class="input-icon">
-                        <input type="password" class="form-control indent-icon" id="password" placeholder="Password" required oninput="checkPasswordRules()">
-                        <img src="../images/74.png" class="password-toggle" id="passwordToggle" onclick="togglePassword()">
-                    </div>
-
-                    <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
-                    <!-- Password Hint Rules -->
-<div class="hints-popup" id="passwordHints">
-    <p>Password must contain:</p>
-    <ul>
-        <li class="rule-item" id="ruleLength">✔ At least 8 characters</li>
-        <li class="rule-item" id="ruleUpper">✔ One uppercase letter (A-Z)</li>
-        <li class="rule-item" id="ruleLower">✔ One lowercase letter (a-z)</li>
-        <li class="rule-item" id="ruleNumber">✔ One number (0-9)</li>
-        <li class="rule-item" id="ruleSpecial">✔ One symbol (!@#$%…)</li>
-    </ul>
-</div>
-                    <div class="strength-text" id="strengthText"></div>
-                </div>
-
-                <div class="form-group">
-                    <div class="input-wrapper">
-                        <img src="../images/75.png" class="input-icon">
-                        <input type="password" class="form-control indent-icon" id="confirmPassword" placeholder="Confirm Password" required>
-                        <img src="../images/74.png" class="password-toggle" onclick="togglePassword()">
-                    </div>
-                </div>
-
-                <div class="checkbox-container">
-                    <div class="custom-checkbox" id="rememberMe" onclick="toggleCheckbox(this)"></div>
-                    <label>Remember me</label>
-                </div>
-
-                <div class="error-message" id="step2Error"></div>
-
-                <button type="button" class="submit-btn" onclick="validateStep2()">Next Step</button>
-
-                <div class="switch-form">
-                    <a href="#" onclick="goToStep(1)">Back</a>
-                </div>
+              <div class="password-strength">
+                <div class="password-strength-bar" id="strengthBar"></div>
+              </div>
+              <!-- Password Hint Rules -->
+              <div class="hints-popup" id="passwordHints">
+                <p>Password must contain:</p>
+                <ul>
+                  <li class="rule-item" id="ruleLength">
+                    ✔ At least 8 characters
+                  </li>
+                  <li class="rule-item" id="ruleUpper">
+                    ✔ One uppercase letter (A-Z)
+                  </li>
+                  <li class="rule-item" id="ruleLower">
+                    ✔ One lowercase letter (a-z)
+                  </li>
+                  <li class="rule-item" id="ruleNumber">✔ One number (0-9)</li>
+                  <li class="rule-item" id="ruleSpecial">
+                    ✔ One symbol (!@#$%…)
+                  </li>
+                </ul>
+              </div>
+              <div class="strength-text" id="strengthText"></div>
             </div>
 
-            <!-- STEP 3 -->
-            <div id="step-group-3" class="form-step">
-                <div class="otp-container">
-                    <p>Enter the 4-digit code sent to your email.</p>
-                    <div class="otp-inputs">
-                        <input type="text" maxlength="1" class="otp-input" id="otp1" onkeyup="handleOtpInput(this,'otp2')">
-                        <input type="text" maxlength="1" class="otp-input" id="otp2" onkeyup="handleOtpInput(this,'otp3','otp1')">
-                        <input type="text" maxlength="1" class="otp-input" id="otp3" onkeyup="handleOtpInput(this,'otp4','otp2')">
-                        <input type="text" maxlength="1" class="otp-input" id="otp4" onkeyup="handleOtpInput(this,null,'otp3')">
-                    </div>
-                </div>
-
-                <button type="button" class="submit-btn" onclick="validateStep3()">Verify & Register</button>
-
-                <div class="switch-form"><a href="#" onclick="goToStep(2)">Back</a></div>
+            <div class="form-group">
+              <div class="input-wrapper">
+                <img src="../images/75.png" class="input-icon" />
+                <input
+                  type="password"
+                  class="form-control indent-icon"
+                  id="confirmPassword"
+                  placeholder="Confirm Password"
+                  required
+                />
+                <img
+                  src="../images/74.png"
+                  class="password-toggle"
+                  onclick="togglePassword()"
+                />
+              </div>
             </div>
 
-            <!-- STEP 4 SUCCESS -->
-            <div id="step-group-4" class="form-step success-view">
-                <i class="fas fa-check-circle success-icon"></i>
-                <h2>Registration Successful!</h2>
-                <p>Your account has been verified.</p>
+            <div class="checkbox-container">
+              <div
+                class="custom-checkbox"
+                id="rememberMe"
+                onclick="toggleCheckbox(this)"
+              ></div>
+              <label>Remember me</label>
             </div>
+
+            <div class="error-message" id="step2Error"></div>
+
+            <button type="button" class="submit-btn" onclick="validateStep2()">
+              Next Step
+            </button>
+
+            <div class="switch-form">
+              <a href="#" onclick="goToStep(1)">Back</a>
+            </div>
+          </div>
+
+          <!-- STEP 3 -->
+          <div id="step-group-3" class="form-step">
+            <div class="otp-container">
+              <p>Enter the 4-digit code sent to your email.</p>
+              <div class="otp-inputs">
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="otp-input"
+                  id="otp1"
+                  onkeyup="handleOtpInput(this,'otp2')"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="otp-input"
+                  id="otp2"
+                  onkeyup="handleOtpInput(this,'otp3','otp1')"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="otp-input"
+                  id="otp3"
+                  onkeyup="handleOtpInput(this,'otp4','otp2')"
+                />
+                <input
+                  type="text"
+                  maxlength="1"
+                  class="otp-input"
+                  id="otp4"
+                  onkeyup="handleOtpInput(this,null,'otp3')"
+                />
+              </div>
+            </div>
+
+            <button type="button" class="submit-btn" onclick="validateStep3()">
+              Verify & Register
+            </button>
+
+            <div class="switch-form">
+              <a href="#" onclick="goToStep(2)">Back</a>
+            </div>
+          </div>
+
+          <!-- STEP 4 SUCCESS -->
+          <div id="step-group-4" class="form-step success-view">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h2>Registration Successful!</h2>
+            <p>Your account has been verified.</p>
+          </div>
         </form>
 
         <!-- ========== LOGIN PAGE ========== -->
-        <form class="auth-form login-form" id="loginForm" style="display:none;">
-            <div class="form-header"><h1>Login</h1></div>
+        <form class="auth-form login-form" id="loginForm" style="display: none">
+          <div class="form-header"><h1>Login</h1></div>
 
-            <div class="form-group">
-                <div class="phone-wrapper">
-                  <span class="input-prefix">+60</span>
-                  <input type="tel" 
-                class="form-control phone-input" 
-                id="loginPhone" 
-                placeholder="12 345 6789" 
-                maxlength="13" 
-                oninput="formatPhoneNumber(this)">
-                </div>
+          <div class="form-group">
+            <div class="phone-wrapper">
+              <span class="input-prefix">+60</span>
+              <input
+                type="tel"
+                class="form-control phone-input"
+                id="loginPhone"
+                placeholder="12 345 6789"
+                maxlength="13"
+                oninput="formatPhoneNumber(this)"
+              />
             </div>
+          </div>
 
-            <div class="form-group">
-                <div class="input-wrapper">
-                    <img src="../images/75.png" class="input-icon">
-                    <input type="password" class="form-control indent-icon" id="loginPassword" placeholder="Password">
-                    <img src="../images/74.png" class="password-toggle" id="loginPasswordToggle" onclick="toggleLoginPassword()">
-                </div>
+          <div class="form-group">
+            <div class="input-wrapper">
+              <img src="../images/75.png" class="input-icon" />
+              <input
+                type="password"
+                class="form-control indent-icon"
+                id="loginPassword"
+                placeholder="Password"
+              />
+              <img
+                src="../images/74.png"
+                class="password-toggle"
+                id="loginPasswordToggle"
+                onclick="toggleLoginPassword()"
+              />
             </div>
+          </div>
 
-            <button type="button" class="submit-btn" onclick="validateCustomerLogin()">LOGIN</button>
+          <button
+            type="button"
+            class="submit-btn"
+            onclick="validateCustomerLogin()"
+          >
+            LOGIN
+          </button>
 
-            <div class="switch-form">
-                Don’t have an account? <a href="#" onclick="showRegister()">Register</a>
-            </div>
+          <div class="switch-form">
+            Don’t have an account?
+            <a href="#" onclick="showRegister()">Register</a>
+          </div>
         </form>
+      </div>
     </div>
-</div>
 
-
-
-<script src="../js/login.js"></script>
-<!-- Code injected by live-server -->
-<script>
-	// <![CDATA[  <-- For SVG support
-	if ('WebSocket' in window) {
-		(function () {
-			function refreshCSS() {
-				var sheets = [].slice.call(document.getElementsByTagName("link"));
-				var head = document.getElementsByTagName("head")[0];
-				for (var i = 0; i < sheets.length; ++i) {
-					var elem = sheets[i];
-					var parent = elem.parentElement || head;
-					parent.removeChild(elem);
-					var rel = elem.rel;
-					if (elem.href && typeof rel != "string" || rel.length == 0 || rel.toLowerCase() == "stylesheet") {
-						var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, '');
-						elem.href = url + (url.indexOf('?') >= 0 ? '&' : '?') + '_cacheOverride=' + (new Date().valueOf());
-					}
-					parent.appendChild(elem);
-				}
-			}
-			var protocol = window.location.protocol === 'http:' ? 'ws://' : 'wss://';
-			var address = protocol + window.location.host + window.location.pathname + '/ws';
-			var socket = new WebSocket(address);
-			socket.onmessage = function (msg) {
-				if (msg.data == 'reload') window.location.reload();
-				else if (msg.data == 'refreshcss') refreshCSS();
-			};
-			if (sessionStorage && !sessionStorage.getItem('IsThisFirstTime_Log_From_LiveServer')) {
-				console.log('Live reload enabled.');
-				sessionStorage.setItem('IsThisFirstTime_Log_From_LiveServer', true);
-			}
-		})();
-	}
-	else {
-		console.error('Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading.');
-	}
-	// ]]>
-</script>
-</body>
+    <script src="../js/login.js"></script>
+    <!-- Code injected by live-server -->
+    <script>
+      // <![CDATA[  <-- For SVG support
+      if ("WebSocket" in window) {
+        (function () {
+          function refreshCSS() {
+            var sheets = [].slice.call(document.getElementsByTagName("link"));
+            var head = document.getElementsByTagName("head")[0];
+            for (var i = 0; i < sheets.length; ++i) {
+              var elem = sheets[i];
+              var parent = elem.parentElement || head;
+              parent.removeChild(elem);
+              var rel = elem.rel;
+              if (
+                (elem.href && typeof rel != "string") ||
+                rel.length == 0 ||
+                rel.toLowerCase() == "stylesheet"
+              ) {
+                var url = elem.href.replace(/(&|\?)_cacheOverride=\d+/, "");
+                elem.href =
+                  url +
+                  (url.indexOf("?") >= 0 ? "&" : "?") +
+                  "_cacheOverride=" +
+                  new Date().valueOf();
+              }
+              parent.appendChild(elem);
+            }
+          }
+          var protocol =
+            window.location.protocol === "http:" ? "ws://" : "wss://";
+          var address =
+            protocol + window.location.host + window.location.pathname + "/ws";
+          var socket = new WebSocket(address);
+          socket.onmessage = function (msg) {
+            if (msg.data == "reload") window.location.reload();
+            else if (msg.data == "refreshcss") refreshCSS();
+          };
+          if (
+            sessionStorage &&
+            !sessionStorage.getItem("IsThisFirstTime_Log_From_LiveServer")
+          ) {
+            console.log("Live reload enabled.");
+            sessionStorage.setItem("IsThisFirstTime_Log_From_LiveServer", true);
+          }
+        })();
+      } else {
+        console.error(
+          "Upgrade your browser. This Browser is NOT supported WebSocket for Live-Reloading."
+        );
+      }
+      // ]]>
+    </script>
+  </body>
 </html>
