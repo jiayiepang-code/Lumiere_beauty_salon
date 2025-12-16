@@ -15,8 +15,12 @@ try {
     die("Connection failed: " . $e->getMessage());
 }
 
-// Start session with proper settings
+// Start session with proper settings (use staff-specific session name)
 if (session_status() === PHP_SESSION_NONE) {
+    // Ensure APIs read the same session cookie set by staff/login.php
+    if (session_name() !== 'staff_session') {
+        session_name('staff_session');
+    }
     session_set_cookie_params([
         'lifetime' => 0, // Until browser closes
         'path' => '/',

@@ -122,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="auth-main">
         <form class="auth-form staff-theme" id="staffForm" onsubmit="event.preventDefault();">
+            <div id="error-alert" style="display:none;background:#fee;color:#c33;padding:12px;border-radius:8px;margin-bottom:15px;border:1px solid #fcc;font-size:14px;"></div>
             
             <div class="form-header">
                 <h1 style="color: #968073;">Staff Login</h1>

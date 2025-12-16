@@ -37,9 +37,9 @@ session_start();
             <div class="form-group">
                 <div class="phone-wrapper">
                     <span class="input-prefix">+60</span>
-                    <input type="tel"
-                           class="form-control phone-input"
-                           id="adminId"
+                          <input type="tel"
+                              class="form-control phone-input"
+                              id="loginPhone"
                            placeholder="12 345 6789"
                            maxlength="13"
                            oninput="formatPhoneNumber(this)">
