@@ -255,23 +255,35 @@ async function initializeCalendar() {
 async function loadStaffList() {
   try {
     const response = await fetch("../../api/admin/staff/list.php");
+    
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("Non-JSON response received from staff list API:", text.substring(0, 200));
+      throw new Error("Server returned an invalid response. Please check the console for details.");
+    }
+
     const data = await response.json();
 
     if (data.success) {
-      staffList = data.staff;
+      staffList = data.staff || [];
       const staffFilter = document.getElementById("staffFilter");
 
-      data.staff.forEach((staff) => {
-        if (staff.is_active) {
-          const option = document.createElement("option");
-          option.value = staff.staff_email;
-          option.textContent = `${staff.first_name} ${staff.last_name}`;
-          staffFilter.appendChild(option);
-        }
-      });
+      if (staffFilter && Array.isArray(data.staff)) {
+        data.staff.forEach((staff) => {
+          if (staff.is_active) {
+            const option = document.createElement("option");
+            option.value = staff.staff_email;
+            option.textContent = `${staff.first_name || ""} ${staff.last_name || ""}`.trim();
+            staffFilter.appendChild(option);
+          }
+        });
+      }
     }
   } catch (error) {
     console.error("Error loading staff list:", error);
+    // Don't throw - allow calendar to continue loading even if staff list fails
   }
 }
 
@@ -294,8 +306,10 @@ async function loadCalendarData() {
     // Build query parameters
     const params = new URLSearchParams();
 
-    const staffFilter = document.getElementById("staffFilter").value;
-    const statusFilter = document.getElementById("statusFilter").value;
+    const staffFilterEl = document.getElementById("staffFilter");
+    const statusFilterEl = document.getElementById("statusFilter");
+    const staffFilter = staffFilterEl ? staffFilterEl.value : "";
+    const statusFilter = statusFilterEl ? statusFilterEl.value : "";
 
     // Helper function to format date in local timezone (YYYY-MM-DD)
     const formatLocalDate = (date) => {
@@ -346,7 +360,7 @@ async function loadCalendarData() {
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const text = await response.text();
-      console.error("Non-JSON response received:", text);
+      console.error("Non-JSON response received from calendar API:", text.substring(0, 200));
       throw new Error(
         "Server returned an invalid response. Please check the console for details."
       );
@@ -816,13 +830,18 @@ function renderStaffSchedules() {
   const staffScheduleSection = document.getElementById("staffScheduleSection");
   const staffScheduleGrid = document.querySelector(".staff-schedule-grid");
 
-  if (!staffScheduleSection || !staffScheduleGrid) {
-    console.warn("Staff schedule elements not found");
+  if (!staffScheduleSection) {
+    console.warn("Staff schedule section element not found");
+    return;
+  }
+
+  if (!staffScheduleGrid) {
+    console.warn("Staff schedule grid element not found");
     return;
   }
 
   // Show or hide section based on data
-  if (staffSchedulesData.length === 0) {
+  if (!staffSchedulesData || staffSchedulesData.length === 0) {
     staffScheduleSection.style.display = "none";
     return;
   }
@@ -833,23 +852,26 @@ function renderStaffSchedules() {
     const cardHtml = `
             <div class="staff-schedule-card" style="background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center;">
                 <h4 style="margin: 0; font-size: 16px; color: #333;">${escapeHtml(
-                  schedule.staff_name
+                  schedule.staff_name || "Unknown"
                 )}</h4>
                 <p style="margin: 8px 0; font-size: 14px; color: #666;">${escapeHtml(
-                  schedule.working_time
+                  schedule.working_time || ""
                 )}</p>
                 <span style="padding: 4px 8px; border-radius: 4px; background: ${
                   schedule.status === "Working" ? "#4CAF50" : "#9E9E9E"
                 }; color: white; font-size: 12px;">${escapeHtml(
-      schedule.status
+      schedule.status || "Unknown"
     )}</span>
             </div>
         `;
     html += cardHtml;
   });
 
-  staffScheduleGrid.innerHTML = html;
-  staffScheduleSection.style.display = "block";
+  // Double-check element exists before setting innerHTML
+  if (staffScheduleGrid) {
+    staffScheduleGrid.innerHTML = html;
+    staffScheduleSection.style.display = "block";
+  }
 }
 
 // View booking details
@@ -867,14 +889,14 @@ async function viewBookingDetails(bookingId) {
 
   try {
     const response = await fetch(
-      `../../api/admin/bookings/details.php?booking_id=${bookingId}`
+      `../../api/admin/bookings/details.php?booking_id=${encodeURIComponent(bookingId)}`
     );
 
     // Check if response is JSON
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const text = await response.text();
-      console.error("Non-JSON response received:", text);
+      console.error("Non-JSON response received from booking details API:", text.substring(0, 200));
       throw new Error(
         "Server returned an invalid response. Please check the console for details."
       );
@@ -888,6 +910,8 @@ async function viewBookingDetails(bookingId) {
 
     if (data.success) {
       renderBookingDetails(data.booking);
+    } else {
+      throw new Error(data.error?.message || "Failed to load booking details");
     }
   } catch (error) {
     console.error("Error loading booking details:", error);
