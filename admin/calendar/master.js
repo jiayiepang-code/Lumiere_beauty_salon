@@ -147,12 +147,12 @@ document.addEventListener("DOMContentLoaded", function () {
   const loadingState = document.getElementById("loadingState");
   const emptyState = document.getElementById("emptyState");
   const calendarView = document.getElementById("calendarView");
-  
+
   if (!loadingState || !emptyState || !calendarView) {
     console.error("Critical calendar elements not found in DOM");
     return;
   }
-  
+
   initializeCalendar();
   initCalendarInteractions();
 
