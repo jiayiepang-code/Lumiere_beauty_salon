@@ -195,11 +195,44 @@ try {
             }
             $check_stmt->close();
             
-            // Insert new service
-            $sql = "INSERT INTO Service (service_category, sub_category, service_name, 
+            // Generate service_id (VARCHAR(4) format: S001, S002, etc.)
+            $id_stmt = $conn->prepare("SELECT service_id FROM Service WHERE service_id LIKE 'S%' ORDER BY service_id DESC LIMIT 1");
+            $id_stmt->execute();
+            $id_result = $id_stmt->get_result();
+            $last_id = 'S000';
+            if ($id_row = $id_result->fetch_assoc()) {
+                $last_id = $id_row['service_id'];
+            }
+            $id_stmt->close();
+            
+            // Extract number and increment
+            $num = intval(substr($last_id, 1)) + 1;
+            $service_id = 'S' . str_pad($num, 3, '0', STR_PAD_LEFT);
+            
+            // Ensure it doesn't exceed VARCHAR(4) - if it does, use alphanumeric
+            if (strlen($service_id) > 4) {
+                // Use alphanumeric format: S00-S99, then S0A-S9Z, etc.
+                $base = intval(substr($last_id, 1));
+                if ($base < 100) {
+                    $service_id = 'S' . str_pad($num, 2, '0', STR_PAD_LEFT);
+                } else {
+                    // For 100+, use alphanumeric: S0A, S0B, etc.
+                    $alpha_num = $base - 100;
+                    $letter = chr(65 + ($alpha_num % 26)); // A-Z
+                    $digit = floor($alpha_num / 26);
+                    $service_id = 'S' . $digit . $letter;
+                }
+            }
+            
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'crud.php:158','message'=>'Generated service_id','data'=>['service_id'=>$service_id,'last_id'=>$last_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
+            // Insert new service with generated service_id
+            $sql = "INSERT INTO Service (service_id, service_category, sub_category, service_name, 
                                      current_duration_minutes, current_price, description, 
                                      service_image, default_cleanup_minutes, is_active)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $conn->prepare($sql);
             
@@ -207,7 +240,8 @@ try {
             file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'crud.php:163','message'=>'Before bind_param','data'=>['stmt_exists'=>isset($stmt),'stmt_error'=>$stmt ? $stmt->error : 'no_stmt'],'timestamp'=>time()*1000])."\n", FILE_APPEND);
             // #endregion
             
-            $stmt->bind_param("sssidssii", 
+            $stmt->bind_param("ssssidssii", 
+                $service_id,
                 $service_category,
                 $sub_category,
                 $service_name,
@@ -220,38 +254,16 @@ try {
             );
             
             // #region agent log
-            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'crud.php:175','message'=>'Before execute','data'=>[],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'crud.php:225','message'=>'Before execute','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
             // #endregion
             
             if ($stmt->execute()) {
                 // #region agent log
-                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'crud.php:178','message'=>'Execute successful','data'=>['insert_id'=>$conn->insert_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'crud.php:228','message'=>'Execute successful','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
                 // #endregion
                 
-                // Get the inserted service_id (for VARCHAR(4), we need to query it)
-                // Since service_id might be VARCHAR, we'll get it from the last insert
-                $service_id = $conn->insert_id;
-                
-                // If insert_id is 0 (VARCHAR field), get it from the database
-                if ($service_id == 0) {
-                    // #region agent log
-                    file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'crud.php:182','message'=>'insert_id is 0, querying DB','data'=>[],'timestamp'=>time()*1000])."\n", FILE_APPEND);
-                    // #endregion
-                    
-                    $id_stmt = $conn->prepare("SELECT service_id FROM Service WHERE service_category = ? AND service_name = ? ORDER BY created_at DESC LIMIT 1");
-                    if ($id_stmt) {
-                        $id_stmt->bind_param("ss", $service_category, $service_name);
-                        $id_stmt->execute();
-                        $id_result = $id_stmt->get_result();
-                        if ($id_row = $id_result->fetch_assoc()) {
-                            $service_id = $id_row['service_id'];
-                        }
-                        $id_stmt->close();
-                    }
-                }
-                
                 // #region agent log
-                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:196','message'=>'Before ob_end_clean','data'=>['service_id'=>$service_id,'ob_level'=>ob_get_level()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:232','message'=>'Before ob_end_clean','data'=>['service_id'=>$service_id,'ob_level'=>ob_get_level()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
                 // #endregion
                 
                 $stmt->close();
@@ -263,15 +275,26 @@ try {
                 }
                 
                 // #region agent log
-                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:203','message'=>'Before sending JSON response','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:278','message'=>'Before sending JSON response','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
                 // #endregion
                 
                 http_response_code(201);
-                echo json_encode([
+                $response = json_encode([
                     'success' => true,
                     'service_id' => $service_id,
                     'message' => 'Service created successfully'
                 ]);
+                
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:287','message'=>'JSON encoded, about to echo','data'=>['response_length'=>strlen($response),'json_error'=>json_last_error_msg()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
+                echo $response;
+                
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:292','message'=>'Response sent, about to exit','data'=>[],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
                 exit;
             } else {
                 // #region agent log
