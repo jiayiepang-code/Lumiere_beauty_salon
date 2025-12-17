@@ -166,56 +166,62 @@ document.addEventListener("DOMContentLoaded", function () {
 async function initializeCalendar() {
   // Read URL parameters
   const urlParams = new URLSearchParams(window.location.search);
-  const startDateParam = urlParams.get('start_date');
-  const endDateParam = urlParams.get('end_date');
-  const staffEmailParam = urlParams.get('staff_email');
-  const statusParam = urlParams.get('status');
-  const viewParam = urlParams.get('view');
-  
+  const startDateParam = urlParams.get("start_date");
+  const endDateParam = urlParams.get("end_date");
+  const staffEmailParam = urlParams.get("staff_email");
+  const statusParam = urlParams.get("status");
+  const viewParam = urlParams.get("view");
+
   // Set initial date from URL or default to today
   if (startDateParam) {
-    currentDate = new Date(startDateParam + 'T12:00:00');
+    currentDate = new Date(startDateParam + "T12:00:00");
   } else {
     currentDate = new Date();
   }
-  
+
   // Set view from URL or default to day
-  if (viewParam && ['day', 'week', 'month'].includes(viewParam)) {
+  if (viewParam && ["day", "week", "month"].includes(viewParam)) {
     currentView = viewParam;
   } else {
-    currentView = 'day';
+    currentView = "day";
   }
-  
+
   // Update view buttons
-  document.getElementById('viewDay').classList.toggle('active', currentView === 'day');
-  document.getElementById('viewWeek').classList.toggle('active', currentView === 'week');
-  document.getElementById('viewMonth').classList.toggle('active', currentView === 'month');
-  
+  document
+    .getElementById("viewDay")
+    .classList.toggle("active", currentView === "day");
+  document
+    .getElementById("viewWeek")
+    .classList.toggle("active", currentView === "week");
+  document
+    .getElementById("viewMonth")
+    .classList.toggle("active", currentView === "month");
+
   // Update button styles
-  ['viewDay', 'viewWeek', 'viewMonth'].forEach((id) => {
+  ["viewDay", "viewWeek", "viewMonth"].forEach((id) => {
     const btn = document.getElementById(id);
-    if (btn.classList.contains('active')) {
-      btn.style.background = 'white';
-      btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+    if (btn.classList.contains("active")) {
+      btn.style.background = "white";
+      btn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
     } else {
-      btn.style.background = 'transparent';
-      btn.style.boxShadow = 'none';
+      btn.style.background = "transparent";
+      btn.style.boxShadow = "none";
     }
   });
 
   // Load staff list for filter
   await loadStaffList();
-  
+
   // Set filters from URL
   if (staffEmailParam) {
-    const staffFilter = document.getElementById('staffFilter');
+    const staffFilter = document.getElementById("staffFilter");
     if (staffFilter) {
       staffFilter.value = staffEmailParam;
     }
   }
-  
+
   if (statusParam) {
-    const statusFilter = document.getElementById('statusFilter');
+    const statusFilter = document.getElementById("statusFilter");
     if (statusFilter) {
       statusFilter.value = statusParam;
     }
@@ -226,13 +232,13 @@ async function initializeCalendar() {
 
   // Update current date display
   updateDateDisplay();
-  
+
   // Scroll to staff schedule section if anchor is present
-  if (window.location.hash === '#staff-schedule') {
+  if (window.location.hash === "#staff-schedule") {
     setTimeout(() => {
-      const section = document.getElementById('staffScheduleSection');
+      const section = document.getElementById("staffScheduleSection");
       if (section) {
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 500);
   }
@@ -267,6 +273,11 @@ async function loadCalendarData() {
   const loadingState = document.getElementById("loadingState");
   const emptyState = document.getElementById("emptyState");
   const calendarView = document.getElementById("calendarView");
+
+  if (!loadingState || !emptyState || !calendarView) {
+    console.error("Calendar elements not found in DOM");
+    return;
+  }
 
   loadingState.style.display = "block";
   emptyState.style.display = "none";
@@ -323,6 +334,17 @@ async function loadCalendarData() {
     const response = await fetch(
       `../../api/admin/bookings/list.php?${params.toString()}`
     );
+
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("Non-JSON response received:", text);
+      throw new Error(
+        "Server returned an invalid response. Please check the console for details."
+      );
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -355,15 +377,22 @@ async function loadCalendarData() {
     }
   } catch (error) {
     console.error("Error loading calendar data:", error);
-    loadingState.style.display = "none";
-    emptyState.style.display = "block";
-    emptyState.innerHTML = `<p style="color: #F44336;">Error loading calendar: ${error.message}</p>`;
+    if (loadingState) loadingState.style.display = "none";
+    if (emptyState) {
+      emptyState.style.display = "block";
+      emptyState.innerHTML = `<p style="color: #F44336;">Error loading calendar: ${error.message}</p>`;
+    }
   }
 }
 
 // Render calendar based on current view
 function renderCalendar() {
   const calendarView = document.getElementById("calendarView");
+
+  if (!calendarView) {
+    console.error("Calendar view element not found");
+    return;
+  }
 
   if (currentView === "day") {
     renderDayView();
@@ -377,6 +406,11 @@ function renderCalendar() {
 // Render day view - Vertical timeline 10 AM - 10 PM
 function renderDayView() {
   const calendarView = document.getElementById("calendarView");
+
+  if (!calendarView) {
+    console.error("Calendar view element not found");
+    return;
+  }
 
   // Generate time slots from 10:00 AM to 10:00 PM (22:00)
   const timeSlots = [];
@@ -566,6 +600,11 @@ function addRealTimeIndicator() {
 function renderWeekView() {
   const calendarView = document.getElementById("calendarView");
 
+  if (!calendarView) {
+    console.error("Calendar view element not found");
+    return;
+  }
+
   // Get week start (Sunday) and generate 7 days
   const weekStart = new Date(currentDate);
   weekStart.setDate(currentDate.getDate() - currentDate.getDay());
@@ -650,6 +689,11 @@ function renderWeekView() {
 // Render month view - Calendar grid with booking pills
 function renderMonthView() {
   const calendarView = document.getElementById("calendarView");
+
+  if (!calendarView) {
+    console.error("Calendar view element not found");
+    return;
+  }
 
   // Get first and last day of the month
   const year = currentDate.getFullYear();
@@ -762,146 +806,54 @@ function renderBookingCard(booking) {
 
 // Render staff schedules
 function renderStaffSchedules() {
-  const section = document.getElementById("staffScheduleSection");
-  const grid = document.getElementById("staffScheduleGrid");
+  const staffScheduleSection = document.getElementById("staffScheduleSection");
+  const staffScheduleGrid = document.querySelector(".staff-schedule-grid");
 
-  if (staffSchedulesData.length === 0) {
-    section.style.display = "none";
+  if (!staffScheduleSection || !staffScheduleGrid) {
+    console.warn("Staff schedule elements not found");
     return;
   }
 
-  section.style.display = "block";
+  // Show or hide section based on data
+  if (staffSchedulesData.length === 0) {
+    staffScheduleSection.style.display = "none";
+    return;
+  }
 
-  // Timeline view for monthly view
-  if (currentView === "month") {
-    // Get month information
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    
-    // Group schedules by staff and by date
-    const schedulesByStaff = {};
-    const schedulesByDate = {};
-    
-    staffSchedulesData.forEach((schedule) => {
-      const staffKey = schedule.staff_email || schedule.staff_name;
-      const workDate = schedule.work_date || schedule.date || schedule.booking_date;
-      const dateObj = new Date(workDate + "T12:00:00");
-      const dayOfMonth = dateObj.getDate();
-      
-      // Only include schedules for the current month
-      if (dateObj.getFullYear() === year && dateObj.getMonth() === month) {
-        // Group by staff
-        if (!schedulesByStaff[staffKey]) {
-          schedulesByStaff[staffKey] = {
-            staff_name: schedule.staff_name,
-            schedules: {}
-          };
-        }
-        
-        // Group by day (in case multiple schedules per day)
-        if (!schedulesByStaff[staffKey].schedules[dayOfMonth]) {
-          schedulesByStaff[staffKey].schedules[dayOfMonth] = [];
-        }
-        schedulesByStaff[staffKey].schedules[dayOfMonth].push(schedule);
-      }
-    });
+  let html = "";
 
-    // Build timeline HTML
-    let html = '<div class="staff-schedule-timeline">';
-    
-    // Header row with day numbers
-    html += '<div class="timeline-header">';
-    html += '<div class="timeline-staff-label">Staff</div>';
-    html += '<div class="timeline-days">';
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateObj = new Date(year, month, day);
-      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
-      html += `<div class="timeline-day-header" title="${dayName}">${day}</div>`;
-    }
-    html += '</div></div>';
-    
-    // Staff rows
-    Object.values(schedulesByStaff).forEach((staffData) => {
-      html += '<div class="timeline-row">';
-      html += `<div class="timeline-staff-name">${escapeHtml(staffData.staff_name)}</div>`;
-      html += '<div class="timeline-days">';
-      
-      for (let day = 1; day <= daysInMonth; day++) {
-        const daySchedules = staffData.schedules[day] || [];
-        const dateObj = new Date(year, month, day);
-        const isToday = dateObj.toDateString() === new Date().toDateString();
-        
-        html += `<div class="timeline-day-cell ${isToday ? 'today' : ''}">`;
-        
-        if (daySchedules.length > 0) {
-          daySchedules.forEach((schedule) => {
-            const statusClass = schedule.status === "working" ? "status-working" : "status-leave";
-            const isLeave = schedule.status === "leave";
-            
-            if (isLeave) {
-              html += `<div class="timeline-block timeline-leave" title="On Leave - ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}">
-                <span class="timeline-block-label">Leave</span>
-              </div>`;
-            } else {
-              const startTime = formatTime(schedule.start_time);
-              const endTime = formatTime(schedule.end_time);
-              html += `<div class="timeline-block timeline-working" title="${startTime} - ${endTime} - ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}">
-                <span class="timeline-block-time">${startTime}</span>
-                <span class="timeline-block-time">${endTime}</span>
-              </div>`;
-            }
-          });
-        } else {
-          html += '<div class="timeline-block timeline-empty"></div>';
-        }
-        
-        html += '</div>';
-      }
-      
-      html += '</div></div>';
-    });
-    
-    html += '</div>';
-    grid.innerHTML = html;
-  } else {
-    // Original rendering for day/week view
-    let html = "";
-    staffSchedulesData.forEach((schedule) => {
-      const statusClass =
-        schedule.status === "working" ? "status-working" : "status-off";
-      html += `
-            <div class="staff-schedule-card ${statusClass}">
-                <div class="staff-schedule-info">
-                    <div class="staff-name">${escapeHtml(
-                      schedule.staff_name
-                    )}</div>
-                    <div class="schedule-time">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        ${formatTime(schedule.start_time)} - ${formatTime(
-        schedule.end_time
-      )}
-                    </div>
-                </div>
-                <span class="schedule-status-badge ${statusClass}">${
-        schedule.status === "working" ? "Working" : "Off"
-      }</span>
+  staffSchedulesData.forEach((schedule) => {
+    const cardHtml = `
+            <div class="staff-schedule-card" style="background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center;">
+                <h4 style="margin: 0; font-size: 16px; color: #333;">${escapeHtml(
+                  schedule.staff_name
+                )}</h4>
+                <p style="margin: 8px 0; font-size: 14px; color: #666;">${escapeHtml(
+                  schedule.working_time
+                )}</p>
+                <span style="padding: 4px 8px; border-radius: 4px; background: ${
+                  schedule.status === "Working" ? "#4CAF50" : "#9E9E9E"
+                }; color: white; font-size: 12px;">${escapeHtml(
+      schedule.status
+    )}</span>
             </div>
         `;
-    });
+    html += cardHtml;
+  });
 
-    grid.innerHTML = html;
-  }
+  staffScheduleGrid.innerHTML = html;
+  staffScheduleSection.style.display = "block";
 }
 
 // View booking details
 async function viewBookingDetails(bookingId) {
   const modal = document.getElementById("bookingModal");
   const content = document.getElementById("bookingDetailsContent");
+
+  if (!modal || !content) {
+    console.error("Modal elements not found");
+    return;
+  }
 
   content.innerHTML = '<div class="loading">Loading booking details...</div>';
   modal.style.display = "flex";
@@ -910,6 +862,17 @@ async function viewBookingDetails(bookingId) {
     const response = await fetch(
       `../../api/admin/bookings/details.php?booking_id=${bookingId}`
     );
+
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("Non-JSON response received:", text);
+      throw new Error(
+        "Server returned an invalid response. Please check the console for details."
+      );
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -921,13 +884,23 @@ async function viewBookingDetails(bookingId) {
     }
   } catch (error) {
     console.error("Error loading booking details:", error);
-    content.innerHTML = `<div style="color: #F44336; padding: 20px;">Error loading booking details</div>`;
+    if (content) {
+      content.innerHTML = `<div style="color: #F44336; padding: 20px;">
+        <strong>Error loading booking details:</strong><br>
+        ${escapeHtml(error.message)}
+      </div>`;
+    }
   }
 }
 
 // Render booking details in modal
 function renderBookingDetails(booking) {
   const content = document.getElementById("bookingDetailsContent");
+
+  if (!content) {
+    console.error("Booking details content element not found");
+    return;
+  }
 
   let html = `
         <div style="display: grid; gap: 24px;">

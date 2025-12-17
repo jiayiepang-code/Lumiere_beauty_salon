@@ -44,8 +44,8 @@ function updateProfileUI(user) {
 function handleLogout() {
     if(confirm("Are you sure you want to log out?")) {
         console.log("User logged out");
-        // Reload page to simulate logout
-        window.location.href = "home.html"; 
+        // Redirect to logout handler which will redirect to index.php
+        window.location.href = "../logout.php"; 
     }
 }
 

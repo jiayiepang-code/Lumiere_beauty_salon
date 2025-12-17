@@ -9,6 +9,7 @@ let currentDeleteService = null;
 document.addEventListener("DOMContentLoaded", function () {
   loadServices();
   setupEventListeners();
+  setDefaultFilters();
 });
 
 // Setup event listeners
@@ -275,7 +276,7 @@ function renderServices(services) {
                     <button class="btn-icon btn-toggle ${
                       service.is_active ? "toggle-active" : "toggle-inactive"
                     }" 
-                            onclick="toggleServiceStatus('${escapeHtml(
+                            onclick="toggleServiceStatus(event, '${escapeHtml(
                               String(service.service_id)
                             )}', ${service.is_active ? "1" : "0"})" 
                             title="${
@@ -494,10 +495,45 @@ async function handleServiceSubmit(event) {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "same-origin", // Include cookies/session for authentication
       body: JSON.stringify(data),
     });
 
-    const result = await response.json();
+    // Try to parse JSON response
+    let result;
+    const responseText = await response.text();
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      // If response is not JSON, it's likely a PHP error
+      console.error("Failed to parse JSON response:", parseError);
+      console.error("Response text:", responseText);
+      throw new Error(`Server returned invalid response. Please check the server logs. (Status: ${response.status})`);
+    }
+
+    if (!response.ok) {
+      // Handle error response
+      const errorMessage = result.error?.message || result.message || `Request failed (Status: ${response.status})`;
+      
+      // Check if there are field-specific validation errors
+      if (result.error && result.error.details) {
+        displayFormErrors(result.error.details);
+        Swal.fire({
+          title: "Validation Error",
+          text: errorMessage,
+          icon: "error",
+          confirmButtonColor: "#c29076" /* Brown Primary */,
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: errorMessage,
+          icon: "error",
+          confirmButtonColor: "#c29076" /* Brown Primary */,
+        });
+      }
+      return;
+    }
 
     if (result.success) {
       closeServiceModal();
@@ -540,7 +576,7 @@ async function handleServiceSubmit(event) {
     console.error("Error submitting form:", error);
     Swal.fire({
       title: "Error!",
-      text: "An error occurred while saving the service",
+      text: error.message || "An error occurred while saving the service. Please try again.",
       icon: "error",
       confirmButtonColor: "#c29076" /* Brown Primary */,
     });
@@ -550,8 +586,15 @@ async function handleServiceSubmit(event) {
 }
 
 // Toggle service active status
-async function toggleServiceStatus(serviceId, currentStatus) {
-  // Convert to string for comparison (service_id is VARCHAR(4))
+async function toggleServiceStatus(event, serviceId, currentStatus) {
+  event.preventDefault();
+
+  const button = event.target.closest("button");
+  if (!button) {
+    console.error("Button element not found");
+    return;
+  }
+
   const serviceIdStr = String(serviceId);
   const service = allServices.find(
     (s) => String(s.service_id) === serviceIdStr
@@ -567,8 +610,6 @@ async function toggleServiceStatus(serviceId, currentStatus) {
   const actionPastText = newStatus === 1 ? "activated" : "deactivated";
 
   try {
-    // Show loading state
-    const button = event.target.closest("button");
     const originalHTML = button.innerHTML;
     button.disabled = true;
 
@@ -577,17 +618,38 @@ async function toggleServiceStatus(serviceId, currentStatus) {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "same-origin", // Include cookies/session for authentication
       body: JSON.stringify({
         service_id: serviceIdStr,
         csrf_token: CSRF_TOKEN,
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Try to parse JSON response
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      // If response is not JSON, create a generic error response
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      throw parseError;
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      // Handle error response
+      const errorMessage = data.error?.message || data.message || `Failed to ${actionText} service (Status: ${response.status})`;
+      button.disabled = false;
+      button.innerHTML = originalHTML;
+      Swal.fire({
+        title: "Error",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonColor: "#c29076",
+      });
+      return;
+    }
 
     if (data.success) {
       // Show success message as toast notification
@@ -599,11 +661,6 @@ async function toggleServiceStatus(serviceId, currentStatus) {
         showConfirmButton: false,
         timer: 1000,
         timerProgressBar: false,
-        didOpen: (toast) => {
-          toast.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
-          toast.style.fontSize = "0.875rem";
-          toast.style.padding = "0.75rem 1rem";
-        },
       });
 
       // Reload services after a short delay
@@ -615,20 +672,18 @@ async function toggleServiceStatus(serviceId, currentStatus) {
       button.innerHTML = originalHTML;
       Swal.fire({
         title: "Error",
-        text: data.error?.message || `Failed to ${actionText} service`,
+        text: data.error?.message || data.message || `Failed to ${actionText} service`,
         icon: "error",
         confirmButtonColor: "#c29076",
       });
     }
   } catch (error) {
     console.error("Error toggling service status:", error);
-    const button = event.target.closest("button");
-    if (button) {
-      button.disabled = false;
-    }
+    button.disabled = false;
+    button.innerHTML = originalHTML;
     Swal.fire({
       title: "Error",
-      text: `Failed to ${actionText} service. Please try again.`,
+      text: error.message || `Failed to ${actionText} service. Please try again.`,
       icon: "error",
       confirmButtonColor: "#c29076",
     });
@@ -933,6 +988,24 @@ function resetFilters() {
   const statusFilter = document.getElementById("statusFilter");
   if (statusFilter) statusFilter.value = "";
   filterServices();
+}
+
+// Set default month and year filters based on current system time
+function setDefaultFilters() {
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed
+  const currentYear = currentDate.getFullYear();
+
+  const monthFilter = document.getElementById("monthFilter");
+  const yearFilter = document.getElementById("yearFilter");
+
+  if (monthFilter) {
+    monthFilter.value = currentMonth;
+  }
+
+  if (yearFilter) {
+    yearFilter.value = currentYear;
+  }
 }
 
 // Display form errors

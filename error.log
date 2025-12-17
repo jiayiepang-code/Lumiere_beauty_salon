@@ -1,0 +1,6 @@
+[17-Dec-2025 09:09:25 Asia/Kuala_Lumpur] PHP Warning:  require_once(config/email_config.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\Lumiere-beauty-salon\includes\EmailService.php on line 2
+[17-Dec-2025 09:09:25 Asia/Kuala_Lumpur] PHP Fatal error:  Uncaught Error: Failed opening required 'config/email_config.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\Lumiere-beauty-salon\includes\EmailService.php:2
+Stack trace:
+#0 C:\xampp\htdocs\Lumiere-beauty-salon\api\admin\leave_requests\update.php(254): require_once()
+#1 {main}
+  thrown in C:\xampp\htdocs\Lumiere-beauty-salon\includes\EmailService.php on line 2

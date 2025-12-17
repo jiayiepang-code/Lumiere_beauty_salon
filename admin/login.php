@@ -42,6 +42,7 @@ session_start();
                               id="loginPhone"
                            placeholder="12 345 6789"
                            maxlength="13"
+                           autocomplete="off"
                            oninput="formatPhoneNumber(this)">
                 </div>
             </div>
@@ -69,4 +70,4 @@ session_start();
 <script src="./login.js"></script>
 </body>
 </html>
- 
+
