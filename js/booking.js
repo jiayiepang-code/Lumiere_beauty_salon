@@ -26,6 +26,9 @@ const roleKeywords = {
 };
 
 $(document).ready(function() {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/booking.js:28',message:'Booking.js DOM ready',data:{step1Exists:!!document.getElementById('step-1'),headerExists:!!document.querySelector('.main-header'),pageWrapperExists:!!document.querySelector('.page-wrapper'),staffDataAvailable:!!window.staffData},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion agent log
     // Ensure step 1 is visible and active
     $('.booking-step').removeClass('show-step');
     $('#step-1').addClass('show-step');

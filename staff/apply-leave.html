@@ -982,13 +982,13 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        window.location.href = 'login.html';
+                        window.location.href = '../user/index.php';
                     } else {
                         alert('Logout failed. Please try again.');
                     }
                 } catch (error) {
                     console.error('Logout error:', error);
-                    window.location.href = 'login.html';
+                    window.location.href = '../user/index.php';
                 }
             }
         }
@@ -1136,22 +1136,39 @@
                 formData.append('half_day_end_time', '');
             }
 
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:submit',message:'Submitting leave request',data:{leaveType:type,startDate:startDate,endDate:endDate,halfDay:halfDay,reason:reason.substring(0,50)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+            // #endregion agent log
 
             fetch('api/leave.php?action=request', {
                 method: 'POST',
                 body: formData
             })
             .then(res => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:response',message:'Leave request response received',data:{status:res.status,contentType:res.headers.get('content-type')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                // #endregion agent log
+                
                 const ct = res.headers.get('content-type');
                 if (!ct || !ct.includes('application/json')) {
-                    return res.text().then(t => { throw new Error(t); });
+                    return res.text().then(t => { 
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:non-json-response',message:'Non-JSON response from server',data:{responseText:t.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+                        // #endregion agent log
+                        throw new Error(t); 
+                    });
                 }
                 return res.json();
             })
             .then(data => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:data-received',message:'Leave request data parsed',data:{success:data.success,message:data.message,error:data.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                // #endregion agent log
+                
                 if (data.success) {
                     successBox.textContent = data.message || 'Request submitted.';
                     successBox.style.display = 'block';
+                    errorBox.style.display = 'none'; // Hide error box on success
                     form.reset();
                     toggleHalfDayTimeSelection(); // Reset visibility
                     // Reload leave history after successful submission
@@ -1159,12 +1176,17 @@
                 } else {
                     errorBox.textContent = data.error || 'Failed to submit request.';
                     errorBox.style.display = 'block';
+                    successBox.style.display = 'none'; // Hide success box on error
                 }
             })
             .catch(err => {
                 console.error(err);
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:error',message:'Leave request error',data:{error:err.message,stack:err.stack?.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                // #endregion agent log
                 errorBox.textContent = 'System error. Please try again.';
                 errorBox.style.display = 'block';
+                successBox.style.display = 'none'; // Hide success box on error
             });
         });
 

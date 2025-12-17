@@ -119,6 +119,10 @@ async function validateAdminLogin() {
 
     const data = await response.json();
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'admin/login.js:120',message:'API response received',data:{success:data.success,redirect:data.redirect,dataRedirect:data.data?.redirect,currentUrl:window.location.href,pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+
     if (data.success) {
       if (data.csrf_token) {
         sessionStorage.setItem("csrf_token", data.csrf_token);
@@ -132,6 +136,10 @@ async function validateAdminLogin() {
         if (!redirectUrl) {
           redirectUrl = "index.php";
         }
+        
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'admin/login.js:133',message:'Before redirect',data:{redirectUrl:redirectUrl,currentUrl:window.location.href,resolvedUrl:new URL(redirectUrl,window.location.href).href},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         
         console.log("Redirecting to:", redirectUrl);
         console.log("Full response data:", data);

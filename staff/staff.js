@@ -7,8 +7,8 @@ dateElement.innerText = today.toLocaleDateString('en-US', options);
 // Logout Function
 function logout() {
     if(confirm("Are you sure you want to logout?")) {
-        // Redirect back to the main login page (Up one folder)
-        window.location.href = "../home.html";
+        // Redirect to user index page
+        window.location.href = "../user/index.php";
     }
 }
 

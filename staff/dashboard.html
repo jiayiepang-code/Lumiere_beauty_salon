@@ -740,15 +740,15 @@
                     const data = await response.json();
                     
                     if (data.success) {
-                        // Redirect to login page
-                        window.location.href = 'login.html';
+                        // Redirect to user index page
+                        window.location.href = '../user/index.php';
                     } else {
                         alert('Logout failed. Please try again.');
                     }
                 } catch (error) {
                     console.error('Logout error:', error);
-                    // Even if API fails, redirect to login
-                    window.location.href = 'login.html';
+                    // Even if API fails, redirect to user index
+                    window.location.href = '../user/index.php';
                 }
             }
         }

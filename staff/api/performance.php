@@ -12,6 +12,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['action']) && $_GET['action'] === 'get_target') {
         $month = isset($_GET['month']) ? $_GET['month'] : date('Y-m');
         
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'staff/api/performance.php:' . __LINE__, 'message' => 'get_target action called', 'data' => ['staff_email' => $staff_email, 'month' => $month], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run2', 'hypothesisId' => 'D']) . "\n", FILE_APPEND);
+        // #endregion agent log
+        
         try {
             // Calculate current commission for the month
             $month_start = $month . '-01';
@@ -43,6 +47,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 // Table doesn't exist, target is 0
                 $target = 0;
             }
+            
+            // #region agent log
+            file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'staff/api/performance.php:' . __LINE__, 'message' => 'Returning target and current commission', 'data' => ['target' => $target, 'current_commission' => $current_commission, 'month' => $month], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run2', 'hypothesisId' => 'D']) . "\n", FILE_APPEND);
+            // #endregion agent log
             
             jsonResponse([
                 'success' => true,
@@ -462,11 +470,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 UNIQUE KEY unique_staff_month (staff_email, target_month)
             )");
             
+            // #region agent log
+            file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'staff/api/performance.php:' . __LINE__, 'message' => 'Saving target commission', 'data' => ['staff_email' => $staff_email, 'month' => $month, 'target_amount' => $target_amount], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'L']) . "\n", FILE_APPEND);
+            // #endregion agent log
+            
             // Insert or update target
             $stmt = $pdo->prepare("INSERT INTO staff_target_commission (staff_email, target_month, target_amount) 
                                   VALUES (?, ?, ?)
                                   ON DUPLICATE KEY UPDATE target_amount = ?, updated_at = CURRENT_TIMESTAMP");
             $stmt->execute([$staff_email, $month, $target_amount, $target_amount]);
+            
+            // #region agent log
+            file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'staff/api/performance.php:' . __LINE__, 'message' => 'Target commission saved', 'data' => ['rowCount' => $stmt->rowCount(), 'target_amount' => $target_amount, 'month' => $month], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'M']) . "\n", FILE_APPEND);
+            // #endregion agent log
             
             jsonResponse([
                 'success' => true,

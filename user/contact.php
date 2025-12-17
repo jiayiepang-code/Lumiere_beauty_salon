@@ -1,8 +1,5 @@
 <?php
 session_start();
-// 1. Include the Header (Connects to Home/Nav)
-// We use "../" to go up one folder to find the includes
-require_once '../includes/header.php';
 ?>
 
 <!DOCTYPE html>
@@ -10,10 +7,11 @@ require_once '../includes/header.php';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meet The Team – Lumière Beauty Salon</title>
+    <title>Contact Us – Lumière Beauty Salon</title>
 
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/header.css">
 
     <link rel="stylesheet" href="../user/contact.css">
 
@@ -21,6 +19,13 @@ require_once '../includes/header.php';
 </head>
 
 <body>
+
+<div class="page-wrapper">
+
+<?php
+// 1. Include the Header (after body tag)
+require_once '../includes/header.php';
+?>
 <section class="contact-wrapper">
 
     <div class="contact-image-box">
@@ -63,9 +68,13 @@ require_once '../includes/header.php';
 </section>
 
 <?php
-// 4. Include the Footer
-require_once '../includes/footer.php';
+// 4. Include the Footer (if exists)
+if (file_exists("../includes/footer.php")) {
+    require_once '../includes/footer.php';
+}
 ?>
+
+</div> <!-- Close page-wrapper -->
 
 </body>
 </html>

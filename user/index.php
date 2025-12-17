@@ -303,7 +303,11 @@ $currentUrlEncoded = urlencode($currentUrl);
     </div>
 </section>
 
-    <?php include '../includes/footer.php'; ?>
+    <?php 
+    if (file_exists('../includes/footer.php')) {
+        include '../includes/footer.php'; 
+    }
+    ?>
 
     
 

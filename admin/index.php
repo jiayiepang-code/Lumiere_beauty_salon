@@ -7,6 +7,10 @@
 // Include authentication check
 require_once 'includes/auth_check.php';
 
+// #region agent log
+error_log(json_encode(['location'=>'admin/index.php:11','message'=>'Dashboard accessed','data'=>['session_name'=>session_name(),'session_id'=>session_id(),'has_admin_session'=>isset($_SESSION['admin']),'admin_data'=>$_SESSION['admin']??null,'_SERVER_REQUEST_URI'=>$_SERVER['REQUEST_URI']??null],'timestamp'=>time(),'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'C']));
+// #endregion
+
 // Require admin authentication
 requireAdminAuth();
 

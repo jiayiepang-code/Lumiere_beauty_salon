@@ -1367,13 +1367,13 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        window.location.href = 'login.html';
+                        window.location.href = '../user/index.php';
                     } else {
                         alert('Logout failed. Please try again.');
                     }
                 } catch (error) {
                     console.error('Logout error:', error);
-                    window.location.href = 'login.html';
+                    window.location.href = '../user/index.php';
                 }
             }
         }
@@ -1986,14 +1986,34 @@
 
         async function loadTargetCommission() {
             const targetMonth = document.getElementById('targetMonth').value;
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-start',message:'loadTargetCommission called',data:{targetMonth:targetMonth,monthElementExists:!!document.getElementById('targetMonth')},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion agent log
+            
             if (!targetMonth) {
                 alert('Please select a month');
                 return;
             }
 
             try {
-                const response = await fetch(`api/performance.php?action=get_target&month=${targetMonth}`);
+                const apiUrl = `api/performance.php?action=get_target&month=${encodeURIComponent(targetMonth)}`;
+                
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-fetch',message:'Fetching target commission from API',data:{apiUrl:apiUrl,targetMonth:targetMonth},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion agent log
+                
+                const response = await fetch(apiUrl);
+                
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-responseReceived',message:'API response received',data:{status:response.status,ok:response.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion agent log
+                
                 const data = await response.json();
+                
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-dataParsed',message:'Target commission data parsed',data:{success:data.success,target:data.target,currentCommission:data.current_commission,month:data.month},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion agent log
 
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to load target commission');
@@ -2002,29 +2022,60 @@
                 const target = parseFloat(data.target || 0);
                 const currentCommission = parseFloat(data.current_commission || 0);
 
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-calc',message:'Calculating progress',data:{target:target,currentCommission:currentCommission},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                // #endregion agent log
+
                 document.getElementById('targetCommissionValue').textContent = `RM ${target.toFixed(2)}`;
                 document.getElementById('currentCommissionValue').textContent = `RM ${currentCommission.toFixed(2)}`;
 
                 let progress = 0;
                 if (target > 0) {
+                    // Calculate progress percentage, cap at 100% if exceeded
                     progress = Math.min(100, (currentCommission / target) * 100);
                 }
+
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-progress',message:'Progress calculated',data:{progress:progress,isAchieved:currentCommission >= target},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+                // #endregion agent log
 
                 const progressFill = document.getElementById('progressFill');
                 const progressText = document.getElementById('progressText');
                 const targetStatus = document.getElementById('targetStatus');
 
+                if (!progressFill || !progressText || !targetStatus) {
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-elements',message:'Missing DOM elements',data:{progressFill:!!progressFill,progressText:!!progressText,targetStatus:!!targetStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+                    // #endregion agent log
+                    console.error('Missing DOM elements for progress display');
+                    return;
+                }
+
+                // Update progress bar and text
                 progressFill.style.width = `${progress}%`;
                 progressText.textContent = `${progress.toFixed(1)}%`;
 
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-update',message:'Progress bar updated',data:{progressWidth:progressFill.style.width,progressText:progressText.textContent},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+                // #endregion agent log
+
+                // Update status message based on progress
                 if (target === 0) {
                     targetStatus.className = 'target-status no-target';
                     targetStatus.innerHTML = '<i class="fas fa-info-circle"></i><span>Set your target to track your progress</span>';
                     progressFill.className = 'progress-fill';
                 } else if (currentCommission >= target) {
+                    // Target achieved or exceeded - set progress to exactly 100%
+                    progress = 100;
+                    progressFill.style.width = '100%';
+                    progressText.textContent = '100.0%';
                     targetStatus.className = 'target-status achieved';
                     targetStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Congratulations! You achieved your target!</span>';
                     progressFill.className = 'progress-fill over-achieved';
+                    
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-achieved',message:'Target achieved - progress set to 100%',data:{target:target,currentCommission:currentCommission,progress:progress},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                    // #endregion agent log
                 } else {
                     const remaining = target - currentCommission;
                     const percentage = ((remaining / target) * 100).toFixed(1);
@@ -2068,10 +2119,40 @@
 
                 const data = await response.json();
 
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission',message:'Target commission save response',data:{success:data.success,target:data.target,month:data.month,error:data.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion agent log
+
                 if (data.success) {
-                    alert('Target commission saved successfully!');
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-success',message:'Target saved successfully, preparing to reload',data:{savedTarget:data.target,savedMonth:data.month,currentMonth:targetMonth},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+                    // #endregion agent log
+                    
+                    // Clear input field first
                     document.getElementById('targetAmount').value = '';
-                    loadTargetCommission();
+                    
+                    // Force reload with the same month that was just saved
+                    const savedMonth = data.month || targetMonth;
+                    if (savedMonth) {
+                        document.getElementById('targetMonth').value = savedMonth;
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-monthSet',message:'Month selector updated',data:{savedMonth:savedMonth,monthSelectorValue:document.getElementById('targetMonth').value},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
+                        // #endregion agent log
+                    }
+                    
+                    // Reload target commission data BEFORE showing alert to ensure UI updates
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-beforeLoad',message:'About to call loadTargetCommission',data:{monthToLoad:savedMonth || targetMonth},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+                    // #endregion agent log
+                    
+                    await loadTargetCommission();
+                    
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-afterLoad',message:'loadTargetCommission completed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+                    // #endregion agent log
+                    
+                    // Show success message after UI has updated
+                    alert('Target commission saved successfully!');
                 } else {
                     alert('Failed to save target: ' + (data.error || 'Unknown error'));
                 }

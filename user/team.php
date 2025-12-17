@@ -130,8 +130,6 @@ if (isset($_SESSION['customer_phone'])) {
     }
 }
 
-// 1. Include the Header
-require_once '../includes/header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -142,6 +140,7 @@ require_once '../includes/header.php';
 
     <link rel="stylesheet" href="/Lumiere_beauty_salon/css/style.css">
     <link rel="stylesheet" href="/Lumiere_beauty_salon/css/home.css">
+    <link rel="stylesheet" href="/Lumiere_beauty_salon/css/header.css">
 
     <link rel="stylesheet" href="team.css">
 
@@ -151,6 +150,11 @@ require_once '../includes/header.php';
 <body>
 
 <div class="page-wrapper">
+
+<?php
+// 1. Include the Header (after body tag)
+require_once '../includes/header.php';
+?>
 
     <div class="team-header-section">
         <h1>Our Team</h1>
@@ -207,7 +211,9 @@ require_once '../includes/header.php';
 </div>
 
 <?php
-require_once '../includes/footer.php';
+if (file_exists('../includes/footer.php')) {
+    require_once '../includes/footer.php';
+}
 ?>
 
 <script>

@@ -360,7 +360,10 @@ if (session_status() === PHP_SESSION_NONE) {
                         
                         <div class="form-group">
                             <label class="form-label" for="currentPassword">Current Password</label>
-                            <input type="password" id="currentPassword" class="form-input" required>
+                            <div style="position: relative;">
+                                <input type="text" id="currentPassword" class="form-input" required style="padding-right: 45px;">
+                                <i class="fas fa-eye" id="toggleCurrentPassword" onclick="togglePasswordVisibility('currentPassword', 'toggleCurrentPassword')" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-light);"></i>
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -435,7 +438,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     // Check if unauthorized (session expired)
                     if (response.status === 401) {
                         alert('Session expired. Please login again.');
-                        window.location.href = 'login.html';
+                        window.location.href = '../user/index.php';
                         return null;
                     }
                     return response.json();
@@ -451,7 +454,7 @@ if (session_status() === PHP_SESSION_NONE) {
                         console.error('API Error:', data);
                         if (data.error === 'Unauthorized' || data.error === 'Staff not found') {
                             alert('Session expired or staff not found. Please login again.');
-                            window.location.href = 'login.html';
+                            window.location.href = '../user/index.php';
                         } else {
                             showMessage('error', data.error || 'Failed to load profile data. Please try again.');
                         }
@@ -597,6 +600,8 @@ if (session_status() === PHP_SESSION_NONE) {
         function togglePasswordVisibility(inputId, iconId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(iconId);
+    
+            if (!input || !icon) return;
     
             if (input.type === 'password') {
                 input.type = 'text';

@@ -1,7 +1,5 @@
 <?php
 session_start();
-// LOAD SHARED HEADER
-include "../includes/header.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,12 +10,20 @@ include "../includes/header.php";
 
     <link rel="stylesheet" href="/Lumiere_beauty_salon/css/style.css">
     <link rel="stylesheet" href="/Lumiere_beauty_salon/css/home.css">
+    <link rel="stylesheet" href="/Lumiere_beauty_salon/css/header.css">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="services.css">
 </head>
 
 <body>
+
+<div class="page-wrapper">
+
+<?php
+// LOAD SHARED HEADER (after body tag)
+include "../includes/header.php";
+?>
 
 <section class="services-header">
     <h1 class="services-title">Our Services</h1>
@@ -33,7 +39,13 @@ include "../includes/header.php";
 
 <div id="serviceDetails"></div>
 
-<?php include "../includes/footer.php"; ?>
+<?php 
+if (file_exists("../includes/footer.php")) {
+    include "../includes/footer.php"; 
+}
+?>
+
+</div> <!-- Close page-wrapper -->
 
 <script src="../user/services.js"></script>
 

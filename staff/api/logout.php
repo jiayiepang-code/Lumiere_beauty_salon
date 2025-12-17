@@ -1,8 +1,11 @@
 <?php
 require_once '../config.php';
 
-// Start session if not already started
+// Use staff session name (should match config.php)
 if (session_status() === PHP_SESSION_NONE) {
+    if (session_name() !== 'staff_session') {
+        session_name('staff_session');
+    }
     session_start();
 }
 
@@ -10,14 +13,21 @@ if (session_status() === PHP_SESSION_NONE) {
 $_SESSION = array();
 
 // Delete the session cookie
-if (isset($_COOKIE[session_name()])) {
-    setcookie(session_name(), '', time() - 3600, '/');
+$sessionName = session_name();
+if (isset($_COOKIE[$sessionName])) {
+    setcookie($sessionName, '', time() - 3600, '/');
 }
 
 // Destroy the session
 session_destroy();
 
-// Return success response
-jsonResponse(['success' => true, 'message' => 'Logged out successfully']);
+// Handle direct GET request (from profile.html or similar)
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    header('Location: ../user/index.php');
+    exit;
+}
+
+// Return success response for AJAX requests
+jsonResponse(['success' => true, 'message' => 'Logged out successfully', 'redirect' => '../user/index.php']);
 ?>
 

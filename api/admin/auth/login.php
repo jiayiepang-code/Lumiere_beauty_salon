@@ -190,8 +190,13 @@ try {
     $conn->close();
     
     // Determine redirect URL (use relative path for better compatibility)
-    $base_path = '/Lumiere-beauty-salon';
-    $redirect_url = $base_path . '/admin/index.php';
+    // Since redirect is executed from admin/login.php, use relative path to admin/index.php
+    // This avoids hardcoded folder name issues
+    $redirect_url = 'index.php';
+    
+    // #region agent log
+    error_log(json_encode(['location'=>'api/admin/auth/login.php:193','message'=>'Setting redirect URL','data'=>['redirect_url'=>$redirect_url,'_SERVER_REQUEST_URI'=>$_SERVER['REQUEST_URI']??null,'_SERVER_DOCUMENT_ROOT'=>$_SERVER['DOCUMENT_ROOT']??null],'timestamp'=>time(),'sessionId'=>'debug-session','runId'=>'post-fix','hypothesisId'=>'A']));
+    // #endregion
     
     // Return success response
     http_response_code(200);

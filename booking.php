@@ -120,12 +120,27 @@ if (!$customer_info) {
     exit();
 }
 
-// Include header
-require_once 'includes/header.php';
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'booking.php:' . __LINE__, 'message' => 'Booking page PHP execution started', 'data' => ['hasSession' => isset($_SESSION['customer_phone']), 'servicesCount' => count($servicesFlat ?? []), 'staffCount' => count($staff ?? [])], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND);
+// #endregion agent log
 ?>
-<!-- Additional CSS for booking page -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment – Lumière Beauty Salon</title>
+    
+    <!-- CSS Links -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap and Additional CSS for booking page -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 <style>
     /* Protect header styles from Bootstrap overrides - Use high specificity selectors */
     body.booking-page .main-header {
@@ -295,6 +310,43 @@ require_once 'includes/header.php';
     
     body.booking-page .main-header .profile-btn:hover .header-profile-img {
         transform: scale(1.1) !important;
+    }
+    
+    /* Ensure profile panel works on booking page - Override Bootstrap and ensure visibility */
+    body.booking-page .profile-panel {
+        position: fixed !important;
+        top: 90px !important;
+        right: 40px !important;
+        width: 280px !important;
+        z-index: 10001 !important; /* Higher than modals (10000) */
+        opacity: 0 !important;
+        visibility: hidden !important;
+        pointer-events: none !important;
+        transform: translateY(-20px) !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    body.booking-page .profile-panel.open {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: translateY(0) !important;
+    }
+    
+    /* Ensure profile button hover works */
+    body.booking-page .profile-btn:hover + .profile-panel,
+    body.booking-page .profile-btn:hover ~ .profile-panel {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: translateY(0) !important;
+    }
+    
+    body.booking-page .profile-panel:hover {
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        transform: translateY(0) !important;
     }
     
     body.booking-page .main-header .logo-area {
@@ -627,6 +679,26 @@ require_once 'includes/header.php';
         pointer-events: none;
     }
 </style>
+</head>
+<body class="booking-page">
+
+<div class="page-wrapper">
+
+<?php
+// Include header (after body tag)
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'booking.php:' . __LINE__, 'message' => 'About to include header.php', 'data' => ['headerPath' => 'includes/header.php', 'fileExists' => file_exists('includes/header.php')], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'D']) . "\n", FILE_APPEND);
+// #endregion agent log
+require_once 'includes/header.php';
+// #region agent log
+file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'booking.php:' . __LINE__, 'message' => 'Header.php included successfully', 'data' => [], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'D']) . "\n", FILE_APPEND);
+// #endregion agent log
+?>
+<script>
+// #region agent log
+fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.php:after-header',message:'Page body loaded after header',data:{bodyClass:document.body.className,hasHeader:!!document.querySelector('.main-header'),hasPageWrapper:!!document.querySelector('.page-wrapper'),headerLinks:Array.from(document.querySelectorAll('.main-nav a')).map(a=>a.href)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+// #endregion agent log
+</script>
 
 <div class="container mt-4">
     <div class="step-indicator">
@@ -1181,6 +1253,9 @@ require_once 'includes/header.php';
 </script>
 
 <script src="js/booking.js"></script>
-</div> <!-- Close page-wrapper from header.php -->
+</div> <!-- Close container -->
+
+</div> <!-- Close page-wrapper -->
+
 </body>
 </html>

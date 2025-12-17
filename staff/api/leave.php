@@ -116,14 +116,39 @@ if ($action === 'request' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'staff/api/leave.php:' . __LINE__, 'message' => 'Preparing to insert leave request', 'data' => ['staff_email' => $staff_email, 'leave_type' => $leave_type, 'start_date' => $start_date, 'end_date' => $end_date, 'half_day' => $half_day, 'half_day_time' => $half_day_time, 'reason_length' => strlen($reason)], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'I']) . "\n", FILE_APPEND);
+        // #endregion agent log
+        
         // INSERT statement remains the same, using the calculated $half_day_time
         $stmt = $pdo->prepare("INSERT INTO leave_requests (staff_email, leave_type, start_date, end_date, half_day, half_day_time, reason)
                                VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$staff_email, $leave_type, $start_date, $end_date, $half_day, $half_day_time, $reason]);
+        
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'staff/api/leave.php:' . __LINE__, 'message' => 'Leave request inserted successfully', 'data' => ['lastInsertId' => $pdo->lastInsertId(), 'rowCount' => $stmt->rowCount()], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'J']) . "\n", FILE_APPEND);
+        // #endregion agent log
 
         respond(['success' => true, 'message' => 'Leave request submitted. Pending approval.']);
     } catch (PDOException $e) {
-        respond(['success' => false, 'error' => 'Database error: ' . $e->getMessage()], 500);
+        // #region agent log
+        $errorMsg = $e->getMessage();
+        $errorCode = $e->getCode();
+        $logData = array(
+            'location' => 'staff/api/leave.php:135',
+            'message' => 'Leave request insert failed',
+            'data' => array(
+                'error' => $errorMsg,
+                'code' => $errorCode
+            ),
+            'timestamp' => round(microtime(true) * 1000),
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'K'
+        );
+        file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode($logData) . "\n", FILE_APPEND);
+        // #endregion agent log
+        respond(array('success' => false, 'error' => 'Database error: ' . $errorMsg), 500);
     }
 }
 
@@ -184,3 +209,4 @@ if ($action === 'history' && $_SERVER['REQUEST_METHOD'] === 'GET') {
 }
 
 respond(['success' => false, 'error' => 'Invalid action'], 400);
+?>
