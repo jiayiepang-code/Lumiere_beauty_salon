@@ -698,10 +698,14 @@ function openDeleteModal(serviceId) {
     (s) => String(s.service_id) === serviceIdStr
   );
   if (!service) {
-    console.error("Service not found:", serviceId);
+    console.error("Service not found:", serviceId, "Available services:", allServices.map(s => ({id: s.service_id, name: s.service_name})));
     showToast("Service not found", "error");
     return;
   }
+
+  // #region agent log
+  console.log("Delete modal opened for service:", {service_id: service.service_id, service_name: service.service_name, full_service: service});
+  // #endregion
 
   currentDeleteService = service;
 
@@ -801,6 +805,25 @@ async function confirmDelete() {
     });
 
     try {
+      // #region agent log
+      console.log("Sending delete request:", {
+        service_id: currentDeleteService.service_id,
+        service_name: currentDeleteService.service_name,
+        has_service_id: !!currentDeleteService.service_id,
+        service_id_type: typeof currentDeleteService.service_id
+      });
+      // #endregion
+      
+      if (!currentDeleteService.service_id || currentDeleteService.service_id === '') {
+        Swal.fire({
+          title: "Error",
+          text: "Service ID is missing. Please refresh the page and try again.",
+          icon: "error",
+          confirmButtonColor: "#c29076",
+        });
+        return;
+      }
+      
       const response = await fetch("../../api/admin/services/crud.php", {
         method: "DELETE",
         credentials: "include",

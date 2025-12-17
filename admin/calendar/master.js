@@ -1,10 +1,6 @@
 // Master Calendar Logic: drag-and-drop rescheduling, conflict checks, and modal details
 // Minimal scaffolding to enable interactions; integrates with future API endpoints.
 
-document.addEventListener("DOMContentLoaded", () => {
-  initCalendarInteractions();
-});
-
 function initCalendarInteractions() {
   const events = document.querySelectorAll(".calendar-event");
   events.forEach((ev) => {
@@ -147,7 +143,18 @@ let staffList = [];
 
 // Initialize calendar on page load
 document.addEventListener("DOMContentLoaded", function () {
+  // Ensure critical DOM elements exist before initializing
+  const loadingState = document.getElementById("loadingState");
+  const emptyState = document.getElementById("emptyState");
+  const calendarView = document.getElementById("calendarView");
+  
+  if (!loadingState || !emptyState || !calendarView) {
+    console.error("Critical calendar elements not found in DOM");
+    return;
+  }
+  
   initializeCalendar();
+  initCalendarInteractions();
 
   // Add event listeners to filter dropdowns
   const staffFilter = document.getElementById("staffFilter");

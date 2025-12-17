@@ -196,7 +196,8 @@ try {
             $check_stmt->close();
             
             // Generate service_id (VARCHAR(4) format: S001, S002, etc.)
-            $id_stmt = $conn->prepare("SELECT service_id FROM Service WHERE service_id LIKE 'S%' ORDER BY service_id DESC LIMIT 1");
+            // Get the highest numeric service_id by extracting the number part
+            $id_stmt = $conn->prepare("SELECT service_id FROM Service WHERE service_id LIKE 'S%' ORDER BY CAST(SUBSTRING(service_id, 2) AS UNSIGNED) DESC, service_id DESC LIMIT 1");
             $id_stmt->execute();
             $id_result = $id_stmt->get_result();
             $last_id = 'S000';
@@ -209,19 +210,11 @@ try {
             $num = intval(substr($last_id, 1)) + 1;
             $service_id = 'S' . str_pad($num, 3, '0', STR_PAD_LEFT);
             
-            // Ensure it doesn't exceed VARCHAR(4) - if it does, use alphanumeric
-            if (strlen($service_id) > 4) {
-                // Use alphanumeric format: S00-S99, then S0A-S9Z, etc.
-                $base = intval(substr($last_id, 1));
-                if ($base < 100) {
-                    $service_id = 'S' . str_pad($num, 2, '0', STR_PAD_LEFT);
-                } else {
-                    // For 100+, use alphanumeric: S0A, S0B, etc.
-                    $alpha_num = $base - 100;
-                    $letter = chr(65 + ($alpha_num % 26)); // A-Z
-                    $digit = floor($alpha_num / 26);
-                    $service_id = 'S' . $digit . $letter;
-                }
+            // Ensure it doesn't exceed VARCHAR(4) - max is S999
+            if (strlen($service_id) > 4 || $num > 999) {
+                // If we exceed S999, we need a different strategy
+                // For now, throw an error as this is unlikely
+                throw new Exception('Maximum service ID limit reached (S999). Please contact administrator.');
             }
             
             // #region agent log
@@ -404,14 +397,28 @@ try {
             break;
             
         case 'DELETE':
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:399','message'=>'Entering DELETE case','data'=>['has_service_id'=>isset($input['service_id']),'service_id'=>$input['service_id'] ?? null,'service_id_type'=>gettype($input['service_id'] ?? null),'input_keys'=>array_keys($input ?? [])],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
             // Delete service
-            // Validate service_id
-            if (!isset($input['service_id']) || empty($input['service_id'])) {
-                ErrorHandler::sendError(ErrorHandler::VALIDATION_ERROR, 'Service ID is required', ['service_id' => 'Service ID is required'], 400);
+            // Validate service_id - check for both missing and empty string
+            if (!isset($input['service_id']) || $input['service_id'] === '' || $input['service_id'] === null) {
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                ErrorHandler::sendError(ErrorHandler::VALIDATION_ERROR, 'Service ID is required and cannot be empty', ['service_id' => 'Service ID is required'], 400);
             }
             
             // Check if password re-authentication is valid (required for delete)
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:408','message'=>'Checking reauth','data'=>['has_reauth'=>isset($_SESSION['reauth_ok_until']),'reauth_until'=>$_SESSION['reauth_ok_until'] ?? null,'current_time'=>time()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
             if (!isset($_SESSION['reauth_ok_until']) || time() > $_SESSION['reauth_ok_until']) {
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
                 http_response_code(401);
                 echo json_encode([
                     'success' => false,
@@ -425,6 +432,10 @@ try {
             }
             
             $service_id = $input['service_id'];
+            
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:425','message'=>'Service ID validated','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
             
             // Check if service exists (service_id is VARCHAR(4))
             $check_sql = "SELECT service_id, service_name FROM Service WHERE service_id = ?";
@@ -443,6 +454,10 @@ try {
             $check_stmt->close();
             
             // Check for existing future bookings
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:445','message'=>'Checking for future bookings','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
             $booking_sql = "SELECT COUNT(*) as booking_count 
                             FROM Booking_Service bs
                             INNER JOIN Booking b ON bs.booking_id = b.booking_id
@@ -459,9 +474,17 @@ try {
             $booking_count = (int)$booking_data['booking_count'];
             $booking_stmt->close();
             
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:460','message'=>'Booking check completed','data'=>['booking_count'=>$booking_count],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
             // If there are future bookings, return error
             if ($booking_count > 0) {
                 $conn->close();
+                
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
                 
                 ErrorHandler::sendError(
                     'HAS_FUTURE_BOOKINGS',
@@ -475,11 +498,19 @@ try {
             }
             
             // Delete service
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:477','message'=>'About to delete service','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
             $sql = "DELETE FROM Service WHERE service_id = ?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $service_id);
             
             if ($stmt->execute()) {
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:485','message'=>'Delete execute successful','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
                 $stmt->close();
                 $conn->close();
                 
@@ -488,15 +519,32 @@ try {
                 unset($_SESSION['reauth_action']);
                 
                 // Clear output buffer and send JSON response
-                ob_end_clean();
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:497','message'=>'Before sending delete response','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
                 http_response_code(200);
-                echo json_encode([
+                $response = json_encode([
                     'success' => true,
                     'service_id' => $service_id,
                     'message' => 'Service deleted successfully'
                 ]);
+                
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:507','message'=>'JSON encoded, about to echo','data'=>['response_length'=>strlen($response),'json_error'=>json_last_error_msg()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
+                echo $response;
                 exit;
             } else {
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:514','message'=>'Delete execute failed','data'=>['error'=>$stmt->error],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
                 throw new Exception('Failed to delete service: ' . $stmt->error);
             }
             break;
