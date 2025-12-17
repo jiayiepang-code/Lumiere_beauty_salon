@@ -67,14 +67,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    $check = $db->prepare("SELECT phone FROM Customer WHERE customer_email = ? OR phone = ?");
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:70','message'=>'Checking for duplicates','data'=>['email'=>$email,'phone'=>$phone,'normalized_phone'=>$phone],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+
+    // Check for duplicates - improved to show which field is duplicate
+    $check = $db->prepare("SELECT customer_email, phone FROM Customer WHERE customer_email = ? OR phone = ?");
     $check->execute([$email, $phone]);
-    if ($check->rowCount() > 0) {
-        echo json_encode(['status' => 'error', 'message' => 'Email or Phone already registered.']);
+    $existing = $check->fetchAll(PDO::FETCH_ASSOC);
+    
+    // #region agent log
+    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:75','message'=>'Duplicate check results','data'=>['row_count'=>count($existing),'existing_records'=>$existing],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    
+    if (count($existing) > 0) {
+        // Determine which field is duplicate
+        $duplicateEmail = false;
+        $duplicatePhone = false;
+        foreach ($existing as $row) {
+            if (strtolower($row['customer_email']) === strtolower($email)) {
+                $duplicateEmail = true;
+            }
+            if ($row['phone'] === $phone) {
+                $duplicatePhone = true;
+            }
+        }
+        
+        $message = 'Email or Phone already registered.';
+        if ($duplicateEmail && $duplicatePhone) {
+            $message = 'Both email and phone are already registered. Please login instead.';
+        } elseif ($duplicateEmail) {
+            $message = 'This email is already registered. Please login or use a different email.';
+        } elseif ($duplicatePhone) {
+            $message = 'This phone number is already registered. Please login or use a different phone number.';
+        }
+        
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:95','message'=>'DUPLICATE FOUND - Registration blocked','data'=>['duplicate_email'=>$duplicateEmail,'duplicate_phone'=>$duplicatePhone,'message'=>$message],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
+        
+        echo json_encode(['status' => 'error', 'message' => $message]);
         exit;
     }
 
     try {
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:100','message'=>'Attempting to insert new customer','data'=>['first_name'=>$firstName,'last_name'=>$lastName,'phone'=>$phone,'email'=>$email],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
+        
         $hash = password_hash($password, PASSWORD_DEFAULT);
         $sql = "INSERT INTO Customer (first_name, last_name, phone, customer_email, password, created_at) VALUES (?, ?, ?, ?, ?, NOW())";
         $stmt = $db->prepare($sql);
@@ -82,16 +122,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Execute the insert with normalized phone
         $result = $stmt->execute([$firstName, $lastName, $phone, $email, $hash]);
         
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:108','message'=>'INSERT executed','data'=>['result'=>$result,'row_count'=>$stmt->rowCount()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
+        
         if ($result) {
             // Clear the CAPTCHA session after successful registration
             unset($_SESSION['register_captcha']);
+            // #region agent log
+            file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:113','message'=>'Registration SUCCESS','data'=>['email'=>$email,'phone'=>$phone],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
             echo json_encode(['status' => 'success', 'message' => 'Registration successful!']);
         } else {
             $errorInfo = $stmt->errorInfo();
+            // #region agent log
+            file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:118','message'=>'INSERT FAILED - result is false','data'=>['error_info'=>$errorInfo],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
             error_log("Registration error: " . print_r($errorInfo, true));
             echo json_encode(['status' => 'error', 'message' => 'Failed to save registration data. Please try again.']);
         }
     } catch(PDOException $e) {
+        // #region agent log
+        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:125','message'=>'INSERT EXCEPTION','data'=>['error_message'=>$e->getMessage(),'error_code'=>$e->getCode()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
         error_log("Registration PDO error: " . $e->getMessage());
         error_log("SQL: " . $sql);
         error_log("Data: firstName=$firstName, lastName=$lastName, phone=$phone, email=$email");

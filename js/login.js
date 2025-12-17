@@ -203,8 +203,8 @@ function validateStep3() {
     const codeEl = document.getElementById('registerCaptchaCode');
 
     if (!captchaInput || !codeEl) {
-        // Fallback: if elements missing, just move on
-        goToStep(4);
+        errorBox.style.display = 'block';
+        errorBox.innerText = "CAPTCHA elements not found. Please refresh the page.";
         return;
     }
 
@@ -221,23 +221,76 @@ function validateStep3() {
     if (entered !== expected) {
         errorBox.style.display = 'block';
         errorBox.innerText = "Incorrect CAPTCHA. Please check the case of letters.";
+        // Refresh CAPTCHA after wrong attempt
+        refreshRegisterCaptcha();
         return;
     }
 
     errorBox.style.display = 'none';
 
-    // ✅ SIMULATE REGISTRATION SUCCESS
-    goToStep(4); // Show "Registration Successful" view
+    // Get all form values
+    const firstName = document.getElementById('firstName').value;
+    const lastName = document.getElementById('lastName').value;
+    const phone = document.getElementById('phone').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const captcha = entered;
 
-    // AFTER 2 SECONDS, SWITCH TO LOGIN FORM with prefilled phone
-    setTimeout(() => {
-        const registeredPhone = document.getElementById('phone').value;
-        const loginPhone = document.getElementById('loginPhone');
-        if (loginPhone) {
-            loginPhone.value = registeredPhone;
+    // Package into FormData
+    const formData = new FormData();
+    formData.append('firstName', firstName);
+    formData.append('lastName', lastName);
+    formData.append('phone', phone);
+    formData.append('email', email);
+    formData.append('password', password);
+    formData.append('captcha', captcha);
+
+    // Send to register.php
+    fetch('../register.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
         }
-        showLogin();
-    }, 2000);
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch(e) {
+                console.error('Invalid JSON response:', text);
+                throw new Error('Invalid response from server: ' + text.substring(0, 100));
+            }
+        });
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            // Registration successful
+            goToStep(4);
+            // After 2 seconds, switch to login form with prefilled phone
+            setTimeout(() => {
+                const registeredPhone = document.getElementById('phone').value;
+                const loginPhone = document.getElementById('loginPhone');
+                if (loginPhone) {
+                    loginPhone.value = registeredPhone;
+                }
+                showLogin();
+            }, 2000);
+        } else {
+            // Show error message
+            errorBox.style.display = 'block';
+            errorBox.innerText = data.message || 'An error occurred. Please try again.';
+            // Refresh CAPTCHA after error
+            refreshRegisterCaptcha();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        errorBox.style.display = 'block';
+        errorBox.innerText = 'Connection error. Please check your internet connection and try again.';
+        // Refresh CAPTCHA after error
+        refreshRegisterCaptcha();
+    });
 }
 
 /* ========================
@@ -427,28 +480,72 @@ function validateCustomerLogin() {
         return;
     }
 
-    // 2. Get redirect target from hidden input
+    // 2. Get redirect target from hidden input or URL parameter
     const redirectInput = document.getElementById('redirectUrl');
-    let targetUrl = "../user/home.php"; // fallback
-
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectParam = urlParams.get('redirect');
+    
+    let targetUrl = "index.php"; // Default to user homepage (index.php)
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/login.js:483','message':'Determining redirect URL','data':{'redirect_input_exists':!!redirectInput,'redirect_input_value':redirectInput?.value||null,'redirect_param':redirectParam,'default_target':'index.php'},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
     if (redirectInput && redirectInput.value) {
         targetUrl = redirectInput.value;
+    } else if (redirectParam) {
+        targetUrl = redirectParam;
     }
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/login.js:494','message':'Final redirect target determined','data':{'target_url':targetUrl,'source':redirectInput&&redirectInput.value?'hidden_input':redirectParam?'url_param':'default'},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
 
-    // 3. A successful login
+    // 3. Send login request
     fetch("login-handler.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: `phone=${phone}&password=${pass}`
-})
-.then(res => res.json())
-.then(data => {
-    if (data.success) {
-        window.location.href = targetUrl;
-    } else {
-        alert(data.message);
-    }
-});
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: `phone=${encodeURIComponent(phone)}&password=${encodeURIComponent(pass)}`
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch(e) {
+                console.error('Invalid JSON response:', text);
+                throw new Error('Invalid response from server');
+            }
+        });
+    })
+    .then(data => {
+        if (data.success) {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/login.js:516','message':'Login SUCCESS - Redirecting','data':{'target_url':targetUrl,'redirecting_to':targetUrl},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion
+            window.location.href = targetUrl;
+        } else {
+            const errorBox = document.getElementById('loginError');
+            if (errorBox) {
+                errorBox.style.display = 'block';
+                errorBox.innerText = data.message || 'Login failed. Please try again.';
+            } else {
+                alert(data.message || 'Login failed. Please try again.');
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        const errorBox = document.getElementById('loginError');
+        if (errorBox) {
+            errorBox.style.display = 'block';
+            errorBox.innerText = 'Connection error. Please check your internet connection and try again.';
+        } else {
+            alert('Connection error. Please check your internet connection and try again.');
+        }
+    });
 }
 
 // CAPTCHA Refresh
@@ -457,6 +554,25 @@ function refreshRegisterCaptcha(event) {
         event.preventDefault();     // Stop form submit
         event.stopPropagation();    
     }
-    // Reload page to generate new CAPTCHA via PHP
-    window.location.reload();
+    
+    // Call refresh_captcha.php to get new CAPTCHA
+    fetch('../refresh_captcha.php?type=register')
+        .then(response => response.text())
+        .then(newCode => {
+            // Update the CAPTCHA display
+            const codeEl = document.getElementById('registerCaptchaCode');
+            const captchaInput = document.getElementById('registerCaptchaInput');
+            if (codeEl) {
+                codeEl.textContent = newCode.trim();
+                codeEl.dataset.code = newCode.trim();
+            }
+            if (captchaInput) {
+                captchaInput.value = ''; // Clear input
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing CAPTCHA:', error);
+            // Fallback: reload page
+            window.location.reload();
+        });
 }
