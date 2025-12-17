@@ -388,7 +388,7 @@ async function loadCalendarData() {
 // Render calendar based on current view
 function renderCalendar() {
   const calendarView = document.getElementById("calendarView");
-  
+
   if (!calendarView) {
     console.error("Calendar view element not found");
     return;
@@ -406,7 +406,7 @@ function renderCalendar() {
 // Render day view - Vertical timeline 10 AM - 10 PM
 function renderDayView() {
   const calendarView = document.getElementById("calendarView");
-  
+
   if (!calendarView) {
     console.error("Calendar view element not found");
     return;
@@ -599,7 +599,7 @@ function addRealTimeIndicator() {
 // Render week view - Horizontal table with days as columns, time as rows
 function renderWeekView() {
   const calendarView = document.getElementById("calendarView");
-  
+
   if (!calendarView) {
     console.error("Calendar view element not found");
     return;
@@ -689,7 +689,7 @@ function renderWeekView() {
 // Render month view - Calendar grid with booking pills
 function renderMonthView() {
   const calendarView = document.getElementById("calendarView");
-  
+
   if (!calendarView) {
     console.error("Calendar view element not found");
     return;
@@ -896,7 +896,7 @@ async function viewBookingDetails(bookingId) {
 // Render booking details in modal
 function renderBookingDetails(booking) {
   const content = document.getElementById("bookingDetailsContent");
-  
+
   if (!content) {
     console.error("Booking details content element not found");
     return;
