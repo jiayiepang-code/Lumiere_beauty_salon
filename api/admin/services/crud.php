@@ -157,14 +157,23 @@ try {
             }
             
             // Prepare data
-            $service_category = trim($input['service_category']);
-            $sub_category = isset($input['sub_category']) && trim($input['sub_category']) !== '' ? trim($input['sub_category']) : null;
-            $service_name = trim($input['service_name']);
-            $current_duration_minutes = (int)$input['current_duration_minutes'];
-            $current_price = (float)$input['current_price'];
-            $description = isset($input['description']) && trim($input['description']) !== '' ? trim($input['description']) : null;
-            $service_image = isset($input['service_image']) && trim($input['service_image']) !== '' ? trim($input['service_image']) : null;
-            $default_cleanup_minutes = (int)$input['default_cleanup_minutes'];
+            $service_category = trim($input['service_category'] ?? '');
+            $sub_category = isset($input['sub_category']) && is_string($input['sub_category']) && trim($input['sub_category']) !== '' ? trim($input['sub_category']) : null;
+            $service_name = trim($input['service_name'] ?? '');
+            $current_duration_minutes = (int)($input['current_duration_minutes'] ?? 0);
+            $current_price = (float)($input['current_price'] ?? 0);
+            $description = isset($input['description']) && is_string($input['description']) && trim($input['description']) !== '' ? trim($input['description']) : null;
+            // Handle service_image - it might be an array from FormData, so check type first
+            $service_image = null;
+            if (isset($input['service_image'])) {
+                if (is_string($input['service_image']) && trim($input['service_image']) !== '') {
+                    $service_image = trim($input['service_image']);
+                } elseif (is_array($input['service_image'])) {
+                    // If it's an array (from file input), ignore it for now (file uploads handled separately)
+                    $service_image = null;
+                }
+            }
+            $default_cleanup_minutes = (int)($input['default_cleanup_minutes'] ?? 10);
             $is_active = isset($input['is_active']) ? (int)(bool)$input['is_active'] : 1;
             
             // #region agent log
@@ -284,14 +293,23 @@ try {
             
             // Prepare data
             $service_id = $input['service_id'];
-            $service_category = trim($input['service_category']);
-            $sub_category = isset($input['sub_category']) && trim($input['sub_category']) !== '' ? trim($input['sub_category']) : null;
-            $service_name = trim($input['service_name']);
-            $current_duration_minutes = (int)$input['current_duration_minutes'];
-            $current_price = (float)$input['current_price'];
-            $description = isset($input['description']) && trim($input['description']) !== '' ? trim($input['description']) : null;
-            $service_image = isset($input['service_image']) && trim($input['service_image']) !== '' ? trim($input['service_image']) : null;
-            $default_cleanup_minutes = (int)$input['default_cleanup_minutes'];
+            $service_category = trim($input['service_category'] ?? '');
+            $sub_category = isset($input['sub_category']) && is_string($input['sub_category']) && trim($input['sub_category']) !== '' ? trim($input['sub_category']) : null;
+            $service_name = trim($input['service_name'] ?? '');
+            $current_duration_minutes = (int)($input['current_duration_minutes'] ?? 0);
+            $current_price = (float)($input['current_price'] ?? 0);
+            $description = isset($input['description']) && is_string($input['description']) && trim($input['description']) !== '' ? trim($input['description']) : null;
+            // Handle service_image - it might be an array from FormData, so check type first
+            $service_image = null;
+            if (isset($input['service_image'])) {
+                if (is_string($input['service_image']) && trim($input['service_image']) !== '') {
+                    $service_image = trim($input['service_image']);
+                } elseif (is_array($input['service_image'])) {
+                    // If it's an array (from file input), ignore it for now (file uploads handled separately)
+                    $service_image = null;
+                }
+            }
+            $default_cleanup_minutes = (int)($input['default_cleanup_minutes'] ?? 10);
             $is_active = isset($input['is_active']) ? (int)(bool)$input['is_active'] : 1;
             
             // Check if service exists (service_id is VARCHAR(4))

@@ -274,6 +274,11 @@ async function loadCalendarData() {
   const emptyState = document.getElementById("emptyState");
   const calendarView = document.getElementById("calendarView");
 
+  if (!loadingState || !emptyState || !calendarView) {
+    console.error("Calendar elements not found in DOM");
+    return;
+  }
+
   loadingState.style.display = "block";
   emptyState.style.display = "none";
   calendarView.style.display = "none";
@@ -372,15 +377,22 @@ async function loadCalendarData() {
     }
   } catch (error) {
     console.error("Error loading calendar data:", error);
-    loadingState.style.display = "none";
-    emptyState.style.display = "block";
-    emptyState.innerHTML = `<p style="color: #F44336;">Error loading calendar: ${error.message}</p>`;
+    if (loadingState) loadingState.style.display = "none";
+    if (emptyState) {
+      emptyState.style.display = "block";
+      emptyState.innerHTML = `<p style="color: #F44336;">Error loading calendar: ${error.message}</p>`;
+    }
   }
 }
 
 // Render calendar based on current view
 function renderCalendar() {
   const calendarView = document.getElementById("calendarView");
+  
+  if (!calendarView) {
+    console.error("Calendar view element not found");
+    return;
+  }
 
   if (currentView === "day") {
     renderDayView();
@@ -394,6 +406,11 @@ function renderCalendar() {
 // Render day view - Vertical timeline 10 AM - 10 PM
 function renderDayView() {
   const calendarView = document.getElementById("calendarView");
+  
+  if (!calendarView) {
+    console.error("Calendar view element not found");
+    return;
+  }
 
   // Generate time slots from 10:00 AM to 10:00 PM (22:00)
   const timeSlots = [];
@@ -582,6 +599,11 @@ function addRealTimeIndicator() {
 // Render week view - Horizontal table with days as columns, time as rows
 function renderWeekView() {
   const calendarView = document.getElementById("calendarView");
+  
+  if (!calendarView) {
+    console.error("Calendar view element not found");
+    return;
+  }
 
   // Get week start (Sunday) and generate 7 days
   const weekStart = new Date(currentDate);
@@ -667,6 +689,11 @@ function renderWeekView() {
 // Render month view - Calendar grid with booking pills
 function renderMonthView() {
   const calendarView = document.getElementById("calendarView");
+  
+  if (!calendarView) {
+    console.error("Calendar view element not found");
+    return;
+  }
 
   // Get first and last day of the month
   const year = currentDate.getFullYear();
@@ -823,6 +850,11 @@ async function viewBookingDetails(bookingId) {
   const modal = document.getElementById("bookingModal");
   const content = document.getElementById("bookingDetailsContent");
 
+  if (!modal || !content) {
+    console.error("Modal elements not found");
+    return;
+  }
+
   content.innerHTML = '<div class="loading">Loading booking details...</div>';
   modal.style.display = "flex";
 
@@ -852,16 +884,23 @@ async function viewBookingDetails(bookingId) {
     }
   } catch (error) {
     console.error("Error loading booking details:", error);
-    content.innerHTML = `<div style="color: #F44336; padding: 20px;">
-      <strong>Error loading booking details:</strong><br>
-      ${escapeHtml(error.message)}
-    </div>`;
+    if (content) {
+      content.innerHTML = `<div style="color: #F44336; padding: 20px;">
+        <strong>Error loading booking details:</strong><br>
+        ${escapeHtml(error.message)}
+      </div>`;
+    }
   }
 }
 
 // Render booking details in modal
 function renderBookingDetails(booking) {
   const content = document.getElementById("bookingDetailsContent");
+  
+  if (!content) {
+    console.error("Booking details content element not found");
+    return;
+  }
 
   let html = `
         <div style="display: grid; gap: 24px;">
