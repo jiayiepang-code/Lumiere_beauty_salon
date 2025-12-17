@@ -236,7 +236,7 @@ async function openEditModal(staffEmail) {
       document.getElementById("modalTitle").textContent = "Edit Staff Member";
       document.getElementById("isEdit").value = "1";
       document.getElementById("staffEmail").value = member.staff_email;
-      document.getElementById("staffEmail").readOnly = true;
+      document.getElementById("staffEmail").readOnly = false;
       document.getElementById("phone").value = formatPhoneForDisplay(
         member.phone
       );

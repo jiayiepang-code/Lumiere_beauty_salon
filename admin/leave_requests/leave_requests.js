@@ -1,7 +1,7 @@
 let isProcessing = false;
 let allRequests = [];
 let currentMonth = new Date().getMonth() + 1;
-let currentYear = new Date().getFullYear();
+let currentYear = 0; // Start with no year filter (0 = unselected)
 
 // Format date helper
 function formatDate(dateString) {
@@ -47,13 +47,18 @@ function initializeYearFilter() {
   const endYear = nowYear + 5;
 
   yearFilter.innerHTML = "";
+
+  // Add "-unselected-" option first
+  const unselectedOption = document.createElement("option");
+  unselectedOption.value = "";
+  unselectedOption.textContent = "- unselected -";
+  unselectedOption.selected = true; // Default to unselected
+  yearFilter.appendChild(unselectedOption);
+
   for (let year = startYear; year <= endYear; year++) {
     const option = document.createElement("option");
     option.value = year;
     option.textContent = year;
-    if (year === nowYear) {
-      option.selected = true;
-    }
     yearFilter.appendChild(option);
   }
 }
@@ -72,7 +77,28 @@ function updateFilterDisplay() {
   const filterDisplay = document.getElementById("filterDisplay");
   if (!filterDisplay) return;
 
-  if (currentMonth === 0) {
+  if (currentYear === 0) {
+    if (currentMonth === 0) {
+      filterDisplay.textContent = `Showing all pending requests (no filters)`;
+    } else {
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const monthName = monthNames[currentMonth - 1];
+      filterDisplay.textContent = `Showing statistics for ${monthName} (all years)`;
+    }
+  } else if (currentMonth === 0) {
     filterDisplay.textContent = `Showing statistics for ${currentYear}`;
   } else {
     const monthNames = [
@@ -107,10 +133,21 @@ async function fetchLeaveRequests() {
   try {
     // Construct URL with query parameters
     const monthParam = currentMonth === 0 ? "" : currentMonth;
-    const apiUrl =
-      monthParam === ""
-        ? `${LEAVE_REQUESTS_API_BASE}/list.php?year=${currentYear}`
-        : `${LEAVE_REQUESTS_API_BASE}/list.php?month=${monthParam}&year=${currentYear}`;
+    const yearParam = currentYear === 0 ? "" : currentYear;
+
+    let apiUrl = `${LEAVE_REQUESTS_API_BASE}/list.php`;
+    const params = [];
+
+    if (monthParam !== "") {
+      params.push(`month=${monthParam}`);
+    }
+    if (yearParam !== "") {
+      params.push(`year=${yearParam}`);
+    }
+
+    if (params.length > 0) {
+      apiUrl += "?" + params.join("&");
+    }
 
     const response = await fetch(apiUrl, {
       credentials: "same-origin",
@@ -125,30 +162,67 @@ async function fetchLeaveRequests() {
     allRequests = data.requests || [];
     const stats = data.stats || {};
 
-    // If API provides available_years, rebuild the year dropdown dynamically
-    if (
-      Array.isArray(data.available_years) &&
-      data.available_years.length > 0
-    ) {
-      const yearFilter = document.getElementById("yearFilter");
-      if (yearFilter) {
-        const prevSelected = parseInt(yearFilter.value || currentYear, 10);
-        yearFilter.innerHTML = "";
-        data.available_years.forEach((y) => {
-          const option = document.createElement("option");
-          option.value = y;
-          option.textContent = y;
-          yearFilter.appendChild(option);
-        });
-        // Prefer keeping currentYear if present; otherwise select last available
-        if (data.available_years.includes(prevSelected)) {
-          yearFilter.value = String(prevSelected);
-          currentYear = prevSelected;
-        } else if (data.available_years.includes(currentYear)) {
-          yearFilter.value = String(currentYear);
+    // Always ensure year dropdown has "-unselected-" option and proper years
+    const yearFilter = document.getElementById("yearFilter");
+    if (yearFilter) {
+      // Preserve the current selection, handling empty string for "-unselected-"
+      const prevSelectedValue = yearFilter.value || "";
+      const prevSelected =
+        prevSelectedValue === "" ? 0 : parseInt(prevSelectedValue, 10);
+      const nowYear = new Date().getFullYear();
+
+      // Create a default range (current year ± 5 years) to ensure future years are always available
+      const defaultStartYear = nowYear - 5;
+      const defaultEndYear = nowYear + 5;
+      const defaultYears = [];
+      for (let y = defaultStartYear; y <= defaultEndYear; y++) {
+        defaultYears.push(y);
+      }
+
+      // Merge API years with default years if available, removing duplicates and sorting
+      let mergedYears = defaultYears;
+      if (
+        Array.isArray(data.available_years) &&
+        data.available_years.length > 0
+      ) {
+        mergedYears = [
+          ...new Set([...defaultYears, ...data.available_years]),
+        ].sort((a, b) => a - b);
+      }
+
+      yearFilter.innerHTML = "";
+
+      // Always add "-unselected-" option first
+      const unselectedOption = document.createElement("option");
+      unselectedOption.value = "";
+      unselectedOption.textContent = "- unselected -";
+      yearFilter.appendChild(unselectedOption);
+
+      mergedYears.forEach((y) => {
+        const option = document.createElement("option");
+        option.value = y;
+        option.textContent = y;
+        yearFilter.appendChild(option);
+      });
+
+      // Prefer keeping prevSelected if present; otherwise use currentYear
+      if (prevSelected === 0 || prevSelected === null || isNaN(prevSelected)) {
+        yearFilter.value = "";
+        currentYear = 0;
+      } else if (mergedYears.includes(prevSelected)) {
+        yearFilter.value = String(prevSelected);
+        currentYear = prevSelected;
+      } else if (mergedYears.includes(currentYear) && currentYear !== 0) {
+        yearFilter.value = String(currentYear);
+      } else {
+        // Fallback to current year or last available, or unselected if currentYear is 0
+        if (currentYear === 0 || isNaN(currentYear)) {
+          yearFilter.value = "";
+          currentYear = 0;
         } else {
-          const fallback =
-            data.available_years[data.available_years.length - 1];
+          const fallback = mergedYears.includes(nowYear)
+            ? nowYear
+            : mergedYears[mergedYears.length - 1];
           yearFilter.value = String(fallback);
           currentYear = fallback;
         }
@@ -380,31 +454,19 @@ async function handleAction(button, action) {
     }
   }
 
-  // Standard confirmation dialog
-  const confirmTitle =
-    action === "approve" ? "Approve Leave Request?" : "Reject Leave Request?";
-  const confirmText =
-    action === "approve"
-      ? "Are you sure you want to approve this leave request? This will update the staff schedule."
-      : "Are you sure you want to reject this leave request?";
-  const confirmButtonText =
-    action === "approve" ? "Yes, Approve" : "Yes, Reject";
-  const confirmButtonColor = action === "approve" ? "#22c55e" : "#ef4444";
+  // Update the confirmation dialog to show a success message instead of the approval prompt
+  const confirmTitle = "Leave Request Approved";
+  const confirmText = "The staff schedule has been successfully updated.";
+  const confirmButtonText = "OK";
+  const confirmButtonColor = "#22c55e";
 
-  const result = await Swal.fire({
+  await Swal.fire({
     title: confirmTitle,
     text: confirmText,
-    icon: "question",
-    showCancelButton: true,
+    icon: "success",
     confirmButtonColor: confirmButtonColor,
-    cancelButtonColor: "#6b7280",
     confirmButtonText: confirmButtonText,
-    cancelButtonText: "Cancel",
   });
-
-  if (!result.isConfirmed) {
-    return;
-  }
 
   const row = button.closest("tr");
   const approveBtn = row.querySelector(".btn-approve");
@@ -533,7 +595,8 @@ document.addEventListener("DOMContentLoaded", function () {
           monthFilter.value === "" ? 0 : parseInt(monthFilter.value, 10);
       }
       if (yearFilter) {
-        currentYear = parseInt(yearFilter.value, 10);
+        currentYear =
+          yearFilter.value === "" ? 0 : parseInt(yearFilter.value, 10);
       }
 
       fetchLeaveRequests();

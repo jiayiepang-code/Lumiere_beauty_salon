@@ -1250,8 +1250,8 @@ include '../includes/header.php';
 
                     <div class="mb-3">
                         <label for="staffEmail" class="form-label">Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="staffEmail" name="staff_email" required maxlength="100" placeholder="email@lumiere.my">
-                        <div class="error-message" id="error-staff_email" style="display: none;"></div>
+                        <input type="email" class="form-control" id="staffEmail" name="staff_email" required maxlength="100" placeholder="email@lumiere.com" autocomplete="off">
+                       <div class="error-message" id="error-staff_email" style="display: none;"></div>
                     </div>
 
                     <div class="mb-3">

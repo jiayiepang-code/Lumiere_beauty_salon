@@ -1,6 +1,7 @@
 # Dashboard Overview Database Integration - Code Review
 
 ## Review Date
+
 Review conducted on: Current date
 
 ## Implementation Status
@@ -16,14 +17,17 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
 ### Files That Should Have Been Created (All Missing):
 
 1. **`user/includes/auth_check.php`** ❌ NOT FOUND
+
    - Customer authentication utilities
    - Functions: `isCustomerLoggedIn()`, `requireCustomerAuth()`, `getCurrentCustomer()`
 
 2. **`api/customer/auth/login.php`** ❌ NOT FOUND
+
    - Customer login API endpoint
    - Should handle POST requests with phone/password authentication
 
 3. **`api/customer/profile.php`** ❌ NOT FOUND
+
    - Customer profile data endpoint
    - Should return customer info with booking statistics
 
@@ -33,6 +37,7 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
 ### Files That Should Have Been Modified (Not Modified):
 
 1. **`user/dashboard.html`** ⚠️ NOT MODIFIED
+
    - Still contains hardcoded values: `<input type="text" value="Wong" readonly>`
    - Still HTML file (not converted to PHP)
    - Missing proper input IDs: `profileFirst`, `profileLast`, `profilePhone`, `profileEmail`
@@ -40,14 +45,15 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
    - Currently at line 47-48: Still has hardcoded "Wong" and "Yi" values
 
 2. **`user/dashboard.js`** ⚠️ NOT MODIFIED
+
    - Still contains hardcoded mock user object (lines 3-9):
      ```javascript
      const user = {
-         firstName: "Wong",
-         lastName: "Li Hua",
-         phone: "+60 165756288",
-         email: "wonglh@gmail.com",
-         lastVisit: "20 Nov 2025"
+       firstName: "Wong",
+       lastName: "Li Hua",
+       phone: "+60 165756288",
+       email: "wonglh@gmail.com",
+       lastVisit: "20 Nov 2025",
      };
      ```
    - Missing `loadCustomerProfile()` function
@@ -59,7 +65,7 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
    - `validateCustomerLogin()` function (line 323) still uses mock login:
      ```javascript
      // 1. Simulate Login Check (You can add real logic later)
-     window.location.href = "user/dashboard.html"; 
+     window.location.href = "user/dashboard.html";
      ```
    - No API call to `api/customer/auth/login.php`
    - No error handling
@@ -71,6 +77,7 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
 ## Current State Analysis
 
 ### What Exists:
+
 - ✅ Plan document (`docs/features/0009_PLAN.md`) - Well-structured and comprehensive
 - ✅ `user/dashboard.html` - HTML structure exists but uses hardcoded data
 - ✅ `user/dashboard.js` - JavaScript structure exists but uses mock data
@@ -79,6 +86,7 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
 - ✅ Admin authentication pattern exists - Can be used as reference
 
 ### What's Missing:
+
 - ❌ All API endpoints (`api/customer/` directory doesn't exist)
 - ❌ Customer authentication utilities (`user/includes/` doesn't exist)
 - ❌ Session management for customers
@@ -90,6 +98,7 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
 ## Issues Identified in Current Code
 
 ### 1. `user/dashboard.html` Issues:
+
 - **Line 47-48**: Hardcoded input values ("Wong", "Yi")
 - **Missing IDs**: Inputs don't have the IDs expected by `dashboard.js`:
   - Expected: `profileFirst`, `profileLast`, `profilePhone`, `profileEmail`
@@ -98,6 +107,7 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
 - **File extension**: Should be converted to `.php` to enable server-side auth check (per plan)
 
 ### 2. `user/dashboard.js` Issues:
+
 - **Hardcoded data**: Lines 3-9 contain mock user object
 - **No API integration**: No fetch calls to load real data
 - **Missing error handling**: No handling for API failures or authentication errors
@@ -106,6 +116,7 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
   - `profileFirst`, `profileLast`, `profilePhone`, `profileEmail` are referenced but not in HTML
 
 ### 3. `js/login.js` Issues:
+
 - **Mock authentication**: Line 332-336 has comment "Simulate Login Check (You can add real logic later)"
 - **No validation**: Only checks if fields are filled, doesn't validate phone format via API
 - **Security risk**: Redirects without verifying credentials
@@ -117,17 +128,20 @@ The feature described in `0009_PLAN.md` has **not been implemented**. None of th
 
 When implementation is done, watch for these potential issues:
 
-1. **Case Sensitivity**: 
+1. **Case Sensitivity**:
+
    - Plan uses `customer_email` (snake_case) in database
    - JavaScript typically uses camelCase
    - Ensure proper mapping: `customer_email` → `email` in API response
 
 2. **API Response Structure**:
+
    - Plan specifies: `{ "success": true, "customer": {...} }`
    - JavaScript should access: `response.customer.first_name` not `response.first_name`
    - Ensure `dashboard.js` accesses nested customer object correctly
 
 3. **Field Name Mismatches**:
+
    - Database: `first_name`, `last_name`
    - JavaScript mock: `firstName`, `lastName`
    - API should normalize or JavaScript should map correctly
@@ -142,21 +156,25 @@ When implementation is done, watch for these potential issues:
 ## Recommendations
 
 ### Priority 1: Implement Authentication Infrastructure
+
 1. Create `user/includes/auth_check.php` following `admin/includes/auth_check.php` pattern
 2. Create `api/customer/auth/login.php` following `api/admin/auth/login.php` pattern
 3. Update `js/login.js` to call the login API
 
 ### Priority 2: Implement Profile Data API
+
 1. Create `api/customer/profile.php` endpoint
 2. Test with existing customer data
 
 ### Priority 3: Dashboard Integration
+
 1. Fix HTML: Add proper IDs to input fields (`profileFirst`, `profileLast`, `profilePhone`, `profileEmail`)
 2. Update `dashboard.js`: Replace mock data with API call
 3. Add error handling and loading states
 4. Consider converting `dashboard.html` to `dashboard.php` for server-side auth check
 
 ### Priority 4: Logout
+
 1. Create `api/customer/auth/logout.php`
 2. Update logout button to call endpoint
 
@@ -182,11 +200,13 @@ When implementation is done, watch for these potential issues:
 ## Code Style Observations
 
 ### Positive Patterns to Follow:
+
 - Admin authentication uses secure session configuration (`configureSecureSession()`)
 - Admin APIs use consistent JSON response format
 - Prepared statements are used in admin code (good security practice)
 
 ### Concerns:
+
 - Current `dashboard.js` has inconsistent naming (camelCase in JS vs snake_case in DB)
 - No error logging in current mock code
 - Missing input validation in current login function
@@ -197,7 +217,8 @@ When implementation is done, watch for these potential issues:
 
 **Status**: Feature has not been implemented. The plan is comprehensive and well-structured, but execution is needed.
 
-**Next Steps**: 
+**Next Steps**:
+
 1. Begin implementation following the phases outlined in the plan
 2. Start with Phase 1 (Authentication Infrastructure)
 3. Test each phase before moving to the next
@@ -206,4 +227,3 @@ When implementation is done, watch for these potential issues:
 **Risk Level**: Low (plan is solid, just needs implementation)
 
 **Estimated Effort**: Following the 4-phase plan, estimate 2-4 hours for complete implementation if following the admin authentication patterns closely.
-

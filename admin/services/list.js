@@ -9,6 +9,7 @@ let currentDeleteService = null;
 document.addEventListener("DOMContentLoaded", function () {
   loadServices();
   setupEventListeners();
+  setDefaultFilters();
 });
 
 // Setup event listeners
@@ -275,7 +276,7 @@ function renderServices(services) {
                     <button class="btn-icon btn-toggle ${
                       service.is_active ? "toggle-active" : "toggle-inactive"
                     }" 
-                            onclick="toggleServiceStatus('${escapeHtml(
+                            onclick="toggleServiceStatus(event, '${escapeHtml(
                               String(service.service_id)
                             )}', ${service.is_active ? "1" : "0"})" 
                             title="${
@@ -550,12 +551,17 @@ async function handleServiceSubmit(event) {
 }
 
 // Toggle service active status
-async function toggleServiceStatus(serviceId, currentStatus) {
-  // Convert to string for comparison (service_id is VARCHAR(4))
+async function toggleServiceStatus(event, serviceId, currentStatus) {
+  event.preventDefault();
+
+  const button = event.target.closest("button");
+  if (!button) {
+    console.error("Button element not found");
+    return;
+  }
+
   const serviceIdStr = String(serviceId);
-  const service = allServices.find(
-    (s) => String(s.service_id) === serviceIdStr
-  );
+  const service = allServices.find((s) => String(s.service_id) === serviceIdStr);
   if (!service) {
     console.error("Service not found:", serviceId);
     showToast("Service not found", "error");
@@ -567,8 +573,6 @@ async function toggleServiceStatus(serviceId, currentStatus) {
   const actionPastText = newStatus === 1 ? "activated" : "deactivated";
 
   try {
-    // Show loading state
-    const button = event.target.closest("button");
     const originalHTML = button.innerHTML;
     button.disabled = true;
 
@@ -577,6 +581,7 @@ async function toggleServiceStatus(serviceId, currentStatus) {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "same-origin", // Include cookies/session for authentication
       body: JSON.stringify({
         service_id: serviceIdStr,
         csrf_token: CSRF_TOKEN,
@@ -599,11 +604,6 @@ async function toggleServiceStatus(serviceId, currentStatus) {
         showConfirmButton: false,
         timer: 1000,
         timerProgressBar: false,
-        didOpen: (toast) => {
-          toast.style.boxShadow = "0 2px 8px rgba(0, 0, 0, 0.1)";
-          toast.style.fontSize = "0.875rem";
-          toast.style.padding = "0.75rem 1rem";
-        },
       });
 
       // Reload services after a short delay
@@ -622,10 +622,7 @@ async function toggleServiceStatus(serviceId, currentStatus) {
     }
   } catch (error) {
     console.error("Error toggling service status:", error);
-    const button = event.target.closest("button");
-    if (button) {
-      button.disabled = false;
-    }
+    button.disabled = false;
     Swal.fire({
       title: "Error",
       text: `Failed to ${actionText} service. Please try again.`,
@@ -933,6 +930,24 @@ function resetFilters() {
   const statusFilter = document.getElementById("statusFilter");
   if (statusFilter) statusFilter.value = "";
   filterServices();
+}
+
+// Set default month and year filters based on current system time
+function setDefaultFilters() {
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1; // Months are 0-indexed
+  const currentYear = currentDate.getFullYear();
+
+  const monthFilter = document.getElementById("monthFilter");
+  const yearFilter = document.getElementById("yearFilter");
+
+  if (monthFilter) {
+    monthFilter.value = currentMonth;
+  }
+
+  if (yearFilter) {
+    yearFilter.value = currentYear;
+  }
 }
 
 // Display form errors
