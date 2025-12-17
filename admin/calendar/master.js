@@ -166,56 +166,62 @@ document.addEventListener("DOMContentLoaded", function () {
 async function initializeCalendar() {
   // Read URL parameters
   const urlParams = new URLSearchParams(window.location.search);
-  const startDateParam = urlParams.get('start_date');
-  const endDateParam = urlParams.get('end_date');
-  const staffEmailParam = urlParams.get('staff_email');
-  const statusParam = urlParams.get('status');
-  const viewParam = urlParams.get('view');
-  
+  const startDateParam = urlParams.get("start_date");
+  const endDateParam = urlParams.get("end_date");
+  const staffEmailParam = urlParams.get("staff_email");
+  const statusParam = urlParams.get("status");
+  const viewParam = urlParams.get("view");
+
   // Set initial date from URL or default to today
   if (startDateParam) {
-    currentDate = new Date(startDateParam + 'T12:00:00');
+    currentDate = new Date(startDateParam + "T12:00:00");
   } else {
     currentDate = new Date();
   }
-  
+
   // Set view from URL or default to day
-  if (viewParam && ['day', 'week', 'month'].includes(viewParam)) {
+  if (viewParam && ["day", "week", "month"].includes(viewParam)) {
     currentView = viewParam;
   } else {
-    currentView = 'day';
+    currentView = "day";
   }
-  
+
   // Update view buttons
-  document.getElementById('viewDay').classList.toggle('active', currentView === 'day');
-  document.getElementById('viewWeek').classList.toggle('active', currentView === 'week');
-  document.getElementById('viewMonth').classList.toggle('active', currentView === 'month');
-  
+  document
+    .getElementById("viewDay")
+    .classList.toggle("active", currentView === "day");
+  document
+    .getElementById("viewWeek")
+    .classList.toggle("active", currentView === "week");
+  document
+    .getElementById("viewMonth")
+    .classList.toggle("active", currentView === "month");
+
   // Update button styles
-  ['viewDay', 'viewWeek', 'viewMonth'].forEach((id) => {
+  ["viewDay", "viewWeek", "viewMonth"].forEach((id) => {
     const btn = document.getElementById(id);
-    if (btn.classList.contains('active')) {
-      btn.style.background = 'white';
-      btn.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+    if (btn.classList.contains("active")) {
+      btn.style.background = "white";
+      btn.style.boxShadow = "0 1px 3px rgba(0,0,0,0.1)";
     } else {
-      btn.style.background = 'transparent';
-      btn.style.boxShadow = 'none';
+      btn.style.background = "transparent";
+      btn.style.boxShadow = "none";
     }
   });
 
   // Load staff list for filter
   await loadStaffList();
-  
+
   // Set filters from URL
   if (staffEmailParam) {
-    const staffFilter = document.getElementById('staffFilter');
+    const staffFilter = document.getElementById("staffFilter");
     if (staffFilter) {
       staffFilter.value = staffEmailParam;
     }
   }
-  
+
   if (statusParam) {
-    const statusFilter = document.getElementById('statusFilter');
+    const statusFilter = document.getElementById("statusFilter");
     if (statusFilter) {
       statusFilter.value = statusParam;
     }
@@ -226,13 +232,13 @@ async function initializeCalendar() {
 
   // Update current date display
   updateDateDisplay();
-  
+
   // Scroll to staff schedule section if anchor is present
-  if (window.location.hash === '#staff-schedule') {
+  if (window.location.hash === "#staff-schedule") {
     setTimeout(() => {
-      const section = document.getElementById('staffScheduleSection');
+      const section = document.getElementById("staffScheduleSection");
       if (section) {
-        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 500);
   }
@@ -323,15 +329,17 @@ async function loadCalendarData() {
     const response = await fetch(
       `../../api/admin/bookings/list.php?${params.toString()}`
     );
-    
+
     // Check if response is JSON
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const text = await response.text();
       console.error("Non-JSON response received:", text);
-      throw new Error("Server returned an invalid response. Please check the console for details.");
+      throw new Error(
+        "Server returned an invalid response. Please check the console for details."
+      );
     }
-    
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -773,7 +781,7 @@ function renderBookingCard(booking) {
 function renderStaffSchedules() {
   const staffScheduleSection = document.getElementById("staffScheduleSection");
   const staffScheduleGrid = document.querySelector(".staff-schedule-grid");
-  
+
   if (!staffScheduleSection || !staffScheduleGrid) {
     console.warn("Staff schedule elements not found");
     return;
@@ -790,9 +798,17 @@ function renderStaffSchedules() {
   staffSchedulesData.forEach((schedule) => {
     const cardHtml = `
             <div class="staff-schedule-card" style="background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center;">
-                <h4 style="margin: 0; font-size: 16px; color: #333;">${escapeHtml(schedule.staff_name)}</h4>
-                <p style="margin: 8px 0; font-size: 14px; color: #666;">${escapeHtml(schedule.working_time)}</p>
-                <span style="padding: 4px 8px; border-radius: 4px; background: ${schedule.status === 'Working' ? '#4CAF50' : '#9E9E9E'}; color: white; font-size: 12px;">${escapeHtml(schedule.status)}</span>
+                <h4 style="margin: 0; font-size: 16px; color: #333;">${escapeHtml(
+                  schedule.staff_name
+                )}</h4>
+                <p style="margin: 8px 0; font-size: 14px; color: #666;">${escapeHtml(
+                  schedule.working_time
+                )}</p>
+                <span style="padding: 4px 8px; border-radius: 4px; background: ${
+                  schedule.status === "Working" ? "#4CAF50" : "#9E9E9E"
+                }; color: white; font-size: 12px;">${escapeHtml(
+      schedule.status
+    )}</span>
             </div>
         `;
     html += cardHtml;
@@ -814,15 +830,17 @@ async function viewBookingDetails(bookingId) {
     const response = await fetch(
       `../../api/admin/bookings/details.php?booking_id=${bookingId}`
     );
-    
+
     // Check if response is JSON
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
       const text = await response.text();
       console.error("Non-JSON response received:", text);
-      throw new Error("Server returned an invalid response. Please check the console for details.");
+      throw new Error(
+        "Server returned an invalid response. Please check the console for details."
+      );
     }
-    
+
     const data = await response.json();
 
     if (!response.ok) {

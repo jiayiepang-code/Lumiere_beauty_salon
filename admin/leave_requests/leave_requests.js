@@ -508,7 +508,9 @@ async function handleAction(button, action) {
     if (!contentType || !contentType.includes("application/json")) {
       const textResponse = await response.text();
       console.error("Non-JSON response:", textResponse);
-      throw new Error("Server returned an invalid response. Please check the error log.");
+      throw new Error(
+        "Server returned an invalid response. Please check the error log."
+      );
     }
 
     const data = await response.json();
@@ -526,7 +528,7 @@ async function handleAction(button, action) {
     // Show success message
     if (action === "approve") {
       let successMessage = "The staff schedule has been successfully updated.";
-      
+
       if (data.conflict_count > 0) {
         successMessage += `\n\n${data.conflict_count} customer(s) have been notified via email.`;
         if (data.emails_failed > 0) {
