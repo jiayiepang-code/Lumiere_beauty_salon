@@ -7,6 +7,9 @@
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
 ini_set('session.use_strict_mode', 1);
+
+// Use admin-specific session name to match auth_check.php
+session_name('admin_session');
 session_start();
 
 header('Content-Type: application/json');
@@ -28,6 +31,20 @@ if (!checkSessionTimeout()) {
 // Handle POST request only
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     ErrorHandler::sendError(ErrorHandler::METHOD_NOT_ALLOWED, 'Only POST requests are allowed', null, 405);
+}
+
+/**
+ * Validate CSRF token
+ * 
+ * @param string $token Token to validate
+ * @return bool True if valid
+ */
+function validateCSRFToken($token) {
+    if (!isAdminAuthenticated()) {
+        return false;
+    }
+    $session_token = $_SESSION['admin']['csrf_token'] ?? '';
+    return !empty($token) && hash_equals($session_token, $token);
 }
 
 try {

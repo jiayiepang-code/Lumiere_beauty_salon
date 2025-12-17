@@ -323,6 +323,15 @@ async function loadCalendarData() {
     const response = await fetch(
       `../../api/admin/bookings/list.php?${params.toString()}`
     );
+    
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("Non-JSON response received:", text);
+      throw new Error("Server returned an invalid response. Please check the console for details.");
+    }
+    
     const data = await response.json();
 
     if (!response.ok) {
@@ -762,140 +771,35 @@ function renderBookingCard(booking) {
 
 // Render staff schedules
 function renderStaffSchedules() {
-  const section = document.getElementById("staffScheduleSection");
-  const grid = document.getElementById("staffScheduleGrid");
-
-  if (staffSchedulesData.length === 0) {
-    section.style.display = "none";
+  const staffScheduleSection = document.getElementById("staffScheduleSection");
+  const staffScheduleGrid = document.querySelector(".staff-schedule-grid");
+  
+  if (!staffScheduleSection || !staffScheduleGrid) {
+    console.warn("Staff schedule elements not found");
     return;
   }
 
-  section.style.display = "block";
+  // Show or hide section based on data
+  if (staffSchedulesData.length === 0) {
+    staffScheduleSection.style.display = "none";
+    return;
+  }
 
-  // Timeline view for monthly view
-  if (currentView === "month") {
-    // Get month information
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    
-    // Group schedules by staff and by date
-    const schedulesByStaff = {};
-    const schedulesByDate = {};
-    
-    staffSchedulesData.forEach((schedule) => {
-      const staffKey = schedule.staff_email || schedule.staff_name;
-      const workDate = schedule.work_date || schedule.date || schedule.booking_date;
-      const dateObj = new Date(workDate + "T12:00:00");
-      const dayOfMonth = dateObj.getDate();
-      
-      // Only include schedules for the current month
-      if (dateObj.getFullYear() === year && dateObj.getMonth() === month) {
-        // Group by staff
-        if (!schedulesByStaff[staffKey]) {
-          schedulesByStaff[staffKey] = {
-            staff_name: schedule.staff_name,
-            schedules: {}
-          };
-        }
-        
-        // Group by day (in case multiple schedules per day)
-        if (!schedulesByStaff[staffKey].schedules[dayOfMonth]) {
-          schedulesByStaff[staffKey].schedules[dayOfMonth] = [];
-        }
-        schedulesByStaff[staffKey].schedules[dayOfMonth].push(schedule);
-      }
-    });
+  let html = "";
 
-    // Build timeline HTML
-    let html = '<div class="staff-schedule-timeline">';
-    
-    // Header row with day numbers
-    html += '<div class="timeline-header">';
-    html += '<div class="timeline-staff-label">Staff</div>';
-    html += '<div class="timeline-days">';
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dateObj = new Date(year, month, day);
-      const dayName = dateObj.toLocaleDateString("en-US", { weekday: "short" });
-      html += `<div class="timeline-day-header" title="${dayName}">${day}</div>`;
-    }
-    html += '</div></div>';
-    
-    // Staff rows
-    Object.values(schedulesByStaff).forEach((staffData) => {
-      html += '<div class="timeline-row">';
-      html += `<div class="timeline-staff-name">${escapeHtml(staffData.staff_name)}</div>`;
-      html += '<div class="timeline-days">';
-      
-      for (let day = 1; day <= daysInMonth; day++) {
-        const daySchedules = staffData.schedules[day] || [];
-        const dateObj = new Date(year, month, day);
-        const isToday = dateObj.toDateString() === new Date().toDateString();
-        
-        html += `<div class="timeline-day-cell ${isToday ? 'today' : ''}">`;
-        
-        if (daySchedules.length > 0) {
-          daySchedules.forEach((schedule) => {
-            const statusClass = schedule.status === "working" ? "status-working" : "status-leave";
-            const isLeave = schedule.status === "leave";
-            
-            if (isLeave) {
-              html += `<div class="timeline-block timeline-leave" title="On Leave - ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}">
-                <span class="timeline-block-label">Leave</span>
-              </div>`;
-            } else {
-              const startTime = formatTime(schedule.start_time);
-              const endTime = formatTime(schedule.end_time);
-              html += `<div class="timeline-block timeline-working" title="${startTime} - ${endTime} - ${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}">
-                <span class="timeline-block-time">${startTime}</span>
-                <span class="timeline-block-time">${endTime}</span>
-              </div>`;
-            }
-          });
-        } else {
-          html += '<div class="timeline-block timeline-empty"></div>';
-        }
-        
-        html += '</div>';
-      }
-      
-      html += '</div></div>';
-    });
-    
-    html += '</div>';
-    grid.innerHTML = html;
-  } else {
-    // Original rendering for day/week view
-    let html = "";
-    staffSchedulesData.forEach((schedule) => {
-      const statusClass =
-        schedule.status === "working" ? "status-working" : "status-off";
-      html += `
-            <div class="staff-schedule-card ${statusClass}">
-                <div class="staff-schedule-info">
-                    <div class="staff-name">${escapeHtml(
-                      schedule.staff_name
-                    )}</div>
-                    <div class="schedule-time">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                        ${formatTime(schedule.start_time)} - ${formatTime(
-        schedule.end_time
-      )}
-                    </div>
-                </div>
-                <span class="schedule-status-badge ${statusClass}">${
-        schedule.status === "working" ? "Working" : "Off"
-      }</span>
+  staffSchedulesData.forEach((schedule) => {
+    const cardHtml = `
+            <div class="staff-schedule-card" style="background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center;">
+                <h4 style="margin: 0; font-size: 16px; color: #333;">${escapeHtml(schedule.staff_name)}</h4>
+                <p style="margin: 8px 0; font-size: 14px; color: #666;">${escapeHtml(schedule.working_time)}</p>
+                <span style="padding: 4px 8px; border-radius: 4px; background: ${schedule.status === 'Working' ? '#4CAF50' : '#9E9E9E'}; color: white; font-size: 12px;">${escapeHtml(schedule.status)}</span>
             </div>
         `;
-    });
+    html += cardHtml;
+  });
 
-    grid.innerHTML = html;
-  }
+  staffScheduleGrid.innerHTML = html;
+  staffScheduleSection.style.display = "block";
 }
 
 // View booking details
@@ -910,6 +814,15 @@ async function viewBookingDetails(bookingId) {
     const response = await fetch(
       `../../api/admin/bookings/details.php?booking_id=${bookingId}`
     );
+    
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("Non-JSON response received:", text);
+      throw new Error("Server returned an invalid response. Please check the console for details.");
+    }
+    
     const data = await response.json();
 
     if (!response.ok) {
@@ -921,7 +834,10 @@ async function viewBookingDetails(bookingId) {
     }
   } catch (error) {
     console.error("Error loading booking details:", error);
-    content.innerHTML = `<div style="color: #F44336; padding: 20px;">Error loading booking details</div>`;
+    content.innerHTML = `<div style="color: #F44336; padding: 20px;">
+      <strong>Error loading booking details:</strong><br>
+      ${escapeHtml(error.message)}
+    </div>`;
   }
 }
 

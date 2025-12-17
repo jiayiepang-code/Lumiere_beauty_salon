@@ -1,9 +1,13 @@
 <?php
+// Suppress all output except JSON
+error_reporting(0);
+ini_set('display_errors', 0);
+
+header('Content-Type: application/json');
+
 require_once '../../../config/config.php';
 require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
-
-header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     http_response_code(405);

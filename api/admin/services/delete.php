@@ -3,6 +3,9 @@
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
 ini_set('session.use_strict_mode', 1);
+
+// Use admin-specific session name to match auth_check.php
+session_name('admin_session');
 session_start();
 
 header('Content-Type: application/json');

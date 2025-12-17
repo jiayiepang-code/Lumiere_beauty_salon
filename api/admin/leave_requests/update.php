@@ -1,9 +1,13 @@
 <?php
+// Suppress all output except JSON
+error_reporting(0);
+ini_set('display_errors', 0);
+
+header('Content-Type: application/json');
+
 require_once '../../../config/config.php';
 require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
-
-header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -238,7 +242,12 @@ try {
 
         // Send email notifications
         require_once '../../../includes/EmailService.php';
-        require_once '../../../config/email_config.php'; // For SALON constants
+        
+        // Safely load email config
+        $emailConfigPath = '../../../config/email_config.php';
+        if (file_exists($emailConfigPath)) {
+            require_once $emailConfigPath;
+        }
         
         $emailService = new EmailService();
         $leaveDateRange = date('d M Y', strtotime($startDate));
@@ -284,7 +293,10 @@ try {
         'emails_sent' => $emailsSent,
         'emails_failed' => $emailsFailed
     ]);
+    exit;
+    
 } catch (Exception $e) {
+    
     if (isset($conn) && $conn->errno === 0) {
         // Attempt to rollback if a transaction is open
         try {

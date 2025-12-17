@@ -495,10 +495,45 @@ async function handleServiceSubmit(event) {
       headers: {
         "Content-Type": "application/json",
       },
+      credentials: "same-origin", // Include cookies/session for authentication
       body: JSON.stringify(data),
     });
 
-    const result = await response.json();
+    // Try to parse JSON response
+    let result;
+    const responseText = await response.text();
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      // If response is not JSON, it's likely a PHP error
+      console.error("Failed to parse JSON response:", parseError);
+      console.error("Response text:", responseText);
+      throw new Error(`Server returned invalid response. Please check the server logs. (Status: ${response.status})`);
+    }
+
+    if (!response.ok) {
+      // Handle error response
+      const errorMessage = result.error?.message || result.message || `Request failed (Status: ${response.status})`;
+      
+      // Check if there are field-specific validation errors
+      if (result.error && result.error.details) {
+        displayFormErrors(result.error.details);
+        Swal.fire({
+          title: "Validation Error",
+          text: errorMessage,
+          icon: "error",
+          confirmButtonColor: "#c29076" /* Brown Primary */,
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: errorMessage,
+          icon: "error",
+          confirmButtonColor: "#c29076" /* Brown Primary */,
+        });
+      }
+      return;
+    }
 
     if (result.success) {
       closeServiceModal();
@@ -541,7 +576,7 @@ async function handleServiceSubmit(event) {
     console.error("Error submitting form:", error);
     Swal.fire({
       title: "Error!",
-      text: "An error occurred while saving the service",
+      text: error.message || "An error occurred while saving the service. Please try again.",
       icon: "error",
       confirmButtonColor: "#c29076" /* Brown Primary */,
     });
@@ -561,7 +596,9 @@ async function toggleServiceStatus(event, serviceId, currentStatus) {
   }
 
   const serviceIdStr = String(serviceId);
-  const service = allServices.find((s) => String(s.service_id) === serviceIdStr);
+  const service = allServices.find(
+    (s) => String(s.service_id) === serviceIdStr
+  );
   if (!service) {
     console.error("Service not found:", serviceId);
     showToast("Service not found", "error");
@@ -588,11 +625,31 @@ async function toggleServiceStatus(event, serviceId, currentStatus) {
       }),
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    // Try to parse JSON response
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      // If response is not JSON, create a generic error response
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      throw parseError;
     }
 
-    const data = await response.json();
+    if (!response.ok) {
+      // Handle error response
+      const errorMessage = data.error?.message || data.message || `Failed to ${actionText} service (Status: ${response.status})`;
+      button.disabled = false;
+      button.innerHTML = originalHTML;
+      Swal.fire({
+        title: "Error",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonColor: "#c29076",
+      });
+      return;
+    }
 
     if (data.success) {
       // Show success message as toast notification
@@ -615,7 +672,7 @@ async function toggleServiceStatus(event, serviceId, currentStatus) {
       button.innerHTML = originalHTML;
       Swal.fire({
         title: "Error",
-        text: data.error?.message || `Failed to ${actionText} service`,
+        text: data.error?.message || data.message || `Failed to ${actionText} service`,
         icon: "error",
         confirmButtonColor: "#c29076",
       });
@@ -623,9 +680,10 @@ async function toggleServiceStatus(event, serviceId, currentStatus) {
   } catch (error) {
     console.error("Error toggling service status:", error);
     button.disabled = false;
+    button.innerHTML = originalHTML;
     Swal.fire({
       title: "Error",
-      text: `Failed to ${actionText} service. Please try again.`,
+      text: error.message || `Failed to ${actionText} service. Please try again.`,
       icon: "error",
       confirmButtonColor: "#c29076",
     });

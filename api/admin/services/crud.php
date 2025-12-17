@@ -1,11 +1,26 @@
 <?php
+// Start output buffering to catch any accidental output
+ob_start();
+
+// Disable error display (errors will be logged, not printed)
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
 // Start session with secure configuration
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
 ini_set('session.use_strict_mode', 1);
+
+// Use admin-specific session name to match auth_check.php
+session_name('admin_session');
 session_start();
 
+// Set JSON header early to prevent any HTML output
 header('Content-Type: application/json');
+
+// Clear any output that might have been generated
+ob_clean();
 
 // Include required files
 require_once '../../../config/db_connect.php';
@@ -82,13 +97,26 @@ function validateServiceData($data, $isUpdate = false) {
 }
 
 try {
+    // #region agent log
+    file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:99','message'=>'Entering main try block','data'=>['method'=>$method],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    
     // Get database connection
     $conn = getDBConnection();
+    
+    // #region agent log
+    file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'crud.php:102','message'=>'DB connection obtained','data'=>['conn_exists'=>isset($conn)],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
     
     // Get JSON input for POST, PUT, DELETE
     $input = null;
     if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
-        $input = json_decode(file_get_contents('php://input'), true);
+        $raw_input = file_get_contents('php://input');
+        $input = json_decode($raw_input, true);
+        
+        // #region agent log
+        file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:108','message'=>'JSON input parsed','data'=>['method'=>$method,'input_keys'=>array_keys($input ?? []),'json_error'=>json_last_error_msg()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
         
         if ($input === null && $method !== 'DELETE') {
             ErrorHandler::sendError(ErrorHandler::INVALID_JSON, 'Invalid JSON data');
@@ -97,16 +125,32 @@ try {
     
     // Validate CSRF token for POST, PUT, DELETE
     if (in_array($method, ['POST', 'PUT', 'DELETE'])) {
+        // #region agent log
+        file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'crud.php:118','message'=>'Before CSRF validation','data'=>['has_csrf'=>isset($input['csrf_token']),'session_has_token'=>isset($_SESSION['admin']['csrf_token'])],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
+        
         if (!isset($input['csrf_token']) || !validateCSRFToken($input['csrf_token'])) {
             ErrorHandler::sendError(ErrorHandler::INVALID_CSRF_TOKEN, 'Invalid CSRF token', null, 403);
         }
+        
+        // #region agent log
+        file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'D','location'=>'crud.php:121','message'=>'CSRF validation passed','data'=>[],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        // #endregion
     }
     
     switch ($method) {
         case 'POST':
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'E','location'=>'crud.php:125','message'=>'Entering POST case','data'=>['input_keys'=>array_keys($input ?? [])],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
             // Create new service
             // Validate input data
             $validation_errors = validateServiceData($input, false);
+            
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'E','location'=>'crud.php:129','message'=>'Validation completed','data'=>['has_errors'=>!empty($validation_errors),'error_count'=>count($validation_errors ?? [])],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
             
             if (!empty($validation_errors)) {
                 ErrorHandler::handleValidationError($validation_errors);
@@ -122,6 +166,10 @@ try {
             $service_image = isset($input['service_image']) && trim($input['service_image']) !== '' ? trim($input['service_image']) : null;
             $default_cleanup_minutes = (int)$input['default_cleanup_minutes'];
             $is_active = isset($input['is_active']) ? (int)(bool)$input['is_active'] : 1;
+            
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'crud.php:141','message'=>'Data prepared for insert','data'=>['service_category'=>$service_category,'service_name'=>$service_name,'sub_category'=>$sub_category,'has_description'=>!is_null($description),'has_image'=>!is_null($service_image)],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
             
             // Check for duplicate service name within the same category (case-insensitive)
             $check_sql = "SELECT service_id FROM Service 
@@ -145,6 +193,11 @@ try {
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $stmt = $conn->prepare($sql);
+            
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'crud.php:163','message'=>'Before bind_param','data'=>['stmt_exists'=>isset($stmt),'stmt_error'=>$stmt ? $stmt->error : 'no_stmt'],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
             $stmt->bind_param("sssidssii", 
                 $service_category,
                 $sub_category,
@@ -157,10 +210,52 @@ try {
                 $is_active
             );
             
+            // #region agent log
+            file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'crud.php:175','message'=>'Before execute','data'=>[],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            // #endregion
+            
             if ($stmt->execute()) {
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'crud.php:178','message'=>'Execute successful','data'=>['insert_id'=>$conn->insert_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
+                // Get the inserted service_id (for VARCHAR(4), we need to query it)
+                // Since service_id might be VARCHAR, we'll get it from the last insert
                 $service_id = $conn->insert_id;
+                
+                // If insert_id is 0 (VARCHAR field), get it from the database
+                if ($service_id == 0) {
+                    // #region agent log
+                    file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'crud.php:182','message'=>'insert_id is 0, querying DB','data'=>[],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                    // #endregion
+                    
+                    $id_stmt = $conn->prepare("SELECT service_id FROM Service WHERE service_category = ? AND service_name = ? ORDER BY created_at DESC LIMIT 1");
+                    if ($id_stmt) {
+                        $id_stmt->bind_param("ss", $service_category, $service_name);
+                        $id_stmt->execute();
+                        $id_result = $id_stmt->get_result();
+                        if ($id_row = $id_result->fetch_assoc()) {
+                            $service_id = $id_row['service_id'];
+                        }
+                        $id_stmt->close();
+                    }
+                }
+                
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:196','message'=>'Before ob_end_clean','data'=>['service_id'=>$service_id,'ob_level'=>ob_get_level()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
                 $stmt->close();
                 $conn->close();
+                
+                // Clear output buffer and send JSON response
+                if (ob_get_level() > 0) {
+                    ob_end_clean();
+                }
+                
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'crud.php:203','message'=>'Before sending JSON response','data'=>['service_id'=>$service_id],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
                 
                 http_response_code(201);
                 echo json_encode([
@@ -168,7 +263,12 @@ try {
                     'service_id' => $service_id,
                     'message' => 'Service created successfully'
                 ]);
+                exit;
             } else {
+                // #region agent log
+                file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'C','location'=>'crud.php:214','message'=>'Execute failed','data'=>['error'=>$stmt->error],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+                // #endregion
+                
                 throw new Exception('Failed to create service: ' . $stmt->error);
             }
             break;
@@ -248,12 +348,15 @@ try {
                 $stmt->close();
                 $conn->close();
                 
+                // Clear output buffer and send JSON response
+                ob_end_clean();
                 http_response_code(200);
                 echo json_encode([
                     'success' => true,
                     'service_id' => $service_id,
                     'message' => 'Service updated successfully'
                 ]);
+                exit;
             } else {
                 throw new Exception('Failed to update service: ' . $stmt->error);
             }
@@ -343,12 +446,15 @@ try {
                 unset($_SESSION['reauth_ok_until']);
                 unset($_SESSION['reauth_action']);
                 
+                // Clear output buffer and send JSON response
+                ob_end_clean();
                 http_response_code(200);
                 echo json_encode([
                     'success' => true,
                     'service_id' => $service_id,
                     'message' => 'Service deleted successfully'
                 ]);
+                exit;
             } else {
                 throw new Exception('Failed to delete service: ' . $stmt->error);
             }
@@ -359,8 +465,37 @@ try {
     }
     
 } catch (Exception $e) {
+    // #region agent log
+    file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'ALL','location'=>'crud.php:368','message'=>'Exception caught','data'=>['message'=>$e->getMessage(),'file'=>$e->getFile(),'line'=>$e->getLine(),'trace'=>explode("\n",$e->getTraceAsString())],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    
     if (isset($conn)) {
         $conn->close();
     }
+    // Clear output buffer before sending error
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     ErrorHandler::handleDatabaseError($e, 'service operation');
+} catch (Error $e) {
+    // #region agent log
+    file_put_contents('../../../.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'ALL','location'=>'crud.php:378','message'=>'Fatal Error caught','data'=>['message'=>$e->getMessage(),'file'=>$e->getFile(),'line'=>$e->getLine()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    // #endregion
+    
+    if (isset($conn)) {
+        $conn->close();
+    }
+    // Clear output buffer before sending error
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => [
+            'code' => 'FATAL_ERROR',
+            'message' => 'A fatal error occurred: ' . $e->getMessage()
+        ]
+    ]);
+    exit;
 }

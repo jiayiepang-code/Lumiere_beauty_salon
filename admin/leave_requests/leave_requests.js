@@ -454,19 +454,23 @@ async function handleAction(button, action) {
     }
   }
 
-  // Update the confirmation dialog to show a success message instead of the approval prompt
-  const confirmTitle = "Leave Request Approved";
-  const confirmText = "The staff schedule has been successfully updated.";
-  const confirmButtonText = "OK";
-  const confirmButtonColor = "#22c55e";
+  // For reject action, show confirmation dialog
+  if (action === "reject") {
+    const result = await Swal.fire({
+      title: "Reject Leave Request?",
+      text: "Are you sure you want to reject this leave request?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, Reject",
+      cancelButtonText: "Cancel",
+    });
 
-  await Swal.fire({
-    title: confirmTitle,
-    text: confirmText,
-    icon: "success",
-    confirmButtonColor: confirmButtonColor,
-    confirmButtonText: confirmButtonText,
-  });
+    if (!result.isConfirmed) {
+      return;
+    }
+  }
 
   const row = button.closest("tr");
   const approveBtn = row.querySelector(".btn-approve");
@@ -499,6 +503,14 @@ async function handleAction(button, action) {
       }),
     });
 
+    // Check if response is JSON
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const textResponse = await response.text();
+      console.error("Non-JSON response:", textResponse);
+      throw new Error("Server returned an invalid response. Please check the error log.");
+    }
+
     const data = await response.json();
 
     if (!response.ok || data.error) {
@@ -511,25 +523,31 @@ async function handleAction(button, action) {
     // Refresh data
     await fetchLeaveRequests();
 
-    // Show success with conflict info if applicable
-    let successMessage =
-      action === "approve"
-        ? "Leave request has been approved."
-        : "Leave request has been rejected.";
-
-    if (action === "approve" && data.conflict_count > 0) {
-      successMessage += `\n\n${data.conflict_count} customer(s) have been notified via email.`;
-      if (data.emails_failed > 0) {
-        successMessage += `\n⚠️ ${data.emails_failed} email(s) failed to send.`;
+    // Show success message
+    if (action === "approve") {
+      let successMessage = "The staff schedule has been successfully updated.";
+      
+      if (data.conflict_count > 0) {
+        successMessage += `\n\n${data.conflict_count} customer(s) have been notified via email.`;
+        if (data.emails_failed > 0) {
+          successMessage += `\n⚠️ ${data.emails_failed} email(s) failed to send.`;
+        }
       }
-    }
 
-    Swal.fire({
-      title: "Success!",
-      text: successMessage,
-      icon: "success",
-      confirmButtonColor: "#c29076",
-    });
+      Swal.fire({
+        title: "Leave Request Approved",
+        text: successMessage,
+        icon: "success",
+        confirmButtonColor: "#22c55e",
+      });
+    } else {
+      Swal.fire({
+        title: "Success!",
+        text: "Leave request has been rejected.",
+        icon: "success",
+        confirmButtonColor: "#c29076",
+      });
+    }
   } catch (err) {
     console.error(err);
     Swal.fire({

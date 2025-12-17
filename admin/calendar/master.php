@@ -93,10 +93,11 @@ include '../includes/header.php';
             <!-- Calendar content will be dynamically generated -->
         </div>
         
+        <!-- Updated Staff Schedule Section -->
         <div class="staff-schedule-section" id="staffScheduleSection" style="display: none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-            <h3 style="margin-bottom: 15px;" id="staff-schedule">Staff Schedules</h3>
-            <div class="staff-schedule-grid" id="staffScheduleGrid">
-                <!-- Staff schedules will be dynamically generated -->
+            <h3 style="margin-bottom: 15px;">Staff Schedules</h3>
+            <div class="staff-schedule-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
+                <!-- Cards will be dynamically generated -->
             </div>
         </div>
     </div>
