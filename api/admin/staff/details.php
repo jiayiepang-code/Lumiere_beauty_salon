@@ -39,7 +39,7 @@ try {
     $conn = getDBConnection();
     
     // Fetch staff details
-    $sql = "SELECT staff_email, phone, first_name, last_name, bio, role, 
+    $sql = "SELECT staff_email, phone, first_name, last_name, role, 
                    staff_image, is_active, created_at
             FROM staff
             WHERE staff_email = ?";

@@ -51,7 +51,7 @@ try {
     $active_only = isset($_GET['active_only']) ? filter_var($_GET['active_only'], FILTER_VALIDATE_BOOLEAN) : false;
     
     // Build query with filters
-    $sql = "SELECT staff_email, phone, first_name, last_name, bio, role, 
+    $sql = "SELECT staff_email, phone, first_name, last_name, role, 
                    staff_image, is_active, created_at
             FROM Staff
             WHERE 1=1";
@@ -116,6 +116,23 @@ try {
     ]);
     
 } catch (Exception $e) {
+    // #region agent log
+    $log_data = [
+        'sessionId' => 'debug-session',
+        'runId' => 'run1',
+        'hypothesisId' => 'A',
+        'location' => 'api/admin/staff/list.php:' . __LINE__,
+        'message' => 'Database error caught',
+        'data' => [
+            'error_message' => $e->getMessage(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine()
+        ],
+        'timestamp' => time() * 1000
+    ];
+    file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
+    // #endregion
+    
     // Log error
     error_log(json_encode([
         'timestamp' => date('Y-m-d H:i:s'),
@@ -125,12 +142,15 @@ try {
         'line' => $e->getLine()
     ]), 3, '../../../logs/admin_errors.log');
     
+    // Ensure JSON response (not HTML)
     http_response_code(500);
+    header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
         'error' => [
             'code' => 'DATABASE_ERROR',
-            'message' => 'An error occurred while fetching staff'
+            'message' => 'An error occurred while fetching staff: ' . $e->getMessage()
         ]
     ]);
+    exit;
 }

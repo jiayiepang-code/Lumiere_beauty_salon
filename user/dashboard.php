@@ -280,12 +280,24 @@ $historyFilterMonth = isset($_GET['history_month']) && $_GET['history_month'] !=
 $historyFilterStatus = isset($_GET['history_status']) && $_GET['history_status'] !== '' ? $_GET['history_status'] : null;
 
 foreach($bookings as $booking) {
+    $bookingStatus = strtolower($booking['status']);
+    $bookingDate = $booking['booking_date'];
+    
     // Upcoming: only confirmed bookings with future dates
-    if ($booking['booking_date'] >= $today && strtolower($booking['status']) === 'confirmed') {
+    if ($bookingDate >= $today && $bookingStatus === 'confirmed') {
         $upcomingBookingsAll[] = $booking;
     } else {
-        // History: all other bookings (past dates, cancelled, completed, etc.)
-        $pastBookingsAll[] = $booking;
+        // History: only completed and cancelled bookings
+        // If a confirmed booking's date has passed, mark it as expired and include in history
+        if ($bookingStatus === 'completed' || $bookingStatus === 'cancelled') {
+            $pastBookingsAll[] = $booking;
+        } elseif ($bookingStatus === 'confirmed' && $bookingDate < $today) {
+            // Past confirmed bookings should show as expired
+            $booking['status'] = 'expired';
+            $booking['display_status'] = 'expired';
+            $pastBookingsAll[] = $booking;
+        }
+        // Exclude all other confirmed bookings from history
     }
 }
 
@@ -316,8 +328,18 @@ foreach($pastBookingsAll as $booking) {
     
     // Apply status filter for history
     if ($includeInHistory && $historyFilterStatus && $historyFilterStatus !== 'all') {
-        if (strtolower($booking['status']) !== strtolower($historyFilterStatus)) {
-            $includeInHistory = false;
+        $bookingStatus = strtolower($booking['status']);
+        $displayStatus = isset($booking['display_status']) ? strtolower($booking['display_status']) : $bookingStatus;
+        
+        // Check both the actual status and display status for expired
+        if ($historyFilterStatus === 'expired') {
+            if ($displayStatus !== 'expired') {
+                $includeInHistory = false;
+            }
+        } else {
+            if ($bookingStatus !== strtolower($historyFilterStatus)) {
+                $includeInHistory = false;
+            }
         }
     }
     
@@ -425,42 +447,58 @@ foreach($pastBookingsAll as $booking) {
             $upcomingAppointment = null;
             $recentAppointments = [];
             $today = new DateTime();
+            $today->setTime(0, 0, 0); // Set to start of day for accurate comparison
             
             foreach ($bookings as $booking) {
-                $bookingDate = new DateTime($booking['booking_date']);
+                $bookingStatus = strtolower($booking['status']);
                 
-                if ($booking['status'] === 'completed') {
+                if ($bookingStatus === 'completed') {
                     $completedCount++;
                 }
                 
-                // Find next upcoming appointment (closest date to today)
-                if (($booking['status'] === 'confirmed') && $bookingDate >= $today) {
-                    if (!$nextAppointment) {
-                        $nextAppointment = $booking;
-                        $upcomingAppointment = $booking;
-                    } else {
-                        $currentNextDate = new DateTime($nextAppointment['booking_date']);
-                        // Compare dates to find the closest one
-                        if ($bookingDate < $currentNextDate) {
+                // Find next upcoming appointment (closest date and time to now)
+                if ($bookingStatus === 'confirmed') {
+                    $bookingDate = new DateTime($booking['booking_date']);
+                    $bookingDate->setTime(0, 0, 0);
+                    
+                    // Combine date and time for accurate comparison
+                    $bookingDateTime = new DateTime($booking['booking_date'] . ' ' . $booking['start_time']);
+                    $now = new DateTime();
+                    
+                    // Only consider future bookings
+                    if ($bookingDateTime > $now) {
+                        if (!$nextAppointment) {
                             $nextAppointment = $booking;
                             $upcomingAppointment = $booking;
+                        } else {
+                            // Compare with existing next appointment
+                            $currentNextDateTime = new DateTime($nextAppointment['booking_date'] . ' ' . $nextAppointment['start_time']);
+                            if ($bookingDateTime < $currentNextDateTime) {
+                                $nextAppointment = $booking;
+                                $upcomingAppointment = $booking;
+                            }
                         }
                     }
                 }
             }
             
-            // Get recent 3 appointments (past ones)
-            $recentAppointments = array_slice(array_filter($bookings, function($b) use ($today) {
-                $date = new DateTime($b['booking_date']);
-                return $date < $today || $b['status'] === 'completed';
+            // Get recent 3 appointments (only completed bookings)
+            $recentAppointments = array_slice(array_filter($bookings, function($b) {
+                return strtolower($b['status']) === 'completed';
             }), 0, 3);
             
             // Calculate days until next appointment
             $daysUntilNext = null;
             if ($nextAppointment) {
-                $nextDate = new DateTime($nextAppointment['booking_date']);
-                $interval = $today->diff($nextDate);
+                $nextDateTime = new DateTime($nextAppointment['booking_date'] . ' ' . $nextAppointment['start_time']);
+                $now = new DateTime();
+                $interval = $now->diff($nextDateTime);
                 $daysUntilNext = $interval->days;
+                
+                // If same day but time hasn't passed, show 0 days
+                if ($interval->days === 0 && $nextDateTime > $now) {
+                    $daysUntilNext = 0;
+                }
             }
             
             // Get first favorite staff
@@ -615,31 +653,49 @@ foreach($pastBookingsAll as $booking) {
                 </div>
             </div>
 
-            <!-- Recent Appointments -->
-            <?php if (!empty($recentAppointments)): ?>
+            <!-- Recent Bookings -->
             <div class="recent-appointments-section">
-                <h2 style="font-family: 'Playfair Display', serif; color: var(--dark-brown); margin-bottom: 20px;">Recent Appointments</h2>
-                <?php foreach ($recentAppointments as $recent): 
-                    $recentDate = new DateTime($recent['booking_date']);
-                    $recentServices = explode(', ', $recent['services'] ?? 'Service');
-                    $recentStaff = explode(', ', $recent['staff_names'] ?? 'Staff');
-                ?>
-                <div class="recent-appointment-item">
-                    <div class="recent-icon">
-                        <i class="fas fa-user"></i>
+                <h2 style="font-family: 'Playfair Display', serif; color: var(--dark-brown); margin-bottom: 20px;">Recent Bookings</h2>
+                <?php if (!empty($recentAppointments)): ?>
+                    <?php foreach ($recentAppointments as $recent): 
+                        $recentDate = new DateTime($recent['booking_date']);
+                        $recentServices = explode(', ', $recent['services'] ?? 'Service');
+                        
+                        // Get staff name from booking services if available
+                        $recentStaffName = 'Staff Member';
+                        if (isset($bookingServices[$recent['booking_id']]) && !empty($bookingServices[$recent['booking_id']])) {
+                            $firstService = $bookingServices[$recent['booking_id']][0];
+                            if (!empty($firstService['staff_first_name']) || !empty($firstService['staff_last_name'])) {
+                                $staffFirstName = $firstService['staff_first_name'] ?? '';
+                                $staffLastName = $firstService['staff_last_name'] ?? '';
+                                $recentStaffName = trim($staffFirstName . ' ' . $staffLastName);
+                            }
+                        }
+                        
+                        // Fallback to staff_names from booking if not found in services
+                        if ($recentStaffName === 'Staff Member' && !empty($recent['staff_names'])) {
+                            $recentStaffArray = explode(', ', $recent['staff_names']);
+                            $recentStaffName = $recentStaffArray[0];
+                        }
+                    ?>
+                    <div class="recent-appointment-item">
+                        <div class="recent-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="recent-details">
+                            <h4><?= htmlspecialchars($recentServices[0]) ?></h4>
+                            <p>with <?= htmlspecialchars($recentStaffName) ?></p>
+                        </div>
+                        <div class="recent-date">
+                            <span><?= $recentDate->format('M d, Y') ?></span>
+                            <a href="../booking.php" class="book-again">Book Again</a>
+                        </div>
                     </div>
-                    <div class="recent-details">
-                        <h4><?= htmlspecialchars($recentServices[0]) ?></h4>
-                        <p>with <?= htmlspecialchars($recentStaff[0]) ?></p>
-                    </div>
-                    <div class="recent-date">
-                        <span><?= $recentDate->format('M d, Y') ?></span>
-                        <a href="../booking.php" class="book-again">Book Again</a>
-                    </div>
-                </div>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <p class="text-muted" style="padding: 20px; text-align: center;">No completed bookings yet.</p>
+                <?php endif; ?>
             </div>
-            <?php endif; ?>
 
         </div>
 
@@ -756,6 +812,7 @@ foreach($pastBookingsAll as $booking) {
                             <option value="all" <?php echo (!$historyFilterStatus || $historyFilterStatus === 'all') ? 'selected' : ''; ?>>All</option>
                             <option value="cancelled" <?php echo $historyFilterStatus === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                             <option value="completed" <?php echo $historyFilterStatus === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                            <option value="expired" <?php echo $historyFilterStatus === 'expired' ? 'selected' : ''; ?>>Expired</option>
                         </select>
                         <?php if ($historyFilterMonth || ($historyFilterStatus && $historyFilterStatus !== 'all')): ?>
                             <button class="btn btn-sm btn-outline-secondary" onclick="clearHistoryFilters()" title="Clear filters">
@@ -782,7 +839,14 @@ foreach($pastBookingsAll as $booking) {
                                 <div class="card booking-card h-100" style="opacity: 0.95;">
                                     <div class="card-header bg-light d-flex justify-content-between align-items-center">
                                         <span class="fw-bold" style="color: #c29076;"><?php echo htmlspecialchars($booking['booking_id']); ?></span>
-                                        <span class="status-badge status-<?php echo $booking['status']; ?>"><?php echo ucfirst($booking['status']); ?></span>
+                                        <?php 
+                                        $displayStatus = isset($booking['display_status']) ? $booking['display_status'] : $booking['status'];
+                                        $statusClass = strtolower($displayStatus);
+                                        if ($statusClass === 'expired') {
+                                            $statusClass = 'expired';
+                                        }
+                                        ?>
+                                        <span class="status-badge status-<?php echo $statusClass; ?>"><?php echo ucfirst($displayStatus); ?></span>
                                     </div>
                                     <div class="card-body">
                                         <div class="mb-3">
@@ -805,7 +869,10 @@ foreach($pastBookingsAll as $booking) {
                                     </div>
                                     <div class="card-footer bg-white d-flex gap-2" style="padding: 1rem;">
                                         <button class="btn btn-sm btn-outline-primary booking-action-btn" style="flex: 1 1 0; min-width: 0; padding: 0.5rem 1rem; border: 1px solid #0d6efd; color: #0d6efd;" onclick="viewDetails('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-eye"></i> View Details</button>
-                                        <?php if(strtolower($booking['status']) === 'completed'): ?>
+                                        <?php 
+                                        $actualStatus = strtolower($booking['status']);
+                                        if($actualStatus === 'completed'): 
+                                        ?>
                                             <button class="btn btn-sm btn-outline-success booking-action-btn" style="flex: 1 1 0; min-width: 0; padding: 0.5rem 1rem; border: 1px solid #198754; color: #198754;" onclick="openCommentModal('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"><i class="fas fa-comment"></i> Add Comment</button>
                                         <?php endif; ?>
                                     </div>

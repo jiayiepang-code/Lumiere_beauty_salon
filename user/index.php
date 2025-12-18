@@ -172,7 +172,7 @@ $currentUrlEncoded = urlencode($currentUrl);
         <div class="service-grid">
             <!-- example cards – keep or replace with your real ones -->
             <div class="service-box stagger" onclick="window.location.href='services.php?category=haircut'">
-                <img src="../images/14.png" class="service-img" alt="Haircut">
+                <img src="../images/s13.jpg" class="service-img" alt="Haircut">
                 <div class="service-overlay">haircut</div>
             </div>
 

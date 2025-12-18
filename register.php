@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // #region agent log
-    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:70','message'=>'Checking for duplicates','data'=>['email'=>$email,'phone'=>$phone,'normalized_phone'=>$phone],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:70','message'=>'Checking for duplicates','data'=>['email'=>$email,'phone'=>$phone,'normalized_phone'=>$phone],'timestamp'=>time()*1000])."\n", FILE_APPEND);
     // #endregion
 
     // Check for duplicates - improved to show which field is duplicate
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $existing = $check->fetchAll(PDO::FETCH_ASSOC);
     
     // #region agent log
-    file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:75','message'=>'Duplicate check results','data'=>['row_count'=>count($existing),'existing_records'=>$existing],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+    @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:75','message'=>'Duplicate check results','data'=>['row_count'=>count($existing),'existing_records'=>$existing],'timestamp'=>time()*1000])."\n", FILE_APPEND);
     // #endregion
     
     if (count($existing) > 0) {
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         // #region agent log
-        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:95','message'=>'DUPLICATE FOUND - Registration blocked','data'=>['duplicate_email'=>$duplicateEmail,'duplicate_phone'=>$duplicatePhone,'message'=>$message],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'A','location'=>'register.php:95','message'=>'DUPLICATE FOUND - Registration blocked','data'=>['duplicate_email'=>$duplicateEmail,'duplicate_phone'=>$duplicatePhone,'message'=>$message],'timestamp'=>time()*1000])."\n", FILE_APPEND);
         // #endregion
         
         echo json_encode(['status' => 'error', 'message' => $message]);
@@ -112,7 +112,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         // #region agent log
-        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:100','message'=>'Attempting to insert new customer','data'=>['first_name'=>$firstName,'last_name'=>$lastName,'phone'=>$phone,'email'=>$email],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:100','message'=>'Attempting to insert new customer','data'=>['first_name'=>$firstName,'last_name'=>$lastName,'phone'=>$phone,'email'=>$email],'timestamp'=>time()*1000])."\n", FILE_APPEND);
         // #endregion
         
         $hash = password_hash($password, PASSWORD_DEFAULT);
@@ -123,27 +123,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $result = $stmt->execute([$firstName, $lastName, $phone, $email, $hash]);
         
         // #region agent log
-        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:108','message'=>'INSERT executed','data'=>['result'=>$result,'row_count'=>$stmt->rowCount()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:108','message'=>'INSERT executed','data'=>['result'=>$result,'row_count'=>$stmt->rowCount()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
         // #endregion
         
         if ($result) {
             // Clear the CAPTCHA session after successful registration
             unset($_SESSION['register_captcha']);
             // #region agent log
-            file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:113','message'=>'Registration SUCCESS','data'=>['email'=>$email,'phone'=>$phone],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:113','message'=>'Registration SUCCESS','data'=>['email'=>$email,'phone'=>$phone],'timestamp'=>time()*1000])."\n", FILE_APPEND);
             // #endregion
             echo json_encode(['status' => 'success', 'message' => 'Registration successful!']);
         } else {
             $errorInfo = $stmt->errorInfo();
             // #region agent log
-            file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:118','message'=>'INSERT FAILED - result is false','data'=>['error_info'=>$errorInfo],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+            @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:118','message'=>'INSERT FAILED - result is false','data'=>['error_info'=>$errorInfo],'timestamp'=>time()*1000])."\n", FILE_APPEND);
             // #endregion
             error_log("Registration error: " . print_r($errorInfo, true));
             echo json_encode(['status' => 'error', 'message' => 'Failed to save registration data. Please try again.']);
         }
     } catch(PDOException $e) {
         // #region agent log
-        file_put_contents('c:\xampp\htdocs\Lumiere-beauty-salon\.cursor\debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:125','message'=>'INSERT EXCEPTION','data'=>['error_message'=>$e->getMessage(),'error_code'=>$e->getCode()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
+        @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['sessionId'=>'debug-session','runId'=>'pre-fix','hypothesisId'=>'B','location'=>'register.php:125','message'=>'INSERT EXCEPTION','data'=>['error_message'=>$e->getMessage(),'error_code'=>$e->getCode()],'timestamp'=>time()*1000])."\n", FILE_APPEND);
         // #endregion
         error_log("Registration PDO error: " . $e->getMessage());
         error_log("SQL: " . $sql);
@@ -321,12 +321,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     function refreshRegisterCaptcha(event) {
         if(event) event.preventDefault();
-        // NOTE: I kept 'auth/' because most likely you left that file there.
-        // If you moved refresh_captcha.php to root as well, remove 'auth/'.
-        fetch('auth/refresh_captcha.php').then(res=>res.text()).then(code=>{
-            const box = document.getElementById("registerCaptchaCode");
-            if(box) box.textContent = code;
-        });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register.php:refreshRegisterCaptcha',message:'CAPTCHA refresh initiated',data:{currentUrl:window.location.href},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+        // #endregion agent log
+        fetch('refresh_captcha.php')
+            .then(res => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register.php:refreshRegisterCaptcha',message:'CAPTCHA fetch response',data:{ok:res.ok,status:res.status,statusText:res.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                // #endregion agent log
+                if (!res.ok) {
+                    throw new Error('Failed to refresh CAPTCHA: ' + res.statusText);
+                }
+                return res.text();
+            })
+            .then(code => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register.php:refreshRegisterCaptcha',message:'CAPTCHA code received',data:{codeLength:code.length,codePreview:code.substring(0,5)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion agent log
+                const box = document.getElementById("registerCaptchaCode");
+                if(box) {
+                    box.textContent = code;
+                    box.dataset.code = code;
+                }
+            })
+            .catch(error => {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'register.php:refreshRegisterCaptcha',message:'CAPTCHA refresh error',data:{errorMessage:error.message,errorStack:error.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                // #endregion agent log
+                console.error('Error refreshing CAPTCHA:', error);
+                alert('Failed to refresh CAPTCHA. Please try again.');
+            });
     }
     </script>
 </body>

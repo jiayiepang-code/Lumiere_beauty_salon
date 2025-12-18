@@ -46,6 +46,9 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
+    // Get database connection
+    $conn = getDBConnection();
+    
     // Get parameters
     $period = isset($_GET['period']) ? trim($_GET['period']) : 'weekly';
     $start_date = isset($_GET['start_date']) ? trim($_GET['start_date']) : null;
@@ -241,6 +244,23 @@ try {
     echo json_encode($response);
     
 } catch (Exception $e) {
+    // #region agent log
+    $log_data = [
+        'sessionId' => 'debug-session',
+        'runId' => 'run1',
+        'hypothesisId' => 'A',
+        'location' => 'api/admin/analytics/booking_trends.php:' . __LINE__,
+        'message' => 'Exception caught in analytics API',
+        'data' => [
+            'error_message' => $e->getMessage(),
+            'error_file' => $e->getFile(),
+            'error_line' => $e->getLine()
+        ],
+        'timestamp' => time() * 1000
+    ];
+    file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
+    // #endregion
+    
     // Log error
     error_log(json_encode([
         'timestamp' => date('Y-m-d H:i:s'),
@@ -250,12 +270,15 @@ try {
         'line' => $e->getLine()
     ]), 3, '../../../logs/admin_errors.log');
     
+    // Ensure JSON response (not HTML)
     http_response_code(500);
+    header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
         'error' => [
             'code' => 'DATABASE_ERROR',
-            'message' => 'An error occurred while fetching analytics data'
+            'message' => 'An error occurred while fetching analytics data: ' . $e->getMessage()
         ]
     ]);
+    exit;
 }

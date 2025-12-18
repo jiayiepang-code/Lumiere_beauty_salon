@@ -69,6 +69,10 @@
             }
             
             try {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'footer.php:72', message: 'Initiating logout request', data: {basePath: basePath, url: `${basePath}/api/admin/auth/logout.php`}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H2'})}).catch(() => {});
+                // #endregion
+
                 const response = await fetch(`${basePath}/api/admin/auth/logout.php`, {
                     method: 'POST',
                     headers: {
@@ -76,7 +80,25 @@
                     }
                 });
                 
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'footer.php:82', message: 'Logout response received', data: {status: response.status, statusText: response.statusText, contentType: response.headers.get('content-type'), ok: response.ok}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H2'})}).catch(() => {});
+                // #endregion
+
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'footer.php:88', message: 'Non-JSON response from logout API', data: {status: response.status, contentType: contentType, responseText: text.substring(0, 200)}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H2'})}).catch(() => {});
+                    // #endregion
+                    throw new Error('Server returned non-JSON response');
+                }
+                
                 const data = await response.json();
+                
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'footer.php:95', message: 'Logout data parsed', data: {success: data.success, hasRedirect: !!data.redirect, redirect: data.redirect, message: data.message}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H2'})}).catch(() => {});
+                // #endregion
                 
                 if (data.success) {
                     Swal.fire({
@@ -87,7 +109,15 @@
                         timer: 1500,
                         timerProgressBar: true
                     }).then(() => {
-                        window.location.href = data.redirect || `${basePath}/admin/login.html`;
+                        // Redirect to user index.php (homepage)
+                        // Construct absolute path using basePath to avoid relative path issues
+                        const redirectUrl = data.redirect ? 
+                            (data.redirect.startsWith('/') ? data.redirect : `${basePath}/${data.redirect.replace(/^\.\.\//g, '')}`) :
+                            `${basePath}/user/index.php`;
+                        // #region agent log
+                        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'footer.php:107', message: 'Redirecting after successful logout', data: {redirectUrl: redirectUrl, apiRedirect: data.redirect, basePath: basePath, currentPath: window.location.pathname}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H2'})}).catch(() => {});
+                        // #endregion
+                        window.location.href = redirectUrl;
                     });
                 } else {
                     Swal.fire({
@@ -95,10 +125,16 @@
                         text: data.message || 'Logout failed. Please try again.',
                         icon: 'error',
                         confirmButtonColor: '#c29076'
+                    }).then(() => {
+                        // Still redirect to homepage even on error
+                        window.location.href = data.redirect || `${basePath}/user/index.php`;
                     });
                 }
             } catch (error) {
                 console.error('Logout error:', error);
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'footer.php:118', message: 'Logout exception caught', data: {errorMessage: error.message, errorStack: error.stack?.substring(0, 200)}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H2'})}).catch(() => {});
+                // #endregion
                 Swal.fire({
                     title: 'Error!',
                     text: 'An error occurred during logout. Redirecting...',
@@ -107,7 +143,8 @@
                     timer: 2000,
                     timerProgressBar: true
                 }).then(() => {
-                    window.location.href = `${basePath}/admin/login.html`;
+                    // Redirect to user homepage instead of admin login
+                    window.location.href = `${basePath}/user/index.php`;
                 });
             }
         }

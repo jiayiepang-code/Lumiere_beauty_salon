@@ -152,6 +152,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
+            <div class="switch-form" style="text-align: right; margin-bottom: 15px;">
+                <a href="forgot-password.php" style="color: #968073; font-size: 14px;">Forgot password?</a>
+            </div>
+
             <button type="button" class="submit-btn" style="background: #968073;" onclick="validateStaffLogin()">STAFF LOGIN</button>
             
             <div class="switch-form">

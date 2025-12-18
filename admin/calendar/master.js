@@ -248,6 +248,15 @@ async function initializeCalendar() {
 async function loadStaffList() {
   try {
     const response = await fetch("../../api/admin/staff/list.php");
+    
+    // Check if response is JSON
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error("Error loading staff list: Server returned non-JSON response", text.substring(0, 200));
+      return;
+    }
+    
     const data = await response.json();
 
     if (data.success) {
@@ -262,6 +271,8 @@ async function loadStaffList() {
           staffFilter.appendChild(option);
         }
       });
+    } else {
+      console.error("Error loading staff list:", data.error);
     }
   } catch (error) {
     console.error("Error loading staff list:", error);

@@ -430,7 +430,7 @@ img {
     display: none; 
 }
 .password-strength-bar { height: 100%; width: 0; transition: 0.3s; }
-.strength-text { position: absolute; top: 58px; left: 2px; font-size: 12px; font-weight: 600; color: var(--text-light); }
+.strength-text { margin-bottom: 10px; position: absolute; top: 58px; left: 2px; font-size: 12px; font-weight: 600; color: var(--text-light); }
 
 /* Bar Colors */
 .bar-weak { background-color: var(--error-color); }
@@ -498,7 +498,7 @@ img {
     height: 18px;
     border: 2px solid #c89b7b;
     border-radius: 4px;
-    background-color: transparent;
+    background-color: transparent;   /* empty box when unchecked */
     display: flex;
     align-items: center;
     justify-content: center;   /* Center the checkmark */
@@ -507,15 +507,16 @@ img {
 
 /* Checked state */
 .custom-checkbox.checked {
-    background-color: #c89b7b;
+    background-color: #c89b7b;  /* filled brown when checked */
     border-color: #c89b7b;
 }
 
 /* Tick icon */
 .custom-checkbox.checked::after {
     content: "✔";
-    font-size: 12px;
-    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ffffff;            /* white tick on brown background */
     line-height: 1;
 }
 
@@ -532,7 +533,7 @@ img {
     padding: 15px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.12);
     z-index: 50;
-    margin-top: 6px;
+    margin-top: 12px;
 }
 
 #passwordHints p {
@@ -588,8 +589,12 @@ img {
 }
 
 .password-strength {
+    position: static;      /* override earlier absolute positioning */
+    top: auto;
+    left: auto;
+    display: block;
     margin-top: 6px;
-    margin-bottom: 8px;   /* 🔥 Add this */
+    margin-bottom: 8px;   /* space below the bar */
     width: 100%;
     height: 4px;
     background: #eee;
@@ -601,12 +606,16 @@ img {
     width: 0%;
     transition: width 0.3s ease, background 0.3s ease;
 }
-
 .strength-text {
-    margin-top: 4px;
-    margin-bottom: 10px; /* 🔥 Add this */
+    position: static;      /* override earlier absolute positioning */
+    top: auto;
+    left: auto;
+    display: block;
+    margin-top: 8px;
+    margin-bottom: 8px;   /* reduce gap before confirm password */
     font-size: 13px;
     font-weight: 600;
+    color: var(--text-light);
 }
 
 /* Add spacing above confirm password field */
@@ -622,9 +631,6 @@ img {
     transform: translateY(-50%);
 }
 
-#step-group-2 .confirm-password-group {
-    margin-top: 35px !important;
-}
 
 /* More accurate selector for your layout */
 #step-group-2 .form-group:nth-of-type(3) .input-wrapper .input-icon {
@@ -933,6 +939,25 @@ img {
     position: relative;
     display: block !important;
     visibility: visible !important;
+    align-self: flex-start; /* Align to top */
+}
+
+/* Ensure booking page row aligns items at top */
+.booking-page-bg .row,
+.container .row {
+    align-items: flex-start;
+}
+
+/* Ensure both columns start at same height */
+.container .row .col-lg-8,
+.container .row .col-lg-4 {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+/* Match booking summary border radius and padding to card */
+.booking-summary {
+    border-radius: 22px; /* Match card border radius */
 }
 
 /* LEFT SIDE (steps: calendar / services / staff / customer info) */
@@ -1143,7 +1168,8 @@ img {
     border: none; 
     padding: 28px 30px; 
     background: #fff; 
-    box-shadow: 0 22px 40px rgba(0,0,0,0.06); 
+    box-shadow: 0 22px 40px rgba(0,0,0,0.06);
+    margin-top: 0; /* Ensure no top margin */
 }
 
 .booking-step .card-header { 
@@ -1412,6 +1438,9 @@ img {
     height: 45px;
     border-radius: 50%;
     background-color: #5c4b45;
+    color: #f4e2d6; /* make the IG / FB / TT text visible on dark bg */
+    font-weight: 600;
+    font-size: 13px;
     text-decoration: none;
     transition: all 0.3s ease;
     border: 1px solid #7c6a65;
@@ -1749,6 +1778,8 @@ body {
     min-height: 400px;
     display: flex;
     flex-direction: column;
+    align-self: flex-start; /* Align to top of flex container */
+    margin-top: 0; /* Ensure no top margin to align with services card */
 }
 
 .summary-list {

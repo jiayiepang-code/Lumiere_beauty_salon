@@ -372,19 +372,19 @@
     </div>
 
     <div class="schedule-container" style="margin-top: 2rem;">
-        <div class="page-header"><h1 class="page-title">Month Schedule</h1></div>
+        <div class="page-header"><h1 class="page-title">Monthly Schedule</h1></div>
 
         <section class="date-picker-section">
           <div class="date-picker-container">
             <label for="monthPicker">Select Month:</label>
             <input type="month" id="monthPicker" class="date-input">
-            <button class="btn-primary" onclick="loadMonthAppointments()">Load Month Schedule</button>
+            <button class="btn-primary" onclick="loadMonthAppointments()">Load Monthly Schedule</button>
           </div>
         </section>
 
         <section class="appointments-section">
           <div class="appointments-header">
-            <h2 class="appointments-title" id="monthScheduleTitle">Month Schedule</h2>
+            <h2 class="appointments-title" id="monthScheduleTitle">Monthly Schedule</h2>
             <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
               <div class="legend">
                 <div class="legend-item"><div class="legend-color green"></div><span>Confirmed (Booking is created)</span></div>
@@ -499,15 +499,15 @@ async function logout() {
             const data = await response.json();
             
             if (data.success) {
-                // Redirect to user index page
-                window.location.href = '../user/index.php';
+                // Redirect to login page
+                window.location.href = 'login.html';
             } else {
                 alert('Logout failed. Please try again.');
             }
         } catch (error) {
             console.error('Logout error:', error);
-            // Even if API fails, redirect to user index
-            window.location.href = '../user/index.php';
+            // Even if API fails, redirect to login
+            window.location.href = 'login.html';
         }
     }
 }
@@ -639,11 +639,31 @@ async function loadAppointments(){
   const selectedStatus=statusFilter?statusFilter.value:'';
   const titleEl=document.querySelector('.appointments-title');
   
+  // Validate date is selected
+  if(!date){
+    alert('Please select a date first');
+    return;
+  }
+  
   grid.innerHTML='<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>Loading...</h3></div>';
   
   try{
-    const response=await fetch(`api/appointments.php?date=${date}`);
+    // Validate date format (YYYY-MM-DD)
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){
+      throw new Error('Invalid date format. Please select a valid date.');
+    }
+    
+    // URL encode the date to ensure proper transmission
+    const encodedDate=encodeURIComponent(date);
+    console.log('Loading appointments for date:', date);
+    const response=await fetch(`api/appointments.php?date=${encodedDate}`);
+    
+    if(!response.ok){
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const data=await response.json();
+    console.log('Appointments data received:', data);
     
     if(!data.success){
       throw new Error(data.error||'Failed to load appointments');
@@ -712,7 +732,8 @@ async function loadAppointments(){
     });
   }catch(error){
     console.error('Error loading appointments:',error);
-    grid.innerHTML=`<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>${error.message}</p></div>`;
+    console.error('Date used:', date);
+    grid.innerHTML=`<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><h3>Error</h3><p>${error.message}</p><p style="font-size: 0.9rem; color: #666; margin-top: 10px;">Date: ${date || 'Not selected'}</p></div>`;
   }
 }
 
@@ -740,12 +761,21 @@ async function updateStatus(bookingId,status){
 
 document.addEventListener('DOMContentLoaded',function(){
   const dateInput=document.getElementById('datePicker');
-  dateInput.value=new Date().toISOString().split('T')[0];
+  // Set default to today if not already set
+  if(!dateInput.value){
+    dateInput.value=new Date().toISOString().split('T')[0];
+  }
+  
+  // Add event listener to load appointments when date changes
+  dateInput.addEventListener('change', function(){
+    loadAppointments();
+  });
   
   const monthPicker=document.getElementById('monthPicker');
   const today=new Date();
   monthPicker.value=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
   
+  // Load appointments for the selected date (or today if none selected)
   loadAppointments();
   // Call loadMonthAppointments() on load to apply the default 'confirmed' status
   loadMonthAppointments(); 

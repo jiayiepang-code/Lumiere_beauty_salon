@@ -203,21 +203,40 @@ function validateStep3() {
     formData.append('password', password);
     formData.append('captcha', captcha);
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:validateStep3',message:'Registration submission started',data:{firstName:firstName,lastName:lastName,phone:phone,email:email,hasPassword:!!password,hasCaptcha:!!captcha},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+    // #endregion agent log
+    
     // 3. Send to PHP
     fetch('register.php', {
         method: 'POST',
         body: formData
     })
     .then(response => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:validateStep3',message:'Registration fetch response received',data:{ok:response.ok,status:response.status,statusText:response.statusText,contentType:response.headers.get('content-type')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+        // #endregion agent log
+        
         // Check if response is ok
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Network response was not ok: ' + response.status + ' ' + response.statusText);
         }
         // Try to parse as JSON
         return response.text().then(text => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:validateStep3',message:'Registration response text received',data:{textLength:text.length,textPreview:text.substring(0,200),isJSON:false},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+            // #endregion agent log
+            
             try {
-                return JSON.parse(text);
+                const parsed = JSON.parse(text);
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:validateStep3',message:'Registration response parsed as JSON',data:{status:parsed.status,hasMessage:!!parsed.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                // #endregion agent log
+                return parsed;
             } catch(e) {
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:validateStep3',message:'JSON parse error',data:{errorMessage:e.message,textPreview:text.substring(0,200)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
+                // #endregion agent log
                 console.error('Invalid JSON response:', text);
                 throw new Error('Invalid response from server: ' + text.substring(0, 100));
             }
@@ -237,12 +256,17 @@ function validateStep3() {
             document.getElementById('step3Error').style.display = 'block';
             
             // Refresh CAPTCHA because the old one is now invalid
-            refreshRegisterCaptcha(); 
+            if (typeof refreshRegisterCaptcha === 'function') {
+                refreshRegisterCaptcha(null);
+            }
         }
     })
     .catch(error => {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:validateStep3',message:'Registration submission error',data:{errorMessage:error.message,errorStack:error.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'J'})}).catch(()=>{});
+        // #endregion agent log
         console.error('Error:', error);
-        document.getElementById('step3Error').innerText = 'Connection error. Please check your internet connection and try again.';
+        document.getElementById('step3Error').innerText = 'Error: ' + (error.message || 'Connection error. Please check your internet connection and try again.');
         document.getElementById('step3Error').style.display = 'block';
     });
 }
@@ -320,6 +344,14 @@ if (passwordInput && passwordHints) {
     });
 }
 
+// Show Password Hints Function (called from onfocus attribute)
+function showPasswordHints() {
+    const hints = document.getElementById("passwordHints");
+    if (hints) {
+        hints.style.display = "block";
+    }
+}
+
 // Global variable to store password strength
 let passwordStrength = 'weak';
 let isPasswordStrong = false;
@@ -331,6 +363,25 @@ function checkPasswordRules() {
     const text = document.getElementById('strengthText');
     const strengthContainer = document.querySelector('.password-strength');
     const nextStepBtn = document.querySelector('#step-group-2 .submit-btn');
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sessionId: 'debug-session',
+            runId: 'pre-fix',
+            hypothesisId: 'A',
+            location: 'js/script.js:checkPasswordRules:before-display',
+            message: 'Password strength DOM before layout changes',
+            data: {
+                hasStrengthContainer: !!strengthContainer,
+                hasTextEl: !!text
+            },
+            timestamp: Date.now()
+        })
+    }).catch(()=>{});
+    // #endregion
 
     // Show bars
     if (strengthContainer) strengthContainer.style.display = "block";
@@ -363,6 +414,26 @@ function checkPasswordRules() {
 
     // Check if ALL 5 rules are met (strong password)
     isPasswordStrong = validCount === 5;
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sessionId: 'debug-session',
+            runId: 'pre-fix',
+            hypothesisId: 'B',
+            location: 'js/script.js:checkPasswordRules:after-calc',
+            message: 'Password rule counts and strength classification',
+            data: {
+                validCount,
+                isPasswordStrong,
+                passwordStrengthBefore: passwordStrength
+            },
+            timestamp: Date.now()
+        })
+    }).catch(()=>{});
+    // #endregion
 
     if (validCount <= 1) {
         bar.style.width = '25%';
@@ -408,6 +479,25 @@ function checkPasswordRules() {
             nextStepBtn.style.cursor = 'not-allowed';
         }
     }
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            sessionId: 'debug-session',
+            runId: 'pre-fix',
+            hypothesisId: 'C',
+            location: 'js/script.js:checkPasswordRules:end',
+            message: 'Password strength UI final state',
+            data: {
+                passwordStrength,
+                nextStepDisabled: nextStepBtn ? nextStepBtn.disabled : null
+            },
+            timestamp: Date.now()
+        })
+    }).catch(()=>{});
+    // #endregion
 }
 
 // Remember Me Checkbox
@@ -538,14 +628,38 @@ function validateStaffLogin() {
 
 // CAPTCHA Refresh
 function refreshRegisterCaptcha(event) {
-    event.preventDefault(); // ⛔ stop page reload
+    if (event) event.preventDefault(); // ⛔ stop page reload
+
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:refreshRegisterCaptcha',message:'CAPTCHA refresh initiated',data:{currentUrl:window.location.href},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'K'})}).catch(()=>{});
+    // #endregion agent log
 
     // Refresh CAPTCHA from root-level script
     fetch("refresh_captcha.php")
-        .then(response => response.text())
+        .then(response => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:refreshRegisterCaptcha',message:'CAPTCHA fetch response',data:{ok:response.ok,status:response.status,statusText:response.statusText},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'L'})}).catch(()=>{});
+            // #endregion agent log
+            if (!response.ok) {
+                throw new Error('Failed to refresh CAPTCHA: ' + response.statusText);
+            }
+            return response.text();
+        })
         .then(newCode => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:refreshRegisterCaptcha',message:'CAPTCHA code received',data:{codeLength:newCode.length,codePreview:newCode.substring(0,5)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'M'})}).catch(()=>{});
+            // #endregion agent log
             let captchaBox = document.getElementById("registerCaptchaCode");
-            captchaBox.textContent = newCode;
-            captchaBox.dataset.code = newCode;
+            if (captchaBox) {
+                captchaBox.textContent = newCode;
+                captchaBox.dataset.code = newCode;
+            }
+        })
+        .catch(error => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:refreshRegisterCaptcha',message:'CAPTCHA refresh error',data:{errorMessage:error.message,errorStack:error.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'N'})}).catch(()=>{});
+            // #endregion agent log
+            console.error('Error refreshing CAPTCHA:', error);
+            alert('Failed to refresh CAPTCHA. Please try again.');
         });
 }

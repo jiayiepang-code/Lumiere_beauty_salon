@@ -411,7 +411,7 @@ include '../includes/header.php';
                         <polyline points="12 6 12 12 16 14"></polyline>
                     </svg>
                 </div>
-                <div class="card-info-btn" data-tooltip="Total hours actually used = Sum of service duration + cleanup time">
+                <div class="card-info-btn" data-tooltip="Total hours actually used: service duration + cleanup time">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -830,20 +830,22 @@ include '../includes/header.php';
     transform: translateX(-50%);
     background: #2d2d2d;
     color: #fff;
-    padding: 10px 12px;
-    border-radius: 0;
+    padding: 10px 14px;
+    border-radius: 6px;
     font-size: 0.85rem;
-    line-height: 1.4;
+    line-height: 1.5;
     white-space: normal;
+    word-wrap: break-word;
     word-break: break-word;
-    max-width: 260px;
+    max-width: 300px;
+    min-width: 200px;
     width: max-content;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease, transform 0.25s ease;
     z-index: 10;
     box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-    text-align: center;
+    text-align: left;
 }
 
 .card-info-btn::before {

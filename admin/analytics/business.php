@@ -142,7 +142,7 @@ include '../includes/header.php';
             <!-- Total Revenue Card -->
             <div class="summary-card">
                 <div class="summary-icon" style="background-color: rgba(194, 144, 118, 0.1); color: #c29076;">
-                    <i class="fas fa-coins"></i>
+                    <i class="fas fa-dollar-sign" aria-hidden="true"></i>
                 </div>
                 <div class="summary-info">
                     <h3>Total Revenue</h3>
@@ -154,7 +154,7 @@ include '../includes/header.php';
             <!-- Commission Paid Card -->
             <div class="summary-card">
                 <div class="summary-icon" style="background-color: rgba(76, 175, 80, 0.1); color: #4CAF50;">
-                    <i class="fas fa-hand-holding-usd"></i>
+                    <i class="fas fa-money-bill-wave" aria-hidden="true"></i>
                 </div>
                 <div class="summary-info">
                     <h3>Commission Paid</h3>
@@ -166,7 +166,7 @@ include '../includes/header.php';
             <!-- Booking Volume Card -->
             <div class="summary-card">
                 <div class="summary-icon" style="background-color: rgba(33, 150, 243, 0.1); color: #2196F3;">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
                 </div>
                 <div class="summary-info">
                     <h3>Booking Volume</h3>
@@ -339,6 +339,9 @@ include '../includes/header.php';
         </div>
     </div>
 </div>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>

@@ -536,17 +536,47 @@ async function handleFormSubmit(e) {
       console.error("API Error Response:", errorText);
       try {
         const errorData = JSON.parse(errorText);
-        if (errorData.error?.details) {
-          displayErrors(errorData.error.details);
-        } else {
-          Swal.fire({
-            title: "Error",
-            text:
-              errorData.error?.message || `Server error: ${response.status}`,
-            icon: "error",
-            confirmButtonColor: "#c29076",
-          });
+      
+      if (errorData.error?.details) {
+        displayErrors(errorData.error.details);
+        // Show alert with detailed error messages
+        let errorMessages = [];
+        if (errorData.error.details.phone) {
+          errorMessages.push('Phone: ' + errorData.error.details.phone);
         }
+        if (errorData.error.details.password) {
+          errorMessages.push('Password: ' + errorData.error.details.password);
+        }
+        if (errorData.error.details.staff_email) {
+          errorMessages.push('Email: ' + errorData.error.details.staff_email);
+        }
+        if (errorData.error.details.first_name) {
+          errorMessages.push('First Name: ' + errorData.error.details.first_name);
+        }
+        if (errorData.error.details.last_name) {
+          errorMessages.push('Last Name: ' + errorData.error.details.last_name);
+        }
+        if (errorData.error.details.role) {
+          errorMessages.push('Role: ' + errorData.error.details.role);
+        }
+        
+        Swal.fire({
+          title: "Validation Error",
+          html: errorMessages.length > 0 
+            ? errorMessages.join('<br>') 
+            : (errorData.error?.message || 'Please check the form for errors'),
+          icon: "error",
+          confirmButtonColor: "#c29076",
+        });
+      } else {
+        Swal.fire({
+          title: "Error",
+          text:
+            errorData.error?.message || `Server error: ${response.status}`,
+          icon: "error",
+          confirmButtonColor: "#c29076",
+        });
+      }
       } catch (e) {
         Swal.fire({
           title: "Error",
@@ -597,10 +627,32 @@ async function handleFormSubmit(e) {
     } else {
       if (data.error?.details) {
         displayErrors(data.error.details);
-        // Also show a general error message
+        // Show alert with detailed error messages
+        let errorMessages = [];
+        if (data.error.details.phone) {
+          errorMessages.push('Phone: ' + data.error.details.phone);
+        }
+        if (data.error.details.password) {
+          errorMessages.push('Password: ' + data.error.details.password);
+        }
+        if (data.error.details.staff_email) {
+          errorMessages.push('Email: ' + data.error.details.staff_email);
+        }
+        if (data.error.details.first_name) {
+          errorMessages.push('First Name: ' + data.error.details.first_name);
+        }
+        if (data.error.details.last_name) {
+          errorMessages.push('Last Name: ' + data.error.details.last_name);
+        }
+        if (data.error.details.role) {
+          errorMessages.push('Role: ' + data.error.details.role);
+        }
+        
         Swal.fire({
           title: "Validation Error",
-          text: data.error?.message || "Please check the form for errors",
+          html: errorMessages.length > 0 
+            ? errorMessages.join('<br>') 
+            : (data.error?.message || 'Please check the form for errors'),
           icon: "error",
           confirmButtonColor: "#c29076",
         });

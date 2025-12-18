@@ -4,7 +4,29 @@
  * Handles staff account creation with image upload support
  */
 
+// Suppress PHP warnings/errors from being displayed in JSON responses
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+ini_set('log_errors', '1');
+
+// Start output buffering to prevent any stray output from corrupting JSON
+ob_start();
+
 header('Content-Type: application/json');
+
+// Helper function to safely write debug logs
+function safeLogDebug($data) {
+    $log_dir = __DIR__ . '/../../.cursor';
+    $log_file = $log_dir . '/debug.log';
+    
+    // Create directory if it doesn't exist
+    if (!is_dir($log_dir)) {
+        @mkdir($log_dir, 0777, true);
+    }
+    
+    // Use @ to suppress any warnings if write fails
+    @file_put_contents($log_file, json_encode($data) . "\n", FILE_APPEND);
+}
 
 // Include required files
 // Note: auth_check.php handles session start with proper secure configuration
@@ -178,35 +200,71 @@ try {
     // Hash password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     
-    // Insert new staff account
+    // Insert new staff account (removed bio column as it doesn't exist in database)
     $sql = "INSERT INTO staff (staff_email, phone, password, first_name, last_name, 
-                               bio, role, staff_image, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                               role, staff_image, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    
+    // #region agent log
+    safeLogDebug([
+        'sessionId' => 'debug-session',
+        'runId' => 'run1',
+        'hypothesisId' => 'C,D',
+        'location' => 'api/admin/staff/create.php:' . __LINE__,
+        'message' => 'Preparing database insert',
+        'data' => ['sql' => $sql, 'staff_email' => $staff_email, 'first_name' => $first_name, 'last_name' => $last_name],
+        'timestamp' => time() * 1000
+    ]);
+    // #endregion
     
     $stmt = $conn->prepare($sql);
     if (!$stmt) {
+        // #region agent log
+        safeLogDebug([
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'C,D',
+            'location' => 'api/admin/staff/create.php:' . __LINE__,
+            'message' => 'Failed to prepare statement',
+            'data' => ['error' => $conn->error],
+            'timestamp' => time() * 1000
+        ]);
+        // #endregion
         throw new Exception('Failed to prepare statement: ' . $conn->error);
     }
     
     // Handle NULL values properly
-    $bio_value = ($bio === null || $bio === '') ? null : $bio;
     $staff_image_value = ($staff_image === null || $staff_image === '') ? null : $staff_image;
     
-    $stmt->bind_param("ssssssssi", 
+    $stmt->bind_param("sssssssi", 
         $staff_email,
         $phone,
         $hashed_password,
         $first_name,
         $last_name,
-        $bio_value,
         $role,
         $staff_image_value,
         $is_active
     );
     
     if ($stmt->execute()) {
+        // #region agent log
+        safeLogDebug([
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'C,D',
+            'location' => 'api/admin/staff/create.php:' . __LINE__,
+            'message' => 'Database insert successful',
+            'data' => ['staff_email' => $staff_email],
+            'timestamp' => time() * 1000
+        ]);
+        // #endregion
+        
         $stmt->close();
         $conn->close();
+        
+        // Clean any output buffer before sending JSON
+        ob_clean();
         
         http_response_code(201);
         echo json_encode([
@@ -214,7 +272,19 @@ try {
             'staff_email' => $staff_email,
             'message' => 'Staff account created successfully'
         ]);
+        ob_end_flush();
     } else {
+        // #region agent log
+        safeLogDebug([
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'C,D',
+            'location' => 'api/admin/staff/create.php:' . __LINE__,
+            'message' => 'Database insert failed',
+            'data' => ['error' => $stmt->error, 'errno' => $stmt->errno],
+            'timestamp' => time() * 1000
+        ]);
+        // #endregion
         throw new Exception('Failed to create staff account: ' . $stmt->error);
     }
     

@@ -35,6 +35,11 @@ class ErrorHandler {
      * @param int $http_code HTTP status code
      */
     public static function sendError($code, $message, $details = null, $http_code = 400) {
+        // Clean any output buffer to prevent PHP warnings/errors from corrupting JSON
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+        
         http_response_code($http_code);
         
         $response = [
@@ -51,6 +56,9 @@ class ErrorHandler {
         
         header('Content-Type: application/json');
         echo json_encode($response);
+        if (ob_get_level() > 0) {
+            ob_end_flush();
+        }
         exit;
     }
     

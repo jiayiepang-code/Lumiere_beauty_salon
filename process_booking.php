@@ -1,9 +1,31 @@
 <?php
+// Suppress PHP warnings/errors from being displayed in JSON responses
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+ini_set('log_errors', '1');
+
+// Start output buffering to prevent any stray output from corrupting JSON
+ob_start();
+
 session_start();
 require_once 'config/database.php';
 require 'mailer.php';
 
 header('Content-Type: application/json');
+
+// Helper function to safely write debug logs
+function safeLogDebug($data) {
+    $log_dir = __DIR__ . '/.cursor';
+    $log_file = $log_dir . '/debug.log';
+    
+    // Create directory if it doesn't exist
+    if (!is_dir($log_dir)) {
+        @mkdir($log_dir, 0777, true);
+    }
+    
+    // Use @ to suppress any warnings if write fails
+    @file_put_contents($log_file, json_encode($data) . "\n", FILE_APPEND);
+}
 
 /**
  * Get a random available staff member for a service
@@ -480,13 +502,13 @@ try {
         } else {
             error_log('Confirmation email sent successfully for booking ' . $bookingId);
             // #region agent log
-            file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'process_booking.php:' . __LINE__, 'message' => 'Email sent successfully', 'data' => ['bookingId' => $bookingId, 'customerEmail' => $customerEmail], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'F']) . "\n", FILE_APPEND);
+            safeLogDebug(['location' => 'process_booking.php:' . __LINE__, 'message' => 'Email sent successfully', 'data' => ['bookingId' => $bookingId, 'customerEmail' => $customerEmail], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'F']);
             // #endregion agent log
         }
     } catch (Exception $emailEx) {
         error_log('Exception sending confirmation email for booking ' . $bookingId . ': ' . $emailEx->getMessage());
         // #region agent log
-        file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'process_booking.php:' . __LINE__, 'message' => 'Exception in email sending', 'data' => ['bookingId' => $bookingId, 'exception' => $emailEx->getMessage()], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'G']) . "\n", FILE_APPEND);
+        safeLogDebug(['location' => 'process_booking.php:' . __LINE__, 'message' => 'Exception in email sending', 'data' => ['bookingId' => $bookingId, 'exception' => $emailEx->getMessage()], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'G']);
         // #endregion agent log
         // Don't fail the booking if email fails
     }

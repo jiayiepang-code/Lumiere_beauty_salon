@@ -1453,19 +1453,26 @@
 
         document.addEventListener('DOMContentLoaded', function () {
             const dateInput = document.getElementById('metricDate');
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.setAttribute('max', today);
-            dateInput.value = today;
+            // Get today's date in local timezone to avoid timezone issues
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const todayFormatted = `${year}-${month}-${day}`;
+            
+            // Always set to today's date
+            dateInput.setAttribute('max', todayFormatted);
+            dateInput.value = todayFormatted;
 
             formatMetricDateDisplay();
             dateInput.addEventListener('change', formatMetricDateDisplay);
             dateInput.addEventListener('blur', formatMetricDateDisplay);
 
             const currentMonth = new Date();
-            const year = currentMonth.getFullYear();
-            const month = String(currentMonth.getMonth() + 1).padStart(2, '0');
-            document.getElementById('monthlySelector').value = `${year}-${month}`;
-            document.getElementById('targetMonth').value = `${year}-${month}`;
+            const currentYear = currentMonth.getFullYear();
+            const currentMonthNum = String(currentMonth.getMonth() + 1).padStart(2, '0');
+            document.getElementById('monthlySelector').value = `${currentYear}-${currentMonthNum}`;
+            document.getElementById('targetMonth').value = `${currentYear}-${currentMonthNum}`;
 
             loadPerformanceData();
             loadStaffProfile();
@@ -1482,8 +1489,13 @@
                 }
 
                 performanceData = data;
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('metricDate').value = today;
+                // Get today's date in local timezone to avoid timezone issues
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                const todayFormatted = `${year}-${month}-${day}`;
+                document.getElementById('metricDate').value = todayFormatted;
 
                 updateCompletedAppointments();
                 updateRanking();
@@ -1525,11 +1537,23 @@
             const completedValueElement = document.getElementById('completedAppointmentsValue');
             const completedChangeElement = document.getElementById('completedAppointmentsChange');
 
-            let date = new Date(selectedDate);
+            if (!selectedDate) {
+                completedValueElement.textContent = '0';
+                completedChangeElement.textContent = 'Please select a date';
+                completedChangeElement.className = 'metric-change';
+                return;
+            }
+
+            // Properly compare dates by normalizing both to local midnight
+            const [year, month, day] = selectedDate.split('-');
+            const selectedDateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+            selectedDateObj.setHours(0, 0, 0, 0);
+            
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            if (date > today) {
+            // Only block dates that are in the future (after today)
+            if (selectedDateObj > today) {
                 completedValueElement.textContent = '0';
                 completedChangeElement.textContent = 'Future Date Selected';
                 completedChangeElement.className = 'metric-change';
@@ -2119,42 +2143,24 @@
 
                 const data = await response.json();
 
-                // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission',message:'Target commission save response',data:{success:data.success,target:data.target,month:data.month,error:data.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-                // #endregion agent log
-
                 if (data.success) {
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-success',message:'Target saved successfully, preparing to reload',data:{savedTarget:data.target,savedMonth:data.month,currentMonth:targetMonth},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-                    // #endregion agent log
-                    
-                    // Clear input field first
+                    // Clear input field
                     document.getElementById('targetAmount').value = '';
                     
-                    // Force reload with the same month that was just saved
+                    // Ensure the month selector is set to the saved month
                     const savedMonth = data.month || targetMonth;
-                    if (savedMonth) {
-                        document.getElementById('targetMonth').value = savedMonth;
-                        // #region agent log
-                        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-monthSet',message:'Month selector updated',data:{savedMonth:savedMonth,monthSelectorValue:document.getElementById('targetMonth').value},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'B'})}).catch(()=>{});
-                        // #endregion agent log
-                    }
+                    document.getElementById('targetMonth').value = savedMonth;
                     
-                    // Reload target commission data BEFORE showing alert to ensure UI updates
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-beforeLoad',message:'About to call loadTargetCommission',data:{monthToLoad:savedMonth || targetMonth},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-                    // #endregion agent log
+                    // Small delay to ensure database is updated, then reload
+                    await new Promise(resolve => setTimeout(resolve, 100));
                     
+                    // Reload target commission data
                     await loadTargetCommission();
                     
-                    // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-afterLoad',message:'loadTargetCommission completed',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
-                    // #endregion agent log
-                    
-                    // Show success message after UI has updated
+                    // Show success message
                     alert('Target commission saved successfully!');
                 } else {
-                    alert('Failed to save target: ' + (data.error || 'Unknown error'));
+                    alert('Failed to save target commission: ' + (data.error || 'Unknown error'));
                 }
             } catch (error) {
                 console.error('Error saving target commission:', error);

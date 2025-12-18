@@ -23,16 +23,22 @@ $currentUrlEncoded = urlencode($currentUrl);
 
 // Determine base path for navigation links based on where header is included from
 $currentScript = $_SERVER['PHP_SELF'] ?? '';
-$basePath = '';
-if (strpos($currentScript, '/booking.php') !== false) {
-    // If included from booking.php (in root), links should go to user/ directory
-    $basePath = 'user/';
-    $imagePath = 'images/';
-} else {
-    // If included from user pages, use relative paths
-    $basePath = '';
-    $imagePath = '../images/';
-}
+
+// Are we currently in the /user/ folder?
+$inUserFolder = strpos($currentScript, '/user/') !== false;
+
+// Used for user-facing nav links (Home, Services, Team, Contact)
+// - From booking.php (root) → go into user/ (e.g. user/index.php)
+// - From user/*.php       → stay in current folder (e.g. index.php)
+$basePath = strpos($currentScript, '/booking.php') !== false ? 'user/' : '';
+
+// Prefix needed to reach root-level scripts like login.php, register.php, logout.php, booking.php
+// - From /user/*.php      → '../'
+// - From root pages       → ''
+$rootPrefix = $inUserFolder ? '../' : '';
+
+// Image paths
+$imagePath = $inUserFolder ? '../images/' : 'images/';
 // #region agent log
 file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'includes/header.php:' . __LINE__, 'message' => 'Header path resolution', 'data' => ['currentScript' => $currentScript, 'basePath' => $basePath, 'imagePath' => $imagePath, 'isLoggedIn' => $isLoggedIn], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'B']) . "\n", FILE_APPEND);
 // #endregion agent log
@@ -72,12 +78,12 @@ file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json
     <!-- BOOK NOW (forces login if guest) -->
     <?php if ($isLoggedIn): ?>
 <button class="book-btn"
-        onclick="window.location.href='<?php echo $basePath ? '../' : ''; ?>booking.php'">
+        onclick="window.location.href='<?php echo $rootPrefix; ?>booking.php'">
     Book Now
 </button>
 <?php else: ?>
 <button class="book-btn"
-        onclick="window.location.href='<?php echo $basePath ? '../' : ''; ?>login.php?redirect=' + encodeURIComponent('booking.php')">
+        onclick="window.location.href='<?php echo $rootPrefix; ?>login.php?redirect=' + encodeURIComponent('booking.php')">
     Book Now
 </button>
 <?php endif; ?>
@@ -120,7 +126,7 @@ file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json
 
     <div class="panel-divider"></div>
 
-    <a href="<?php echo $basePath ? '../' : ''; ?>logout.php" class="panel-logout">
+    <a href="<?php echo $rootPrefix; ?>logout.php" class="panel-logout">
         <img src="<?php echo $imagePath; ?>51.png" class="logout-img" alt="Logout">
         Logout
     </a>
@@ -144,14 +150,14 @@ file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json
             <ul class="panel-menu">
             <li>
                 <!-- OPEN LOGIN TAB -->
-                <a href="<?php echo $basePath ? '../' : ''; ?>login.php?mode=login&redirect=<?= $currentUrlEncoded ?>">
+                <a href="<?php echo $rootPrefix; ?>login.php?mode=login&redirect=<?= $currentUrlEncoded ?>">
                 Login
                 </a>
             </li>
 
             <li>
                 <!-- OPEN REGISTER TAB -->
-                <a href="<?php echo $basePath ? '../' : ''; ?>register.php?mode=register&redirect=<?= $currentUrlEncoded ?>">
+                <a href="<?php echo $rootPrefix; ?>register.php?mode=register&redirect=<?= $currentUrlEncoded ?>">
                 Register
                 </a>
             </li>

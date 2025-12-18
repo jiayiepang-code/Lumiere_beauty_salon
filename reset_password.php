@@ -180,7 +180,7 @@ if ($token) {
                         </div>
                     </div>
 
-                    <div class="form-group" style="margin-top: 20px;">
+                    <div class="form-group" style="margin-top: 8px;">
                         <div class="input-wrapper">
                             <img src="images/75.png" class="input-icon" alt="Confirm Password">
                             <input type="password" 

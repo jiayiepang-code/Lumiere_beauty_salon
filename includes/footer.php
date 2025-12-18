@@ -43,9 +43,18 @@ if (strpos($currentScript, '/booking.php') !== false) {
 
         <h4 style="margin-top:18px;">Follow Us</h4>
         <div class="footer-social-icons">
-            <a href="#" class="footer-social-circle">IG</a>
-            <a href="#" class="footer-social-circle">FB</a>
-            <a href="#" class="footer-social-circle">TT</a>
+            <!-- Instagram -->
+            <a href="#" class="footer-social-circle" aria-label="Visit our Instagram">
+                <img src="<?php echo $footerImagePath; ?>77.png" alt="Instagram">
+            </a>
+            <!-- Facebook -->
+            <a href="#" class="footer-social-circle" aria-label="Visit our Facebook">
+                <img src="<?php echo $footerImagePath; ?>76.png" alt="Facebook">
+            </a>
+            <!-- TikTok -->
+            <a href="#" class="footer-social-circle" aria-label="Visit our TikTok">
+                <img src="<?php echo $footerImagePath; ?>78.png" alt="TikTok">
+            </a>
         </div>
     </div>
 

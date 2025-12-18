@@ -137,16 +137,23 @@ try {
         $update_types .= "s";
     }
     
-    // Update bio if provided
-    if (isset($input['bio'])) {
-        $bio = trim($input['bio']);
-        if (strlen($bio) > 500) {
-            $conn->close();
-            ErrorHandler::handleValidationError(['bio' => 'Bio must not exceed 500 characters']);
+    // Update bio if provided and column exists
+    // Note: Only update bio if it's explicitly provided and not empty
+    // Skip if bio column doesn't exist in database
+    if (isset($input['bio']) && $input['bio'] !== '' && $input['bio'] !== null) {
+        // Check if bio column exists in the table
+        $check_bio_column = $conn->query("SHOW COLUMNS FROM staff LIKE 'bio'");
+        if ($check_bio_column && $check_bio_column->num_rows > 0) {
+            $bio = trim($input['bio']);
+            if (strlen($bio) > 500) {
+                $conn->close();
+                ErrorHandler::handleValidationError(['bio' => 'Bio must not exceed 500 characters']);
+            }
+            $update_fields[] = "bio = ?";
+            $update_values[] = $bio;
+            $update_types .= "s";
         }
-        $update_fields[] = "bio = ?";
-        $update_values[] = $bio ?: null;
-        $update_types .= "s";
+        // If column doesn't exist, silently skip bio update
     }
     
     // Update role if provided

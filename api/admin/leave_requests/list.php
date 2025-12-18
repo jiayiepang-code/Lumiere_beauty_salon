@@ -180,16 +180,24 @@ try {
     }
 
     // Summary stats
-    // Pending count: ALL pending requests (not filtered by month)
-    $pendingStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM leave_requests WHERE status = 'pending'");
-    $pendingCount = 0;
-    if ($pendingStmt) {
-        $pendingStmt->execute();
-        $res = $pendingStmt->get_result();
-        if ($row = $res->fetch_assoc()) {
-            $pendingCount = (int)$row['cnt'];
+    // Pending count: Match the filtering logic used for displayed requests
+    // If filters are applied, count only filtered pending requests
+    // If no filters, count all pending requests
+    if ($month !== null || $year !== null) {
+        // Filters are applied - count only the filtered pending requests (what's shown in table)
+        $pendingCount = count($requests);
+    } else {
+        // No filters - count all pending requests
+        $pendingStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM leave_requests WHERE status = 'pending'");
+        $pendingCount = 0;
+        if ($pendingStmt) {
+            $pendingStmt->execute();
+            $res = $pendingStmt->get_result();
+            if ($row = $res->fetch_assoc()) {
+                $pendingCount = (int)$row['cnt'];
+            }
+            $pendingStmt->close();
         }
-        $pendingStmt->close();
     }
 
     // Approved/Rejected: Filtered by selected month/year (or all if no filters)

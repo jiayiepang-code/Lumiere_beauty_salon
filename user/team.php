@@ -212,7 +212,7 @@ require_once '../includes/header.php';
 
 <?php
 if (file_exists('../includes/footer.php')) {
-    require_once '../includes/footer.php';
+require_once '../includes/footer.php';
 }
 ?>
 
@@ -248,6 +248,34 @@ function filterSelection(c) {
     w3RemoveClass(x[i], "show");
     if (x[i].className.indexOf(c) > -1) w3AddClass(x[i], "show");
   }
+  
+  // Update button active states
+  var btnContainer = document.getElementById("myBtnContainer");
+  if (btnContainer) {
+    var btns = btnContainer.getElementsByClassName("btn");
+    // Remove active class from all buttons first
+    for (i = 0; i < btns.length; i++) {
+      w3RemoveClass(btns[i], "active");
+    }
+    
+    // Add active class to the correct button
+    if (c == "" || c == "all") {
+      // "All" button is first (index 0)
+      if (btns[0]) w3AddClass(btns[0], "active");
+    } else if (c == "hair") {
+      // "Hair Stylists" button is second (index 1)
+      if (btns[1]) w3AddClass(btns[1], "active");
+    } else if (c == "beauty") {
+      // "Beauticians" button is third (index 2)
+      if (btns[2]) w3AddClass(btns[2], "active");
+    } else if (c == "massage") {
+      // "Massage Therapists" button is fourth (index 3)
+      if (btns[3]) w3AddClass(btns[3], "active");
+    } else if (c == "nail") {
+      // "Nail Technicians" button is fifth (index 4)
+      if (btns[4]) w3AddClass(btns[4], "active");
+    }
+  }
 }
 
 function w3AddClass(element, name) {
@@ -271,16 +299,8 @@ function w3RemoveClass(element, name) {
   element.className = arr1.join(" ");
 }
 
-// Button Click Logic
-var btnContainer = document.getElementById("myBtnContainer");
-var btns = btnContainer.getElementsByClassName("btn");
-for (var i = 0; i < btns.length; i++) {
-  btns[i].addEventListener("click", function(){
-    var current = document.getElementsByClassName("active");
-    current[0].className = current[0].className.replace(" active", "");
-    this.className += " active";
-  });
-}
+// Button Click Logic - buttons already have onclick handlers that call filterSelection
+// The filterSelection function now handles button state updates
 
 // Toggle Favorite Function
 function toggleFavorite(button, staffEmail) {

@@ -17,7 +17,7 @@ $error = null;
 
 try {
     // Use prepared statement even though no user input yet (best practice)
-    $sql = "SELECT staff_email, phone, first_name, last_name, bio, role, 
+    $sql = "SELECT staff_email, phone, first_name, last_name, role, 
                    staff_image, is_active, created_at
             FROM staff
             ORDER BY first_name, last_name";

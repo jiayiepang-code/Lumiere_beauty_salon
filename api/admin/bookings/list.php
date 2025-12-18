@@ -83,11 +83,15 @@ try {
     }
     
     // Add status filter
+    // Only filter by status if explicitly requested
+    // When no status filter is provided, all bookings (including completed) are returned
     if ($status !== null && $status !== '') {
         $sql .= " AND b.status = ?";
         $params[] = $status;
         $types .= "s";
     }
+    // Note: When querying for today's appointments without a status filter,
+    // all statuses (confirmed, completed, cancelled, etc.) are included by default
     
     // Add staff or service filter (requires subquery)
     if ($staff_email !== null && $staff_email !== '') {

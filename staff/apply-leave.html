@@ -1279,12 +1279,21 @@
 
         // UPDATED: Function to control the visibility of the half-day time selection
         function toggleHalfDayTimeSelection() {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:toggleHalfDayTimeSelection-entry',message:'Function called',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+            // #endregion agent log
+            
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
-            const halfDayChecked = document.getElementById('halfDay').checked;
+            const halfDayCheckbox = document.getElementById('halfDay'); // FIX: Added missing element reference
+            const halfDayChecked = halfDayCheckbox.checked;
             const halfDayTimeGroup = document.getElementById('halfDayTimeGroup');
             const halfDayStartTimeInput = document.getElementById('halfDayStartTime');
             const halfDayEndTimeInput = document.getElementById('halfDayEndTime');
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:toggleHalfDayTimeSelection-elements',message:'Elements retrieved',data:{startDate:startDate,endDate:endDate,halfDayChecked:halfDayChecked,halfDayElementExists:!!halfDayCheckbox},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion agent log
             
             // Only show if it's a single day and halfDay is checked
             const isSingleDay = startDate && endDate && startDate === endDate;
@@ -1302,6 +1311,10 @@
                 // halfDayStartTimeInput.value = '10:00';
                 // halfDayEndTimeInput.value = '14:00';
             }
+            
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:toggleHalfDayTimeSelection-beforeCheckbox',message:'Before accessing halfDayCheckbox',data:{isSingleDay:isSingleDay,halfDayChecked:halfDayChecked,typeofHalfDayCheckbox:typeof halfDayCheckbox,halfDayCheckboxExists:!!halfDayCheckbox},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'C'})}).catch(()=>{});
+            // #endregion agent log
             
             // Disable half-day checkbox if it is not a single day
             if (startDate && endDate && startDate !== endDate) {
@@ -1335,9 +1348,15 @@
                 }
 
                 const requests = data.requests || [];
+                // Filter out cancelled requests on frontend as well (backup filter)
+                const filteredRequests = requests.filter(request => {
+                    if (!request || !request.status) return true; // Keep if no status
+                    const status = String(request.status).trim().toLowerCase();
+                    return status !== 'cancelled';
+                });
                 container.innerHTML = '';
 
-                if (requests.length === 0) {
+                if (filteredRequests.length === 0) {
                     container.innerHTML = `
                         <div class="empty-state">
                             <i class="fas fa-calendar-times"></i>
@@ -1351,7 +1370,7 @@
                 const historyList = document.createElement('div');
                 historyList.className = 'leave-history-list';
 
-                requests.forEach(request => {
+                filteredRequests.forEach(request => {
                     const item = document.createElement('div');
                     item.className = 'leave-history-item';
                     

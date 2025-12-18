@@ -55,6 +55,10 @@ session_start();
                 </div>
             </div>
 
+            <div class="switch-form" style="text-align: right; margin-bottom: 15px;">
+                <a href="forgot-password.php" style="color: #A26E60; font-size: 14px;">Forgot password?</a>
+            </div>
+
             <button type="button" class="submit-btn" style="background: #A26E60;" onclick="validateAdminLogin()">ADMIN LOGIN</button>
 
             <div class="switch-form">

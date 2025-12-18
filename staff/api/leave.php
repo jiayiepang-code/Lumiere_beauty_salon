@@ -192,12 +192,12 @@ if ($action === 'cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($action === 'history' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Fetch leave history for the logged-in staff
+    // Fetch leave history for the logged-in staff (excluding cancelled requests)
     try {
         // SELECT statement remains the same, retrieving half_day_time
         $stmt = $pdo->prepare("SELECT id, leave_type, start_date, end_date, half_day, half_day_time, reason, status, created_at, updated_at 
                               FROM leave_requests 
-                              WHERE staff_email = ? 
+                              WHERE staff_email = ? AND status <> 'cancelled'
                               ORDER BY created_at DESC");
         $stmt->execute([$staff_email]);
         $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);

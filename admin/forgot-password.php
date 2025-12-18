@@ -40,31 +40,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $message = 'Invalid email address.';
             $message_class = 'error';
         } else {
-            // Check if staff exists with this email
-            $stmt = $db->prepare('SELECT staff_email FROM Staff WHERE staff_email = ? AND role = "staff"');
+            // Check if admin exists with this email
+            $stmt = $db->prepare('SELECT staff_email FROM Staff WHERE staff_email = ? AND role = "admin"');
             $stmt->execute([$email]);
-            $staff = $stmt->fetch(PDO::FETCH_ASSOC);
+            $admin = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($staff) {
-                $staff_email = $staff['staff_email'];
+            if ($admin) {
+                $admin_email = $admin['staff_email'];
                 // Generate token
                 $token = bin2hex(random_bytes(32));
                 $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
                 
-                // Insert token into password_resets table using staff_email
-                // Note: We'll use staff_email in customer_email column for staff resets
-                // Or create a separate staff_password_resets table if needed
+                // Insert token into password_resets table using admin_email
                 $stmt2 = $db->prepare('INSERT INTO password_resets (customer_email, token, expires_at) VALUES (?, ?, ?)');
-                $stmt2->execute([$staff_email, $token, $expires]);
+                $stmt2->execute([$admin_email, $token, $expires]);
                 
                 // Send email
-                $reset_link = "http://" . $_SERVER['HTTP_HOST'] . dirname(dirname($_SERVER['PHP_SELF'])) . "/staff/reset-password.php?token=$token";
-                $subject = 'Staff Password Reset Request - Lumière';
+                $reset_link = "http://" . $_SERVER['HTTP_HOST'] . dirname(dirname($_SERVER['PHP_SELF'])) . "/admin/reset-password.php?token=$token";
+                $subject = 'Admin Password Reset Request - Lumière';
                 $body = '<div style="font-family:Roboto,Arial,sans-serif;background:#f4f8fb;padding:32px 0;">
                     <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(25,118,210,0.08);padding:32px 24px;text-align:center;">
-                        <h2 style="color:#968073;margin-bottom:16px;">Lumière Beauty Salon - Staff Password Reset</h2>
-                        <p style="color:#333;font-size:1.1rem;margin-bottom:24px;">We received a request to reset your staff account password. Click the button below to set a new password. This link will expire in 1 hour.</p>
-                        <a href="' . $reset_link . '" style="display:inline-block;padding:12px 32px;background:#968073;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:1.1rem;margin-bottom:24px;">Reset Password</a>
+                        <h2 style="color:#A26E60;margin-bottom:16px;">Lumière Beauty Salon - Admin Password Reset</h2>
+                        <p style="color:#333;font-size:1.1rem;margin-bottom:24px;">We received a request to reset your admin account password. Click the button below to set a new password. This link will expire in 1 hour.</p>
+                        <a href="' . $reset_link . '" style="display:inline-block;padding:12px 32px;background:#A26E60;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:1.1rem;margin-bottom:24px;">Reset Password</a>
                         <p style="color:#888;font-size:0.95rem;margin-top:32px;">If you did not request a password reset, you can safely ignore this email.<br><br>— Lumière Beauty Salon Team</p>
                     </div>
                 </div>';
@@ -104,15 +102,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forgot Password – Staff Portal</title>
+    <title>Forgot Password – Admin Portal</title>
     <link rel="stylesheet" href="../css/style.css">
 </head>
-<body class="staff-page">
+<body class="admin-page">
 
     <div class="auth-container">
-        <div class="auth-sidebar" style="background: linear-gradient(135deg, #aa9385 0%, #968073 50%, #6b5b52 100%);">
+        <div class="auth-sidebar" style="background: linear-gradient(135deg, #ac7c6e 0%, #A26E60 50%, #6d4236 100%);">
             <div>
-                <h2>Staff Portal</h2>
+                <h2>Admin Portal</h2>
                 <div class="logo-container">
                     <img src="../images/16.png" class="sidebar-logo" alt="Lumière Logo">
                 </div>
@@ -124,10 +122,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="auth-main">
-            <form class="auth-form staff-theme" action="forgot-password.php" method="post">
+            <form class="auth-form admin-theme" action="forgot-password.php" method="post">
                 <div class="form-header">
-                    <h1 style="color: #968073;">Forgot Password</h1>
-                    <p>Staff Account Recovery</p>
+                    <h1 style="color: #A26E60;">Forgot Password</h1>
+                    <p>Admin Account Recovery</p>
                 </div>
 
                 <?php if ($message): ?>
@@ -142,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <form method="POST" action="forgot-password.php" id="resend-form">
                                     <input type="hidden" name="email" value="<?php echo htmlspecialchars($email_sent); ?>">
                                     <input type="hidden" name="resend_email" value="1">
-                                    <button type="submit" id="resend-btn" class="submit-btn" style="background: #968073; padding: 8px 16px; font-size: 14px; margin-top: 10px; cursor: pointer; border: none;">
+                                    <button type="submit" id="resend-btn" class="submit-btn" style="background: #A26E60; padding: 8px 16px; font-size: 14px; margin-top: 10px; cursor: pointer; border: none;">
                                         Resend Link
                                     </button>
                                 </form>
@@ -159,16 +157,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                    class="form-control indent-icon" 
                                    id="email" 
                                    name="email" 
-                                   placeholder="Enter your staff email address" 
+                                   placeholder="Enter your admin email address" 
                                    required>
                         </div>
                     </div>
 
-                    <button type="submit" class="submit-btn" style="background: #968073;">Send Reset Link</button>
+                    <button type="submit" class="submit-btn" style="background: #A26E60;">Send Reset Link</button>
                 <?php endif; ?>
 
                 <div class="switch-form">
-                    <a href="login.php" style="color: #968073;">Back to Login</a>
+                    <a href="login.php" style="color: #A26E60;">Back to Login</a>
                 </div>
             </form>
         </div>
@@ -176,3 +174,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 </body>
 </html>
+
+
+
