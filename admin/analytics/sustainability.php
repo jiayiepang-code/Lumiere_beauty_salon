@@ -316,6 +316,9 @@ include '../includes/header.php';
             </select>
             <button type="submit" class="btn btn-primary">Apply</button>
         </form>
+        <button type="button" id="export-esg-pdf" class="btn btn-secondary">
+            <i class="fas fa-file-pdf"></i> Export ESG Report
+        </button>
     </div>
 
     <?php if ($error_message): ?>
@@ -680,6 +683,37 @@ include '../includes/header.php';
 
 .date-filter-form .btn-primary:hover {
     background: #C4956A;
+}
+
+.btn-secondary {
+    padding: 10px 20px;
+    background: #6c757d;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.btn-secondary:disabled {
+    background: #6c757d;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary i {
+    font-size: 14px;
 }
 
 /* ========== METRICS GRID ========== */
@@ -1278,5 +1312,7 @@ include '../includes/header.php';
     }
 }
 </style>
+
+<script src="sustainability.js"></script>
 
 <?php require_once '../includes/footer.php'; ?>
