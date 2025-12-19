@@ -582,7 +582,7 @@ include '../includes/header.php';
             $start_date = $selected_year . '-' . $selected_month . '-01';
             $end_date = $selected_year . '-' . $selected_month . '-' . str_pad($last_day, 2, '0', STR_PAD_LEFT);
             ?>
-            <a href="../calendar/master.php?view=month&start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>#staff-schedule" 
+            <a href="../calendar/master.php?view=month&start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>#staffRosterSection" 
                class="btn btn-secondary">
                 <i class="fas fa-calendar"></i> View Full Schedule in Master Calendar
             </a>
@@ -597,13 +597,12 @@ include '../includes/header.php';
                         <th>Days Worked</th>
                         <th>Leave Days</th>
                         <th>Average Hours/Day</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($schedule_summary)): ?>
                         <tr>
-                            <td colspan="6" style="text-align: center; color: #666;">No schedule data available for selected period.</td>
+                            <td colspan="5" style="text-align: center; color: #666;">No schedule data available for selected period.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($schedule_summary as $summary): ?>
@@ -613,12 +612,6 @@ include '../includes/header.php';
                             <td><?php echo $summary['days_worked']; ?></td>
                             <td><?php echo $summary['leave_days']; ?></td>
                             <td><?php echo number_format($summary['avg_hours'], 2); ?>h</td>
-                            <td>
-                                <a href="../calendar/master.php?view=month&start_date=<?php echo $start_date; ?>&end_date=<?php echo $end_date; ?>&staff_email=<?php echo urlencode($summary['email']); ?>#staff-schedule" 
-                                   class="schedule-link-btn">
-                                    <i class="fas fa-external-link-alt"></i> View Schedule
-                                </a>
-                            </td>
                         </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

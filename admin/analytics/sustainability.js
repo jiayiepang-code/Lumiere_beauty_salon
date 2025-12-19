@@ -169,9 +169,9 @@ async function exportESGReportPdf() {
     "07": "July",
     "08": "August",
     "09": "September",
-    "10": "October",
-    "11": "November",
-    "12": "December",
+    10: "October",
+    11: "November",
+    12: "December",
   };
   const periodLabel = `${monthNames[month] || month} ${year}`;
 
@@ -309,7 +309,8 @@ async function exportESGReportPdf() {
         data: {
           name: error && error.name,
           message: error && error.message,
-          stack: error && error.stack ? String(error.stack).slice(0, 500) : null,
+          stack:
+            error && error.stack ? String(error.stack).slice(0, 500) : null,
         },
         timestamp: Date.now(),
       }),
