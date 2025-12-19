@@ -136,13 +136,15 @@ function filterCustomers() {
   filtered.sort((a, b) => {
     switch (sortValue) {
       case "name_asc":
-        return (a.last_name + a.first_name).localeCompare(
-          b.last_name + b.first_name
-        );
+        // Sort by first name ascending (A-Z)
+        const nameA = ((a.first_name || "") + " " + (a.last_name || "")).trim().toLowerCase();
+        const nameB = ((b.first_name || "") + " " + (b.last_name || "")).trim().toLowerCase();
+        return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
       case "name_desc":
-        return (b.last_name + b.first_name).localeCompare(
-          a.last_name + a.first_name
-        );
+        // Sort by first name descending (Z-A)
+        const nameA_desc = ((a.first_name || "") + " " + (a.last_name || "")).trim().toLowerCase();
+        const nameB_desc = ((b.first_name || "") + " " + (b.last_name || "")).trim().toLowerCase();
+        return nameB_desc.localeCompare(nameA_desc, undefined, { sensitivity: 'base' });
       case "bookings_desc":
         return (b.total_bookings || 0) - (a.total_bookings || 0);
       case "recent_desc":
@@ -220,11 +222,19 @@ function renderTable(customers) {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 4px; color: #999;">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                 </svg>
-                ${escapeHtml(customer.phone)}
+                ${escapeHtml(formatPhoneNumber(customer.phone))}
             </td>
             <td style="color: #666; font-size: 14px;">${dateRegistered}</td>
             <td>
                 <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-sm btn-info" onclick="viewCustomer('${escapeHtml(
+                      customer.email || customer.customer_email
+                    )}')" title="View Customer Details">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
                     <button class="btn btn-sm btn-secondary" onclick="openEditModal('${escapeHtml(
                       customer.email || customer.customer_email
                     )}')" title="Edit Customer">
@@ -311,8 +321,13 @@ function renderPagination(totalPages) {
 }
 
 function viewCustomer(email) {
-  const customer = allCustomers.find((c) => c.email === email);
-  if (!customer) return;
+  const customer = allCustomers.find(
+    (c) => (c.email || c.customer_email) === email
+  );
+  if (!customer) {
+    showToast("Customer not found", "error");
+    return;
+  }
 
   const modal = document.getElementById("customerModal");
   const content = document.getElementById("customerDetailsContent");
@@ -339,7 +354,7 @@ function viewCustomer(email) {
         <div style="display: flex; gap: 24px; flex-wrap: wrap;">
             <div style="flex: 1; min-width: 250px;">
                 <div style="text-align: center; margin-bottom: 20px;">
-                    <div style="width: 80px; height: 80px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 600; color: #666; margin: 0 auto 12px;">
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #c29076, #b18776); display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 600; color: white; margin: 0 auto 12px;">
                         ${customer.first_name.charAt(
                           0
                         )}${customer.last_name.charAt(0)}
@@ -358,9 +373,9 @@ function viewCustomer(email) {
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
                         <a href="mailto:${escapeHtml(
-                          customer.email
+                          customer.email || customer.customer_email
                         )}" style="color: var(--primary-color);">${escapeHtml(
-    customer.email
+    customer.email || customer.customer_email
   )}</a>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
@@ -368,9 +383,9 @@ function viewCustomer(email) {
                             <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
                         </svg>
                         <a href="tel:${escapeHtml(
-                          customer.phone
+                          customer.phone.replace(/\s+/g, "")
                         )}" style="color: var(--primary-color);">${escapeHtml(
-    customer.phone
+    formatPhoneNumber(customer.phone)
   )}</a>
                     </div>
                 </div>
@@ -380,12 +395,12 @@ function viewCustomer(email) {
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
                     <div style="background: white; border: 1px solid #eee; padding: 12px; border-radius: 8px; text-align: center;">
                         <div style="font-size: 24px; font-weight: 700; color: var(--primary-color);">${
-                          customer.total_bookings
+                          customer.total_bookings || 0
                         }</div>
                         <div style="font-size: 12px; color: #666;">Total Bookings</div>
                     </div>
                     <div style="background: white; border: 1px solid #eee; padding: 12px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: 700; color: #4CAF50;">$${parseFloat(
+                        <div style="font-size: 24px; font-weight: 700; color: #4CAF50;">RM ${parseFloat(
                           customer.total_spent || 0
                         ).toFixed(2)}</div>
                         <div style="font-size: 12px; color: #666;">Total Spent</div>
@@ -396,8 +411,8 @@ function viewCustomer(email) {
                     </div>
                 </div>
                 
-                <h4 style="margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px;">Recent Bookings</h4>
-                <div id="customerBookingsList">
+                <h4 style="margin-bottom: 12px; border-bottom: 1px solid #eee; padding-bottom: 8px;">Booking History</h4>
+                <div id="customerBookingsList" style="max-height: 400px; overflow-y: auto;">
                     <div style="text-align: center; padding: 20px; color: #999;">Loading bookings...</div>
                 </div>
             </div>
@@ -406,8 +421,9 @@ function viewCustomer(email) {
 
   // Show modal with flex for proper centering
   modal.style.display = "flex";
+  modal.classList.add("active");
 
-  // Fetch recent bookings for this customer
+  // Fetch ALL bookings for this customer (not just 5)
   fetch(
     `../../api/admin/bookings/list.php?customer_email=${encodeURIComponent(
       email
@@ -416,91 +432,188 @@ function viewCustomer(email) {
     .then((res) => res.json())
     .then((data) => {
       const bookingsList = document.getElementById("customerBookingsList");
-      if (data.success && data.bookings.length > 0) {
-        bookingsList.innerHTML = data.bookings
-          .slice(0, 5)
-          .map(
-            (booking) => `
-                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
-                        <div>
-                            <div style="font-weight: 500; color: #333;">${new Date(
-                              booking.booking_date
-                            ).toLocaleDateString()} at ${booking.start_time.substring(
-              0,
-              5
-            )}</div>
-                            <div style="font-size: 13px; color: #666;">$${parseFloat(
-                              booking.total_price
-                            ).toFixed(2)}</div>
-                        </div>
-                        <div>
-                            <span class="status-badge status-${booking.status.toLowerCase()}">${
-              booking.status
-            }</span>
-                        </div>
-                    </div>
-                `
-          )
-          .join("");
+      if (data.success && data.bookings && data.bookings.length > 0) {
+        // Show all bookings in a table format
+        bookingsList.innerHTML = `
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f9fafb; border-bottom: 2px solid #eee;">
+                <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; font-weight: 600;">Date & Time</th>
+                <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; font-weight: 600;">Services</th>
+                <th style="padding: 12px; text-align: right; font-size: 12px; text-transform: uppercase; color: #666; font-weight: 600;">Amount</th>
+                <th style="padding: 12px; text-align: center; font-size: 12px; text-transform: uppercase; color: #666; font-weight: 600;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.bookings
+                .map(
+                  (booking) => `
+                <tr style="border-bottom: 1px solid #f0f0f0;">
+                  <td style="padding: 12px;">
+                    <div style="font-weight: 500; color: #333;">${new Date(
+                      booking.booking_date
+                    ).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}</div>
+                    <div style="font-size: 13px; color: #666;">${booking.start_time.substring(
+                      0,
+                      5
+                    )} - ${booking.expected_finish_time || booking.end_time || "N/A"}</div>
+                  </td>
+                  <td style="padding: 12px; color: #666; font-size: 14px;">
+                    ${booking.services && booking.services.length > 0
+                      ? booking.services.map((s) => escapeHtml(s.name || s.service_name)).join(", ")
+                      : "N/A"}
+                  </td>
+                  <td style="padding: 12px; text-align: right; font-weight: 600; color: #333;">
+                    RM ${parseFloat(booking.total_price || 0).toFixed(2)}
+                  </td>
+                  <td style="padding: 12px; text-align: center;">
+                    <span class="status-badge status-${booking.status.toLowerCase()}" style="padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">
+                      ${escapeHtml(booking.status)}
+                    </span>
+                  </td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+        `;
       } else {
         bookingsList.innerHTML =
-          '<div style="text-align: center; padding: 20px; color: #999;">No bookings found</div>';
+          '<div style="text-align: center; padding: 40px; color: #999;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin: 0 auto 12px; opacity: 0.3;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><line x1="7" y1="3" x2="7" y2="8" x3="17" y3="8"></line></svg><p>No bookings found</p></div>';
       }
     })
     .catch((err) => {
       console.error(err);
       document.getElementById("customerBookingsList").innerHTML =
-        '<div style="text-align: center; color: #f44336;">Error loading bookings</div>';
+        '<div style="text-align: center; padding: 20px; color: #f44336;">Error loading bookings</div>';
     });
 }
 
 function closeCustomerModal() {
-  document.getElementById("customerModal").style.display = "none";
+  const customerModal = document.getElementById("customerModal");
+  if (customerModal) {
+    customerModal.style.display = "none";
+    customerModal.classList.remove("active");
+  }
 }
 
 function openEditModal(email) {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:503',message:'openEditModal called',data:{email:email,allCustomersLength:allCustomers.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
   const customer = allCustomers.find(
     (c) => (c.email || c.customer_email) === email
   );
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:510',message:'Customer lookup result',data:{customerFound:!!customer,customerEmail:customer?(customer.email||customer.customer_email):null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
   if (!customer) {
     showToast("Customer not found", "error");
     return;
   }
 
+  // Get form elements
+  const editEmailInput = document.getElementById("edit_customer_email");
+  const editFirstNameInput = document.getElementById("edit_first_name");
+  const editLastNameInput = document.getElementById("edit_last_name");
+  const editPhoneInput = document.getElementById("edit_phone");
+  const editModal = document.getElementById("editModal");
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:525',message:'Element lookup results',data:{editEmailInput:!!editEmailInput,editFirstNameInput:!!editFirstNameInput,editLastNameInput:!!editLastNameInput,editPhoneInput:!!editPhoneInput,editModal:!!editModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion
+
+  // Check if elements exist
+  if (!editEmailInput || !editFirstNameInput || !editLastNameInput || !editPhoneInput || !editModal) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:530',message:'Elements missing error',data:{missingElements:{email:!editEmailInput,firstName:!editFirstNameInput,lastName:!editLastNameInput,phone:!editPhoneInput,modal:!editModal}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
+    console.error("Edit modal elements not found");
+    showToast("Error: Edit form elements not found", "error");
+    return;
+  }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:536',message:'Before setting values',data:{customerData:{email:customer.email||customer.customer_email,firstName:customer.first_name,lastName:customer.last_name,phone:customer.phone}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+
   // Populate form
-  document.getElementById("edit_customer_email").value =
-    customer.email || customer.customer_email;
-  document.getElementById("edit_first_name").value = customer.first_name;
-  document.getElementById("edit_last_name").value = customer.last_name;
-  document.getElementById("edit_phone").value = customer.phone;
-  document.getElementById("reset_password_checkbox").checked = false;
-  document.getElementById("password_group").style.display = "none";
-  document.getElementById("edit_password").value = "";
-  document.getElementById("edit_password").removeAttribute("required");
+  try {
+    editEmailInput.value = customer.email || customer.customer_email;
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:542',message:'After setting email',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+  } catch(e) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:545',message:'Error setting email',data:{error:e.message,stack:e.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    throw e;
+  }
+  
+  try {
+    editFirstNameInput.value = customer.first_name || "";
+    editLastNameInput.value = customer.last_name || "";
+    editPhoneInput.value = customer.phone || "";
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:554',message:'After setting all input values',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+  } catch(e) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:557',message:'Error setting input values',data:{error:e.message,stack:e.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    throw e;
+  }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:562',message:'Before showing modal',data:{editModalExists:!!editModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
 
   // Show modal with flex for proper centering
-  document.getElementById("editModal").style.display = "flex";
+  try {
+    editModal.style.display = "flex";
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:567',message:'After setting display flex',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    
+    // Also add active class for CSS compatibility
+    editModal.classList.add("active");
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:571',message:'After adding active class',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+  } catch(e) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:574',message:'Error showing modal',data:{error:e.message,stack:e.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
+    throw e;
+  }
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:579',message:'openEditModal completed successfully',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
 }
 
 function closeEditModal() {
-  document.getElementById("editModal").style.display = "none";
-  document.getElementById("editForm").reset();
-}
-
-function togglePasswordReset() {
-  const checkbox = document.getElementById("reset_password_checkbox");
-  const passwordGroup = document.getElementById("password_group");
-  const passwordInput = document.getElementById("edit_password");
-
-  if (checkbox.checked) {
-    passwordGroup.style.display = "block";
-    passwordInput.setAttribute("required", "required");
-  } else {
-    passwordGroup.style.display = "none";
-    passwordInput.removeAttribute("required");
-    passwordInput.value = "";
+  const editModal = document.getElementById("editModal");
+  const editForm = document.getElementById("editForm");
+  
+  if (editModal) {
+    editModal.style.display = "none";
+    editModal.classList.remove("active");
+  }
+  
+  if (editForm) {
+    editForm.reset();
   }
 }
+
 
 function saveCustomer(event) {
   event.preventDefault();
@@ -513,22 +626,19 @@ function saveCustomer(event) {
     phone: formData.get("phone"),
   };
 
-  // Include password if reset checkbox is checked
-  if (document.getElementById("reset_password_checkbox").checked) {
-    const password = formData.get("password");
-    if (password) {
-      data.password = password;
-    }
-  }
-
   // Add CSRF token
   data.csrf_token = CSRF_TOKEN;
+
+  // Close the edit modal immediately before showing loading
+  closeEditModal();
 
   // Show loading
   Swal.fire({
     title: "Saving...",
     text: "Please wait",
     allowOutsideClick: false,
+    allowEscapeKey: false,
+    showConfirmButton: false,
     didOpen: () => {
       Swal.showLoading();
     },
@@ -542,7 +652,14 @@ function saveCustomer(event) {
     credentials: "same-origin",
     body: JSON.stringify(data),
   })
-    .then((response) => response.json())
+    .then((response) => {
+      if (!response.ok) {
+        return response.json().then(err => {
+          throw new Error(err.error?.message || `HTTP error! status: ${response.status}`);
+        });
+      }
+      return response.json();
+    })
     .then((result) => {
       if (result.success) {
         Swal.fire({
@@ -550,8 +667,9 @@ function saveCustomer(event) {
           title: "Success",
           text: result.message || "Customer updated successfully",
           confirmButtonColor: "#c29076",
+          timer: 2000,
+          timerProgressBar: true,
         }).then(() => {
-          closeEditModal();
           loadCustomers(); // Reload the table
         });
       } else {
@@ -568,7 +686,7 @@ function saveCustomer(event) {
       Swal.fire({
         icon: "error",
         title: "Error",
-        text: "An error occurred while updating the customer",
+        text: error.message || "An error occurred while updating the customer",
         confirmButtonColor: "#c29076",
       });
     });
@@ -703,6 +821,52 @@ function escapeHtml(text) {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function formatPhoneNumber(phone) {
+  if (!phone) return "";
+  
+  // Remove all spaces and keep only digits and +
+  let cleaned = phone.replace(/\s+/g, "");
+  
+  // Format Malaysian phone numbers (+60)
+  if (cleaned.startsWith("+60")) {
+    // Remove +60 to get the number part
+    let numberPart = cleaned.substring(3);
+    
+    // Format as: +60 XX XXX XXXX
+    if (numberPart.length >= 9) {
+      // Take first 2 digits, next 3 digits, and remaining digits
+      let part1 = numberPart.substring(0, 2);
+      let part2 = numberPart.substring(2, 5);
+      let part3 = numberPart.substring(5);
+      
+      return `+60 ${part1} ${part2} ${part3}`;
+    } else if (numberPart.length >= 6) {
+      // For shorter numbers: +60 XX XXX
+      let part1 = numberPart.substring(0, 2);
+      let part2 = numberPart.substring(2);
+      return `+60 ${part1} ${part2}`;
+    } else {
+      // For very short numbers: +60 XX
+      return `+60 ${numberPart}`;
+    }
+  }
+  
+  // If it doesn't start with +60, return as is (or format if it's a local number)
+  // Handle local numbers that might start with 0
+  if (cleaned.startsWith("0")) {
+    let numberPart = cleaned.substring(1);
+    if (numberPart.length >= 9) {
+      let part1 = numberPart.substring(0, 2);
+      let part2 = numberPart.substring(2, 5);
+      let part3 = numberPart.substring(5);
+      return `+60 ${part1} ${part2} ${part3}`;
+    }
+  }
+  
+  // Return original if we can't format it
+  return phone;
 }
 
 function showToast(message, type = "success") {

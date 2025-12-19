@@ -584,6 +584,140 @@ function escapeHtml(value) {
     .replace(/'/g, "&#039;");
 }
 
+// Modal functions
+async function openRequestsModal(status) {
+  const modal = document.getElementById("requestsModal");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalLoading = document.getElementById("modalLoading");
+  const modalEmpty = document.getElementById("modalEmpty");
+  const modalTableWrapper = document.getElementById("modalTableWrapper");
+  const modalTableBody = document.getElementById("modalTableBody");
+
+  if (!modal) return;
+
+  // Set title based on status
+  if (status === "approved") {
+    modalTitle.textContent = "Approved Leave Requests";
+  } else if (status === "rejected") {
+    modalTitle.textContent = "Rejected Leave Requests";
+  } else {
+    modalTitle.textContent = "Leave Requests";
+  }
+
+  // Show modal and loading state
+  modal.style.display = "flex";
+  modalLoading.style.display = "block";
+  modalEmpty.style.display = "none";
+  modalTableWrapper.style.display = "none";
+  modalTableBody.innerHTML = "";
+
+  try {
+    // Fetch requests with current month/year filters and status
+    const monthParam = currentMonth === 0 ? "" : currentMonth;
+    const yearParam = currentYear === 0 ? "" : currentYear;
+
+    let apiUrl = `${LEAVE_REQUESTS_API_BASE}/list.php?status=${status}`;
+    const params = [];
+
+    if (monthParam !== "") {
+      params.push(`month=${monthParam}`);
+    }
+    if (yearParam !== "") {
+      params.push(`year=${yearParam}`);
+    }
+
+    if (params.length > 0) {
+      apiUrl += "&" + params.join("&");
+    }
+
+    const response = await fetch(apiUrl, {
+      credentials: "same-origin",
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to load requests");
+    }
+
+    const data = await response.json();
+    const requests = data.requests || [];
+
+    // Hide loading
+    modalLoading.style.display = "none";
+
+    if (requests.length === 0) {
+      modalEmpty.style.display = "block";
+      return;
+    }
+
+    // Show table and render requests
+    modalTableWrapper.style.display = "block";
+    modalTableBody.innerHTML = "";
+
+    requests.forEach((req) => {
+      const tr = document.createElement("tr");
+      const reasonShort =
+        (req.reason || "").length > 60
+          ? (req.reason || "").substring(0, 57) + "..."
+          : req.reason || "";
+
+      const statusBadgeClass =
+        req.status === "approved" ? "badge-approved" : "badge-rejected";
+      const statusText =
+        req.status === "approved" ? "Approved" : "Rejected";
+
+      tr.innerHTML = `
+                <td>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <div style="width:32px;height:32px;border-radius:50%;background:#f5e9e2;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:#8b5e3c;">
+                            ${getInitials(req.staff_name)}
+                        </div>
+                        <div>
+                            <div style="font-weight:500;">${escapeHtml(
+                              req.staff_name || ""
+                            )}</div>
+                            <div style="font-size:0.8rem;color:#6b7280;">${escapeHtml(
+                              req.staff_email || ""
+                            )}</div>
+                        </div>
+                    </div>
+                </td>
+                <td>${escapeHtml(req.leave_type || "")}</td>
+                <td class="date-range-cell">${escapeHtml(
+                  formatDateRange(req.start_date, req.end_date)
+                )}</td>
+                <td>${escapeHtml(req.duration_label || "")}</td>
+                <td>
+                    <span class="reason-text" title="${escapeHtml(
+                      req.reason || ""
+                    )}">
+                        ${escapeHtml(reasonShort)}
+                    </span>
+                </td>
+                <td class="submitted-cell">${escapeHtml(
+                  formatDateTime(req.submitted_at || req.created_at_raw)
+                )}</td>
+                <td>
+                    <span class="badge-status ${statusBadgeClass}">${statusText}</span>
+                </td>
+            `;
+
+      modalTableBody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error(err);
+    modalLoading.style.display = "none";
+    modalEmpty.style.display = "block";
+    modalEmpty.innerHTML = '<p style="color: #b91c1c;">Failed to load requests. Please try again.</p>';
+  }
+}
+
+function closeRequestsModal() {
+  const modal = document.getElementById("requestsModal");
+  if (modal) {
+    modal.style.display = "none";
+  }
+}
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
   // Set month first, year will be populated from API if available
@@ -620,6 +754,45 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       fetchLeaveRequests();
+    });
+  }
+
+  // Stat card click handlers
+  const approvedCard = document.getElementById("card-approved-month");
+  const rejectedCard = document.getElementById("card-rejected-month");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
+  const modal = document.getElementById("requestsModal");
+
+  if (approvedCard) {
+    approvedCard.addEventListener("click", function () {
+      openRequestsModal("approved");
+    });
+  }
+
+  if (rejectedCard) {
+    rejectedCard.addEventListener("click", function () {
+      openRequestsModal("rejected");
+    });
+  }
+
+  // Close modal handlers
+  if (modalCloseBtn) {
+    modalCloseBtn.addEventListener("click", closeRequestsModal);
+  }
+
+  if (modal) {
+    // Close modal when clicking outside
+    modal.addEventListener("click", function (e) {
+      if (e.target === modal) {
+        closeRequestsModal();
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && modal.style.display === "flex") {
+        closeRequestsModal();
+      }
     });
   }
 });

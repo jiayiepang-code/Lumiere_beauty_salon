@@ -85,7 +85,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // #endregion
             
             // Send email
+            // #region agent log
+            @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['location' => 'forgot_password.php:87', 'message' => 'Before reset link construction', 'data' => ['HTTP_HOST' => $_SERVER['HTTP_HOST'] ?? 'none', 'PHP_SELF' => $_SERVER['PHP_SELF'] ?? 'none', 'SCRIPT_NAME' => $_SERVER['SCRIPT_NAME'] ?? 'none', 'REQUEST_URI' => $_SERVER['REQUEST_URI'] ?? 'none', 'DOCUMENT_ROOT' => $_SERVER['DOCUMENT_ROOT'] ?? 'none', '__DIR__' => __DIR__, 'dirname_php_self' => dirname($_SERVER['PHP_SELF'] ?? '')], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND | LOCK_EX);
+            // #endregion
+            
             $reset_link = "http://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/reset_password.php?token=$token";
+            
+            // #region agent log
+            @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['location' => 'forgot_password.php:91', 'message' => 'After reset link construction', 'data' => ['reset_link' => $reset_link, 'expected_path' => 'Lumiere_beauty_salon', 'actual_path_in_link' => strpos($reset_link, 'Lumiere') !== false ? substr($reset_link, strpos($reset_link, 'Lumiere')) : 'not_found'], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND | LOCK_EX);
+            // #endregion
             $subject = 'Password Reset Request';
             $body = '<div style="font-family:Roboto,Arial,sans-serif;background:#f4f8fb;padding:32px 0;">
                 <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(25,118,210,0.08);padding:32px 24px;text-align:center;">

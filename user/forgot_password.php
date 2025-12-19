@@ -92,9 +92,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt = $db->prepare("UPDATE customer SET password = ? WHERE phone = ?");
                 $stmt->execute([$hash, $_SESSION['fp_user_id']]);
 
-                $success = "Password reset successful. You can now login.";
+                // Clear session data
+                unset($_SESSION['fp_user_id']);
+                unset($_SESSION['fp_phone']);
+                unset($_SESSION['fp_captcha']);
 
-                $step = 4; // Show success
+                // Redirect to login with success message
+                header('Location: ../login.php?message=' . urlencode('Password reset successfully! Your new password has been created. Please login with your new password.'));
+                exit;
             }
         }
     }

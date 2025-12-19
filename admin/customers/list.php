@@ -173,20 +173,6 @@ endif;
                     <small class="form-text text-muted">Format: +60123456789 or 0123456789</small>
                 </div>
                 
-                <div class="form-group">
-                    <div class="checkbox-wrapper" style="display: flex; align-items: center; gap: 8px;">
-                        <input type="checkbox" id="reset_password_checkbox" onchange="togglePasswordReset()" style="width: 18px; height: 18px; cursor: pointer;">
-                        <label for="reset_password_checkbox" style="margin: 0; cursor: pointer;">Reset Password</label>
-                    </div>
-                    <small class="form-text text-muted" style="margin-left: 26px;">Check this box to set a new password for the customer</small>
-                </div>
-                
-                <div class="form-group" id="password_group" style="display: none;">
-                    <label for="edit_password">New Password <span style="color: red;">*</span></label>
-                    <input type="password" id="edit_password" name="password" class="form-control" minlength="8">
-                    <small class="form-text text-muted">Min 8 chars, 1 uppercase, 1 number, 1 special character</small>
-                </div>
-                
                 <div class="form-actions" style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                     <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Changes</button>

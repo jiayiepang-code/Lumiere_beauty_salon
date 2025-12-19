@@ -58,6 +58,10 @@ function showAdminLogin() {
 
 // Step navigation
 function goToStep(step) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:goToStep',message:'Navigating to step',data:{step:step,currentStep:currentStep},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'L'})}).catch(()=>{});
+    // #endregion agent log
+    
     document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active-step'));
     document.getElementById(`step-group-${step}`).classList.add('active-step');
     document.getElementById('stepCount').innerText = step;
@@ -75,6 +79,31 @@ function goToStep(step) {
             isPasswordStrong = false;
             passwordStrength = 'weak';
         }
+    }
+    
+    // If moving to step 4 (success view), set up 3-second redirect to login page
+    if (step === 4) {
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:goToStep',message:'Step 4 activated - setting up redirect timer',data:{step:step},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'M'})}).catch(()=>{});
+        // #endregion agent log
+        
+        // Clear any existing timeout
+        if (window.registrationRedirectTimeout) {
+            clearTimeout(window.registrationRedirectTimeout);
+        }
+        
+        // Set timeout to redirect after 3 seconds
+        window.registrationRedirectTimeout = setTimeout(() => {
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:goToStep',message:'Redirecting to login page after 3 seconds',data:{elapsed:3000},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'N'})}).catch(()=>{});
+            // #endregion agent log
+            
+            // Preserve redirect parameter if it exists in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get('redirect');
+            const loginUrl = redirect ? 'login.php?redirect=' + encodeURIComponent(redirect) : 'login.php';
+            window.location.href = loginUrl;
+        }, 3000);
     }
 }
 
@@ -244,12 +273,12 @@ function validateStep3() {
     })
     .then(data => {
         if (data.status === 'success') {
-            // Registration successful - redirect immediately to login page
-            // Preserve redirect parameter if it exists in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect');
-            const loginUrl = redirect ? 'login.php?redirect=' + encodeURIComponent(redirect) : 'login.php';
-            window.location.href = loginUrl;
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/script.js:validateStep3',message:'Registration success - navigating to step 4',data:{status:data.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'K'})}).catch(()=>{});
+            // #endregion agent log
+            
+            // Registration successful - show step 4 (success view)
+            goToStep(4);
         } else {
             // Show error message (e.g., "Email already registered")
             document.getElementById('step3Error').innerText = data.message || 'An error occurred. Please try again.';

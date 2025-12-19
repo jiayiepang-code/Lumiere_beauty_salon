@@ -17,9 +17,15 @@ if (!isAdminAuthenticated()) {
 try {
     $conn = getDBConnection();
 
-    // Get month/year from query params
+    // Get month/year/status from query params
     $month = isset($_GET['month']) && $_GET['month'] !== '' ? (int)$_GET['month'] : null;
     $year = isset($_GET['year']) && $_GET['year'] !== '' ? (int)$_GET['year'] : null;
+    $status = isset($_GET['status']) && $_GET['status'] !== '' ? $_GET['status'] : 'pending';
+    
+    // Validate status - only allow pending, approved, or rejected
+    if (!in_array($status, ['pending', 'approved', 'rejected'])) {
+        $status = 'pending';
+    }
     
     // Validate month (1-12) if provided
     if ($month !== null && ($month < 1 || $month > 12)) {
@@ -30,7 +36,7 @@ try {
         $year = null;
     }
 
-    // Pending requests filtered by selected month/year
+    // Requests filtered by selected month/year and status
     // Build dynamic query based on whether month/year is provided
     // Check if the leave request date range overlaps with the selected month/year
     if ($month !== null && $year !== null) {
@@ -50,13 +56,14 @@ try {
             lr.half_day,
             lr.reason,
             lr.status,
-            lr.created_at
+            lr.created_at,
+            lr.updated_at
         FROM leave_requests lr
         JOIN staff s ON lr.staff_email = s.staff_email
-        WHERE lr.status = 'pending'
+        WHERE lr.status = ?
               AND lr.start_date <= ?
               AND lr.end_date >= ?
-            ORDER BY lr.created_at ASC";
+            ORDER BY lr.created_at DESC";
     } else if ($year !== null) {
         // Filter by year only - check if date range overlaps with the year
         $firstDay = sprintf('%04d-01-01', $year);
@@ -74,13 +81,14 @@ try {
                 lr.half_day,
                 lr.reason,
                 lr.status,
-                lr.created_at
+                lr.created_at,
+                lr.updated_at
             FROM leave_requests lr
             JOIN staff s ON lr.staff_email = s.staff_email
-            WHERE lr.status = 'pending'
+            WHERE lr.status = ?
               AND lr.start_date <= ?
               AND lr.end_date >= ?
-            ORDER BY lr.created_at ASC";
+            ORDER BY lr.created_at DESC";
     } else if ($month !== null) {
         // Filter by month only (all years) - check if date range overlaps with the month in any year
         // This handles: month in start_date, month in end_date, or range spans the month
@@ -96,17 +104,18 @@ try {
                 lr.half_day,
                 lr.reason,
                 lr.status,
-                lr.created_at
-            FROM leave_requests lr
-            JOIN staff s ON lr.staff_email = s.staff_email
-            WHERE lr.status = 'pending'
+                lr.created_at,
+                lr.updated_at
+        FROM leave_requests lr
+        JOIN staff s ON lr.staff_email = s.staff_email
+        WHERE lr.status = ?
               AND (
                 MONTH(lr.start_date) = ?
                 OR MONTH(lr.end_date) = ?
                 OR (MONTH(lr.start_date) < ? AND MONTH(lr.end_date) > ?)
                 OR (MONTH(lr.start_date) > MONTH(lr.end_date) AND (MONTH(lr.start_date) <= ? OR MONTH(lr.end_date) >= ?))
               )
-            ORDER BY lr.created_at ASC";
+            ORDER BY lr.created_at DESC";
     } else {
         // No filters - show all pending requests
         $sql = "
@@ -121,11 +130,12 @@ try {
                 lr.half_day,
                 lr.reason,
                 lr.status,
-                lr.created_at
-            FROM leave_requests lr
-            JOIN staff s ON lr.staff_email = s.staff_email
-            WHERE lr.status = 'pending'
-            ORDER BY lr.created_at ASC";
+                lr.created_at,
+                lr.updated_at
+        FROM leave_requests lr
+        JOIN staff s ON lr.staff_email = s.staff_email
+        WHERE lr.status = ?
+            ORDER BY lr.created_at DESC";
     }
     
     $stmtPendingList = $conn->prepare($sql);
@@ -136,15 +146,17 @@ try {
     // Bind parameters based on which filters are provided
     if ($month !== null && $year !== null) {
         // Month and year filter
-        $stmtPendingList->bind_param('ss', $lastDay, $firstDay);
+        $stmtPendingList->bind_param('sss', $status, $lastDay, $firstDay);
     } else if ($year !== null) {
         // Year filter only
-        $stmtPendingList->bind_param('ss', $lastDay, $firstDay);
+        $stmtPendingList->bind_param('sss', $status, $lastDay, $firstDay);
     } else if ($month !== null) {
-        // Month filter only - bind month parameter 6 times for all conditions
-        $stmtPendingList->bind_param('iiiiii', $month, $month, $month, $month, $month, $month);
+        // Month filter only - bind status first, then month parameter 6 times for all conditions
+        $stmtPendingList->bind_param('siiiiii', $status, $month, $month, $month, $month, $month, $month);
+    } else {
+        // No filters - only status parameter
+        $stmtPendingList->bind_param('s', $status);
     }
-    // No parameters needed if no filters
     
     $stmtPendingList->execute();
     $result = $stmtPendingList->get_result();
@@ -161,6 +173,7 @@ try {
         $durationLabel = $isHalfDay ? 'Half Day' : 'Full Day';
 
         $submittedAt = $row['created_at'];
+        $updatedAt = isset($row['updated_at']) ? $row['updated_at'] : null;
 
         $requests[] = [
             'id' => (int)$row['id'],
@@ -175,38 +188,45 @@ try {
             'reason' => $row['reason'],
             'status' => $row['status'],
             'created_at_raw' => $submittedAt,
-            'submitted_at' => $submittedAt
+            'submitted_at' => $submittedAt,
+            'updated_at' => $updatedAt
         ];
     }
 
-    // Summary stats
-    // Pending count: Match the filtering logic used for displayed requests
-    // If filters are applied, count only filtered pending requests
-    // If no filters, count all pending requests
-    if ($month !== null || $year !== null) {
-        // Filters are applied - count only the filtered pending requests (what's shown in table)
-        $pendingCount = count($requests);
-    } else {
-        // No filters - count all pending requests
-        $pendingStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM leave_requests WHERE status = 'pending'");
-        $pendingCount = 0;
-        if ($pendingStmt) {
-            $pendingStmt->execute();
-            $res = $pendingStmt->get_result();
-            if ($row = $res->fetch_assoc()) {
-                $pendingCount = (int)$row['cnt'];
+    // Summary stats - only calculate when fetching pending requests (for main page)
+    $stats = [
+        'pending_count' => 0,
+        'approved_this_month' => 0,
+        'rejected_this_month' => 0
+    ];
+    
+    if ($status === 'pending') {
+        // Pending count: Match the filtering logic used for displayed requests
+        // If filters are applied, count only filtered pending requests
+        // If no filters, count all pending requests
+        if ($month !== null || $year !== null) {
+            // Filters are applied - count only the filtered pending requests (what's shown in table)
+            $pendingCount = count($requests);
+        } else {
+            // No filters - count all pending requests
+            $pendingStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM leave_requests WHERE status = 'pending'");
+            $pendingCount = 0;
+            if ($pendingStmt) {
+                $pendingStmt->execute();
+                $res = $pendingStmt->get_result();
+                if ($row = $res->fetch_assoc()) {
+                    $pendingCount = (int)$row['cnt'];
+                }
+                $pendingStmt->close();
             }
-            $pendingStmt->close();
         }
+        $stats['pending_count'] = $pendingCount;
     }
 
     // Approved/Rejected: Filtered by selected month/year (or all if no filters)
     // Use date range overlap logic for consistency
-    $stats = [
-        'pending_count' => $pendingCount,
-        'approved_this_month' => 0,
-        'rejected_this_month' => 0
-    ];
+    // Only calculate when fetching pending requests (for main page stats)
+    if ($status === 'pending') {
 
     if ($month !== null && $year !== null) {
         // Month and year filter

@@ -87,11 +87,14 @@ try {
     
     // Update phone if provided
     if (isset($input['phone']) && !empty($input['phone'])) {
-        $phone = preg_replace('/[\s\-\+]/', '', trim($input['phone']));
-        $phone_validation = Validator::phoneNumber($phone);
-        if ($phone_validation !== null) {
+        // Use sanitizePhone utility function to normalize to +60 format
+        require_once '../../../config/utils.php';
+        $phone = sanitizePhone($input['phone']);
+        
+        // Validate phone format
+        if (!isValidMalaysianPhone($phone)) {
             $conn->close();
-            ErrorHandler::handleValidationError(['phone' => $phone_validation]);
+            ErrorHandler::handleValidationError(['phone' => 'Invalid Malaysian phone number format']);
         }
         
         // Check for duplicate phone (excluding current staff)

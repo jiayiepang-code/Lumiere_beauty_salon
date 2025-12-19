@@ -1,4 +1,8 @@
 <?php
+// #region agent log
+@file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['location' => 'reset_password.php:1', 'message' => 'File accessed', 'data' => ['REQUEST_URI' => $_SERVER['REQUEST_URI'] ?? 'none', 'SCRIPT_NAME' => $_SERVER['SCRIPT_NAME'] ?? 'none', 'PHP_SELF' => $_SERVER['PHP_SELF'] ?? 'none', 'DOCUMENT_ROOT' => $_SERVER['DOCUMENT_ROOT'] ?? 'none', '__FILE__' => __FILE__, '__DIR__' => __DIR__, 'file_exists' => file_exists(__FILE__)], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'B']) . "\n", FILE_APPEND | LOCK_EX);
+// #endregion
+
 require_once 'config/database.php';
 
 // Connect to DB using PDO (consistent with rest of codebase)
@@ -16,6 +20,10 @@ try {
 $message = '';
 $show_form = false;
 $token = isset($_GET['token']) ? $_GET['token'] : '';
+
+// #region agent log
+@file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['location' => 'reset_password.php:20', 'message' => 'Token received', 'data' => ['token' => $token ? substr($token, 0, 8) . '...' : 'none', 'GET_token' => $_GET['token'] ?? 'none'], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'B']) . "\n", FILE_APPEND | LOCK_EX);
+// #endregion
 
 // #region agent log
 @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['location' => 'reset_password.php:18', 'message' => 'Token received', 'data' => ['token' => $token ? substr($token, 0, 8) . '...' : 'none'], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND | LOCK_EX);

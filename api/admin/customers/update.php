@@ -1,7 +1,7 @@
 <?php
 /**
  * Customer UPDATE API Endpoint
- * Handles customer account updates with password reset support
+ * Handles customer account updates (name, phone)
  */
 
 // Include required files first
@@ -120,11 +120,14 @@ try {
     
     // Update phone if provided
     if (isset($input['phone']) && !empty($input['phone'])) {
-        $phone = preg_replace('/[\s\-\+]/', '', trim($input['phone']));
-        $phone_validation = Validator::phoneNumber($phone);
-        if ($phone_validation !== null) {
+        // Use sanitizePhone utility function to normalize to +60 format
+        require_once '../../../config/utils.php';
+        $phone = sanitizePhone($input['phone']);
+        
+        // Validate phone format
+        if (!isValidMalaysianPhone($phone)) {
             $conn->close();
-            ErrorHandler::handleValidationError(['phone' => $phone_validation]);
+            ErrorHandler::handleValidationError(['phone' => 'Invalid Malaysian phone number format']);
         }
         
         // Check for duplicate phone (excluding current customer)
@@ -143,23 +146,6 @@ try {
         
         $update_fields[] = "phone = ?";
         $update_values[] = $phone;
-        $update_types .= "s";
-    }
-    
-    // Update password if provided
-    if (isset($input['password']) && !empty($input['password'])) {
-        $password = trim($input['password']);
-        
-        // Validate password strength
-        if (strlen($password) < 8) {
-            $conn->close();
-            ErrorHandler::handleValidationError(['password' => 'Password must be at least 8 characters long']);
-        }
-        
-        // Hash password
-        $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-        $update_fields[] = "password = ?";
-        $update_values[] = $hashed_password;
         $update_types .= "s";
     }
     

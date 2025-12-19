@@ -132,6 +132,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-header"><h1>Login</h1></div>
 
+            <?php if (isset($_GET['message'])): ?>
+                <div class="success-message" style="display: block; margin-bottom: 20px; background: #f0f9f0; color: #5cb85c; padding: 12px; border-radius: 6px; border-left: 3px solid #5cb85c; font-size: 14px;">
+                    <?php echo htmlspecialchars($_GET['message']); ?>
+                </div>
+            <?php endif; ?>
+
             <div class="form-group">
                 <div class="phone-wrapper">
                     <span class="input-prefix">+60</span>

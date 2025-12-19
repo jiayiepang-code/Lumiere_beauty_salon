@@ -86,7 +86,11 @@ try {
     
     // Prepare data
     $staff_email = trim($input['staff_email']);
-    $phone = preg_replace('/[\s\-\+]/', '', trim($input['phone']));
+    
+    // Use sanitizePhone utility function to normalize to +60 format
+    require_once '../../../config/utils.php';
+    $phone = sanitizePhone($input['phone']);
+    
     $password = trim($input['password']);
     $first_name = trim($input['first_name']);
     $last_name = trim($input['last_name']);
@@ -100,9 +104,8 @@ try {
     }
     
     // Validate phone format
-    $phone_validation = Validator::phoneNumber($phone);
-    if ($phone_validation !== null) {
-        ErrorHandler::handleValidationError(['phone' => $phone_validation]);
+    if (!isValidMalaysianPhone($phone)) {
+        ErrorHandler::handleValidationError(['phone' => 'Invalid Malaysian phone number format']);
     }
     
     // Validate password strength

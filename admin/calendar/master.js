@@ -247,13 +247,25 @@ async function initializeCalendar() {
 // Load staff list for filter dropdown
 async function loadStaffList() {
   try {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:250',message:'loadStaffList entry',data:{url:'../../api/admin/staff/list.php'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
     const response = await fetch("../../api/admin/staff/list.php");
     
-    // Check if response is JSON
+    // #region agent log
+    const status = response.status;
     const contentType = response.headers.get('content-type');
+    const responseText = await response.clone().text();
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:257',message:'loadStaffList response received',data:{status,contentType,responsePreview:responseText.substring(0,500),isJson:contentType?.includes('application/json'),startsWithHtml:responseText.trim().startsWith('<')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+    // #endregion
+    
+    // Check if response is JSON
     if (!contentType || !contentType.includes('application/json')) {
-      const text = await response.text();
-      console.error("Error loading staff list: Server returned non-JSON response", text.substring(0, 200));
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:262',message:'loadStaffList non-JSON response detected',data:{contentType,responsePreview:responseText.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+      // #endregion
+      console.error("Error loading staff list: Server returned non-JSON response", responseText.substring(0, 200));
       return;
     }
     
@@ -275,6 +287,9 @@ async function loadStaffList() {
       console.error("Error loading staff list:", data.error);
     }
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:278',message:'loadStaffList error caught',data:{errorMessage:error.message,errorStack:error.stack?.substring(0,300)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C,D,E'})}).catch(()=>{});
+    // #endregion
     console.error("Error loading staff list:", error);
   }
 }
@@ -870,15 +885,26 @@ async function viewBookingDetails(bookingId) {
   modal.style.display = "flex";
 
   try {
-    const response = await fetch(
-      `../../api/admin/bookings/details.php?booking_id=${bookingId}`
-    );
+    // #region agent log
+    const url = `../../api/admin/bookings/details.php?booking_id=${bookingId}`;
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:873',message:'viewBookingDetails entry',data:{bookingId,url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
+    
+    const response = await fetch(url);
+
+    // #region agent log
+    const status = response.status;
+    const contentType = response.headers.get("content-type");
+    const responseText = await response.clone().text();
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:878',message:'viewBookingDetails response received',data:{status,contentType,responsePreview:responseText.substring(0,500),isJson:contentType?.includes('application/json'),startsWithHtml:responseText.trim().startsWith('<')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+    // #endregion
 
     // Check if response is JSON
-    const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text();
-      console.error("Non-JSON response received:", text);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:882',message:'viewBookingDetails non-JSON response detected',data:{contentType,responsePreview:responseText.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+      // #endregion
+      console.error("Non-JSON response received:", responseText);
       throw new Error(
         "Server returned an invalid response. Please check the console for details."
       );
@@ -894,6 +920,9 @@ async function viewBookingDetails(bookingId) {
       renderBookingDetails(data.booking);
     }
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:897',message:'viewBookingDetails error caught',data:{errorMessage:error.message,errorStack:error.stack?.substring(0,300)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C,D,E'})}).catch(()=>{});
+    // #endregion
     console.error("Error loading booking details:", error);
     if (content) {
       content.innerHTML = `<div style="color: #F44336; padding: 20px;">

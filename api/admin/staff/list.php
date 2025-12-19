@@ -1,9 +1,16 @@
 <?php
+// Suppress error display for API (errors will be returned as JSON)
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
 header('Content-Type: application/json');
 
 // Include required files
 require_once '../../../admin/includes/auth_check.php'; // This handles session start
 require_once '../../../config/db_connect.php';
+
+// Get database connection
+$conn = getDBConnection();
 
 // Check authentication
 if (!isAdminAuthenticated()) {

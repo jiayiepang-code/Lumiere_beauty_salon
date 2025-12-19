@@ -526,6 +526,219 @@ include '../includes/header.php';
     }
 </style>
 
+<!-- Modal for viewing approved/rejected requests -->
+<div id="requestsModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Leave Requests</h2>
+            <button class="modal-close" id="modalCloseBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="modalLoading" style="text-align: center; padding: 40px; color: #999;">
+                Loading requests...
+            </div>
+            <div id="modalEmpty" style="display: none; text-align: center; padding: 40px; color: #999;">
+                <p>No requests found.</p>
+            </div>
+            <div id="modalTableWrapper" style="display: none;">
+                <div class="table-responsive">
+                    <table class="table" id="modalTable">
+                        <thead>
+                            <tr>
+                                <th>Staff Name</th>
+                                <th>Leave Type</th>
+                                <th>Date Range</th>
+                                <th>Duration</th>
+                                <th>Reason</th>
+                                <th>Submitted</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalTableBody">
+                            <!-- Rows will be populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        padding: 20px;
+        animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 1200px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+        from {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .modal-close {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+        border-radius: 6px;
+        transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+
+    .modal-body {
+        padding: 24px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    #modalTable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    #modalTable th {
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        color: #6c757d;
+        white-space: nowrap;
+        padding: 12px;
+        text-align: left;
+        border-bottom: 2px solid #e5e7eb;
+        background: #f9fafb;
+    }
+
+    #modalTable td {
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+        font-size: 0.9rem;
+    }
+
+    #modalTable tbody tr:hover {
+        background: #f9fafb;
+    }
+
+    .badge-approved {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    /* Make stat cards clickable */
+    #card-approved-month,
+    #card-rejected-month {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    #card-approved-month:hover,
+    #card-rejected-month:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .modal-content {
+            max-width: 100%;
+            max-height: 95vh;
+            margin: 10px;
+        }
+
+        .modal-header {
+            padding: 16px;
+        }
+
+        .modal-header h2 {
+            font-size: 1.25rem;
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        #modalTable {
+            font-size: 0.8rem;
+            min-width: 700px;
+        }
+
+        #modalTable th,
+        #modalTable td {
+            padding: 8px 6px;
+        }
+    }
+</style>
+
 <script>
     const LEAVE_REQUESTS_API_BASE = '<?php echo $base_path; ?>/api/admin/leave_requests';
 </script>
