@@ -142,7 +142,6 @@ function escapeHtml(str) {
 let currentView = "day";
 let currentDate = new Date();
 let bookingsData = [];
-let staffSchedulesData = [];
 let staffList = [];
 
 // Initialize calendar on page load
@@ -212,6 +211,9 @@ async function initializeCalendar() {
   // Load staff list for filter
   await loadStaffList();
 
+  // Load staff roster
+  await loadStaffRoster();
+
   // Set filters from URL
   if (staffEmailParam) {
     const staffFilter = document.getElementById("staffFilter");
@@ -232,16 +234,144 @@ async function initializeCalendar() {
 
   // Update current date display
   updateDateDisplay();
+}
 
-  // Scroll to staff schedule section if anchor is present
-  if (window.location.hash === "#staff-schedule") {
-    setTimeout(() => {
-      const section = document.getElementById("staffScheduleSection");
-      if (section) {
-        section.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }, 500);
+// Load staff roster
+async function loadStaffRoster() {
+  const loadingEl = document.getElementById("staffRosterLoading");
+  const gridEl = document.getElementById("staffRosterGrid");
+  
+  if (!loadingEl || !gridEl) {
+    return;
   }
+  
+  loadingEl.style.display = "block";
+  gridEl.style.display = "none";
+  
+  try {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    
+    const response = await fetch(`../../api/admin/staff/roster.php?date=${dateStr}`);
+    
+    if (!response.ok) {
+      throw new Error("Failed to load staff roster");
+    }
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      loadingEl.style.display = "none";
+      renderStaffRoster(data.roster);
+      gridEl.style.display = "grid";
+    } else {
+      throw new Error(data.error?.message || "Failed to load staff roster");
+    }
+  } catch (error) {
+    console.error("Error loading staff roster:", error);
+    loadingEl.style.display = "none";
+    if (gridEl) {
+      gridEl.innerHTML = `<div style="text-align: center; padding: 40px; color: #999;">Error loading staff roster: ${error.message}</div>`;
+      gridEl.style.display = "block";
+    }
+  }
+}
+
+// Render staff roster cards
+function renderStaffRoster(roster) {
+  const gridEl = document.getElementById("staffRosterGrid");
+  
+  if (!gridEl || !roster || roster.length === 0) {
+    if (gridEl) {
+      gridEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No staff members found</div>';
+      gridEl.style.display = "block";
+    }
+    return;
+  }
+  
+  const statusColors = {
+    'available': '#E8F5E9',
+    'on-break': '#FFF3E0',
+    'off-duty': '#F5F5F5',
+    'with-client': '#F5EDE6' // Light brown/taupe to match theme (#c29076 lightened)
+  };
+  
+  const statusDots = {
+    'available': '#4CAF50',
+    'on-break': '#FF9800',
+    'off-duty': '#9E9E9E',
+    'with-client': '#c29076' // Theme primary brown color
+  };
+  
+  const statusLabels = {
+    'available': 'Available',
+    'on-break': 'On Break',
+    'with-client': 'With Customer',
+    'off-duty': 'Off Duty'
+  };
+  
+  let html = '';
+  
+  roster.forEach((staff) => {
+    const status = staff.status || 'off-duty';
+    const bgColor = statusColors[status] || statusColors['off-duty'];
+    const dotColor = statusDots[status] || statusDots['off-duty'];
+    const statusLabel = statusLabels[status] || 'Off Duty';
+    
+    // Get initials for avatar
+    const names = staff.staff_name.split(' ');
+    const initials = names.length >= 2 
+      ? (names[0][0] + names[names.length - 1][0]).toUpperCase()
+      : names[0][0].toUpperCase();
+    
+    html += `
+      <div class="staff-roster-card" style="background: ${bgColor}; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+          <div style="position: relative;">
+            <div style="width: 56px; height: 56px; border-radius: 50%; background: #D4A574; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 20px;">
+              ${initials}
+            </div>
+            <div style="position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; border-radius: 50%; background: ${dotColor}; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
+          </div>
+          <div style="flex: 1;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #333;">${escapeHtml(staff.staff_name)}</h3>
+              <span class="status-badge" style="padding: 4px 10px; border-radius: 12px; background: ${dotColor}; color: white; font-size: 11px; font-weight: 500;">${statusLabel}</span>
+            </div>
+            <p style="margin: 0; font-size: 13px; color: #666;">${escapeHtml(staff.role || 'Staff')}</p>
+          </div>
+        </div>
+        <div style="margin-bottom: 12px;">
+          <div style="font-size: 13px; color: #666; margin-bottom: 4px;">Schedule</div>
+          <div style="font-size: 15px; font-weight: 500; color: #333;">${escapeHtml(staff.schedule)}</div>
+        </div>
+        ${staff.current_client ? `
+          <div style="margin-bottom: 12px;">
+            <div style="font-size: 13px; color: #666; margin-bottom: 4px;">Current Customer</div>
+            <div style="font-size: 15px; font-weight: 500; color: #333;">${escapeHtml(staff.current_client)}</div>
+          </div>
+        ` : ''}
+        ${staff.break_info ? `
+          <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 6px; color: #FF9800;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
+              <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
+              <line x1="6" y1="1" x2="6" y2="4"></line>
+              <line x1="10" y1="1" x2="10" y2="4"></line>
+              <line x1="14" y1="1" x2="14" y2="4"></line>
+            </svg>
+            <span style="font-size: 13px;">${escapeHtml(staff.break_info)}</span>
+          </div>
+        ` : ''}
+        <div>
+          <div style="font-size: 13px; color: #666; margin-bottom: 4px;">Hours today</div>
+          <div style="font-size: 15px; font-weight: 500; color: #333;">${escapeHtml(staff.hours_today)}</div>
+        </div>
+      </div>
+    `;
+  });
+  
+  gridEl.innerHTML = html;
 }
 
 // Load staff list for filter dropdown
@@ -389,7 +519,6 @@ async function loadCalendarData() {
         }
         return booking;
       });
-      staffSchedulesData = data.staff_schedules || [];
 
       loadingState.style.display = "none";
 
@@ -399,9 +528,6 @@ async function loadCalendarData() {
         calendarView.style.display = "block";
         renderCalendar();
       }
-
-      // Render staff schedules
-      renderStaffSchedules();
     }
   } catch (error) {
     console.error("Error loading calendar data:", error);
@@ -602,7 +728,7 @@ function addRealTimeIndicator() {
     top: ${positionPercent}%;
     height: 2px;
     background: #c29076;
-    z-index: 100;
+    z-index: 1;
     pointer-events: none;
   `;
 
@@ -834,47 +960,6 @@ function renderBookingCard(booking) {
             <div class="booking-staff">Staff: ${escapeHtml(staffNames)}</div>
         </div>
     `;
-}
-
-// Render staff schedules
-function renderStaffSchedules() {
-  const staffScheduleSection = document.getElementById("staffScheduleSection");
-  const staffScheduleGrid = document.querySelector(".staff-schedule-grid");
-
-  if (!staffScheduleSection || !staffScheduleGrid) {
-    console.warn("Staff schedule elements not found");
-    return;
-  }
-
-  // Show or hide section based on data
-  if (staffSchedulesData.length === 0) {
-    staffScheduleSection.style.display = "none";
-    return;
-  }
-
-  let html = "";
-
-  staffSchedulesData.forEach((schedule) => {
-    const cardHtml = `
-            <div class="staff-schedule-card" style="background: white; border-radius: 8px; padding: 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); display: flex; flex-direction: column; align-items: center;">
-                <h4 style="margin: 0; font-size: 16px; color: #333;">${escapeHtml(
-                  schedule.staff_name
-                )}</h4>
-                <p style="margin: 8px 0; font-size: 14px; color: #666;">${escapeHtml(
-                  schedule.working_time
-                )}</p>
-                <span style="padding: 4px 8px; border-radius: 4px; background: ${
-                  schedule.status === "Working" ? "#4CAF50" : "#9E9E9E"
-                }; color: white; font-size: 12px;">${escapeHtml(
-      schedule.status
-    )}</span>
-            </div>
-        `;
-    html += cardHtml;
-  });
-
-  staffScheduleGrid.innerHTML = html;
-  staffScheduleSection.style.display = "block";
 }
 
 // View booking details

@@ -93,11 +93,45 @@ include '../includes/header.php';
             <!-- Calendar content will be dynamically generated -->
         </div>
         
-        <!-- Updated Staff Schedule Section -->
-        <div class="staff-schedule-section" id="staffScheduleSection" style="display: none; margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px;">
-            <h3 style="margin-bottom: 15px;">Staff Schedules</h3>
-            <div class="staff-schedule-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px;">
-                <!-- Cards will be dynamically generated -->
+        <!-- Staff Roster Section -->
+        <div class="staff-roster-section" id="staffRosterSection" style="margin-top: 30px; border-top: 1px solid #eee; padding-top: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 24px; font-weight: 700; color: #333; display: flex; align-items: center; gap: 12px;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                        Staff Roster
+                    </h2>
+                    <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">Today's schedule & availability</p>
+                </div>
+                <div class="roster-legend" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #4CAF50;"></div>
+                        <span style="font-size: 12px; color: #666;">Available</span>
+                    </div>
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #FF9800;"></div>
+                        <span style="font-size: 12px; color: #666;">On Break</span>
+                    </div>
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #9E9E9E;"></div>
+                        <span style="font-size: 12px; color: #666;">Off Duty</span>
+                    </div>
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #c29076;"></div>
+                        <span style="font-size: 12px; color: #666;">With Customer</span>
+                    </div>
+                </div>
+            </div>
+            <div id="staffRosterLoading" class="loading" style="text-align: center; padding: 40px; color: #999;">
+                Loading staff roster...
+            </div>
+            <div id="staffRosterGrid" class="staff-roster-grid" style="display: none;">
+                <!-- Staff cards will be dynamically generated -->
             </div>
         </div>
     </div>
