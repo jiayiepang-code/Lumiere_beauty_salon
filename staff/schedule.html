@@ -341,7 +341,7 @@
         <section class="date-picker-section">
           <div class="date-picker-container">
             <label for="datePicker">Select Date:</label>
-            <input type="date" id="datePicker" class="date-input" value="2025-12-05">
+            <input type="date" id="datePicker" class="date-input">
             <button class="btn-primary" onclick="loadAppointments()">Load Schedule</button>
           </div>
         </section>
@@ -637,10 +637,17 @@ async function loadAppointments(){
   const statusFilter=document.getElementById('statusFilter');
   const date=dateInput.value;
   const selectedStatus=statusFilter?statusFilter.value:'';
-  const titleEl=document.querySelector('.appointments-title');
+  const titleEl=document.getElementById('dailyScheduleTitle');
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadAppointments-start',message:'loadAppointments called',data:{date:date,selectedStatus:selectedStatus,dateInputExists:!!dateInput,gridExists:!!grid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
+  // #endregion agent log
   
   // Validate date is selected
   if(!date){
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadAppointments-noDate',message:'No date selected',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'F'})}).catch(()=>{});
+    // #endregion agent log
     alert('Please select a date first');
     return;
   }
@@ -656,6 +663,11 @@ async function loadAppointments(){
     // URL encode the date to ensure proper transmission
     const encodedDate=encodeURIComponent(date);
     console.log('Loading appointments for date:', date);
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadAppointments-fetch',message:'Fetching appointments from API',data:{date:date,encodedDate:encodedDate,apiUrl:`api/appointments.php?date=${encodedDate}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'G'})}).catch(()=>{});
+    // #endregion agent log
+    
     const response=await fetch(`api/appointments.php?date=${encodedDate}`);
     
     if(!response.ok){
@@ -760,11 +772,22 @@ async function updateStatus(bookingId,status){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:DOMContentLoaded-start',message:'Page loaded, initializing schedule',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion agent log
+  
   const dateInput=document.getElementById('datePicker');
-  // Set default to today if not already set
-  if(!dateInput.value){
-    dateInput.value=new Date().toISOString().split('T')[0];
-  }
+  // Always set to today's date
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const todayFormatted = `${year}-${month}-${day}`;
+  dateInput.value = todayFormatted;
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:DOMContentLoaded-dateSet',message:'Date input set to today',data:{todayFormatted:todayFormatted,dateInputValue:dateInput.value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion agent log
   
   // Add event listener to load appointments when date changes
   dateInput.addEventListener('change', function(){
@@ -772,10 +795,19 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   
   const monthPicker=document.getElementById('monthPicker');
-  const today=new Date();
-  monthPicker.value=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  const todayMonth=new Date();
+  const monthValue=todayMonth.getFullYear()+'-'+String(todayMonth.getMonth()+1).padStart(2,'0');
+  monthPicker.value=monthValue;
+  
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:DOMContentLoaded-monthSet',message:'Month input set to current month',data:{monthValue:monthValue,monthPickerValue:monthPicker.value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion agent log
   
   // Load appointments for the selected date (or today if none selected)
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:DOMContentLoaded-callingLoad',message:'Calling loadAppointments and loadMonthAppointments',data:{dateValue:dateInput.value,monthValue:monthPicker.value},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  // #endregion agent log
+  
   loadAppointments();
   // Call loadMonthAppointments() on load to apply the default 'confirmed' status
   loadMonthAppointments(); 
@@ -791,7 +823,14 @@ async function loadMonthAppointments(){
   const selectedStatus=monthStatusFilter?monthStatusFilter.value:'';
   const titleEl=document.getElementById('monthScheduleTitle');
   
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadMonthAppointments-start',message:'loadMonthAppointments called',data:{monthValue:monthValue,selectedStatus:selectedStatus,monthInputExists:!!monthInput,gridExists:!!grid},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'L'})}).catch(()=>{});
+  // #endregion agent log
+  
   if(!monthValue){
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadMonthAppointments-noMonth',message:'No month selected',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'M'})}).catch(()=>{});
+    // #endregion agent log
     alert('Please select a month');
     return;
   }
@@ -799,14 +838,26 @@ async function loadMonthAppointments(){
   grid.innerHTML='<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><h3>Loading...</h3></div>';
   
   try{
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadMonthAppointments-fetch',message:'Fetching monthly appointments from API',data:{monthValue:monthValue,apiUrl:`api/appointments.php?month=${monthValue}`},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'N'})}).catch(()=>{});
+    // #endregion agent log
+    
     const response=await fetch(`api/appointments.php?month=${monthValue}`);
     const data=await response.json();
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadMonthAppointments-response',message:'Monthly API response received',data:{success:data.success,appointmentCount:data.appointments?.length,status:response.status,ok:response.ok},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'O'})}).catch(()=>{});
+    // #endregion agent log
     
     if(!data.success){
       throw new Error(data.error||'Failed to load appointments');
     }
     
     let appointments=data.appointments||[];
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadMonthAppointments-beforeFilter',message:'Monthly appointments before filtering',data:{totalAppointments:appointments.length,selectedStatus:selectedStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'P'})}).catch(()=>{});
+    // #endregion agent log
     
     // Filter out completed bookings from monthly schedule
     appointments=appointments.filter(ap=>ap.status!=='completed');
@@ -815,6 +866,10 @@ async function loadMonthAppointments(){
     if(selectedStatus){
       appointments=appointments.filter(ap=>ap.status===selectedStatus);
     }
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadMonthAppointments-afterFilter',message:'Monthly appointments after filtering',data:{filteredAppointments:appointments.length,selectedStatus:selectedStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'Q'})}).catch(()=>{});
+    // #endregion agent log
     
     const [year,month]=monthValue.split('-');
     const monthName=new Date(year,month-1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
@@ -828,6 +883,9 @@ async function loadMonthAppointments(){
     if(appointments.length===0){
       const filterText=selectedStatus?` with status "${selectedStatus}"`:'';
       grid.innerHTML=`<div class="empty-state"><i class="fas fa-calendar-times"></i><h3>No appointments${filterText}</h3><p>There are no appointments${filterText} for this month.</p></div>`;
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/schedule.html:loadMonthAppointments-empty',message:'No monthly appointments found',data:{monthValue:monthValue,selectedStatus:selectedStatus},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'R'})}).catch(()=>{});
+      // #endregion agent log
       return;
     }
     

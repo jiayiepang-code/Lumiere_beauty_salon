@@ -192,15 +192,43 @@ if ($action === 'cancel' && $_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if ($action === 'history' && $_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Fetch leave history for the logged-in staff (excluding cancelled requests)
+    // Fetch leave history for the logged-in staff (including cancelled requests)
     try {
         // SELECT statement remains the same, retrieving half_day_time
         $stmt = $pdo->prepare("SELECT id, leave_type, start_date, end_date, half_day, half_day_time, reason, status, created_at, updated_at 
                               FROM leave_requests 
-                              WHERE staff_email = ? AND status <> 'cancelled'
+                              WHERE staff_email = ?
                               ORDER BY created_at DESC");
         $stmt->execute([$staff_email]);
         $requests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // #region agent log
+        $logData = [
+            'location' => 'staff/api/leave.php:' . __LINE__,
+            'message' => 'Returning leave history',
+            'data' => [
+                'requestCount' => count($requests),
+                'requests' => array_map(function($r) {
+                    return ['id' => $r['id'], 'status' => $r['status'], 'leave_type' => $r['leave_type']];
+                }, $requests)
+            ],
+            'timestamp' => round(microtime(true) * 1000),
+            'sessionId' => 'debug-session',
+            'runId' => 'run1',
+            'hypothesisId' => 'B'
+        ];
+        file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($logData) . "\n", FILE_APPEND);
+        // #endregion agent log
+        
+        // Ensure status values are properly set (handle null/empty)
+        foreach ($requests as &$request) {
+            if (empty($request['status'])) {
+                $request['status'] = 'pending'; // Default to pending if status is missing
+            }
+            // Normalize status to lowercase
+            $request['status'] = strtolower(trim($request['status']));
+        }
+        unset($request); // Break reference
         
         respond(['success' => true, 'requests' => $requests]);
     } catch (PDOException $e) {

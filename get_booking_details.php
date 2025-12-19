@@ -84,6 +84,53 @@ if (strpos($referenceId, 'LB') === 0 || strpos($referenceId, 'BK') === 0) {
 
 // Determine payment method (default to Pay_at_salon if not set)
 $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
+
+// Check if booking date has passed and mark as expired if status is still confirmed
+$bookingDate = $booking['booking_date'];
+$bookingDateTime = $bookingDate . ' ' . $booking['expected_finish_time'];
+$currentDateTime = date('Y-m-d H:i:s');
+
+// #region agent log
+$logData = [
+    'location' => 'get_booking_details.php:' . __LINE__,
+    'message' => 'Checking booking expiration',
+    'data' => [
+        'booking_id' => $bookingId,
+        'booking_date' => $bookingDate,
+        'booking_datetime' => $bookingDateTime,
+        'current_datetime' => $currentDateTime,
+        'original_status' => $booking['status'],
+        'is_past' => strtotime($bookingDateTime) < strtotime($currentDateTime)
+    ],
+    'timestamp' => round(microtime(true) * 1000),
+    'sessionId' => 'debug-session',
+    'runId' => 'run1',
+    'hypothesisId' => 'A'
+];
+file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode($logData) . "\n", FILE_APPEND);
+// #endregion agent log
+
+// If booking date/time has passed and status is still confirmed, mark as expired
+if (strtotime($bookingDateTime) < strtotime($currentDateTime) && $booking['status'] === 'confirmed') {
+    $booking['status'] = 'expired';
+    
+    // #region agent log
+    $logData = [
+        'location' => 'get_booking_details.php:' . __LINE__,
+        'message' => 'Booking marked as expired',
+        'data' => [
+            'booking_id' => $bookingId,
+            'original_status' => 'confirmed',
+            'new_status' => 'expired'
+        ],
+        'timestamp' => round(microtime(true) * 1000),
+        'sessionId' => 'debug-session',
+        'runId' => 'run1',
+        'hypothesisId' => 'B'
+    ];
+    file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode($logData) . "\n", FILE_APPEND);
+    // #endregion agent log
+}
 ?>
 
 <style>
@@ -127,6 +174,10 @@ $paymentMethod = $booking['payment_method'] ?? 'Pay_at_salon';
 }
 .status-cancelled {
     background-color: #dc3545;
+    color: white;
+}
+.status-expired {
+    background-color: #ff9800;
     color: white;
 }
 .services-table {

@@ -892,6 +892,23 @@
             box-shadow: 0 0 0 3px rgba(150, 128, 115, 0.1);
         }
 
+        .target-setter button {
+            background: var(--staff-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        .target-setter button:hover {
+            background: #7a6a5f;
+        }
+
         .chart-controls {
             display: flex;
             gap: 1rem;
@@ -1268,7 +1285,7 @@
                                     <label for="targetAmount">Set Target Commission (RM):</label>
                                     <input type="number" id="targetAmount" step="0.01" min="0" placeholder="Enter target amount">
                                 </div>
-                                <button class="btn-primary" onclick="saveTargetCommission()">Save Target</button>
+                                <button onclick="saveTargetCommission()">Save Target</button>
                             </div>
                         </div>
                     </div>
@@ -2047,7 +2064,7 @@
                 const currentCommission = parseFloat(data.current_commission || 0);
 
                 // #region agent log
-                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-calc',message:'Calculating progress',data:{target:target,currentCommission:currentCommission},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-calc',message:'Calculating progress',data:{target:target,currentCommission:currentCommission,targetType:typeof target,currentType:typeof currentCommission},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
                 // #endregion agent log
 
                 document.getElementById('targetCommissionValue').textContent = `RM ${target.toFixed(2)}`;
@@ -2055,8 +2072,14 @@
 
                 let progress = 0;
                 if (target > 0) {
-                    // Calculate progress percentage, cap at 100% if exceeded
-                    progress = Math.min(100, (currentCommission / target) * 100);
+                    // Check if target is achieved first, then calculate progress
+                    if (currentCommission >= target) {
+                        // Target achieved or exceeded - progress is 100%
+                        progress = 100;
+                    } else {
+                        // Calculate progress percentage
+                        progress = (currentCommission / target) * 100;
+                    }
                 }
 
                 // #region agent log
@@ -2089,7 +2112,7 @@
                     targetStatus.innerHTML = '<i class="fas fa-info-circle"></i><span>Set your target to track your progress</span>';
                     progressFill.className = 'progress-fill';
                 } else if (currentCommission >= target) {
-                    // Target achieved or exceeded - set progress to exactly 100%
+                    // Target achieved or exceeded - ensure progress is exactly 100%
                     progress = 100;
                     progressFill.style.width = '100%';
                     progressText.textContent = '100.0%';
@@ -2098,7 +2121,7 @@
                     progressFill.className = 'progress-fill over-achieved';
                     
                     // #region agent log
-                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-achieved',message:'Target achieved - progress set to 100%',data:{target:target,currentCommission:currentCommission,progress:progress},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:loadTargetCommission-achieved',message:'Target achieved - progress set to 100%',data:{target:target,currentCommission:currentCommission,progress:progress,comparison:currentCommission >= target},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'H'})}).catch(()=>{});
                     // #endregion agent log
                 } else {
                     const remaining = target - currentCommission;
@@ -2143,22 +2166,94 @@
 
                 const data = await response.json();
 
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-response',message:'Save target commission API response',data:{success:data.success,target:data.target,month:data.month},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion agent log
+
                 if (data.success) {
+                    // Store the saved target amount for immediate UI update
+                    const savedTarget = parseFloat(data.target || targetAmount);
+                    const savedMonth = data.month || targetMonth;
+                    
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-update',message:'Updating UI immediately with saved target',data:{savedTarget:savedTarget,savedMonth:savedMonth},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+                    // #endregion agent log
+                    
                     // Clear input field
                     document.getElementById('targetAmount').value = '';
                     
                     // Ensure the month selector is set to the saved month
-                    const savedMonth = data.month || targetMonth;
                     document.getElementById('targetMonth').value = savedMonth;
                     
-                    // Small delay to ensure database is updated, then reload
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    
-                    // Reload target commission data
-                    await loadTargetCommission();
-                    
-                    // Show success message
-                    alert('Target commission saved successfully!');
+                    // Immediately fetch current commission and update UI (real-time update)
+                    try {
+                        const updateResponse = await fetch(`api/performance.php?action=get_target&month=${encodeURIComponent(savedMonth)}`);
+                        const updateData = await updateResponse.json();
+                        
+                        if (updateData.success) {
+                            const currentCommission = parseFloat(updateData.current_commission || 0);
+                            
+                            // Update target commission display immediately
+                            document.getElementById('targetCommissionValue').textContent = `RM ${savedTarget.toFixed(2)}`;
+                            document.getElementById('currentCommissionValue').textContent = `RM ${currentCommission.toFixed(2)}`;
+                            
+                            // Calculate and update progress immediately
+                            let progress = 0;
+                            if (savedTarget > 0) {
+                                if (currentCommission >= savedTarget) {
+                                    progress = 100;
+                                } else {
+                                    progress = (currentCommission / savedTarget) * 100;
+                                }
+                            }
+                            
+                            const progressFill = document.getElementById('progressFill');
+                            const progressText = document.getElementById('progressText');
+                            const targetStatus = document.getElementById('targetStatus');
+                            
+                            if (progressFill && progressText && targetStatus) {
+                                progressFill.style.width = `${progress}%`;
+                                progressText.textContent = `${progress.toFixed(1)}%`;
+                                
+                                // Update status message
+                                if (savedTarget === 0) {
+                                    targetStatus.className = 'target-status no-target';
+                                    targetStatus.innerHTML = '<i class="fas fa-info-circle"></i><span>Set your target to track your progress</span>';
+                                    progressFill.className = 'progress-fill';
+                                } else if (currentCommission >= savedTarget) {
+                                    progress = 100;
+                                    progressFill.style.width = '100%';
+                                    progressText.textContent = '100.0%';
+                                    targetStatus.className = 'target-status achieved';
+                                    targetStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Congratulations! You achieved your target!</span>';
+                                    progressFill.className = 'progress-fill over-achieved';
+                                } else {
+                                    const remaining = savedTarget - currentCommission;
+                                    const percentage = ((remaining / savedTarget) * 100).toFixed(1);
+                                    targetStatus.className = 'target-status not-achieved';
+                                    targetStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i><span>Keep working! You need RM ${remaining.toFixed(2)} more (${percentage}% remaining)</span>`;
+                                    progressFill.className = 'progress-fill under-achieved';
+                                }
+                            }
+                            
+                            // #region agent log
+                            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/performance.html:saveTargetCommission-immediateUpdate',message:'UI updated immediately with real-time data',data:{savedTarget:savedTarget,currentCommission:currentCommission,progress:progress},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                            // #endregion agent log
+                            
+                            // Show success message
+                            alert('Target commission saved successfully!');
+                        } else {
+                            // Fallback: just update target, show success, then reload
+                            document.getElementById('targetCommissionValue').textContent = `RM ${savedTarget.toFixed(2)}`;
+                            alert('Target commission saved successfully!');
+                            await loadTargetCommission();
+                        }
+                    } catch (updateError) {
+                        // Fallback: just update target, show success, then reload
+                        document.getElementById('targetCommissionValue').textContent = `RM ${savedTarget.toFixed(2)}`;
+                        alert('Target commission saved successfully!');
+                        await loadTargetCommission();
+                    }
                 } else {
                     alert('Failed to save target commission: ' + (data.error || 'Unknown error'));
                 }

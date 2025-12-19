@@ -1222,23 +1222,39 @@
         }
 
         function getStatusClass(status) {
+            // Normalize status to lowercase for consistent matching
+            const normalizedStatus = String(status || '').toLowerCase().trim();
             const statusMap = {
                 'pending': 'status-pending',
                 'approved': 'status-approved',
                 'rejected': 'status-rejected',
-                'cancelled': 'status-cancelled'
+                'cancelled': 'status-cancelled',
+                'canceled': 'status-cancelled' // Handle alternative spelling
             };
-            return statusMap[status] || 'status-pending';
+            return statusMap[normalizedStatus] || 'status-pending';
         }
 
         function getStatusText(status) {
+            // Normalize status to lowercase for consistent matching
+            if (!status) {
+                console.warn('getStatusText called with empty status');
+                return 'Unknown';
+            }
+            
+            const normalizedStatus = String(status).toLowerCase().trim();
             const statusMap = {
                 'pending': 'Pending',
                 'approved': 'Approved',
                 'rejected': 'Rejected',
-                'cancelled': 'Cancelled'
+                'cancelled': 'Cancelled',
+                'canceled': 'Cancelled' // Handle alternative spelling
             };
-            return statusMap[status] || status;
+            
+            const result = statusMap[normalizedStatus];
+            if (!result) {
+                console.warn('Unknown status value:', status, 'normalized:', normalizedStatus);
+            }
+            return result || 'Unknown';
         }
 
         async function cancelLeaveRequest(requestId, buttonEl) {
@@ -1247,6 +1263,10 @@
             if (!confirmCancel) return;
 
             buttonEl?.setAttribute('disabled', 'disabled');
+
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:cancelLeaveRequest-start',message:'Cancelling leave request',data:{requestId:requestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+            // #endregion agent log
 
             try {
                 const formData = new FormData();
@@ -1260,12 +1280,23 @@
                     throw new Error('Unexpected response from server');
                 }
                 const data = await res.json();
+                
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:cancelLeaveRequest-response',message:'Cancel API response',data:{success:data.success,message:data.message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+                // #endregion agent log
+                
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to cancel request');
                 }
                 successBox.textContent = data.message || 'Leave request cancelled';
                 successBox.style.display = 'block';
                 errorBox.style.display = 'none';
+                
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:cancelLeaveRequest-reload',message:'Reloading leave history after cancellation',data:{requestId:requestId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                // #endregion agent log
+                
+                // Reload leave history to show updated status
                 await loadLeaveHistory();
             } catch (err) {
                 console.error(err);
@@ -1343,17 +1374,17 @@
                 }
                 const data = await response.json();
 
+                // #region agent log
+                fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:loadLeaveHistory-dataReceived',message:'Leave history data received',data:{success:data.success,requestCount:data.requests?.length,requests:data.requests?.map(r=>({id:r.id,status:r.status,leave_type:r.leave_type}))},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                // #endregion agent log
+
                 if (!data.success) {
                     throw new Error(data.error || 'Failed to load leave history');
                 }
 
                 const requests = data.requests || [];
-                // Filter out cancelled requests on frontend as well (backup filter)
-                const filteredRequests = requests.filter(request => {
-                    if (!request || !request.status) return true; // Keep if no status
-                    const status = String(request.status).trim().toLowerCase();
-                    return status !== 'cancelled';
-                });
+                // Show all requests including cancelled ones
+                const filteredRequests = requests;
                 container.innerHTML = '';
 
                 if (filteredRequests.length === 0) {
@@ -1381,7 +1412,30 @@
                     const updatedDate = request.updated_at && request.updated_at !== request.created_at 
                         ? formatDateTime(request.updated_at) 
                         : null;
-                    const canCancel = request.status === 'pending';
+                    
+                    // Normalize status to lowercase for comparison
+                    // Ensure we handle null, undefined, or empty status values
+                    const rawStatus = request.status || '';
+                    const normalizedStatus = String(rawStatus).toLowerCase().trim();
+                    const canCancel = normalizedStatus === 'pending';
+                    
+                    // Get status text and class using the raw status (function will normalize internally)
+                    const statusText = getStatusText(request.status);
+                    const statusClass = getStatusClass(request.status);
+                    
+                    // #region agent log
+                    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'staff/apply-leave.html:loadLeaveHistory-render',message:'Rendering leave request',data:{requestId:request.id,rawStatus:rawStatus,statusType:typeof request.status,normalizedStatus:normalizedStatus,statusClass:statusClass,statusText:statusText,fullRequest:JSON.stringify(request)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+                    // #endregion agent log
+                    
+                    // Debug: Log if status is missing or unexpected
+                    if (!normalizedStatus || normalizedStatus === '') {
+                        console.warn('Leave request has no status:', request);
+                    }
+                    
+                    // Ensure status text is not 'Unknown' - if it is, log and use raw status
+                    if (statusText === 'Unknown') {
+                        console.error('Status text is Unknown for request:', request.id, 'Raw status:', rawStatus);
+                    }
                     
                     // UPDATED: Include half_day_time (HH:MM - HH:MM) in duration display
                     const durationValue = request.half_day 
@@ -1392,8 +1446,8 @@
                     item.innerHTML = `
                         <div class="leave-history-header">
                             <div class="leave-history-type">${request.leave_type} Leave</div>
-                            <span class="leave-status-badge ${getStatusClass(request.status)}">
-                                ${getStatusText(request.status)}
+                            <span class="leave-status-badge ${statusClass}">
+                                ${statusText}
                             </span>
                             ${canCancel ? `<button class="leave-action-btn" data-request-id="${request.id}">Cancel</button>` : ''}
                         </div>

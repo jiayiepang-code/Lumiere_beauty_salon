@@ -97,21 +97,33 @@ require_once 'includes/header.php';
         </div>
 
         <div class="row">
-            <?php foreach($bookings as $booking): ?>
+            <?php foreach($bookings as $booking): 
+                // Check if booking date has passed and mark as expired if status is still confirmed
+                $bookingDate = $booking['booking_date'];
+                $bookingDateTime = $bookingDate . ' ' . $booking['expected_finish_time'];
+                $currentDateTime = date('Y-m-d H:i:s');
+                $displayStatus = $booking['status'];
+                
+                // If booking date/time has passed and status is still confirmed, mark as expired
+                if (strtotime($bookingDateTime) < strtotime($currentDateTime) && $booking['status'] === 'confirmed') {
+                    $displayStatus = 'expired';
+                }
+            ?>
                 <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-header d-flex justify-content-between align-items-center">
                             <span class="fw-bold"><?php echo htmlspecialchars($booking['booking_id']); ?></span>
                             <span class="badge 
                                 <?php 
-                                switch($booking['status']) {
+                                switch($displayStatus) {
                                     case 'confirmed': echo 'bg-success'; break;
                                     case 'completed': echo 'bg-primary'; break;
                                     case 'cancelled': echo 'bg-danger'; break;
+                                    case 'expired': echo 'bg-warning'; break;
                                     default: echo 'bg-warning';
                                 }
                                 ?>">
-                                <?php echo ucfirst($booking['status']); ?>
+                                <?php echo ucfirst($displayStatus); ?>
                             </span>
                         </div>
                         <div class="card-body">
@@ -163,10 +175,12 @@ require_once 'includes/header.php';
                                         data-bs-toggle="modal" data-bs-target="#bookingModal">
                                     View Details
                                 </button>
-                                <?php if($booking['status'] === 'confirmed'): ?>
+                                <?php 
+                                // Use displayStatus to check if cancel button should be shown
+                                $canCancel = ($displayStatus === 'confirmed' && strtotime($bookingDateTime) >= strtotime($currentDateTime));
+                                if($canCancel): ?>
                                     <button type="button" class="btn btn-sm btn-outline-danger flex-fill" 
-                                            onclick="cancelBooking('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')"
-                                            <?php echo $booking['booking_date'] < date('Y-m-d') ? 'disabled' : ''; ?>>
+                                            onclick="cancelBooking('<?php echo htmlspecialchars($booking['booking_id'], ENT_QUOTES); ?>')">
                                         Cancel
                                     </button>
                                 <?php endif; ?>
