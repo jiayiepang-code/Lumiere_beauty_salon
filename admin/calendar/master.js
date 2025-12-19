@@ -329,7 +329,9 @@ async function loadCalendarData() {
       params.append("date", formatLocalDate(currentDate));
     } else if (currentView === "week") {
       const startOfWeek = new Date(currentDate);
-      startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+      const dayOfWeek = currentDate.getDay();
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startOfWeek.setDate(currentDate.getDate() - daysToMonday);
       const endOfWeek = new Date(startOfWeek);
       endOfWeek.setDate(startOfWeek.getDate() + 6);
       params.append("start_date", formatLocalDate(startOfWeek));
@@ -631,9 +633,13 @@ function renderWeekView() {
     return;
   }
 
-  // Get week start (Sunday) and generate 7 days
+  // Get week start (Monday) and generate 7 days (Mon-Sun)
   const weekStart = new Date(currentDate);
-  weekStart.setDate(currentDate.getDate() - currentDate.getDay());
+  const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  // Calculate days to subtract to get to Monday (if Sunday, subtract 6; if Monday, subtract 0, etc.)
+  const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  weekStart.setDate(currentDate.getDate() - daysToMonday);
+  weekStart.setHours(0, 0, 0, 0); // Reset time to start of day
 
   const weekDays = [];
   for (let i = 0; i < 7; i++) {
@@ -1125,7 +1131,12 @@ function changeDate(direction) {
   if (currentView === "day") {
     currentDate.setDate(currentDate.getDate() + direction);
   } else if (currentView === "week") {
+    // Move by 7 days (one week)
     currentDate.setDate(currentDate.getDate() + direction * 7);
+    // Adjust to Monday of the new week
+    const dayOfWeek = currentDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    currentDate.setDate(currentDate.getDate() - daysToMonday);
   } else if (currentView === "month") {
     currentDate.setMonth(currentDate.getMonth() + direction);
   }
@@ -1150,7 +1161,9 @@ function updateDateDisplay() {
     display.textContent = currentDate.toLocaleDateString("en-US", options);
   } else if (currentView === "week") {
     const startOfWeek = new Date(currentDate);
-    startOfWeek.setDate(currentDate.getDate() - currentDate.getDay());
+    const dayOfWeek = currentDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startOfWeek.setDate(currentDate.getDate() - daysToMonday);
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
     display.textContent = `${startOfWeek.toLocaleDateString("en-US", {

@@ -2480,15 +2480,39 @@ tr:last-child td {
 /* Weekly View - Horizontal Table */
 .calendar-week-grid {
   overflow-x: auto;
+  overflow-y: visible;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: white;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #D4A574 #f0f0f0; /* Firefox scrollbar colors */
+}
+
+/* Custom scrollbar for webkit browsers */
+.calendar-week-grid::-webkit-scrollbar {
+  height: 10px;
+}
+
+.calendar-week-grid::-webkit-scrollbar-track {
+  background: #f0f0f0;
+  border-radius: 5px;
+}
+
+.calendar-week-grid::-webkit-scrollbar-thumb {
+  background: #D4A574;
+  border-radius: 5px;
+}
+
+.calendar-week-grid::-webkit-scrollbar-thumb:hover {
+  background: #C4956A;
 }
 
 .week-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 800px;
+  min-width: 900px; /* Increased to ensure all 7 days fit comfortably */
+  table-layout: fixed; /* Fixed layout for consistent column widths */
 }
 
 .week-table thead th {
@@ -2505,12 +2529,20 @@ tr:last-child td {
 
 .week-table .time-col {
   width: 80px;
+  min-width: 80px;
+  max-width: 80px;
   text-align: left;
   border-right: 2px solid var(--border-color);
+  position: sticky;
+  left: 0;
+  background: #f8f9fa;
+  z-index: 11; /* Higher than day columns */
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
 .week-table .day-col {
   text-align: center;
+  width: calc((100% - 80px) / 7); /* Equal width for all 7 days */
   min-width: 120px;
 }
 
@@ -2537,12 +2569,17 @@ tr:last-child td {
   background: #f8f9fa;
   border-right: 1px solid var(--border-color);
   vertical-align: top;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
 }
 
 .week-table .booking-cell {
   padding: 6px;
   vertical-align: top;
   min-height: 50px;
+  width: calc((100% - 80px) / 7); /* Match day-col width */
 }
 
 .week-booking-pill {
