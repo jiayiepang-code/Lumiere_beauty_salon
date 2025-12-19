@@ -109,6 +109,23 @@ async function exportESGReportPdf() {
   pdfBtn.disabled = true;
   pdfBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
 
+  // Human-friendly month name for the report title
+  const monthNames = {
+    "01": "January",
+    "02": "February",
+    "03": "March",
+    "04": "April",
+    "05": "May",
+    "06": "June",
+    "07": "July",
+    "08": "August",
+    "09": "September",
+    10: "October",
+    11: "November",
+    12: "December",
+  };
+  const periodLabel = `${monthNames[month] || month} ${year}`;
+
   try {
     // Build PDF export URL
     const pdfUrl = `../../api/admin/analytics/export_esg_pdf.php?month=${month}&year=${year}`;
@@ -158,8 +175,29 @@ async function exportESGReportPdf() {
     pdfBtn.innerHTML = originalText;
     
   } catch (error) {
-    console.error("Error exporting PDF:", error);
-    
+    console.error("PDF export error:", error);
+
+    // #region agent log - PDF export failure details (H3)
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sessionId: "debug-session",
+        runId: "post-fix1",
+        hypothesisId: "H3",
+        location: "sustainability.js:exportESGReportPdf:catch",
+        message: "PDF export threw error",
+        data: {
+          name: error && error.name,
+          message: error && error.message,
+          stack:
+            error && error.stack ? String(error.stack).slice(0, 500) : null,
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+
     if (typeof Swal !== "undefined") {
       Swal.fire({
         icon: "error",

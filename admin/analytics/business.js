@@ -18,9 +18,27 @@ const chartColors = {
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", function () {
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'business.js:20', message: 'DOMContentLoaded - checking Font Awesome icons', data: {faLoaded: !!document.querySelector('link[href*="font-awesome"]'), iconElements: document.querySelectorAll('.summary-icon i').length, iconClasses: Array.from(document.querySelectorAll('.summary-icon i')).map(el => el.className)}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H1'})}).catch(() => {});
+  fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "business.js:20",
+      message: "DOMContentLoaded - checking Font Awesome icons",
+      data: {
+        faLoaded: !!document.querySelector('link[href*="font-awesome"]'),
+        iconElements: document.querySelectorAll(".summary-icon i").length,
+        iconClasses: Array.from(
+          document.querySelectorAll(".summary-icon i")
+        ).map((el) => el.className),
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "H1",
+    }),
+  }).catch(() => {});
   // #endregion
-  
+
   initializeFilters();
   initializeExportButton();
   loadAnalyticsData();
@@ -220,30 +238,95 @@ async function loadAnalyticsData() {
     let url = `../../api/admin/analytics/booking_trends.php?period=${currentPeriod}&days=${currentDays}`;
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'business.js:152', message: 'About to fetch analytics data', data: {url: url, period: currentPeriod, days: currentDays}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H1,H4'})}).catch(() => {});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "business.js:152",
+        message: "About to fetch analytics data",
+        data: { url: url, period: currentPeriod, days: currentDays },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "H1,H4",
+      }),
+    }).catch(() => {});
     // #endregion
 
     // Fetch data
     const response = await fetch(url);
-    
+
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'business.js:157', message: 'Analytics fetch response received', data: {status: response.status, statusText: response.statusText, contentType: response.headers.get('content-type')}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H1,H4'})}).catch(() => {});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "business.js:157",
+        message: "Analytics fetch response received",
+        data: {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get("content-type"),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "H1,H4",
+      }),
+    }).catch(() => {});
     // #endregion
-    
+
     // Check if response is JSON
-    const contentType = response.headers.get('content-type');
-    if (!contentType || !contentType.includes('application/json')) {
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
       const text = await response.text();
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'business.js:163', message: 'Non-JSON response detected', data: {status: response.status, contentType: contentType, responsePreview: text.substring(0, 200)}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H1,H4'})}).catch(() => {});
+      fetch(
+        "http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "business.js:163",
+            message: "Non-JSON response detected",
+            data: {
+              status: response.status,
+              contentType: contentType,
+              responsePreview: text.substring(0, 200),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "H1,H4",
+          }),
+        }
+      ).catch(() => {});
       // #endregion
-      throw new Error(`Server returned non-JSON response (${response.status} ${response.statusText})`);
+      throw new Error(
+        `Server returned non-JSON response (${response.status} ${response.statusText})`
+      );
     }
-    
+
     const data = await response.json();
-    
+
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({location: 'business.js:171', message: 'Analytics data parsed successfully', data: {success: data.success, hasError: !!data.error, metricsPresent: !!data.metrics}, timestamp: Date.now(), sessionId: 'debug-session', runId: 'run1', hypothesisId: 'H1,H4'})}).catch(() => {});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "business.js:171",
+        message: "Analytics data parsed successfully",
+        data: {
+          success: data.success,
+          hasError: !!data.error,
+          metricsPresent: !!data.metrics,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "H1,H4",
+      }),
+    }).catch(() => {});
     // #endregion
 
     if (!response.ok || !data.success) {
@@ -515,7 +598,6 @@ function updatePopularServicesChart(popularServices) {
           data: bookingCounts,
           backgroundColor: chartColors.primary,
           borderRadius: 4,
-          barThickness: 24,
         },
       ],
     },
@@ -573,6 +655,8 @@ function updatePopularServicesChart(popularServices) {
               size: 12,
             },
           },
+          categoryPercentage: 0.6, // More space between bars
+          barPercentage: 0.7, // Thinner bars with more gap
         },
       },
     },

@@ -208,13 +208,13 @@ async function initializeCalendar() {
     }
   });
 
-  // Load staff list for filter
+  // Update current date display immediately (no async needed)
+  updateDateDisplay();
+
+  // Load staff list first (needed for filter dropdown)
   await loadStaffList();
 
-  // Load staff roster
-  await loadStaffRoster();
-
-  // Set filters from URL
+  // Set filters from URL immediately after staff list loads
   if (staffEmailParam) {
     const staffFilter = document.getElementById("staffFilter");
     if (staffFilter) {
@@ -229,11 +229,20 @@ async function initializeCalendar() {
     }
   }
 
-  // Load calendar data
-  await loadCalendarData();
+  // Load calendar data and staff roster in parallel for faster initial render
+  // Calendar data is more critical, so we prioritize it
+  const [calendarDataResult] = await Promise.allSettled([
+    loadCalendarData(),
+    // Staff roster loads in background (non-blocking)
+    loadStaffRoster().catch(err => {
+      console.warn("Staff roster loading failed (non-critical):", err);
+    })
+  ]);
 
-  // Update current date display
-  updateDateDisplay();
+  // If calendar data failed, log it
+  if (calendarDataResult.status === 'rejected') {
+    console.error("Calendar data loading failed:", calendarDataResult.reason);
+  }
 }
 
 // Load staff roster (day / week / month views)
@@ -333,11 +342,23 @@ async function loadStaffRoster() {
     const staffMatrix = {};
     const dateKeys = [];
 
-    for (const day of dates) {
-      const dateStr = formatLocalDate(day);
-      dateKeys.push(dateStr);
-      const data = await fetchRosterForDate(dateStr);
+    // Fetch all dates in parallel for much faster loading (especially for month view)
+    const dateStrings = dates.map(day => formatLocalDate(day));
+    dateKeys.push(...dateStrings);
+    
+    // Make all API calls in parallel instead of sequentially
+    const rosterPromises = dateStrings.map(dateStr => 
+      fetchRosterForDate(dateStr).catch(err => {
+        console.warn(`Failed to fetch roster for ${dateStr}:`, err);
+        return { roster: [] }; // Return empty roster on error to continue processing
+      })
+    );
+    
+    const rosterResults = await Promise.all(rosterPromises);
 
+    // Process all results
+    rosterResults.forEach((data, index) => {
+      const dateStr = dateStrings[index];
       (data.roster || []).forEach((entry) => {
         const key = entry.staff_email;
         if (!staffMatrix[key]) {
@@ -351,7 +372,7 @@ async function loadStaffRoster() {
 
         staffMatrix[key].days[dateStr] = classifyShift(entry, dateStr);
       });
-    }
+    });
 
     loadingEl.style.display = "none";
 
