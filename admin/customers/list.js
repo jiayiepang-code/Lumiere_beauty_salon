@@ -702,6 +702,7 @@ function deleteCustomer(email, fullName) {
     cancelButtonColor: "#6c757d",
     confirmButtonText: "Yes, delete",
     cancelButtonText: "Cancel",
+    reverseButtons: true,
   }).then((result) => {
     if (result.isConfirmed) {
       // Show loading

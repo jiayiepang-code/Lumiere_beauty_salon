@@ -106,16 +106,14 @@ include '../includes/header.php';
                         </svg>
                         Staff Roster
                     </h2>
-                    <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">Today's schedule & availability</p>
+                    <p id="staffRosterSubtitle" style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
+                        Today's schedule &amp; availability
+                    </p>
                 </div>
                 <div class="roster-legend" style="display: flex; gap: 16px; flex-wrap: wrap;">
                     <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
                         <div style="width: 10px; height: 10px; border-radius: 50%; background: #4CAF50;"></div>
                         <span style="font-size: 12px; color: #666;">Available</span>
-                    </div>
-                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
-                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #FF9800;"></div>
-                        <span style="font-size: 12px; color: #666;">On Break</span>
                     </div>
                     <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
                         <div style="width: 10px; height: 10px; border-radius: 50%; background: #9E9E9E;"></div>
@@ -125,14 +123,20 @@ include '../includes/header.php';
                         <div style="width: 10px; height: 10px; border-radius: 50%; background: #c29076;"></div>
                         <span style="font-size: 12px; color: #666;">With Customer</span>
                     </div>
+                    <div class="legend-item" style="display: flex; align-items: center; gap: 6px;">
+                        <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff6b6b;"></div>
+                        <span style="font-size: 12px; color: #666;">Leave</span>
+                    </div>
                 </div>
+            </div>
+            <div id="staffRosterViewLabel" style="margin-bottom: 12px; font-size: 13px; color: #888;">
+                Showing <strong>today's</strong> roster. Switch the main Day / Week / Month view above to change how the roster is displayed.
             </div>
             <div id="staffRosterLoading" class="loading" style="text-align: center; padding: 40px; color: #999;">
                 Loading staff roster...
             </div>
-            <div id="staffRosterGrid" class="staff-roster-grid" style="display: none;">
-                <!-- Staff cards will be dynamically generated -->
-            </div>
+            <!-- This container is reused for card, weekly, and monthly layouts -->
+            <div id="staffRosterGrid" class="staff-roster-grid" style="display: none;"></div>
         </div>
     </div>
 </div>
@@ -151,189 +155,316 @@ include '../includes/header.php';
 </div>
 
 <style>
-/* ========== STAFF SCHEDULE TIMELINE VIEW STYLES ========== */
-.staff-schedule-grid {
-    display: block;
-}
-
-.staff-schedule-timeline {
+/* ========== STAFF ROSTER TABLE STYLES ========== */
+.roster-table-wrapper {
     background: white;
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border: 1px solid #f0f0f0;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-.timeline-header {
-    display: flex;
+.roster-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 14px;
+    min-width: 600px;
+}
+
+/* Table Header */
+.roster-table thead {
+    background: #fafafa;
     border-bottom: 2px solid #e0e0e0;
-    margin-bottom: 12px;
-    position: sticky;
-    left: 0;
-    background: white;
-    z-index: 10;
 }
 
-.timeline-staff-label {
-    min-width: 150px;
-    max-width: 150px;
+.roster-table th {
     padding: 12px 16px;
+    text-align: left;
     font-weight: 600;
     font-size: 13px;
-    text-transform: uppercase;
     color: #666;
-    background: #fafafa;
-    border-right: 1px solid #e0e0e0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.roster-staff-header {
+    min-width: 180px;
+    width: 180px;
     position: sticky;
     left: 0;
-    z-index: 11;
-}
-
-.timeline-days {
-    display: flex;
-    flex: 1;
-}
-
-.timeline-day-header {
-    min-width: 50px;
-    width: 50px;
-    padding: 12px 8px;
-    text-align: center;
-    font-weight: 600;
-    font-size: 12px;
-    color: #666;
+    z-index: 10;
     background: #fafafa;
-    border-right: 1px solid #e0e0e0;
+    border-right: 2px solid #e0e0e0;
 }
 
-.timeline-row {
-    display: flex;
+.roster-day-header {
+    min-width: 100px;
+    width: 100px;
+    text-align: center;
+    padding: 12px 8px;
+}
+
+.roster-day-header.today {
+    background: #fff9e6;
+    color: #c29076;
+    font-weight: 700;
+}
+
+.roster-weekday {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.roster-daynum {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* Table Body */
+.roster-table tbody tr {
     border-bottom: 1px solid #f0f0f0;
-    min-height: 60px;
+    transition: background-color 0.2s ease;
 }
 
-.timeline-row:last-child {
+.roster-table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+.roster-table tbody tr:last-child {
     border-bottom: none;
 }
 
-.timeline-staff-name {
-    min-width: 150px;
-    max-width: 150px;
+.roster-staff-cell {
+    min-width: 180px;
+    width: 180px;
     padding: 16px;
     font-weight: 500;
-    font-size: 14px;
     color: #333;
     background: #fafafa;
-    border-right: 1px solid #e0e0e0;
-    display: flex;
-    align-items: center;
+    border-right: 2px solid #e0e0e0;
     position: sticky;
     left: 0;
     z-index: 5;
+    white-space: nowrap;
 }
 
-.timeline-day-cell {
-    min-width: 50px;
-    width: 50px;
-    padding: 4px;
+.roster-day-cell {
+    min-width: 100px;
+    width: 100px;
+    padding: 8px;
+    text-align: center;
+    vertical-align: middle;
     border-right: 1px solid #f0f0f0;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    position: relative;
 }
 
-.timeline-day-cell.today {
+.roster-day-cell.today {
     background: #fff9e6;
 }
 
-.timeline-block {
-    border-radius: 4px;
-    padding: 4px 6px;
-    font-size: 10px;
-    line-height: 1.2;
+/* Shift Blocks */
+.roster-shift {
+    border-radius: 6px;
+    padding: 8px 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
     cursor: pointer;
-    transition: opacity 0.2s ease;
+    transition: all 0.2s ease;
+    min-height: 40px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    min-height: 20px;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
 }
 
-.timeline-block:hover {
-    opacity: 0.8;
+.roster-shift:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.timeline-block.timeline-working {
-    background: linear-gradient(135deg, #D4A574, #C4956A);
-    color: white;
-    font-weight: 500;
-}
-
-.timeline-block.timeline-leave {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-    color: white;
-    font-weight: 500;
-}
-
-.timeline-block.timeline-empty {
-    background: transparent;
-    min-height: 20px;
-}
-
-.timeline-block-time {
-    font-size: 9px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.timeline-block-label {
-    font-size: 9px;
+.shift-label {
     font-weight: 600;
-    text-align: center;
+    font-size: 11px;
+    display: block;
 }
 
-/* Scrollbar styling for timeline */
-.staff-schedule-timeline::-webkit-scrollbar {
+.shift-time {
+    font-size: 9px;
+    opacity: 0.9;
+    display: block;
+}
+
+/* Shift Type Colors */
+.roster-shift.shift-full {
+    background: #4CAF50;
+    color: #ffffff;
+}
+
+.roster-shift.shift-morning {
+    background: #2196F3;
+    color: #ffffff;
+}
+
+.roster-shift.shift-afternoon {
+    background: #FF9800;
+    color: #ffffff;
+}
+
+.roster-shift.shift-off {
+    background: #EEEEEE;
+    color: #999999;
+}
+
+.roster-shift.shift-with-client {
+    background: #c29076;
+    color: #ffffff;
+}
+
+.roster-shift.shift-leave {
+    background: #ff6b6b;
+    color: #ffffff;
+}
+
+/* Monthly View - Compact Blocks */
+.roster-table-month .roster-shift {
+    min-height: 32px;
+    padding: 4px;
+}
+
+.roster-table-month .shift-label,
+.roster-table-month .shift-time {
+    display: none;
+}
+
+.roster-table-month .roster-day-header {
+    min-width: 50px;
+    width: 50px;
+    padding: 8px 4px;
+}
+
+.roster-table-month .roster-day-cell {
+    min-width: 50px;
+    width: 50px;
+    padding: 4px;
+}
+
+.roster-table-month .roster-shift {
+    min-height: 24px;
+    border-radius: 4px;
+}
+
+/* Empty State */
+.roster-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+    font-size: 14px;
+}
+
+/* Scrollbar Styling */
+.roster-table-wrapper::-webkit-scrollbar {
     height: 8px;
 }
 
-.staff-schedule-timeline::-webkit-scrollbar-track {
+.roster-table-wrapper::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
 }
 
-.staff-schedule-timeline::-webkit-scrollbar-thumb {
+.roster-table-wrapper::-webkit-scrollbar-thumb {
     background: #D4A574;
     border-radius: 4px;
 }
 
-.staff-schedule-timeline::-webkit-scrollbar-thumb:hover {
+.roster-table-wrapper::-webkit-scrollbar-thumb:hover {
     background: #C4956A;
 }
 
+/* Responsive Design - Mobile */
 @media (max-width: 768px) {
-    .timeline-staff-label,
-    .timeline-staff-name {
-        min-width: 120px;
-        max-width: 120px;
-        font-size: 12px;
+    .roster-table-wrapper {
+        padding: 12px;
+        margin: 0 -12px;
+        border-radius: 0;
     }
     
-    .timeline-day-header,
-    .timeline-day-cell {
+    .roster-staff-header,
+    .roster-staff-cell {
+        min-width: 140px;
+        width: 140px;
+        font-size: 13px;
+        padding: 12px;
+    }
+    
+    .roster-day-header {
+        min-width: 70px;
+        width: 70px;
+        padding: 10px 6px;
+    }
+    
+    .roster-day-cell {
+        min-width: 70px;
+        width: 70px;
+        padding: 6px 4px;
+    }
+    
+    .roster-shift {
+        min-height: 36px;
+        padding: 6px 4px;
+        font-size: 10px;
+    }
+    
+    .shift-label {
+        font-size: 10px;
+    }
+    
+    .shift-time {
+        font-size: 8px;
+    }
+    
+    .roster-table-month .roster-day-header {
         min-width: 40px;
         width: 40px;
+        padding: 6px 2px;
     }
     
-    .timeline-block-time {
-        font-size: 8px;
+    .roster-table-month .roster-day-cell {
+        min-width: 40px;
+        width: 40px;
+        padding: 2px;
     }
     
-    .timeline-block-label {
-        font-size: 8px;
+    .roster-table-month .roster-shift {
+        min-height: 20px;
+    }
+    
+    .roster-weekday {
+        font-size: 10px;
+    }
+    
+    .roster-daynum {
+        font-size: 14px;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .roster-table-wrapper {
+        overflow: visible;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    
+    .roster-staff-header,
+    .roster-staff-cell {
+        position: static;
     }
 }
 </style>

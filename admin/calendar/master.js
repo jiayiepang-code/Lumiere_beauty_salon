@@ -236,94 +236,277 @@ async function initializeCalendar() {
   updateDateDisplay();
 }
 
-// Load staff roster
+// Load staff roster (day / week / month views)
 async function loadStaffRoster() {
   const loadingEl = document.getElementById("staffRosterLoading");
   const gridEl = document.getElementById("staffRosterGrid");
-  
+  const subtitleEl = document.getElementById("staffRosterSubtitle");
+  const helperLabel = document.getElementById("staffRosterViewLabel");
+
   if (!loadingEl || !gridEl) {
     return;
   }
-  
+
   loadingEl.style.display = "block";
   gridEl.style.display = "none";
-  
-  try {
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-    
-    const response = await fetch(`../../api/admin/staff/roster.php?date=${dateStr}`);
-    
-    if (!response.ok) {
-      throw new Error("Failed to load staff roster");
+
+  // Helper: format YYYY-MM-DD from Date (local)
+  const formatLocalDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+  // Helper: fetch roster for a single date
+  const fetchRosterForDate = async (dateStr) => {
+    const resp = await fetch(`../../api/admin/staff/roster.php?date=${dateStr}`);
+    if (!resp.ok) {
+      throw new Error(`Failed to load staff roster for ${dateStr}`);
     }
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      loadingEl.style.display = "none";
-      renderStaffRoster(data.roster);
-      gridEl.style.display = "grid";
-    } else {
+    const data = await resp.json();
+    if (!data.success) {
       throw new Error(data.error?.message || "Failed to load staff roster");
     }
+    return data;
+  };
+
+  try {
+    if (currentView === "day") {
+      const dateStr = formatLocalDate(currentDate);
+      const data = await fetchRosterForDate(dateStr);
+      loadingEl.style.display = "none";
+      renderStaffRosterCards(data.roster);
+      gridEl.style.display = "grid";
+
+      if (subtitleEl) {
+        subtitleEl.textContent = "Today's schedule & availability";
+      }
+      if (helperLabel) {
+        helperLabel.innerHTML =
+          'Showing <strong>today&apos;s</strong> roster. Switch the main Day / Week / Month view above to change how the roster is displayed.';
+      }
+      return;
+    }
+
+    // Build range for week / month
+    let startDate;
+    let endDate;
+    if (currentView === "week") {
+      const base = new Date(currentDate);
+      const dayOfWeek = base.getDay(); // 0 = Sun, 1 = Mon
+      const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+      startDate = new Date(base);
+      startDate.setDate(base.getDate() - daysToMonday);
+      endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+      if (subtitleEl) {
+        subtitleEl.textContent = "Weekly schedule overview";
+      }
+      if (helperLabel) {
+        helperLabel.textContent =
+          "Showing staff shifts for this week (Mon - Sun).";
+      }
+    } else {
+      // month
+      startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      if (subtitleEl) {
+        subtitleEl.textContent = "Monthly schedule overview";
+      }
+      if (helperLabel) {
+        helperLabel.textContent =
+          "Showing staff shifts for this month. Each colored block is a day.";
+      }
+    }
+
+    // Collect dates list
+    const dates = [];
+    const cursor = new Date(startDate);
+    cursor.setHours(0, 0, 0, 0);
+    while (cursor <= endDate) {
+      dates.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    // Build matrix: staff -> per-day shift info
+    const staffMatrix = {};
+    const dateKeys = [];
+
+    for (const day of dates) {
+      const dateStr = formatLocalDate(day);
+      dateKeys.push(dateStr);
+      const data = await fetchRosterForDate(dateStr);
+
+      (data.roster || []).forEach((entry) => {
+        const key = entry.staff_email;
+        if (!staffMatrix[key]) {
+          staffMatrix[key] = {
+            staff_email: entry.staff_email,
+            staff_name: entry.staff_name,
+            role: entry.role,
+            days: {},
+          };
+        }
+
+        staffMatrix[key].days[dateStr] = classifyShift(entry, dateStr);
+      });
+    }
+
+    loadingEl.style.display = "none";
+
+    if (currentView === "week") {
+      renderStaffRosterWeek(staffMatrix, dates, dateKeys);
+    } else {
+      renderStaffRosterMonth(staffMatrix, dates, dateKeys);
+    }
+    gridEl.style.display = "block";
   } catch (error) {
     console.error("Error loading staff roster:", error);
     loadingEl.style.display = "none";
     if (gridEl) {
-      gridEl.innerHTML = `<div style="text-align: center; padding: 40px; color: #999;">Error loading staff roster: ${error.message}</div>`;
+      gridEl.innerHTML = `<div style="text-align: center; padding: 40px; color: #999;">Error loading staff roster: ${escapeHtml(
+        error.message
+      )}</div>`;
       gridEl.style.display = "block";
     }
   }
 }
 
-// Render staff roster cards
-function renderStaffRoster(roster) {
+// Classify a single-day shift into Morning / Afternoon / Full Day / Off / Leave / With Customer
+function classifyShift(entry, dateStr = null) {
+  const rawSchedule = entry.schedule || "";
+  const status = entry.status || "off-duty";
+  const isLeave = entry.is_leave || false;
+
+  // Check if this is today (for with-client status)
+  const isToday = dateStr ? (() => {
+    const today = new Date();
+    const checkDate = new Date(dateStr + "T12:00:00");
+    return today.toDateString() === checkDate.toDateString();
+  })() : false;
+
+  // Handle leave status
+  if (isLeave || status === "leave") {
+    return {
+      type: "leave",
+      label: "Leave",
+      timeLabel: "",
+    };
+  }
+
+  // Handle with-client status (only for today)
+  if (status === "with-client" && isToday) {
+    return {
+      type: "with-client",
+      label: "With Customer",
+      timeLabel: rawSchedule,
+    };
+  }
+
+  if (!rawSchedule || /off today/i.test(rawSchedule) || status === "off-duty") {
+    return {
+      type: "off",
+      label: "Off",
+      timeLabel: "",
+    };
+  }
+
+  const match = rawSchedule.match(/(\d{2}:\d{2})\s*-\s*(\d{2}:\d{2})/);
+  if (!match) {
+    return {
+      type: "working",
+      label: "Working",
+      timeLabel: rawSchedule,
+    };
+  }
+
+  const start = match[1];
+  const end = match[2];
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  const duration = (eh * 60 + em) - (sh * 60 + sm);
+
+  // Heuristics based on salon opening hours (9 AM - 7 PM)
+  let type = "working";
+  let label = "Working";
+
+  if (duration >= 8 * 60 - 15) {
+    type = "full";
+    label = "Full Day";
+  } else if (sh <= 9 && eh <= 15) {
+    type = "morning";
+    label = "Morning";
+  } else if (sh >= 13 && eh >= 18) {
+    type = "afternoon";
+    label = "Afternoon";
+  }
+
+  return {
+    type,
+    label,
+    timeLabel: `${start} - ${end}`,
+  };
+}
+
+// Render daily cards (existing look & feel)
+function renderStaffRosterCards(roster) {
   const gridEl = document.getElementById("staffRosterGrid");
-  
+
   if (!gridEl || !roster || roster.length === 0) {
     if (gridEl) {
-      gridEl.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No staff members found</div>';
+      gridEl.innerHTML =
+        '<div style="text-align: center; padding: 40px; color: #999;">No staff members found</div>';
       gridEl.style.display = "block";
     }
     return;
   }
-  
+
   const statusColors = {
-    'available': '#E8F5E9',
-    'on-break': '#FFF3E0',
-    'off-duty': '#F5F5F5',
-    'with-client': '#F5EDE6' // Light brown/taupe to match theme (#c29076 lightened)
+    available: "#E8F5E9",
+    "off-duty": "#F5F5F5",
+    "with-client": "#F5EDE6", // Light brown/taupe to match theme (#c29076 lightened)
+    "leave": "#FFEBEE", // Light red for leave
   };
-  
+
   const statusDots = {
-    'available': '#4CAF50',
-    'on-break': '#FF9800',
-    'off-duty': '#9E9E9E',
-    'with-client': '#c29076' // Theme primary brown color
+    available: "#4CAF50",
+    "off-duty": "#9E9E9E",
+    "with-client": "#c29076", // Theme primary brown color
+    "leave": "#ff6b6b", // Red for leave
   };
-  
+
   const statusLabels = {
-    'available': 'Available',
-    'on-break': 'On Break',
-    'with-client': 'With Customer',
-    'off-duty': 'Off Duty'
+    available: "Available",
+    "with-client": "With Customer",
+    "off-duty": "Off Duty",
+    "leave": "On Leave",
   };
-  
-  let html = '';
-  
+
+  let html = "";
+
+  // Check if viewing today (for with-client status)
+  const today = new Date();
+  const viewingDate = new Date(currentDate);
+  const isViewingToday = today.toDateString() === viewingDate.toDateString();
+
   roster.forEach((staff) => {
-    const status = staff.status || 'off-duty';
-    const bgColor = statusColors[status] || statusColors['off-duty'];
-    const dotColor = statusDots[status] || statusDots['off-duty'];
-    const statusLabel = statusLabels[status] || 'Off Duty';
-    
+    let status = staff.status || "off-duty";
+    // Only show with-client if viewing today
+    if (status === "with-client" && !isViewingToday) {
+      status = "off-duty";
+    }
+    const bgColor = statusColors[status] || statusColors["off-duty"];
+    const dotColor = statusDots[status] || statusDots["off-duty"];
+    const statusLabel = statusLabels[status] || "Off Duty";
+
     // Get initials for avatar
-    const names = staff.staff_name.split(' ');
-    const initials = names.length >= 2 
-      ? (names[0][0] + names[names.length - 1][0]).toUpperCase()
-      : names[0][0].toUpperCase();
-    
+    const names = staff.staff_name.split(" ");
+    const initials =
+      names.length >= 2
+        ? (names[0][0] + names[names.length - 1][0]).toUpperCase()
+        : names[0][0].toUpperCase();
+
     html += `
       <div class="staff-roster-card" style="background: ${bgColor}; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
@@ -335,42 +518,168 @@ function renderStaffRoster(roster) {
           </div>
           <div style="flex: 1;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #333;">${escapeHtml(staff.staff_name)}</h3>
+              <h3 style="margin: 0; font-size: 18px; font-weight: 600; color: #333;">${escapeHtml(
+                staff.staff_name
+              )}</h3>
               <span class="status-badge" style="padding: 4px 10px; border-radius: 12px; background: ${dotColor}; color: white; font-size: 11px; font-weight: 500;">${statusLabel}</span>
             </div>
-            <p style="margin: 0; font-size: 13px; color: #666;">${escapeHtml(staff.role || 'Staff')}</p>
           </div>
         </div>
         <div style="margin-bottom: 12px;">
           <div style="font-size: 13px; color: #666; margin-bottom: 4px;">Schedule</div>
-          <div style="font-size: 15px; font-weight: 500; color: #333;">${escapeHtml(staff.schedule)}</div>
+          <div style="font-size: 15px; font-weight: 500; color: #333;">${escapeHtml(
+            staff.schedule
+          )}</div>
         </div>
-        ${staff.current_client ? `
+        ${
+          staff.current_client && isViewingToday
+            ? `
           <div style="margin-bottom: 12px;">
             <div style="font-size: 13px; color: #666; margin-bottom: 4px;">Current Customer</div>
-            <div style="font-size: 15px; font-weight: 500; color: #333;">${escapeHtml(staff.current_client)}</div>
+            <div style="font-size: 15px; font-weight: 500; color: #333;">${escapeHtml(
+              staff.current_client
+            )}</div>
           </div>
-        ` : ''}
-        ${staff.break_info ? `
-          <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 6px; color: #FF9800;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
-              <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
-              <line x1="6" y1="1" x2="6" y2="4"></line>
-              <line x1="10" y1="1" x2="10" y2="4"></line>
-              <line x1="14" y1="1" x2="14" y2="4"></line>
-            </svg>
-            <span style="font-size: 13px;">${escapeHtml(staff.break_info)}</span>
-          </div>
-        ` : ''}
-        <div>
-          <div style="font-size: 13px; color: #666; margin-bottom: 4px;">Hours today</div>
-          <div style="font-size: 15px; font-weight: 500; color: #333;">${escapeHtml(staff.hours_today)}</div>
-        </div>
+        `
+            : ""
+        }
+        
       </div>
     `;
   });
+
+  gridEl.innerHTML = html;
+}
+
+// Render weekly roster with semantic table structure
+function renderStaffRosterWeek(staffMatrix, dateObjects, dateKeys) {
+  const gridEl = document.getElementById("staffRosterGrid");
+  if (!gridEl) return;
+
+  const staffEntries = Object.values(staffMatrix);
+  if (staffEntries.length === 0) {
+    gridEl.innerHTML =
+      '<div class="roster-empty-state">No staff roster data found for this week</div>';
+    return;
+  }
+
+  // Create semantic table structure
+  let html = '<div class="roster-table-wrapper">';
+  html += '<table class="roster-table roster-table-week" role="table" aria-label="Weekly Staff Roster">';
   
+  // Table header
+  html += '<thead><tr>';
+  html += '<th class="roster-staff-header" scope="col">Staff Member</th>';
+  
+  dateObjects.forEach((date) => {
+    const isToday = date.toDateString() === new Date().toDateString();
+    const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
+    const dayNum = date.getDate();
+    html += `<th class="roster-day-header${isToday ? " today" : ""}" scope="col">`;
+    html += `<span class="roster-weekday">${weekday}</span>`;
+    html += `<span class="roster-daynum">${dayNum}</span>`;
+    html += '</th>';
+  });
+  
+  html += '</tr></thead>';
+  
+  // Table body
+  html += '<tbody>';
+  
+  staffEntries.forEach((staff) => {
+    html += '<tr>';
+    html += `<td class="roster-staff-cell" scope="row">${escapeHtml(staff.staff_name)}</td>`;
+    
+    dateKeys.forEach((key, idx) => {
+      const date = dateObjects[idx];
+      const info = staff.days[key] || { type: "off", label: "Off", timeLabel: "" };
+      const isToday = date.toDateString() === new Date().toDateString();
+      
+      const shiftClass = 
+        info.type === "full" ? "shift-full" :
+        info.type === "morning" ? "shift-morning" :
+        info.type === "afternoon" ? "shift-afternoon" :
+        info.type === "with-client" ? "shift-with-client" :
+        info.type === "leave" ? "shift-leave" :
+        "shift-off";
+      
+      html += `<td class="roster-day-cell${isToday ? " today" : ""}">`;
+      html += `<div class="roster-shift ${shiftClass}" title="${escapeHtml(info.label)}${info.timeLabel ? ' - ' + escapeHtml(info.timeLabel) : ''}">`;
+      html += `<span class="shift-label">${info.label}</span>`;
+      if (info.timeLabel) {
+        html += `<span class="shift-time">${escapeHtml(info.timeLabel)}</span>`;
+      }
+      html += '</div></td>';
+    });
+    
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table></div>';
+  gridEl.innerHTML = html;
+}
+
+// Render monthly roster with semantic table structure
+function renderStaffRosterMonth(staffMatrix, dateObjects, dateKeys) {
+  const gridEl = document.getElementById("staffRosterGrid");
+  if (!gridEl) return;
+
+  const staffEntries = Object.values(staffMatrix);
+  if (staffEntries.length === 0) {
+    gridEl.innerHTML =
+      '<div class="roster-empty-state">No staff roster data found for this month</div>';
+    return;
+  }
+
+  // Create semantic table structure
+  let html = '<div class="roster-table-wrapper">';
+  html += '<table class="roster-table roster-table-month" role="table" aria-label="Monthly Staff Roster">';
+  
+  // Table header
+  html += '<thead><tr>';
+  html += '<th class="roster-staff-header" scope="col">Staff Member</th>';
+  
+  dateObjects.forEach((date) => {
+    const isToday = date.toDateString() === new Date().toDateString();
+    const weekday = date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1);
+    const dayNum = date.getDate();
+    html += `<th class="roster-day-header${isToday ? " today" : ""}" scope="col">`;
+    html += `<span class="roster-weekday">${weekday}</span>`;
+    html += `<span class="roster-daynum">${dayNum}</span>`;
+    html += '</th>';
+  });
+  
+  html += '</tr></thead>';
+  
+  // Table body
+  html += '<tbody>';
+  
+  staffEntries.forEach((staff) => {
+    html += '<tr>';
+    html += `<td class="roster-staff-cell" scope="row">${escapeHtml(staff.staff_name)}</td>`;
+    
+    dateKeys.forEach((key, idx) => {
+      const date = dateObjects[idx];
+      const info = staff.days[key] || { type: "off", label: "Off" };
+      const isToday = date.toDateString() === new Date().toDateString();
+      
+      const shiftClass = 
+        info.type === "full" ? "shift-full" :
+        info.type === "morning" ? "shift-morning" :
+        info.type === "afternoon" ? "shift-afternoon" :
+        info.type === "with-client" ? "shift-with-client" :
+        info.type === "leave" ? "shift-leave" :
+        "shift-off";
+      
+      html += `<td class="roster-day-cell${isToday ? " today" : ""}">`;
+      html += `<div class="roster-shift ${shiftClass}" title="${escapeHtml(info.label)}"></div>`;
+      html += '</td>';
+    });
+    
+    html += '</tr>';
+  });
+  
+  html += '</tbody></table></div>';
   gridEl.innerHTML = html;
 }
 
@@ -1208,6 +1517,7 @@ function switchView(view) {
 
   // Reload calendar with new view
   loadCalendarData();
+  loadStaffRoster();
   updateDateDisplay();
 }
 
@@ -1227,6 +1537,7 @@ function changeDate(direction) {
   }
 
   loadCalendarData();
+  loadStaffRoster();
   updateDateDisplay();
 }
 
@@ -1234,6 +1545,7 @@ function changeDate(direction) {
 function goToToday() {
   currentDate = new Date();
   loadCalendarData();
+  loadStaffRoster();
   updateDateDisplay();
 }
 
@@ -1296,6 +1608,7 @@ function filterByDate(date) {
 
   updateDateDisplay();
   loadCalendarData();
+  loadStaffRoster();
 }
 
 // Utility functions

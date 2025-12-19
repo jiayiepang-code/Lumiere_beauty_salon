@@ -1,0 +1,321 @@
+/**
+ * Staff Roster Table Styles
+ * 
+ * Reusable CSS module for Staff Roster Table component.
+ * Supports both Weekly and Monthly views with responsive design.
+ */
+
+/* Table Wrapper */
+.rosterTableWrapper {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Table Base */
+.rosterTable {
+  width: 100%;
+  border-collapse: collapse;
+  border-spacing: 0;
+  font-size: 14px;
+  min-width: 600px;
+}
+
+/* Table Header */
+.rosterTable thead {
+  background: #fafafa;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.rosterTable th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.rosterStaffHeader {
+  min-width: 180px;
+  width: 180px;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  background: #fafafa;
+  border-right: 2px solid #e0e0e0;
+}
+
+.rosterDayHeader {
+  min-width: 100px;
+  width: 100px;
+  text-align: center;
+  padding: 12px 8px;
+}
+
+.rosterDayHeader.today {
+  background: #fff9e6;
+  color: #c29076;
+  font-weight: 700;
+}
+
+.rosterWeekday {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.rosterDaynum {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* Table Body */
+.rosterTable tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s ease;
+}
+
+.rosterTable tbody tr:hover {
+  background-color: #fafafa;
+}
+
+.rosterTable tbody tr:last-child {
+  border-bottom: none;
+}
+
+.rosterStaffCell {
+  min-width: 180px;
+  width: 180px;
+  padding: 16px;
+  font-weight: 500;
+  color: #333;
+  background: #fafafa;
+  border-right: 2px solid #e0e0e0;
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  white-space: nowrap;
+}
+
+.rosterDayCell {
+  min-width: 100px;
+  width: 100px;
+  padding: 8px;
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid #f0f0f0;
+}
+
+.rosterDayCell.today {
+  background: #fff9e6;
+}
+
+/* Shift Blocks */
+.rosterShift {
+  border-radius: 6px;
+  padding: 8px 6px;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+}
+
+.rosterShift:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.shiftLabel {
+  font-weight: 600;
+  font-size: 11px;
+  display: block;
+}
+
+.shiftTime {
+  font-size: 9px;
+  opacity: 0.9;
+  display: block;
+}
+
+/* Shift Type Colors */
+.rosterShift.shiftFull {
+  background: #4CAF50;
+  color: #ffffff;
+}
+
+.rosterShift.shiftMorning {
+  background: #2196F3;
+  color: #ffffff;
+}
+
+.rosterShift.shiftAfternoon {
+  background: #FF9800;
+  color: #ffffff;
+}
+
+.rosterShift.shiftOff {
+  background: #EEEEEE;
+  color: #999999;
+}
+
+.rosterShift.shiftWithClient {
+  background: #c29076;
+  color: #ffffff;
+}
+
+.rosterShift.shiftLeave {
+  background: #ff6b6b;
+  color: #ffffff;
+}
+
+/* Monthly View - Compact Blocks */
+.rosterTableMonth .rosterShift {
+  min-height: 32px;
+  padding: 4px;
+}
+
+.rosterTableMonth .shiftLabel,
+.rosterTableMonth .shiftTime {
+  display: none;
+}
+
+.rosterTableMonth .rosterDayHeader {
+  min-width: 50px;
+  width: 50px;
+  padding: 8px 4px;
+}
+
+.rosterTableMonth .rosterDayCell {
+  min-width: 50px;
+  width: 50px;
+  padding: 4px;
+}
+
+.rosterTableMonth .rosterShift {
+  min-height: 24px;
+  border-radius: 4px;
+}
+
+/* Empty State */
+.rosterEmptyState {
+  text-align: center;
+  padding: 60px 20px;
+  color: #999;
+  font-size: 14px;
+}
+
+/* Scrollbar Styling */
+.rosterTableWrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.rosterTableWrapper::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.rosterTableWrapper::-webkit-scrollbar-thumb {
+  background: #D4A574;
+  border-radius: 4px;
+}
+
+.rosterTableWrapper::-webkit-scrollbar-thumb:hover {
+  background: #C4956A;
+}
+
+/* Responsive Design - Mobile */
+@media (max-width: 768px) {
+  .rosterTableWrapper {
+    padding: 12px;
+    margin: 0 -12px;
+    border-radius: 0;
+  }
+  
+  .rosterStaffHeader,
+  .rosterStaffCell {
+    min-width: 140px;
+    width: 140px;
+    font-size: 13px;
+    padding: 12px;
+  }
+  
+  .rosterDayHeader {
+    min-width: 70px;
+    width: 70px;
+    padding: 10px 6px;
+  }
+  
+  .rosterDayCell {
+    min-width: 70px;
+    width: 70px;
+    padding: 6px 4px;
+  }
+  
+  .rosterShift {
+    min-height: 36px;
+    padding: 6px 4px;
+    font-size: 10px;
+  }
+  
+  .shiftLabel {
+    font-size: 10px;
+  }
+  
+  .shiftTime {
+    font-size: 8px;
+  }
+  
+  .rosterTableMonth .rosterDayHeader {
+    min-width: 40px;
+    width: 40px;
+    padding: 6px 2px;
+  }
+  
+  .rosterTableMonth .rosterDayCell {
+    min-width: 40px;
+    width: 40px;
+    padding: 2px;
+  }
+  
+  .rosterTableMonth .rosterShift {
+    min-height: 20px;
+  }
+  
+  .rosterWeekday {
+    font-size: 10px;
+  }
+  
+  .rosterDaynum {
+    font-size: 14px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .rosterTableWrapper {
+    overflow: visible;
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+  
+  .rosterStaffHeader,
+  .rosterStaffCell {
+    position: static;
+  }
+}
+

@@ -51,7 +51,7 @@ try {
     $current_time = date('H:i:s');
     $current_datetime = new DateTime($date . ' ' . $current_time);
     
-    // Get all active staff
+    // Get all active non-admin staff
     $staff_sql = "SELECT 
                     st.staff_email,
                     st.first_name,
@@ -60,6 +60,7 @@ try {
                     st.staff_image
                   FROM Staff st
                   WHERE st.is_active = 1
+                    AND (st.role IS NULL OR st.role <> 'Admin')
                   ORDER BY st.first_name, st.last_name";
     
     $staff_stmt = $conn->prepare($staff_sql);
@@ -100,8 +101,8 @@ try {
             
             // Check if staff is on leave
             if ($schedule_status === 'leave') {
-                $status = 'off-duty';
-                $schedule_display = 'Off Today';
+                $status = 'leave';
+                $schedule_display = 'On Leave';
             } else {
                 // Staff is scheduled to work
                 $start_time = $schedule['start_time'];
@@ -139,37 +140,9 @@ try {
                     $schedule_end = new DateTime($date . ' ' . $end_time);
                     
                     if ($current_datetime >= $schedule_start && $current_datetime <= $schedule_end) {
-                        // Check if on break (simplified: assume break if no booking in last 15 min and next 15 min)
-                        $break_check_start = (clone $current_datetime)->modify('-15 minutes');
-                        $break_check_end = (clone $current_datetime)->modify('+15 minutes');
-                        
-                        $break_sql = "SELECT COUNT(*) as booking_count
-                                      FROM Booking b
-                                      INNER JOIN Booking_Service bs ON b.booking_id = bs.booking_id
-                                      WHERE bs.staff_email = ?
-                                        AND b.booking_date = ?
-                                        AND b.status IN ('confirmed', 'in-progress')
-                                        AND (
-                                          (b.start_time <= ? AND b.expected_finish_time >= ?)
-                                          OR (b.start_time <= ? AND b.expected_finish_time >= ?)
-                                        )";
-                        
-                        $break_start_str = $break_check_start->format('H:i:s');
-                        $break_end_str = $break_check_end->format('H:i:s');
-                        
-                        $break_stmt = $conn->prepare($break_sql);
-                        $break_stmt->bind_param("ssssss", $staff_email, $date, $break_start_str, $break_start_str, $break_end_str, $break_end_str);
-                        $break_stmt->execute();
-                        $break_result = $break_stmt->get_result();
-                        $break_data = $break_result->fetch_assoc();
-                        $break_stmt->close();
-                        
-                        if ($break_data['booking_count'] == 0) {
-                            $status = 'on-break';
-                            $break_info = "Back in 15 minutes";
-                        } else {
-                            $status = 'available';
-                        }
+                        // Inside scheduled working hours and not with a client → treat as available
+                        $status = 'available';
+                        $break_info = null;
                     } else {
                         // Outside working hours
                         $status = 'off-duty';
@@ -203,7 +176,7 @@ try {
             $hours_today = '0h';
         }
         
-        // Build roster entry
+        // Build roster entry (hours_today kept for compatibility but can be hidden on UI)
         $roster[] = [
             'staff_email' => $staff_email,
             'staff_name' => $staff_name,
@@ -213,7 +186,8 @@ try {
             'schedule' => $schedule_display,
             'hours_today' => $hours_today,
             'current_client' => $current_client,
-            'break_info' => $break_info
+            'break_info' => $break_info,
+            'is_leave' => ($schedule && strtolower($schedule['status']) === 'leave')
         ];
     }
     
@@ -248,4 +222,5 @@ try {
         ]
     ]);
 }
+
 

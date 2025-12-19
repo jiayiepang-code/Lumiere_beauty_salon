@@ -47,6 +47,3 @@ function getDBConnection() {
     
     return $conn;
 }
-?>
-
-
