@@ -534,7 +534,6 @@ function updatePopularServicesChart(popularServices) {
           data: bookingCounts,
           backgroundColor: chartColors.primary,
           borderRadius: 4,
-          barThickness: 24,
         },
       ],
     },
@@ -592,8 +591,8 @@ function updatePopularServicesChart(popularServices) {
               size: 12,
             },
           },
-          categoryPercentage: 0.75, // Moderate spacing between bars
-          barPercentage: 0.8, // Thick bars (60-70% of row height)
+          categoryPercentage: 0.6, // More space between bars
+          barPercentage: 0.7, // Thinner bars with more gap
         },
       },
     },
