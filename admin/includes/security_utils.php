@@ -298,7 +298,7 @@ function setSecureHeaders() {
     
     // Content Security Policy (allow CDN connections for Bootstrap/Chart.js maps and scripts, Font Awesome)
     // Allow localhost connections for debug logging in DEBUG MODE
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://cdn.jsdelivr.net http://127.0.0.1:7242 http://localhost:7242;");
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https:; connect-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com http://127.0.0.1:7242 http://localhost:7242;");
     
     // Referrer Policy
     header('Referrer-Policy: strict-origin-when-cross-origin');

@@ -214,7 +214,7 @@ try {
         }
         
         $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-        $max_size_mb = 2;
+        $max_size_mb = 200;
         
         $upload_result = secureFileUpload($_FILES['staff_image'], $upload_dir, $allowed_types, $max_size_mb);
         

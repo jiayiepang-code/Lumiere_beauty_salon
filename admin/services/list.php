@@ -495,7 +495,7 @@ include '../includes/header.php';
                             <line x1="12" y1="8" x2="12" y2="12"></line>
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
-                        <span>Image size cannot exceed 2MB. Please choose a smaller file.</span>
+                        <span>Image size cannot exceed 200MB. Please choose a smaller file.</span>
                     </div>
                     <div class="image-upload-wrapper">
                         <div class="image-upload-area" id="imageUploadArea">
@@ -541,7 +541,7 @@ include '../includes/header.php';
                                accept="image/jpeg,image/png,image/gif,image/webp" 
                                style="display: none;">
                     </div>
-                    <small class="text-muted d-block mt-2">Max 2MB. Allowed: JPEG, PNG, GIF, WebP</small>
+                    <small class="text-muted d-block mt-2">Max 200MB. Allowed: JPEG, PNG, GIF, WebP</small>
                     <span class="error-message" id="error-service_image"></span>
                 </div>
                 

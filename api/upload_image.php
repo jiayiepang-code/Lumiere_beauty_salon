@@ -37,7 +37,7 @@ try {
     
     // Allowed image types
     $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    $max_size_mb = 2; // Reduced from 5MB for better security
+    $max_size_mb = 200; // Maximum file size: 200MB
     
     // Upload directory
     $upload_dir = __DIR__ . '/../../images/';

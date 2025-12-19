@@ -1374,12 +1374,8 @@ include '../includes/header.php';
 }
 </style>
 
-<!-- PDF export dependencies (Option 1: jsPDF + html2canvas)
-     NOTE: These are served locally to avoid CDN blocking.
-     Make sure these files exist at: admin/js/html2canvas.min.js and admin/js/jspdf.umd.min.js -->
-<script src="../js/html2canvas.min.js"></script>
-<script src="../js/jspdf.umd.min.js"></script>
-
+<!-- html2pdf.js for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script src="sustainability.js"></script>
 
 <?php require_once '../includes/footer.php'; ?>

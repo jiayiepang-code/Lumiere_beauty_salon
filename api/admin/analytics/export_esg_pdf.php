@@ -1,26 +1,30 @@
 <?php
-// Start output buffering to catch any accidental output
+/**
+ * ESG Sustainability PDF Export
+ * Generates professional PDF report for ESG sustainability analytics
+ */
+
+// Start output buffering
 ob_start();
 
-// Disable error display (errors will be logged, not printed)
+// Disable error display
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 ini_set('log_errors', 1);
 
-// Start session with secure configuration
+// Start session
 ini_set('session.cookie_httponly', 1);
-ini_set('session.cookie_secure', 0); // Set to 1 in production with HTTPS
+ini_set('session.cookie_secure', 0);
 ini_set('session.use_strict_mode', 1);
-
-// Use admin-specific session name to match auth_check.php
 session_name('admin_session');
 session_start();
 
-// Include database connection and authentication
+// Include dependencies
 require_once '../../../config/db_connect.php';
 require_once '../../../admin/includes/auth_check.php';
+require_once 'mpdf_helper.php';
 
-// Clear any output that might have been generated
+// Clear any output
 ob_clean();
 
 // Check authentication
@@ -83,9 +87,12 @@ try {
     $idle_hours = 0.00;
     $global_utilization_rate = 0.00;
     $staff_breakdown = [];
+    $top_performer_message = '';
+    $lowest_performer_message = '';
+    $smart_suggestion = '';
 
     // Card 1: Total Active Staff
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM Staff WHERE is_active = 1");
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM Staff WHERE is_active = 1 AND role != 'admin'");
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
@@ -97,7 +104,7 @@ try {
     $stmt = $conn->prepare("
         SELECT COUNT(*) as count 
         FROM Booking 
-        WHERE status IN ('confirmed', 'completed') 
+        WHERE status = 'completed' 
         AND MONTH(booking_date) = ? 
         AND YEAR(booking_date) = ?
     ");
@@ -202,200 +209,489 @@ try {
         return $b['utilization'] <=> $a['utilization'];
     });
 
+    // Optimization Insights
+    foreach ($staff_breakdown as $staff) {
+        if ($staff['scheduled'] > 0) {
+            $top_performer_message = $staff['name'] . " maintains " . number_format($staff['utilization'], 2) . "% utilization. Consider prioritizing high-value bookings for them.";
+            break;
+        }
+    }
+
+    $lowest_performer = null;
+    for ($i = count($staff_breakdown) - 1; $i >= 0; $i--) {
+        if ($staff_breakdown[$i]['scheduled'] > 0) {
+            $lowest_performer = $staff_breakdown[$i];
+            break;
+        }
+    }
+    if ($lowest_performer) {
+        $lowest_performer_message = $lowest_performer['name'] . " has " . number_format($lowest_performer['idle'], 2) . " idle hours. Consider adjusting their roster or running a promo for their specialty.";
+    }
+
+    if ($global_utilization_rate < 50) {
+        $smart_suggestion = "Consider reducing shifts or cross-training staff.";
+    } elseif ($global_utilization_rate >= 50 && $global_utilization_rate <= 90) {
+        $smart_suggestion = "Balanced efficiency. Maintain current scheduling.";
+    } else {
+        $smart_suggestion = "High utilization. Consider hiring help to prevent burnout.";
+    }
+
+    // Staff Schedule Summary
+    $schedule_summary = [];
+    foreach ($staff_breakdown as $staff) {
+        $stmt = $conn->prepare("
+            SELECT 
+                COUNT(DISTINCT work_date) as days_worked,
+                COUNT(DISTINCT CASE WHEN status = 'leave' THEN work_date END) as leave_days
+            FROM Staff_Schedule
+            WHERE staff_email = (
+                SELECT staff_email FROM Staff 
+                WHERE CONCAT(first_name, ' ', last_name) = ?
+                LIMIT 1
+            )
+            AND MONTH(work_date) = ?
+            AND YEAR(work_date) = ?
+        ");
+        $stmt->bind_param("sii", $staff['name'], $selected_month, $selected_year);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $schedule_data = $result->fetch_assoc();
+        $stmt->close();
+        
+        $days_worked = (int)($schedule_data['days_worked'] ?? 0);
+        $leave_days = (int)($schedule_data['leave_days'] ?? 0);
+        $avg_hours = $days_worked > 0 ? $staff['scheduled'] / $days_worked : 0;
+        
+        $schedule_summary[] = [
+            'name' => $staff['name'],
+            'scheduled' => $staff['scheduled'],
+            'days_worked' => $days_worked,
+            'leave_days' => $leave_days,
+            'avg_hours' => $avg_hours
+        ];
+    }
+
     $conn->close();
 
-    // Generate PDF using TCPDF
-    // Check if TCPDF is available, otherwise use FPDF
-    $use_tcpdf = false;
-    $tcpdf_path = __DIR__ . '/../../../vendor/tecnickcom/tcpdf/tcpdf.php';
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_1','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:276','message'=>'Before initMPDF','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
+    // #endregion
+
+    // Initialize mPDF
+    $mpdf = initMPDF();
     
-    if (file_exists($tcpdf_path)) {
-        require_once $tcpdf_path;
-        $use_tcpdf = true;
-    } else {
-        // Try alternative TCPDF location
-        $tcpdf_path2 = __DIR__ . '/../../../vendor/tcpdf/tcpdf.php';
-        if (file_exists($tcpdf_path2)) {
-            require_once $tcpdf_path2;
-            $use_tcpdf = true;
-        }
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_2','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:280','message'=>'After initMPDF','data'=>['mpdfIsObject'=>is_object($mpdf),'mpdfIsFalse'=>$mpdf===false,'mpdfClass'=>is_object($mpdf)?get_class($mpdf):'N/A'],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
+    // #endregion
+    
+    if (!$mpdf) {
+        // #region agent log
+        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_3','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:285','message'=>'initMPDF returned false','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
+        // #endregion
+        throw new Exception('mPDF library not available. Please ensure mPDF is installed in vendor/mpdf/');
     }
 
-    // Clear output buffer before generating PDF
-    ob_end_clean();
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_4','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:290','message'=>'Before SetTitle/SetAuthor','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
+    // #endregion
+
+    // Set PDF metadata
+    $mpdf->SetTitle('ESG Sustainability Report - ' . $current_month_display);
+    $mpdf->SetAuthor('Lumière Beauty Salon');
+    $mpdf->SetSubject('ESG Sustainability Report');
     
-    if ($use_tcpdf) {
-        // Use TCPDF
-        $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
-        
-        // Set document information
-        $pdf->SetCreator('Lumière Beauty Salon');
-        $pdf->SetAuthor('Lumière Beauty Salon');
-        $pdf->SetTitle('ESG Sustainability Report');
-        $pdf->SetSubject('Sustainability Analytics');
-        
-        // Remove default header/footer
-        $pdf->setPrintHeader(false);
-        $pdf->setPrintFooter(true);
-        
-        // Set margins
-        $pdf->SetMargins(15, 15, 15);
-        $pdf->SetAutoPageBreak(TRUE, 20);
-        
-        // Add a page
-        $pdf->AddPage();
-        
-        // Logo path
-        $logo_path = __DIR__ . '/../../../images/16.png';
-        $logo_height = 30;
-        
-        // Header with logo and company info
-        if (file_exists($logo_path)) {
-            $pdf->Image($logo_path, 15, 15, 0, $logo_height, 'PNG', '', '', false, 300, '', false, false, 0);
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_5','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:297','message'=>'Before SetHTMLFooter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Set footer (applies to all pages)
+    $mpdf->SetHTMLFooter(generatePDFFooter('ESG Sustainability Report'));
+    
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_6','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:301','message'=>'After SetHTMLFooter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
+    // #endregion
+
+    // Generate HTML content
+    $html = '<style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            color: #2d2d2d;
+            line-height: 1.6;
         }
-        
-        $pdf->SetFont('helvetica', 'B', 16);
-        $pdf->SetY(20);
-        $pdf->Cell(0, 10, 'Lumière Beauty Salon', 0, 1, 'L');
-        
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->SetX(15);
-        $pdf->Cell(0, 5, 'No. 10, Ground Floor Block B, Phase 2, Jln Lintas, Kolam Centre', 0, 1, 'L');
-        $pdf->SetX(15);
-        $pdf->Cell(0, 5, '88300 Kota Kinabalu, Sabah', 0, 1, 'L');
-        $pdf->SetX(15);
-        $pdf->Cell(0, 5, 'Email: Lumiere@gmail.com | Tel: 012 345 6789 / 088 978 8977', 0, 1, 'L');
-        
-        // Line separator
-        $pdf->Ln(5);
-        $pdf->Line(15, $pdf->GetY(), 195, $pdf->GetY());
-        $pdf->Ln(10);
-        
-        // Report title
-        $pdf->SetFont('helvetica', 'B', 18);
-        $pdf->Cell(0, 10, 'ESG Sustainability Report', 0, 1, 'C');
-        $pdf->Ln(5);
-        
-        // Month/Year and generated date
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->Cell(0, 8, $current_month_display, 0, 1, 'C');
-        $pdf->SetFont('helvetica', '', 10);
-        $pdf->Cell(0, 5, 'Generated on: ' . $generated_date, 0, 1, 'C');
-        $pdf->Ln(10);
-        
-        // Key Metrics section
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->Cell(0, 8, 'Key Metrics', 0, 1, 'L');
-        $pdf->Ln(3);
-        
-        $pdf->SetFont('helvetica', '', 11);
-        $metrics = [
-            'Active Staff' => number_format($total_active_staff, 0),
-            'Services Delivered' => number_format($services_delivered, 0),
-            'Scheduled Hours' => number_format($total_scheduled_hours, 2) . 'h',
-            'Booked Hours' => number_format($total_booked_hours, 2) . 'h',
-            'Idle Hours' => number_format($idle_hours, 2) . 'h',
-            'Utilization Rate' => number_format($global_utilization_rate, 2) . '%'
-        ];
-        
-        foreach ($metrics as $label => $value) {
-            $pdf->SetX(20);
-            $pdf->Cell(80, 6, '• ' . $label . ':', 0, 0, 'L');
-            $pdf->SetFont('helvetica', 'B', 11);
-            $pdf->Cell(0, 6, $value, 0, 1, 'L');
-            $pdf->SetFont('helvetica', '', 11);
+        h1 {
+            font-size: 24pt;
+            font-weight: bold;
+            color: #1a1a1a;
+            text-align: center;
+            margin: 20px 0;
         }
+        h2 {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #2d2d2d;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 5px;
+        }
+        h3 {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #2d2d2d;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+        .cover-page {
+            text-align: center;
+            padding: 100px 0;
+        }
+        .cover-title {
+            font-size: 28pt;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 30px;
+        }
+        .cover-subtitle {
+            font-size: 14pt;
+            color: #666;
+            margin-top: 20px;
+        }
+        .kpi-grid {
+            display: table;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .kpi-item {
+            display: table-cell;
+            width: 33.33%;
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+            background-color: #fafafa;
+        }
+        .kpi-value {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 10px 0;
+        }
+        .kpi-label {
+            font-size: 10pt;
+            color: #666;
+            text-transform: uppercase;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 10pt;
+        }
+        table th {
+            background-color: #f5f5f5;
+            color: #2d2d2d;
+            font-weight: bold;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #e0e0e0;
+        }
+        table td {
+            padding: 8px 10px;
+            border: 1px solid #e0e0e0;
+        }
+        table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .metric-row {
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .metric-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 200px;
+        }
+        .metric-value {
+            color: #2d2d2d;
+        }
+        .insight-box {
+            margin: 15px 0;
+            padding: 15px;
+            border-left: 4px solid #4CAF50;
+            background-color: #f9f9f9;
+        }
+        .insight-title {
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+        .page-break {
+            page-break-before: always;
+        }
+        .utilization-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+        .utilization-fill {
+            height: 100%;
+            background-color: #4CAF50;
+        }
+    </style>';
+    
+    // Cover Page (no header on first page)
+    $cover_html = '<div class="cover-page">
+        <div class="cover-title">ESG SUSTAINABILITY REPORT</div>
+        <div style="font-size: 16pt; margin: 30px 0; color: #666;">' . htmlspecialchars($current_month_display) . '</div>
+        <div class="cover-subtitle">Operational Efficiency & Staff Utilization Analysis</div>
+        <div class="cover-subtitle" style="margin-top: 20px;">Generated: ' . htmlspecialchars($generated_date) . '</div>
+    </div>';
+    
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_7','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:445','message'=>'Before WriteHTML cover','data'=>['coverHtmlLength'=>strlen($cover_html)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Write cover page first (without header)
+    $mpdf->WriteHTML($cover_html);
+    
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_8','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:450','message'=>'After WriteHTML cover, before SetHTMLHeader','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Now set header for subsequent pages
+    $mpdf->SetHTMLHeader(generatePDFHeader($mpdf));
+    
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_9','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:455','message'=>'After SetHTMLHeader','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Continue with rest of content
+    
+    // Executive Summary
+    $html .= '<h2>Executive Summary</h2>';
+    $html .= '<div class="kpi-grid">
+        <div class="kpi-item">
+            <div class="kpi-label">Active Staff</div>
+            <div class="kpi-value">' . number_format($total_active_staff) . '</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-label">Services Delivered</div>
+            <div class="kpi-value">' . number_format($services_delivered) . '</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-label">Utilization Rate</div>
+            <div class="kpi-value">' . number_format($global_utilization_rate, 1) . '%</div>
+        </div>
+    </div>';
+    
+    $html .= '<h3>Operational Overview</h3>';
+    $html .= '<div class="metric-row"><span class="metric-label">Total Scheduled Hours:</span> <span class="metric-value">' . number_format($total_scheduled_hours, 2) . 'h</span></div>';
+    $html .= '<div class="metric-row"><span class="metric-label">Booked Hours:</span> <span class="metric-value">' . number_format($total_booked_hours, 2) . 'h</span></div>';
+    $html .= '<div class="metric-row"><span class="metric-label">Idle Hours:</span> <span class="metric-value">' . number_format($idle_hours, 2) . 'h</span></div>';
+    $html .= '<div class="metric-row"><span class="metric-label">Global Utilization Rate:</span> <span class="metric-value">' . number_format($global_utilization_rate, 2) . '%</span></div>';
+    
+    // Operational Efficiency Metrics
+    $html .= '<pagebreak />';
+    $html .= '<h2>Operational Efficiency Metrics</h2>';
+    
+    $html .= '<table>
+        <tr>
+            <th style="width: 60%;">Metric</th>
+            <th style="width: 40%;" class="text-right">Value</th>
+        </tr>
+        <tr>
+            <td>Active Staff</td>
+            <td class="text-right">' . number_format($total_active_staff) . '</td>
+        </tr>
+        <tr>
+            <td>Services Delivered</td>
+            <td class="text-right">' . number_format($services_delivered) . '</td>
+        </tr>
+        <tr>
+            <td>Scheduled Hours</td>
+            <td class="text-right">' . number_format($total_scheduled_hours, 2) . 'h</td>
+        </tr>
+        <tr>
+            <td>Booked Hours</td>
+            <td class="text-right">' . number_format($total_booked_hours, 2) . 'h</td>
+        </tr>
+        <tr>
+            <td>Idle Hours</td>
+            <td class="text-right">' . number_format($idle_hours, 2) . 'h</td>
+        </tr>
+        <tr>
+            <td>Utilization Rate</td>
+            <td class="text-right">' . number_format($global_utilization_rate, 2) . '%</td>
+        </tr>
+    </table>';
+    
+    $html .= '<h3>Efficiency Analysis</h3>';
+    if ($global_utilization_rate >= 75) {
+        $html .= '<div class="insight-box">
+            <div class="insight-title">✓ Optimal Efficiency</div>
+            <p>Utilization above 75% indicates optimal efficiency. Idle hours are within acceptable range. Staff scheduling is well-aligned with demand.</p>
+        </div>';
+    } elseif ($global_utilization_rate >= 50) {
+        $html .= '<div class="insight-box">
+            <div class="insight-title">✓ Balanced Efficiency</div>
+            <p>Utilization between 50-75% shows balanced operations. Current scheduling appears appropriate for demand levels.</p>
+        </div>';
+    } else {
+        $html .= '<div class="insight-box">
+            <div class="insight-title">⚠ Optimization Opportunity</div>
+            <p>Utilization below 50% suggests potential for optimization. Consider adjusting staff schedules or implementing demand generation strategies.</p>
+        </div>';
+    }
         
-        $pdf->Ln(10);
+    // Staff Utilization Breakdown
+    if (!empty($staff_breakdown)) {
+        $html .= '<pagebreak />';
+        $html .= '<h2>Staff Utilization Breakdown</h2>';
+        $html .= '<table>
+            <tr>
+                <th style="width: 30%;">Staff Member</th>
+                <th style="width: 20%;" class="text-right">Scheduled (h)</th>
+                <th style="width: 20%;" class="text-right">Booked (h)</th>
+                <th style="width: 15%;" class="text-right">Idle (h)</th>
+                <th style="width: 15%;" class="text-right">Utilization</th>
+            </tr>';
         
-        // Staff Utilization Breakdown
-        $pdf->SetFont('helvetica', 'B', 14);
-        $pdf->Cell(0, 8, 'Staff Utilization Breakdown', 0, 1, 'L');
-        $pdf->Ln(3);
-        
-        if (!empty($staff_breakdown)) {
-            // Table header
-            $pdf->SetFont('helvetica', 'B', 10);
-            $pdf->SetFillColor(240, 240, 240);
-            $pdf->Cell(60, 8, 'Staff Member', 1, 0, 'L', true);
-            $pdf->Cell(30, 8, 'Scheduled (h)', 1, 0, 'C', true);
-            $pdf->Cell(30, 8, 'Booked (h)', 1, 0, 'C', true);
-            $pdf->Cell(30, 8, 'Idle (h)', 1, 0, 'C', true);
-            $pdf->Cell(35, 8, 'Utilization', 1, 1, 'C', true);
-            
-            // Table rows
-            $pdf->SetFont('helvetica', '', 9);
-            $fill = false;
             foreach ($staff_breakdown as $staff) {
-                $pdf->SetFillColor(250, 250, 250);
-                $pdf->Cell(60, 7, $staff['name'], 1, 0, 'L', $fill);
-                $pdf->Cell(30, 7, number_format($staff['scheduled'], 2), 1, 0, 'C', $fill);
-                $pdf->Cell(30, 7, number_format($staff['booked'], 2), 1, 0, 'C', $fill);
-                $pdf->Cell(30, 7, number_format($staff['idle'], 2), 1, 0, 'C', $fill);
-                $pdf->Cell(35, 7, number_format($staff['utilization'], 2) . '%', 1, 1, 'C', $fill);
-                $fill = !$fill;
+            $util_color = '#4CAF50';
+            if ($staff['utilization'] < 60) {
+                $util_color = '#FF9800';
+            } elseif ($staff['utilization'] > 80) {
+                $util_color = '#2196F3';
             }
-        } else {
-            $pdf->SetFont('helvetica', '', 10);
-            $pdf->Cell(0, 8, 'No staff data available for selected period.', 0, 1, 'L');
+            
+            $html .= '<tr>
+                <td>' . htmlspecialchars($staff['name']) . '</td>
+                <td class="text-right">' . number_format($staff['scheduled'], 2) . '</td>
+                <td class="text-right">' . number_format($staff['booked'], 2) . '</td>
+                <td class="text-right">' . number_format($staff['idle'], 2) . '</td>
+                <td class="text-right">' . number_format($staff['utilization'], 2) . '%</td>
+            </tr>';
         }
         
-        // Footer
-        $pdf->SetY(-25);
-        $pdf->SetFont('helvetica', 'I', 8);
-        $pdf->Cell(0, 10, 'Page ' . $pdf->getAliasNumPage() . ' / ' . $pdf->getAliasNbPages(), 0, 0, 'C');
+        $html .= '</table>';
+    }
+    
+    // Optimization Insights
+    if ($top_performer_message || $lowest_performer_message || $smart_suggestion) {
+        $html .= '<pagebreak />';
+        $html .= '<h2>Optimization Insights</h2>';
         
-        // Output PDF
-        $filename = 'ESG_Report_' . $selected_year . '_' . $selected_month . '.pdf';
-        $pdf->Output($filename, 'D'); // 'D' = download
+        if ($top_performer_message) {
+            $html .= '<div class="insight-box" style="border-left-color: #4CAF50;">
+                <div class="insight-title" style="color: #4CAF50;">✓ Efficiency Win</div>
+                <p>' . htmlspecialchars($top_performer_message) . '</p>
+            </div>';
+        }
         
-    } else {
-        // Fallback: Generate simple text-based report if PDF library not available
-        ob_end_clean();
-        header('Content-Type: text/plain');
-        header('Content-Disposition: attachment; filename="ESG_Report_' . $selected_year . '_' . $selected_month . '.txt"');
+        if ($lowest_performer_message) {
+            $html .= '<div class="insight-box" style="border-left-color: #FF9800;">
+                <div class="insight-title" style="color: #FF9800;">⚠ Optimization Opportunity</div>
+                <p>' . htmlspecialchars($lowest_performer_message) . '</p>
+            </div>';
+        }
         
-        echo "LUMIÈRE BEAUTY SALON\n";
-        echo "ESG Sustainability Report\n";
-        echo str_repeat("=", 60) . "\n\n";
-        echo "Report Period: " . $current_month_display . "\n";
-        echo "Generated on: " . $generated_date . "\n\n";
-        echo "Company Information:\n";
-        echo "No. 10, Ground Floor Block B, Phase 2, Jln Lintas, Kolam Centre\n";
-        echo "88300 Kota Kinabalu, Sabah\n";
-        echo "Email: Lumiere@gmail.com\n";
-        echo "Tel: 012 345 6789 / 088 978 8977\n\n";
-        echo str_repeat("-", 60) . "\n\n";
-        echo "KEY METRICS\n";
-        echo str_repeat("-", 60) . "\n";
-        echo "Active Staff: " . $total_active_staff . "\n";
-        echo "Services Delivered: " . $services_delivered . "\n";
-        echo "Scheduled Hours: " . number_format($total_scheduled_hours, 2) . "h\n";
-        echo "Booked Hours: " . number_format($total_booked_hours, 2) . "h\n";
-        echo "Idle Hours: " . number_format($idle_hours, 2) . "h\n";
-        echo "Utilization Rate: " . number_format($global_utilization_rate, 2) . "%\n\n";
-        echo str_repeat("-", 60) . "\n\n";
-        echo "STAFF UTILIZATION BREAKDOWN\n";
-        echo str_repeat("-", 60) . "\n";
-        printf("%-30s %12s %12s %12s %12s\n", "Staff Member", "Scheduled (h)", "Booked (h)", "Idle (h)", "Utilization");
-        echo str_repeat("-", 60) . "\n";
-        foreach ($staff_breakdown as $staff) {
-            printf("%-30s %12.2f %12.2f %12.2f %11.2f%%\n", 
-                $staff['name'], 
-                $staff['scheduled'], 
-                $staff['booked'], 
-                $staff['idle'], 
-                $staff['utilization']
-            );
+        if ($smart_suggestion) {
+            $html .= '<div class="insight-box" style="border-left-color: #2196F3;">
+                <div class="insight-title" style="color: #2196F3;">💡 Recommendation</div>
+                <p>' . htmlspecialchars($smart_suggestion) . '</p>
+            </div>';
         }
     }
-
-} catch (Exception $e) {
+    
+    // Staff Work Schedule Summary
+    if (!empty($schedule_summary)) {
+        $html .= '<pagebreak />';
+        $html .= '<h2>Staff Work Schedule Summary</h2>';
+        $html .= '<table>
+            <tr>
+                <th style="width: 30%;">Staff Member</th>
+                <th style="width: 20%;" class="text-right">Total Hours</th>
+                <th style="width: 15%;" class="text-center">Days Worked</th>
+                <th style="width: 15%;" class="text-center">Leave Days</th>
+                <th style="width: 20%;" class="text-right">Avg Hours/Day</th>
+            </tr>';
+        
+        foreach ($schedule_summary as $summary) {
+            $html .= '<tr>
+                <td>' . htmlspecialchars($summary['name']) . '</td>
+                <td class="text-right">' . number_format($summary['scheduled'], 2) . 'h</td>
+                <td class="text-center">' . number_format($summary['days_worked']) . '</td>
+                <td class="text-center">' . number_format($summary['leave_days']) . '</td>
+                <td class="text-right">' . number_format($summary['avg_hours'], 2) . 'h</td>
+            </tr>';
+        }
+        
+        $html .= '</table>';
+    }
+    
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_10','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:614','message'=>'Before WriteHTML main content','data'=>['htmlLength'=>strlen($html)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Write HTML to mPDF
+    $mpdf->WriteHTML($html);
+    
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_11','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:618','message'=>'After WriteHTML, before Output','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Output PDF
     ob_end_clean();
-    error_log("PDF Export Error: " . $e->getMessage());
+    $filename = 'ESG_Report_' . $selected_year . '_' . $selected_month . '.pdf';
+    
+    // #region agent log
+    $destinationClassExists = class_exists('\Mpdf\Output\Destination');
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_12','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:625','message'=>'Before Output call','data'=>['destinationClassExists'=>$destinationClassExists,'filename'=>$filename],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
+    // #endregion
+    
+    // Use the correct namespace for Destination
+    if ($destinationClassExists) {
+        // #region agent log
+        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_13','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:630','message'=>'Using Destination::DOWNLOAD','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
+        // #endregion
+        $mpdf->Output($filename, \Mpdf\Output\Destination::DOWNLOAD);
+    } else {
+        // #region agent log
+        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_14','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:633','message'=>'Using fallback D parameter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
+        // #endregion
+        // Fallback for older mPDF versions
+        $mpdf->Output($filename, 'D');
+    }
+    
+} catch (Exception $e) {
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_15','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:640','message'=>'Exception caught','data'=>['exceptionMessage'=>$e->getMessage(),'exceptionFile'=>$e->getFile(),'exceptionLine'=>$e->getLine(),'exceptionTrace'=>substr($e->getTraceAsString(),0,500)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1,H3,H5'])."\n", FILE_APPEND);
+    // #endregion
+    
+    ob_end_clean();
+    error_log("ESG PDF Export Error: " . $e->getMessage());
     http_response_code(500);
     header('Content-Type: text/plain');
-    die('Error generating report. Please try again.');
+    die('Error generating report: ' . $e->getMessage());
+} catch (Error $e) {
+    // #region agent log
+    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_16','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:650','message'=>'Fatal Error caught','data'=>['errorMessage'=>$e->getMessage(),'errorFile'=>$e->getFile(),'errorLine'=>$e->getLine(),'errorTrace'=>substr($e->getTraceAsString(),0,500)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H5'])."\n", FILE_APPEND);
+    // #endregion
+    
+    ob_end_clean();
+    error_log("ESG PDF Export Fatal Error: " . $e->getMessage());
+    http_response_code(500);
+    header('Content-Type: text/plain');
+    die('Error generating report: ' . $e->getMessage());
 }
 ?>
-

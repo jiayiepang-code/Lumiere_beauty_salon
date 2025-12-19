@@ -57,39 +57,103 @@ function initializeExportButton() {
   }
 }
 
-// Export report functionality
-function exportReport() {
-  // Create a simple CSV export
-  const data = [];
-  data.push(["Business Analytics Report"]);
-  data.push(["Generated:", new Date().toLocaleDateString()]);
-  data.push([]);
-
-  // Get KPI values
-  const totalBookings =
-    document.getElementById("total-bookings")?.textContent || "0";
-  const completionRate =
-    document.getElementById("completion-rate")?.textContent || "0%";
-  const totalRevenue =
-    document.getElementById("total-revenue")?.textContent || "RM 0";
-  const avgBooking =
-    document.getElementById("avg-booking")?.textContent || "RM 0";
-
-  data.push(["Metric", "Value"]);
-  data.push(["Total Bookings", totalBookings]);
-  data.push(["Completion Rate", completionRate]);
-  data.push(["Total Revenue", totalRevenue]);
-  data.push(["Avg Booking Value", avgBooking]);
-
-  // Convert to CSV
-  const csv = data.map((row) => row.join(",")).join("\n");
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `analytics-report-${new Date().toISOString().split("T")[0]}.csv`;
-  a.click();
-  window.URL.revokeObjectURL(url);
+// Export report functionality - PDF Export
+async function exportReport() {
+  const exportBtn = document.getElementById("export-report");
+  if (!exportBtn) return;
+  
+  // Disable button and show loading
+  const originalText = exportBtn.innerHTML;
+  exportBtn.disabled = true;
+  exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+  
+  try {
+    // Get current filter values
+    const period = document.getElementById("period-select")?.value || "monthly";
+    const days = parseInt(document.getElementById("range-select")?.value || "30");
+    
+    // Calculate date range
+    let startDate, endDate;
+    const today = new Date();
+    
+    switch (period) {
+      case 'daily':
+        startDate = today.toISOString().split('T')[0];
+        endDate = startDate;
+        break;
+      case 'weekly':
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - today.getDay() + 1);
+        startDate = monday.toISOString().split('T')[0];
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        endDate = sunday.toISOString().split('T')[0];
+        break;
+      case 'monthly':
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
+        break;
+      default:
+        // Use days range
+        endDate = today.toISOString().split('T')[0];
+        const start = new Date(today);
+        start.setDate(today.getDate() - days + 1);
+        startDate = start.toISOString().split('T')[0];
+    }
+    
+    // Build PDF export URL
+    const pdfUrl = `../../api/admin/analytics/export_business_pdf.php?period=${period}&start_date=${startDate}&end_date=${endDate}`;
+    
+    // Fetch PDF directly
+    const response = await fetch(pdfUrl);
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+    }
+    
+    // Get PDF blob
+    const blob = await response.blob();
+    
+    // Check if response is actually a PDF
+    if (!blob.type.includes('pdf') && blob.size > 0) {
+      // Might be an error message
+      const text = await blob.text();
+      if (text.includes('Error') || text.includes('error')) {
+        throw new Error(text.substring(0, 200));
+      }
+    }
+    
+    // Create download link
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Business_Analytics_Report_${startDate}_to_${endDate}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    // Show success message
+    if (typeof Swal !== "undefined") {
+      Swal.fire({
+        icon: "success",
+        title: "PDF Generated",
+        text: "Business Analytics Report PDF has been downloaded.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    }
+    
+    // Re-enable button
+    exportBtn.disabled = false;
+    exportBtn.innerHTML = originalText;
+    
+  } catch (error) {
+    console.error("Error exporting PDF:", error);
+    alert("Error generating PDF report. Please try again.");
+    exportBtn.disabled = false;
+    exportBtn.innerHTML = originalText;
+  }
 }
 
 // Setup Intersection Observer for chart animations

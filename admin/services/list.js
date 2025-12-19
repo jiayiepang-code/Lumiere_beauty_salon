@@ -903,8 +903,8 @@ function handleImageUpload(event) {
     return;
   }
 
-  // Validate file size (2MB)
-  if (file.size > 2 * 1024 * 1024) {
+  // Validate file size (200MB)
+  if (file.size > 200 * 1024 * 1024) {
     if (errorElement) {
       errorElement.style.display = "flex";
     }
