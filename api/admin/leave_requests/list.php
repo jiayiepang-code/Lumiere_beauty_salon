@@ -310,18 +310,19 @@ try {
             GROUP BY status";
         $stmt = $conn->prepare($statsSql);
         if ($stmt) {
-        $stmt->execute();
-        $res = $stmt->get_result();
-        while ($row = $res->fetch_assoc()) {
-            if ($row['status'] === 'approved') {
-                $stats['approved_this_month'] = (int)$row['cnt'];
-            } elseif ($row['status'] === 'rejected') {
-                $stats['rejected_this_month'] = (int)$row['cnt'];
+            $stmt->execute();
+            $res = $stmt->get_result();
+            while ($row = $res->fetch_assoc()) {
+                if ($row['status'] === 'approved') {
+                    $stats['approved_this_month'] = (int)$row['cnt'];
+                } elseif ($row['status'] === 'rejected') {
+                    $stats['rejected_this_month'] = (int)$row['cnt'];
+                }
             }
-        }
-        $stmt->close();
+            $stmt->close();
         }
     }
+    } // end if ($status === 'pending')
 
     // Build available years from data for a flexible year dropdown
     $availableYears = [];

@@ -33,4 +33,3 @@ define('SMTP_SENDER_NAME', 'Lumiere Beauty Salon');
 
 // Note: Database connection function is now in config/db_connect.php
 // Use require_once '../../config/db_connect.php' to get getDBConnection() function
-?>

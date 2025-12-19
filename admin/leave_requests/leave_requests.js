@@ -157,7 +157,18 @@ async function fetchLeaveRequests() {
       throw new Error("Failed to load leave requests");
     }
 
-    const data = await response.json();
+    // Safely parse JSON; log raw text if server returned HTML/PHP errors
+    const contentType = response.headers.get("content-type") || "";
+    let data;
+    if (contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const rawText = await response.text();
+      console.error("Non-JSON response from leave_requests list.php:", rawText);
+      throw new Error(
+        "Server returned an invalid response while loading leave requests."
+      );
+    }
 
     allRequests = data.requests || [];
     const stats = data.stats || {};
@@ -638,7 +649,21 @@ async function openRequestsModal(status) {
       throw new Error("Failed to load requests");
     }
 
-    const data = await response.json();
+    // Safely parse JSON; log raw text if server returned HTML/PHP errors
+    const contentType = response.headers.get("content-type") || "";
+    let data;
+    if (contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const rawText = await response.text();
+      console.error(
+        "Non-JSON response from leave_requests list.php (modal):",
+        rawText
+      );
+      throw new Error(
+        "Server returned an invalid response while loading requests."
+      );
+    }
     const requests = data.requests || [];
 
     // Hide loading

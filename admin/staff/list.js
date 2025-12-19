@@ -843,8 +843,9 @@ function openDeleteModal(staffEmail) {
     showCancelButton: true,
     confirmButtonColor: "#E76F51",
     cancelButtonColor: "#6C757D",
-    confirmButtonText: "Yes, delete it!",
+    confirmButtonText: "Yes, delete",
     cancelButtonText: "Cancel",
+    reverseButtons: true,
   }).then((result) => {
     if (result.isConfirmed) {
       confirmDelete();

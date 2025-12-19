@@ -70,7 +70,7 @@ try {
     }
 
     // ========== CARD 1: TOTAL ACTIVE STAFF ==========
-    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM Staff WHERE is_active = 1");
+    $stmt = $conn->prepare("SELECT COUNT(*) as count FROM Staff WHERE is_active = 1 AND role != 'admin'");
     $stmt->execute();
     $result = $stmt->get_result();
     if ($row = $result->fetch_assoc()) {
@@ -82,7 +82,7 @@ try {
     $stmt = $conn->prepare("
         SELECT COUNT(*) as count 
         FROM Booking 
-        WHERE status IN ('confirmed', 'completed') 
+        WHERE status = 'completed' 
         AND MONTH(booking_date) = ? 
         AND YEAR(booking_date) = ?
     ");
@@ -155,7 +155,7 @@ try {
         LEFT JOIN Booking b ON bs.booking_id = b.booking_id 
             AND MONTH(b.booking_date) = ? 
             AND YEAR(b.booking_date) = ?
-            AND b.status IN ('completed', 'confirmed')
+            AND b.status = 'completed'
         WHERE st.is_active = 1 AND st.role != 'admin'
         GROUP BY st.staff_email, st.first_name, st.last_name
     ");
@@ -294,31 +294,38 @@ include '../includes/header.php';
             <h1 class="analytics-title">Sustainability Analytics</h1>
             <p class="analytics-subtitle">Monitor operational efficiency and staff utilization for ESG reporting (Monthly only)</p>
         </div>
-        <form method="GET" action="" class="date-filter-form">
-            <select name="month" id="month-select" class="form-control">
-                <?php for ($m = 1; $m <= 12; $m++): 
-                    $month_val = str_pad($m, 2, '0', STR_PAD_LEFT);
-                    $selected = ($month_val == $selected_month) ? 'selected' : '';
-                ?>
-                    <option value="<?php echo $month_val; ?>" <?php echo $selected; ?>>
-                        <?php echo $month_names[$month_val]; ?>
-                    </option>
-                <?php endfor; ?>
-            </select>
-            <select name="year" id="year-select" class="form-control">
-                <?php foreach ($available_years as $y): 
-                    $selected = ($y == $selected_year) ? 'selected' : '';
-                ?>
-                    <option value="<?php echo $y; ?>" <?php echo $selected; ?>>
-                        <?php echo $y; ?>
-                    </option>
-                <?php endforeach; ?>
-            </select>
-            <button type="submit" class="btn btn-primary">Apply</button>
-        </form>
-        <button type="button" id="export-esg-pdf" class="btn btn-secondary">
-            <i class="fas fa-file-pdf"></i> Export ESG Report
-        </button>
+        <div class="analytics-header-actions">
+            <form method="GET" action="" class="date-filter-form">
+                <select name="month" id="month-select" class="form-control">
+                    <?php for ($m = 1; $m <= 12; $m++): 
+                        $month_val = str_pad($m, 2, '0', STR_PAD_LEFT);
+                        $selected = ($month_val == $selected_month) ? 'selected' : '';
+                    ?>
+                        <option value="<?php echo $month_val; ?>" <?php echo $selected; ?>>
+                            <?php echo $month_names[$month_val]; ?>
+                        </option>
+                    <?php endfor; ?>
+                </select>
+                <select name="year" id="year-select" class="form-control">
+                    <?php foreach ($available_years as $y): 
+                        $selected = ($y == $selected_year) ? 'selected' : '';
+                    ?>
+                        <option value="<?php echo $y; ?>" <?php echo $selected; ?>>
+                            <?php echo $y; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="submit" class="btn btn-primary">Apply</button>
+            </form>
+            <!-- PDF export button (jsPDF + html2canvas) -->
+            <button type="button" id="export-esg-pdf" class="btn btn-export-pdf">
+                <i class="fas fa-file-pdf"></i> Export to PDF
+            </button>
+            <!-- Existing Excel/CSV export button -->
+            <button type="button" id="export-esg-csv" class="btn btn-secondary">
+                <i class="fas fa-file-excel"></i> Export to Excel
+            </button>
+        </div>
     </div>
 
     <?php if ($error_message): ?>
@@ -346,7 +353,7 @@ include '../includes/header.php';
                         <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                     </svg>
                 </div>
-                <div class="card-info-btn" data-tooltip="Total number of active staff members available for bookings">
+                <div class="card-info-btn" data-tooltip="Total number of active staff members (excluding admin) available for bookings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -368,7 +375,7 @@ include '../includes/header.php';
                         <polyline points="22 4 12 14.01 9 11.01"></polyline>
                     </svg>
                 </div>
-                <div class="card-info-btn" data-tooltip="Count of confirmed and completed services during the period">
+                <div class="card-info-btn" data-tooltip="Count of completed services during the period">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -378,7 +385,7 @@ include '../includes/header.php';
             </div>
             <div class="metric-value"><?php echo $services_delivered; ?></div>
             <div class="metric-label">Services Delivered</div>
-            <div class="metric-description">Completed & confirmed bookings</div>
+            <div class="metric-description">Completed bookings only</div>
         </div>
 
         <!-- Card 3: Total Scheduled Hours -->
@@ -638,6 +645,13 @@ include '../includes/header.php';
     gap: 16px;
 }
 
+.analytics-header-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
 .analytics-title {
     font-size: 28px;
     font-weight: 600;
@@ -716,6 +730,39 @@ include '../includes/header.php';
     font-size: 14px;
 }
 
+/* Dedicated styling for PDF export button (blue, prominent) */
+.btn-export-pdf {
+    padding: 10px 20px;
+    background: #1976d2;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-export-pdf:hover {
+    background: #1565c0;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(21, 101, 192, 0.4);
+}
+
+.btn-export-pdf:disabled {
+    background: #90caf9;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-export-pdf i {
+    font-size: 14px;
+}
+
 /* ========== METRICS GRID ========== */
 
 .metrics-grid {
@@ -723,6 +770,8 @@ include '../includes/header.php';
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     margin-bottom: 28px;
+    /* Ensure tooltips inside cards are never clipped by the grid */
+    overflow: visible;
 }
 
 .metric-card {
@@ -737,7 +786,8 @@ include '../includes/header.php';
     flex-direction: column;
     gap: 12px;
     position: relative;
-    overflow: hidden;
+    /* Allow tooltips to extend outside the card without being clipped */
+    overflow: visible;
 }
 
 .metric-card::before {
@@ -843,7 +893,8 @@ include '../includes/header.php';
     cursor: help;
     transition: all 0.2s ease;
     border: 1px solid rgba(212, 165, 116, 0.2);
-    z-index: 5;
+    /* Keep the trigger above card content */
+    z-index: 10;
 }
 
 .card-info-btn svg {
@@ -859,11 +910,16 @@ include '../includes/header.php';
 .card-info-btn::after {
     content: attr(data-tooltip);
     position: absolute;
-    top: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: #2d2d2d;
-    color: #fff;
+    /* Positioned to the left side of the info icon */
+    top: 50%;
+    right: 100%;
+    margin-right: 8px;
+    left: auto;
+    transform: translateY(-50%);
+    /* Tailwind-like: w-64, bg-gray-900, text-white, shadow-xl */
+    width: 256px;
+    background: #111827;
+    color: #ffffff;
     padding: 10px 14px;
     border-radius: 6px;
     font-size: 0.85rem;
@@ -871,29 +927,29 @@ include '../includes/header.php';
     white-space: normal;
     word-wrap: break-word;
     word-break: break-word;
-    max-width: 300px;
-    min-width: 200px;
-    width: max-content;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease, transform 0.25s ease;
-    z-index: 10;
-    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    /* Ensure tooltip appears above all surrounding content */
+    z-index: 9999;
+    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25), 0 10px 10px -5px rgba(0,0,0,0.2);
     text-align: left;
 }
 
 .card-info-btn::before {
     content: '';
     position: absolute;
-    top: calc(100% + 2px);
-    left: 50%;
-    transform: translateX(-50%);
+    /* Arrow on the right-center of the tooltip, pointing towards the icon */
+    top: 50%;
+    right: calc(100% - 1px);
+    left: auto;
+    transform: translateY(-50%);
     border: 6px solid transparent;
-    border-bottom-color: #2d2d2d;
+    border-left-color: #111827;
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.25s ease;
-    z-index: 11;
+    z-index: 9999;
 }
 
 .card-info-btn:hover::after,
@@ -1258,6 +1314,11 @@ include '../includes/header.php';
         align-items: flex-start;
     }
     
+    .analytics-header-actions {
+        align-items: flex-start;
+        width: 100%;
+    }
+    
     .date-filter-form {
         width: 100%;
     }
@@ -1312,6 +1373,12 @@ include '../includes/header.php';
     }
 }
 </style>
+
+<!-- PDF export dependencies (Option 1: jsPDF + html2canvas)
+     NOTE: These are served locally to avoid CDN blocking.
+     Make sure these files exist at: admin/js/html2canvas.min.js and admin/js/jspdf.umd.min.js -->
+<script src="../js/html2canvas.min.js"></script>
+<script src="../js/jspdf.umd.min.js"></script>
 
 <script src="sustainability.js"></script>
 
