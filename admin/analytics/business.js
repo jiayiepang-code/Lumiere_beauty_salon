@@ -124,9 +124,23 @@ async function exportReport() {
     
     // Fetch PDF directly
     const response = await fetch(pdfUrl);
+    
+    // Check content type first
+    const contentType = response.headers.get('content-type');
+    
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      let errorText = '';
+      try {
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          errorText = errorData.error || errorData.message || 'Unknown error';
+        } else {
+          errorText = await response.text();
+        }
+      } catch (e) {
+        errorText = `HTTP ${response.status}: ${response.statusText}`;
+      }
+      throw new Error(errorText);
     }
     
     // Get PDF blob
@@ -135,10 +149,22 @@ async function exportReport() {
     // Check if response is actually a PDF
     if (!blob.type.includes('pdf') && blob.size > 0) {
       // Might be an error message
-      const text = await blob.text();
-      if (text.includes('Error') || text.includes('error')) {
-        throw new Error(text.substring(0, 200));
+      try {
+        const text = await blob.text();
+        if (text.includes('Error') || text.includes('error') || text.includes('Exception')) {
+          throw new Error(text.substring(0, 500));
+        }
+      } catch (e) {
+        if (e.message && !e.message.includes('Error')) {
+          throw e;
+        }
+        throw new Error('Server returned non-PDF response. Please check server logs.');
       }
+    }
+    
+    // Verify blob is not empty
+    if (blob.size === 0) {
+      throw new Error('PDF file is empty. Please try again.');
     }
     
     // Create download link
@@ -168,7 +194,21 @@ async function exportReport() {
     
   } catch (error) {
     console.error("Error exporting PDF:", error);
-    alert("Error generating PDF report. Please try again.");
+    
+    // Show detailed error message
+    const errorMessage = error.message || 'Unknown error occurred';
+    
+    if (typeof Swal !== "undefined") {
+      Swal.fire({
+        icon: "error",
+        title: "Export Failed",
+        html: `<p>Error generating PDF report:</p><p style="font-size: 12px; color: #666;">${errorMessage}</p>`,
+        confirmButtonText: "OK",
+      });
+    } else {
+      alert("Error generating PDF report: " + errorMessage);
+    }
+    
     exportBtn.disabled = false;
     exportBtn.innerHTML = originalText;
   }

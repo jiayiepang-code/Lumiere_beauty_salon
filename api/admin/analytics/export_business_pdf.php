@@ -83,7 +83,17 @@ if ($end_date === null || $end_date === '') {
 }
 
 try {
+    // Get database connection
     $conn = getDBConnection();
+    
+    if (!$conn) {
+        throw new Exception('Failed to connect to database');
+    }
+    
+    // Test connection
+    if ($conn->connect_error) {
+        throw new Exception('Database connection error: ' . $conn->connect_error);
+    }
     
     // Fetch analytics data (similar to booking_trends.php)
     // Metrics
@@ -97,15 +107,33 @@ try {
                     WHERE booking_date BETWEEN ? AND ?";
     
     $stmt = $conn->prepare($metrics_sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare metrics query: ' . $conn->error);
+    }
     $stmt->bind_param("ss", $start_date, $end_date);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to execute metrics query: ' . $stmt->error);
+    }
     $metrics_result = $stmt->get_result();
+    if (!$metrics_result) {
+        throw new Exception('Failed to get metrics result: ' . $conn->error);
+    }
     $metrics = $metrics_result->fetch_assoc();
+    if (!$metrics) {
+        // Initialize with zeros if no data
+        $metrics = [
+            'total_bookings' => 0,
+            'completed_bookings' => 0,
+            'cancelled_bookings' => 0,
+            'no_show_bookings' => 0,
+            'total_revenue' => 0
+        ];
+    }
     $stmt->close();
     
     // Calculate average booking value
     $average_booking_value = 0;
-    if ($metrics['completed_bookings'] > 0) {
+    if (isset($metrics['completed_bookings']) && $metrics['completed_bookings'] > 0) {
         $average_booking_value = $metrics['total_revenue'] / $metrics['completed_bookings'];
     }
     
@@ -119,14 +147,22 @@ try {
                         AND b.booking_date BETWEEN ? AND ?";
     
     $stmt = $conn->prepare($commission_sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare commission query: ' . $conn->error);
+    }
     $stmt->bind_param("ss", $start_date, $end_date);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to execute commission query: ' . $stmt->error);
+    }
     $commission_result = $stmt->get_result();
+    if (!$commission_result) {
+        throw new Exception('Failed to get commission result: ' . $conn->error);
+    }
     $commission_data = $commission_result->fetch_assoc();
     $stmt->close();
     
-    $total_commission = $commission_data['total_commission'] ?? 0;
-    $commission_ratio = $commission_data['commission_ratio'] ?? 0;
+    $total_commission = isset($commission_data['total_commission']) ? (float)$commission_data['total_commission'] : 0;
+    $commission_ratio = isset($commission_data['commission_ratio']) ? (float)$commission_data['commission_ratio'] : 0;
     
     // Staff performance
     $staff_sql = "SELECT 
@@ -146,19 +182,27 @@ try {
                   LIMIT 10";
     
     $stmt = $conn->prepare($staff_sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare staff query: ' . $conn->error);
+    }
     $stmt->bind_param("ss", $start_date, $end_date);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to execute staff query: ' . $stmt->error);
+    }
     $staff_result = $stmt->get_result();
+    if (!$staff_result) {
+        throw new Exception('Failed to get staff result: ' . $conn->error);
+    }
     
     $staff_performance = [];
     $rank = 1;
     while ($row = $staff_result->fetch_assoc()) {
         $staff_performance[] = [
             'rank' => $rank++,
-            'name' => $row['full_name'],
-            'completed' => (int)$row['completed_count'],
-            'revenue' => (float)$row['revenue_generated'],
-            'commission' => (float)$row['commission_earned']
+            'name' => $row['full_name'] ?? 'Unknown',
+            'completed' => (int)($row['completed_count'] ?? 0),
+            'revenue' => (float)($row['revenue_generated'] ?? 0),
+            'commission' => (float)($row['commission_earned'] ?? 0)
         ];
     }
     $stmt->close();
@@ -177,16 +221,24 @@ try {
                      LIMIT 10";
     
     $stmt = $conn->prepare($services_sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare services query: ' . $conn->error);
+    }
     $stmt->bind_param("ss", $start_date, $end_date);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to execute services query: ' . $stmt->error);
+    }
     $services_result = $stmt->get_result();
+    if (!$services_result) {
+        throw new Exception('Failed to get services result: ' . $conn->error);
+    }
     
     $popular_services = [];
     while ($row = $services_result->fetch_assoc()) {
         $popular_services[] = [
-            'name' => $row['service_name'],
-            'bookings' => (int)$row['booking_count'],
-            'revenue' => (float)$row['revenue']
+            'name' => $row['service_name'] ?? 'Unknown',
+            'bookings' => (int)($row['booking_count'] ?? 0),
+            'revenue' => (float)($row['revenue'] ?? 0)
         ];
     }
     $stmt->close();
@@ -204,17 +256,25 @@ try {
                   LIMIT 30";
     
     $stmt = $conn->prepare($daily_sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare daily breakdown query: ' . $conn->error);
+    }
     $stmt->bind_param("ss", $start_date, $end_date);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to execute daily breakdown query: ' . $stmt->error);
+    }
     $daily_result = $stmt->get_result();
+    if (!$daily_result) {
+        throw new Exception('Failed to get daily breakdown result: ' . $conn->error);
+    }
     
     $daily_breakdown = [];
     while ($row = $daily_result->fetch_assoc()) {
         $daily_breakdown[] = [
-            'date' => $row['date'],
-            'bookings' => (int)$row['bookings'],
-            'completed' => (int)$row['completed'],
-            'revenue' => (float)$row['revenue']
+            'date' => $row['date'] ?? date('Y-m-d'),
+            'bookings' => (int)($row['bookings'] ?? 0),
+            'completed' => (int)($row['completed'] ?? 0),
+            'revenue' => (float)($row['revenue'] ?? 0)
         ];
     }
     $stmt->close();
@@ -237,134 +297,155 @@ try {
         ? ($metrics['completed_bookings'] / $metrics['total_bookings']) * 100 
         : 0;
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_1','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:248','message'=>'Before initMPDF','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
-    // #endregion
-
     // Initialize mPDF
     $mpdf = initMPDF();
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_2','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:254','message'=>'After initMPDF','data'=>['mpdfIsObject'=>is_object($mpdf),'mpdfIsFalse'=>$mpdf===false,'mpdfClass'=>is_object($mpdf)?get_class($mpdf):'N/A'],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
-    // #endregion
-    
     if (!$mpdf) {
-        // #region agent log
-        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_3','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:260','message'=>'initMPDF returned false','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
-        // #endregion
         throw new Exception('mPDF library not available. Please ensure mPDF is installed in vendor/mpdf/');
     }
-
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_4','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:265','message'=>'Before SetTitle/SetAuthor','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
 
     // Set PDF metadata
     $mpdf->SetTitle('Business Analytics Report - ' . $period_display);
     $mpdf->SetAuthor('Lumière Beauty Salon');
     $mpdf->SetSubject('Business Analytics Report');
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_5','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:272','message'=>'Before SetHTMLFooter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Set footer (applies to all pages)
     $mpdf->SetHTMLFooter(generatePDFFooter('Business Analytics Report'));
-    
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_6','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:278','message'=>'After SetHTMLFooter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
 
-    // Generate HTML content
+    // Generate HTML content with modern executive summary template style
     $html = '<style>
         body {
-            font-family: Arial, sans-serif;
-            font-size: 11pt;
+            font-family: dejavusans, sans-serif;
+            font-size: 10pt;
             color: #2d2d2d;
-            line-height: 1.6;
+            line-height: 1.5;
+            margin: 0;
+            padding: 0;
         }
         h1 {
-            font-size: 24pt;
+            font-size: 22pt;
             font-weight: bold;
             color: #1a1a1a;
             text-align: center;
-            margin: 20px 0;
+            margin: 15px 0;
         }
         h2 {
-            font-size: 16pt;
-            font-weight: bold;
-            color: #2d2d2d;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            border-bottom: 2px solid #D4A574;
-            padding-bottom: 5px;
-        }
-        h3 {
             font-size: 14pt;
             font-weight: bold;
             color: #2d2d2d;
             margin-top: 20px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #D4A574;
+        }
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #2d2d2d;
+            margin-top: 15px;
+            margin-bottom: 8px;
         }
         .cover-page {
             text-align: center;
-            padding: 80px 20px;
+            padding: 60px 20px;
             page-break-after: always;
         }
         .cover-title {
-            font-size: 26pt;
+            font-size: 24pt;
             font-weight: bold;
             color: #1a1a1a;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             line-height: 1.2;
             word-wrap: break-word;
         }
         .cover-subtitle {
-            font-size: 14pt;
+            font-size: 12pt;
             color: #666;
-            margin-top: 20px;
+            margin-top: 15px;
+        }
+        .card {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .card-header {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            margin: -15px -15px 15px -15px;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: bold;
+            font-size: 11pt;
+            color: #2d2d2d;
         }
         .kpi-grid {
             display: table;
             width: 100%;
-            margin: 20px 0;
+            margin: 15px 0;
         }
         .kpi-item {
             display: table-cell;
             width: 33.33%;
-            padding: 15px;
+            padding: 12px;
             text-align: center;
             border: 1px solid #e0e0e0;
             background-color: #fafafa;
         }
         .kpi-value {
-            font-size: 20pt;
+            font-size: 18pt;
             font-weight: bold;
             color: #D4A574;
-            margin: 10px 0;
+            margin: 8px 0;
         }
         .kpi-label {
-            font-size: 10pt;
+            font-size: 9pt;
             color: #666;
             text-transform: uppercase;
+        }
+        .chart-container {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .chart-title {
+            font-size: 12pt;
+            font-weight: bold;
+            color: #2d2d2d;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .two-column {
+            width: 100%;
+            margin: 15px 0;
+        }
+        .column {
+            width: 50%;
+            vertical-align: top;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
-            font-size: 10pt;
+            margin: 12px 0;
+            font-size: 9pt;
         }
         table th {
             background-color: #f5f5f5;
             color: #2d2d2d;
             font-weight: bold;
-            padding: 10px;
+            padding: 8px;
             text-align: left;
             border: 1px solid #e0e0e0;
+            font-size: 9pt;
         }
         table td {
-            padding: 8px 10px;
+            padding: 6px 8px;
             border: 1px solid #e0e0e0;
+            font-size: 9pt;
         }
         table tr:nth-child(even) {
             background-color: #fafafa;
@@ -376,53 +457,83 @@ try {
             text-align: center;
         }
         .metric-row {
-            margin: 10px 0;
-            padding: 8px 0;
+            margin: 8px 0;
+            padding: 6px 0;
             border-bottom: 1px solid #f0f0f0;
         }
         .metric-label {
             font-weight: bold;
             display: inline-block;
-            width: 200px;
+            width: 180px;
+            font-size: 9pt;
         }
         .metric-value {
             color: #2d2d2d;
+            font-size: 9pt;
         }
         .page-break {
             page-break-before: always;
         }
+        .section-title {
+            font-size: 13pt;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin: 20px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #D4A574;
+        }
     </style>';
     
-    // Cover Page (no header on first page)
+    // Cover Page (no header on first page) - Add logo
+    $company = getCompanyInfo();
+    $logo_html = '';
+    $logo_path = $company['logo_path'] ?? '';
+    
+    if (!empty($logo_path) && file_exists($logo_path) && is_readable($logo_path)) {
+        try {
+            // Convert logo to base64 for embedding in PDF
+            $logo_data = file_get_contents($logo_path);
+            if ($logo_data !== false && strlen($logo_data) > 0) {
+                $logo_base64 = base64_encode($logo_data);
+                $logo_mime = 'image/png'; // Default to PNG
+                
+                // Try to detect MIME type
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                if ($finfo) {
+                    $detected_mime = finfo_file($finfo, $logo_path);
+                    if ($detected_mime && strpos($detected_mime, 'image/') === 0) {
+                        $logo_mime = $detected_mime;
+                    }
+                    finfo_close($finfo);
+                }
+                
+                $logo_html = '<div style="margin-bottom: 30px; text-align: center;"><img src="data:' . $logo_mime . ';base64,' . $logo_base64 . '" style="max-width: 200px; max-height: 100px; height: auto; display: inline-block;" /></div>';
+            }
+        } catch (Exception $e) {
+            // If logo loading fails, continue without it
+            error_log("Cover page logo loading error: " . $e->getMessage());
+        }
+    }
+    
     $cover_html = '<div class="cover-page">
+        ' . $logo_html . '
         <div class="cover-title">BUSINESS ANALYTICS REPORT</div>
         <div style="font-size: 16pt; margin: 30px 0; color: #666;">' . htmlspecialchars($period_display) . '</div>
         <div class="cover-subtitle">Generated: ' . htmlspecialchars($generated_date) . '</div>
         <div class="cover-subtitle" style="margin-top: 40px; font-style: italic;">Confidential Business Report</div>
     </div>';
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_7','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:380','message'=>'Before WriteHTML cover','data'=>['coverHtmlLength'=>strlen($cover_html)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Write cover page first (without header)
     $mpdf->WriteHTML($cover_html);
-    
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_8','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:385','message'=>'After WriteHTML cover, before SetHTMLHeader','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
     
     // Now set header for subsequent pages
     $mpdf->SetHTMLHeader(generatePDFHeader($mpdf));
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_9','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:390','message'=>'After SetHTMLHeader','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Continue with rest of content
     
-    // Executive Summary
-    $html .= '<h2>Executive Summary</h2>';
+    // Executive Summary with card design
+    $html .= '<div class="card">';
+    $html .= '<div class="card-header">Executive Summary</div>';
     $html .= '<div class="kpi-grid">
         <div class="kpi-item">
             <div class="kpi-label">Total Revenue</div>
@@ -437,18 +548,22 @@ try {
             <div class="kpi-value">' . number_format($metrics['total_bookings']) . '</div>
         </div>
     </div>';
+    $html .= '</div>';
     
-    $html .= '<h3>Period Overview</h3>';
+    $html .= '<div class="card">';
+    $html .= '<div class="card-header">Period Overview</div>';
     $html .= '<div class="metric-row"><span class="metric-label">Report Period:</span> <span class="metric-value">' . htmlspecialchars($period_display) . '</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">Total Bookings:</span> <span class="metric-value">' . number_format($metrics['total_bookings']) . '</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">Completion Rate:</span> <span class="metric-value">' . number_format($completion_rate, 1) . '%</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">Average Booking Value:</span> <span class="metric-value">RM ' . number_format($average_booking_value, 2) . '</span></div>';
+    $html .= '</div>';
     
     // Financial Metrics
-        $html .= '<pagebreak />';
-        $html .= '<h2>Financial Metrics</h2>';
+    $html .= '<pagebreak />';
+    $html .= '<div class="section-title">Financial Metrics</div>';
     
-    $html .= '<h3>Revenue Breakdown</h3>';
+    $html .= '<div class="card">';
+    $html .= '<div class="card-header">Revenue Breakdown</div>';
     $html .= '<table>
         <tr>
             <th style="width: 60%;">Metric</th>
@@ -472,16 +587,21 @@ try {
         </tr>
     </table>';
     
-    $html .= '<h3>Booking Status Summary</h3>';
+    $html .= '</div>'; // Close Revenue Breakdown card
+    
+    $html .= '<div class="card">';
+    $html .= '<div class="card-header">Booking Status Summary</div>';
     $html .= '<div class="metric-row"><span class="metric-label">Completed:</span> <span class="metric-value">' . number_format($metrics['completed_bookings']) . ' bookings (' . number_format(($metrics['completed_bookings'] / max($metrics['total_bookings'], 1)) * 100, 1) . '%)</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">Confirmed:</span> <span class="metric-value">' . number_format($metrics['total_bookings'] - $metrics['completed_bookings'] - $metrics['cancelled_bookings'] - $metrics['no_show_bookings']) . ' bookings</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">Cancelled:</span> <span class="metric-value">' . number_format($metrics['cancelled_bookings']) . ' bookings (' . number_format(($metrics['cancelled_bookings'] / max($metrics['total_bookings'], 1)) * 100, 1) . '%)</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">No-Show:</span> <span class="metric-value">' . number_format($metrics['no_show_bookings']) . ' bookings (' . number_format(($metrics['no_show_bookings'] / max($metrics['total_bookings'], 1)) * 100, 1) . '%)</span></div>';
+    $html .= '</div>'; // Close Booking Status card
     
     // Staff Performance Leaderboard
     if (!empty($staff_performance)) {
         $html .= '<pagebreak />';
-        $html .= '<h2>Staff Performance Leaderboard</h2>';
+        $html .= '<div class="section-title">Staff Performance Leaderboard</div>';
+        $html .= '<div class="card">';
         $html .= '<table>
             <tr>
                 <th style="width: 10%;">Rank</th>
@@ -502,133 +622,215 @@ try {
         }
         
         $html .= '</table>';
+        $html .= '</div>'; // Close Staff Performance card
     }
     
-    // Popular Services - Horizontal Bar Chart Design
-    if (!empty($popular_services)) {
+    // Charts Section - Side by Side (Booking Trends Line Chart + Popular Services Bar Chart)
+    if ((count($daily_breakdown) <= 30 && !empty($daily_breakdown)) || !empty($popular_services)) {
         $html .= '<pagebreak />';
-        $html .= '<h2>Popular Services</h2>';
+        $html .= '<div class="section-title">Analytics Charts</div>';
+        $html .= '<table class="two-column" style="width: 100%; border-collapse: collapse; margin: 15px 0;"><tr>';
         
-        // Find max booking count for scaling bars
-        $max_bookings = 0;
-        foreach ($popular_services as $service) {
-            if ($service['bookings'] > $max_bookings) {
-                $max_bookings = $service['bookings'];
+        // LEFT COLUMN: Booking Trends Line Chart
+        if (count($daily_breakdown) <= 30 && !empty($daily_breakdown)) {
+            $html .= '<td class="column" style="width: 50%; vertical-align: top; padding-right: 15px;">';
+            $html .= '<div class="chart-container">';
+            $html .= '<div class="chart-title">Booking Trends</div>';
+            
+            // Find max bookings for scaling
+            $max_bookings = 0;
+            foreach ($daily_breakdown as $day) {
+                if ($day['bookings'] > $max_bookings) {
+                    $max_bookings = $day['bookings'];
+                }
             }
-        }
-        
-        $html .= '<div style="margin-top: 20px;">';
-        
-        foreach ($popular_services as $service) {
-            // Calculate bar width percentage (max 100%)
-            $bar_width_percent = $max_bookings > 0 ? ($service['bookings'] / $max_bookings) * 100 : 0;
             
-            $html .= '<table style="width: 100%; margin-bottom: 20px; border-collapse: collapse;">';
-            $html .= '<tr>';
+            // Chart area
+            $chart_height = 180;
+            $chart_padding = 15;
+            $plot_height = $chart_height - 30;
+            $plot_width = 100 - 20;
             
-            // Service name (left column - 35%)
-            $html .= '<td style="width: 35%; vertical-align: middle; padding-right: 15px; padding-bottom: 12px;">';
-            $html .= '<span style="font-size: 10pt; color: #2d2d2d;">' . htmlspecialchars($service['name']) . '</span>';
-            $html .= '</td>';
+            $html .= '<div style="position: relative; height: ' . $chart_height . 'px; border-left: 2px solid #333; border-bottom: 2px solid #333; padding-left: 5px; padding-right: 5px;">';
             
-            // Bar container (middle column - 50%)
-            $html .= '<td style="width: 50%; vertical-align: middle; padding-right: 15px; padding-bottom: 12px;">';
-            $html .= '<div style="width: 100%; height: 24px; background-color: #f0f0f0; border-radius: 3px; position: relative; overflow: hidden;">';
-            $html .= '<div style="width: ' . number_format($bar_width_percent, 2) . '%; height: 100%; background-color: #D4A574; border-radius: 3px;"></div>';
+            // Y-axis labels
+            $grid_lines = 5;
+            for ($i = 0; $i <= $grid_lines; $i++) {
+                $y_pos = ($plot_height / $grid_lines) * ($grid_lines - $i) + 15;
+                $value = ($max_bookings / $grid_lines) * $i;
+                $html .= '<div style="position: absolute; left: -25px; top: ' . ($y_pos - 6) . 'px; font-size: 8pt; color: #666; text-align: right; width: 20px;">' . round($value) . '</div>';
+                if ($i < $grid_lines) {
+                    $html .= '<div style="position: absolute; left: 0; top: ' . $y_pos . 'px; right: 0; height: 1px; background: #f5f5f5;"></div>';
+                }
+            }
+            
+            // Calculate line points
+            $point_count = count($daily_breakdown);
+            $points = [];
+            foreach ($daily_breakdown as $index => $day) {
+                $x_percent = ($index / max($point_count - 1, 1)) * 100;
+                $y_percent = $max_bookings > 0 ? (($day['bookings'] / $max_bookings) * 100) : 0;
+                $x_pos = ($x_percent / 100) * $plot_width + 5;
+                $y_pos = $plot_height - (($y_percent / 100) * $plot_height) + 15;
+                $points[] = ['x' => $x_pos, 'y' => $y_pos, 'value' => $day['bookings'], 'date' => $day['date']];
+            }
+            
+            // Draw filled area under line using divs (mPDF compatible)
+            if (count($points) > 1) {
+                for ($i = 0; $i < count($points) - 1; $i++) {
+                    $p1 = $points[$i];
+                    $p2 = $points[$i + 1];
+                    $width = $p2['x'] - $p1['x'];
+                    $height = ($plot_height + 15) - min($p1['y'], $p2['y']);
+                    $top = min($p1['y'], $p2['y']);
+                    
+                    // Create trapezoid shape for filled area
+                    $html .= '<div style="position: absolute; left: ' . $p1['x'] . 'px; top: ' . $top . 'px; width: ' . $width . 'px; height: ' . $height . 'px; background: rgba(212, 165, 116, 0.15);"></div>';
+                }
+            }
+            
+            // Draw line connecting points using small divs
+            if (count($points) > 1) {
+                for ($i = 0; $i < count($points) - 1; $i++) {
+                    $p1 = $points[$i];
+                    $p2 = $points[$i + 1];
+                    $dx = $p2['x'] - $p1['x'];
+                    $dy = $p2['y'] - $p1['y'];
+                    $length = sqrt($dx * $dx + $dy * $dy);
+                    $angle = atan2($dy, $dx) * 180 / M_PI;
+                    
+                    $html .= '<div style="position: absolute; left: ' . $p1['x'] . 'px; top: ' . $p1['y'] . 'px; width: ' . $length . 'px; height: 2.5px; background: #D4A574; transform-origin: 0 50%; transform: rotate(' . $angle . 'deg);"></div>';
+                }
+            }
+            
+            // Draw points
+            foreach ($points as $p) {
+                $html .= '<div style="position: absolute; left: ' . ($p['x'] - 3.5) . 'px; top: ' . ($p['y'] - 3.5) . 'px; width: 7px; height: 7px; background: #D4A574; border: 2px solid #fff; border-radius: 50%;"></div>';
+            }
+            
+            $html .= '</div>'; // Close chart area
+            
+            // X-axis labels
+            $html .= '<div style="display: table; width: 100%; margin-top: 8px; padding-left: 5px; padding-right: 5px;">';
+            foreach ($daily_breakdown as $day) {
+                $date_label = date('M j', strtotime($day['date']));
+                if (strlen($date_label) > 6) {
+                    $date_label = date('j M', strtotime($day['date']));
+                }
+                $html .= '<div style="display: table-cell; text-align: center; font-size: 7pt; color: #666;">' . htmlspecialchars($date_label) . '</div>';
+            }
             $html .= '</div>';
-            $html .= '</td>';
             
-            // Count (right column - 15%)
-            $html .= '<td style="width: 15%; vertical-align: middle; text-align: right; padding-bottom: 12px;">';
-            $html .= '<span style="font-size: 10pt; color: #2d2d2d; font-weight: bold;">' . number_format($service['bookings']) . '</span>';
-            $html .= '</td>';
-            
-            $html .= '</tr>';
-            $html .= '</table>';
+            $html .= '</div>'; // Close chart-container
+            $html .= '</td>'; // Close column
+        } else {
+            // Empty cell if no booking trends data
+            $html .= '<td class="column" style="width: 50%; vertical-align: top; padding-right: 15px;"></td>';
         }
         
-        $html .= '</div>';
-    }
-    
-    // Daily Breakdown (if not too many days)
-    if (count($daily_breakdown) <= 30 && !empty($daily_breakdown)) {
-        $html .= '<pagebreak />';
-        $html .= '<h2>Daily Booking Trends</h2>';
-        $html .= '<table>
-            <tr>
-                <th style="width: 30%;">Date</th>
-                <th style="width: 20%;" class="text-center">Total Bookings</th>
-                <th style="width: 20%;" class="text-center">Completed</th>
-                <th style="width: 30%;" class="text-right">Revenue</th>
-            </tr>';
-        
-        foreach ($daily_breakdown as $day) {
-            $date_display = date('M j, Y', strtotime($day['date']));
-            $html .= '<tr>
-                <td>' . htmlspecialchars($date_display) . '</td>
-                <td class="text-center">' . number_format($day['bookings']) . '</td>
-                <td class="text-center">' . number_format($day['completed']) . '</td>
-                <td class="text-right">RM ' . number_format($day['revenue'], 2) . '</td>
-            </tr>';
+        // RIGHT COLUMN: Popular Services Horizontal Bar Chart
+        if (!empty($popular_services)) {
+            $html .= '<td class="column" style="width: 50%; vertical-align: top; padding-left: 15px;">';
+            $html .= '<div class="chart-container">';
+            $html .= '<div class="chart-title">Popular Services</div>';
+            
+            // Find max booking count for scaling bars
+            $max_bookings = 0;
+            foreach ($popular_services as $service) {
+                if ($service['bookings'] > $max_bookings) {
+                    $max_bookings = $service['bookings'];
+                }
+            }
+            
+            // X-axis scale labels (top)
+            $html .= '<div style="display: table; width: 100%; margin-bottom: 8px; font-size: 7pt; color: #666;">';
+            $grid_lines = 4;
+            for ($i = 0; $i <= $grid_lines; $i++) {
+                $value = ($max_bookings / $grid_lines) * $i;
+                $html .= '<div style="display: table-cell; text-align: center;">' . round($value) . '</div>';
+            }
+            $html .= '</div>';
+            
+            // Chart bars
+            $bar_height = 18;
+            $bar_spacing = 6;
+            $max_services = min(count($popular_services), 8); // Limit to 8 services for better fit
+            
+            for ($idx = 0; $idx < $max_services; $idx++) {
+                $service = $popular_services[$idx];
+                $bar_width_percent = $max_bookings > 0 ? ($service['bookings'] / $max_bookings) * 100 : 0;
+                
+                $html .= '<div style="margin-bottom: ' . $bar_spacing . 'px;">';
+                $html .= '<div style="display: table; width: 100%;">';
+                
+                // Service name (left - 35%)
+                $service_name_short = strlen($service['name']) > 15 ? substr($service['name'], 0, 15) . '...' : $service['name'];
+                $html .= '<div style="display: table-cell; width: 35%; vertical-align: middle; padding-right: 8px;">';
+                $html .= '<span style="font-size: 8pt; color: #2d2d2d; font-weight: 500;">' . htmlspecialchars($service_name_short) . '</span>';
+                $html .= '</div>';
+                
+                // Bar container (middle - 50%)
+                $html .= '<div style="display: table-cell; width: 50%; vertical-align: middle; padding-right: 8px;">';
+                $html .= '<div style="position: relative; width: 100%; height: ' . $bar_height . 'px; background-color: #f0f0f0; border-radius: 3px; overflow: hidden;">';
+                $html .= '<div style="position: absolute; left: 0; top: 0; width: ' . number_format($bar_width_percent, 2) . '%; height: 100%; background: #D4A574; border-radius: 3px;"></div>';
+                $html .= '</div>';
+                $html .= '</div>';
+                
+                // Count (right - 15%)
+                $html .= '<div style="display: table-cell; width: 15%; vertical-align: middle; text-align: right;">';
+                $html .= '<span style="font-size: 9pt; color: #2d2d2d; font-weight: bold;">' . number_format($service['bookings']) . '</span>';
+                $html .= '</div>';
+                
+                $html .= '</div>';
+                $html .= '</div>';
+            }
+            
+            $html .= '</div>'; // Close chart-container
+            $html .= '</td>'; // Close column
+        } else {
+            // Empty cell if no popular services data
+            $html .= '<td class="column" style="width: 50%; vertical-align: top; padding-left: 15px;"></td>';
         }
         
-        $html .= '</table>';
+        $html .= '</tr></table>'; // Close two-column table
     }
-    
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_10','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:535','message'=>'Before WriteHTML main content','data'=>['htmlLength'=>strlen($html)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
     
     // Write HTML to mPDF
     $mpdf->WriteHTML($html);
-    
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_11','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:539','message'=>'After WriteHTML, before Output','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
     
     // Output PDF
     ob_end_clean();
     $filename = 'Business_Analytics_Report_' . date('Y-m-d', strtotime($start_date)) . '_to_' . date('Y-m-d', strtotime($end_date)) . '.pdf';
     
-    // #region agent log
-    $destinationClassExists = class_exists('\Mpdf\Output\Destination');
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_12','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:545','message'=>'Before Output call','data'=>['destinationClassExists'=>$destinationClassExists,'filename'=>$filename],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Use the correct namespace for Destination
-    if ($destinationClassExists) {
-        // #region agent log
-        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_13','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:550','message'=>'Using Destination::DOWNLOAD','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
-        // #endregion
+    if (class_exists('\Mpdf\Output\Destination')) {
         $mpdf->Output($filename, \Mpdf\Output\Destination::DOWNLOAD);
     } else {
-        // #region agent log
-        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_14','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:553','message'=>'Using fallback D parameter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
-        // #endregion
         // Fallback for older mPDF versions
         $mpdf->Output($filename, 'D');
     }
     
 } catch (Exception $e) {
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_15','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:560','message'=>'Exception caught','data'=>['exceptionMessage'=>$e->getMessage(),'exceptionFile'=>$e->getFile(),'exceptionLine'=>$e->getLine(),'exceptionTrace'=>substr($e->getTraceAsString(),0,500)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1,H3,H5'])."\n", FILE_APPEND);
-    // #endregion
-    
     ob_end_clean();
     error_log("Business PDF Export Error: " . $e->getMessage());
     http_response_code(500);
-    header('Content-Type: text/plain');
-    die('Error generating report: ' . $e->getMessage());
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+    exit;
 } catch (Error $e) {
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_16','timestamp'=>time()*1000,'location'=>'export_business_pdf.php:570','message'=>'Fatal Error caught','data'=>['errorMessage'=>$e->getMessage(),'errorFile'=>$e->getFile(),'errorLine'=>$e->getLine(),'errorTrace'=>substr($e->getTraceAsString(),0,500)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H5'])."\n", FILE_APPEND);
-    // #endregion
     
     ob_end_clean();
     error_log("Business PDF Export Fatal Error: " . $e->getMessage());
     http_response_code(500);
-    header('Content-Type: text/plain');
-    die('Error generating report: ' . $e->getMessage());
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+    exit;
 }
 ?>
 

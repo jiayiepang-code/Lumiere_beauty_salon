@@ -273,48 +273,25 @@ try {
 
     $conn->close();
 
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_1','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:276','message'=>'Before initMPDF','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
-    // #endregion
-
     // Initialize mPDF
     $mpdf = initMPDF();
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_2','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:280','message'=>'After initMPDF','data'=>['mpdfIsObject'=>is_object($mpdf),'mpdfIsFalse'=>$mpdf===false,'mpdfClass'=>is_object($mpdf)?get_class($mpdf):'N/A'],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
-    // #endregion
-    
     if (!$mpdf) {
-        // #region agent log
-        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_3','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:285','message'=>'initMPDF returned false','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1'])."\n", FILE_APPEND);
-        // #endregion
         throw new Exception('mPDF library not available. Please ensure mPDF is installed in vendor/mpdf/');
     }
-
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_4','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:290','message'=>'Before SetTitle/SetAuthor','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
 
     // Set PDF metadata
     $mpdf->SetTitle('ESG Sustainability Report - ' . $current_month_display);
     $mpdf->SetAuthor('Lumière Beauty Salon');
     $mpdf->SetSubject('ESG Sustainability Report');
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_5','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:297','message'=>'Before SetHTMLFooter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Set footer (applies to all pages)
     $mpdf->SetHTMLFooter(generatePDFFooter('ESG Sustainability Report'));
-    
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_6','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:301','message'=>'After SetHTMLFooter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
 
     // Generate HTML content
     $html = '<style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: dejavusans, sans-serif;
             font-size: 11pt;
             color: #2d2d2d;
             line-height: 1.6;
@@ -457,23 +434,11 @@ try {
         <div class="cover-subtitle" style="margin-top: 20px;">Generated: ' . htmlspecialchars($generated_date) . '</div>
     </div>';
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_7','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:445','message'=>'Before WriteHTML cover','data'=>['coverHtmlLength'=>strlen($cover_html)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Write cover page first (without header)
     $mpdf->WriteHTML($cover_html);
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_8','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:450','message'=>'After WriteHTML cover, before SetHTMLHeader','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Now set header for subsequent pages
     $mpdf->SetHTMLHeader(generatePDFHeader($mpdf));
-    
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_9','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:455','message'=>'After SetHTMLHeader','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
     
     // Continue with rest of content
     
@@ -639,54 +604,28 @@ try {
         $html .= '</table>';
     }
     
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_10','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:614','message'=>'Before WriteHTML main content','data'=>['htmlLength'=>strlen($html)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Write HTML to mPDF
     $mpdf->WriteHTML($html);
-    
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_11','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:618','message'=>'After WriteHTML, before Output','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H3'])."\n", FILE_APPEND);
-    // #endregion
     
     // Output PDF
     ob_end_clean();
     $filename = 'ESG_Report_' . $selected_year . '_' . $selected_month . '.pdf';
     
-    // #region agent log
-    $destinationClassExists = class_exists('\Mpdf\Output\Destination');
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_12','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:625','message'=>'Before Output call','data'=>['destinationClassExists'=>$destinationClassExists,'filename'=>$filename],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
-    // #endregion
-    
     // Use the correct namespace for Destination
-    if ($destinationClassExists) {
-        // #region agent log
-        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_13','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:630','message'=>'Using Destination::DOWNLOAD','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
-        // #endregion
+    if (class_exists('\Mpdf\Output\Destination')) {
         $mpdf->Output($filename, \Mpdf\Output\Destination::DOWNLOAD);
     } else {
-        // #region agent log
-        file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_14','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:633','message'=>'Using fallback D parameter','data'=>[],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H2'])."\n", FILE_APPEND);
-        // #endregion
         // Fallback for older mPDF versions
         $mpdf->Output($filename, 'D');
     }
     
 } catch (Exception $e) {
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_15','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:640','message'=>'Exception caught','data'=>['exceptionMessage'=>$e->getMessage(),'exceptionFile'=>$e->getFile(),'exceptionLine'=>$e->getLine(),'exceptionTrace'=>substr($e->getTraceAsString(),0,500)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H1,H3,H5'])."\n", FILE_APPEND);
-    // #endregion
-    
     ob_end_clean();
     error_log("ESG PDF Export Error: " . $e->getMessage());
     http_response_code(500);
     header('Content-Type: text/plain');
     die('Error generating report: ' . $e->getMessage());
 } catch (Error $e) {
-    // #region agent log
-    file_put_contents(__DIR__ . '/../../../.cursor/debug.log', json_encode(['id'=>'log_'.time().'_16','timestamp'=>time()*1000,'location'=>'export_esg_pdf.php:650','message'=>'Fatal Error caught','data'=>['errorMessage'=>$e->getMessage(),'errorFile'=>$e->getFile(),'errorLine'=>$e->getLine(),'errorTrace'=>substr($e->getTraceAsString(),0,500)],'sessionId'=>'debug-session','runId'=>'run1','hypothesisId'=>'H5'])."\n", FILE_APPEND);
-    // #endregion
     
     ob_end_clean();
     error_log("ESG PDF Export Fatal Error: " . $e->getMessage());

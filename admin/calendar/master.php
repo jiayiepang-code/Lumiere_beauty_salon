@@ -159,7 +159,7 @@ include '../includes/header.php';
 .roster-table-wrapper {
     background: white;
     border-radius: 12px;
-    padding: 20px;
+    padding: 20px 20px 20px 0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     border: 1px solid #f0f0f0;
     overflow-x: auto;
@@ -199,6 +199,9 @@ include '../includes/header.php';
     z-index: 10;
     background: #fafafa;
     border-right: 2px solid #e0e0e0;
+    vertical-align: middle;
+    text-align: left;
+    padding: 12px 12px 12px 12px;
 }
 
 .roster-day-header {
@@ -243,7 +246,7 @@ include '../includes/header.php';
 .roster-staff-cell {
     min-width: 180px;
     width: 180px;
-    padding: 16px;
+    padding: 16px 12px 16px 12px;
     font-weight: 500;
     color: #333;
     background: #fafafa;
@@ -252,6 +255,8 @@ include '../includes/header.php';
     left: 0;
     z-index: 5;
     white-space: nowrap;
+    vertical-align: middle;
+    text-align: left;
 }
 
 .roster-day-cell {
@@ -390,7 +395,7 @@ include '../includes/header.php';
 /* Responsive Design - Mobile */
 @media (max-width: 768px) {
     .roster-table-wrapper {
-        padding: 12px;
+        padding: 12px 12px 12px 0;
         margin: 0 -12px;
         border-radius: 0;
     }
@@ -400,7 +405,9 @@ include '../includes/header.php';
         min-width: 140px;
         width: 140px;
         font-size: 13px;
-        padding: 12px;
+        padding: 12px 10px 12px 10px;
+        vertical-align: middle;
+        text-align: left;
     }
     
     .roster-day-header {
