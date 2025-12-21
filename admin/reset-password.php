@@ -120,16 +120,26 @@ if ($token) {
                                    id="password" 
                                    name="password" 
                                    placeholder="New Password" 
-                                   required>
+                                   required
+                                   oninput="checkPasswordStrength()"
+                                   onfocus="showPasswordHints()">
                             <img src="../images/74.png" class="password-toggle" onclick="togglePass('password')" alt="Show">
                         </div>
-                        <div id="passwordHints" style="display: none; margin-top: 8px; padding: 12px; background: #f8f9fa; border-radius: 8px; font-size: 13px; color: #666;">
-                            <div>Password must contain:</div>
-                            <div id="length-check">✓ At least 8 characters</div>
-                            <div id="upper-check">✓ One uppercase letter</div>
-                            <div id="lower-check">✓ One lowercase letter</div>
-                            <div id="number-check">✓ One number</div>
-                            <div id="special-check">✓ One symbol (@$!%*?&_)</div>
+                        
+                        <div class="password-strength">
+                            <div class="password-strength-bar" id="strengthBar"></div>
+                        </div>
+                        <div class="strength-text" id="strengthText"></div>
+                        
+                        <div class="hints-popup" id="passwordHints" style="display: none;">
+                            <p>Password must contain:</p>
+                            <ul>
+                                <li class="rule-item" id="ruleLength">✔ At least 8 characters</li>
+                                <li class="rule-item" id="ruleUpper">✔ One uppercase letter (A-Z)</li>
+                                <li class="rule-item" id="ruleLower">✔ One lowercase letter (a-z)</li>
+                                <li class="rule-item" id="ruleNumber">✔ One number (0-9)</li>
+                                <li class="rule-item" id="ruleSpecial">✔ One symbol (@$!%*?&_)</li>
+                            </ul>
                         </div>
                     </div>
 
@@ -173,23 +183,94 @@ if ($token) {
             }
         }
 
-        // Password strength checker
-        const passwordInput = document.getElementById('password');
-        const hintsDiv = document.getElementById('passwordHints');
-        
-        if (passwordInput && hintsDiv) {
-            passwordInput.addEventListener('focus', function() {
-                hintsDiv.style.display = 'block';
-            });
-            
-            passwordInput.addEventListener('input', function() {
-                const pwd = this.value;
-                document.getElementById('length-check').style.color = pwd.length >= 8 ? '#28a745' : '#666';
-                document.getElementById('upper-check').style.color = /[A-Z]/.test(pwd) ? '#28a745' : '#666';
-                document.getElementById('lower-check').style.color = /[a-z]/.test(pwd) ? '#28a745' : '#666';
-                document.getElementById('number-check').style.color = /\d/.test(pwd) ? '#28a745' : '#666';
-                document.getElementById('special-check').style.color = /[@$!%*?&_]/.test(pwd) ? '#28a745' : '#666';
-            });
+        // Show password hints popup
+        function showPasswordHints() {
+            const hints = document.getElementById('passwordHints');
+            if (hints) hints.style.display = 'block';
+        }
+
+        // Hide hints when clicking outside
+        document.addEventListener('click', function(e) {
+            const passwordInput = document.getElementById('password');
+            const hints = document.getElementById('passwordHints');
+            if (passwordInput && hints && !passwordInput.contains(e.target) && !hints.contains(e.target)) {
+                hints.style.display = 'none';
+            }
+        });
+
+        // Password strength checker with progress bar
+        function checkPasswordStrength() {
+            const password = document.getElementById('password').value;
+            const bar = document.getElementById('strengthBar');
+            const text = document.getElementById('strengthText');
+            const strengthContainer = document.querySelector('.password-strength');
+            const submitBtn = document.querySelector('.submit-btn');
+
+            if (strengthContainer) strengthContainer.style.display = "block";
+            if (text) text.style.display = "block";
+
+            const ruleLength = document.getElementById("ruleLength");
+            const ruleUpper = document.getElementById("ruleUpper");
+            const ruleLower = document.getElementById("ruleLower");
+            const ruleNumber = document.getElementById("ruleNumber");
+            const ruleSpecial = document.getElementById("ruleSpecial");
+
+            let hasLength = password.length >= 8;
+            let hasUpper = /[A-Z]/.test(password);
+            let hasLower = /[a-z]/.test(password);
+            let hasNumber = /\d/.test(password);
+            let hasSpecial = /[@$!%*?&_]/.test(password);
+
+            if(ruleLength) ruleLength.classList.toggle("valid", hasLength);
+            if(ruleUpper) ruleUpper.classList.toggle("valid", hasUpper);
+            if(ruleLower) ruleLower.classList.toggle("valid", hasLower);
+            if(ruleNumber) ruleNumber.classList.toggle("valid", hasNumber);
+            if(ruleSpecial) ruleSpecial.classList.toggle("valid", hasSpecial);
+
+            let validCount = hasLength + hasUpper + hasLower + hasNumber + hasSpecial;
+            let isPasswordStrong = validCount === 5;
+
+            bar.className = 'password-strength-bar';
+
+            if (validCount <= 1) {
+                bar.style.width = '25%';
+                bar.classList.add('strength-weak');
+                text.innerText = "Weak";
+                text.style.color = "#d9534f";
+            } else if (validCount === 2) {
+                bar.style.width = '50%';
+                bar.classList.add('strength-fair');
+                text.innerText = "Fair";
+                text.style.color = "#f0ad4e";
+            } else if (validCount === 3) {
+                bar.style.width = '75%';
+                bar.classList.add('strength-good');
+                text.innerText = "Good";
+                text.style.color = "#5bc0de";
+            } else if (validCount === 4) {
+                bar.style.width = '90%';
+                bar.classList.add('strength-good');
+                text.innerText = "Good";
+                text.style.color = "#5bc0de";
+            } else if (validCount === 5) {
+                bar.style.width = '100%';
+                bar.classList.add('strength-strong');
+                text.innerText = "Strong";
+                text.style.color = "#5cb85c";
+            }
+
+            // Enable/disable submit button based on password strength
+            if (submitBtn) {
+                if (isPasswordStrong) {
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                } else {
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                }
+            }
         }
     </script>
 
