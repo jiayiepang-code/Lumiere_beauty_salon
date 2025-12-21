@@ -227,7 +227,12 @@ ul {
 
 /* Oval container for logo (similar to login page design) */
 .logo-container-oval {
-  background-color: rgba(255, 253, 250, 0.95); /* Off-white, slightly more opaque */
+  background-color: rgba(
+    255,
+    253,
+    250,
+    0.95
+  ); /* Off-white, slightly more opaque */
   border-radius: 50% / 60%; /* Creates oval/ellipse shape - horizontal radius 50%, vertical radius 60% */
   padding: 12px 24px; /* Reduced padding for smaller logo */
   display: inline-flex;
@@ -2511,7 +2516,7 @@ tr:last-child td {
   background: white;
   -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
   scrollbar-width: thin; /* Firefox */
-  scrollbar-color: #D4A574 #f0f0f0; /* Firefox scrollbar colors */
+  scrollbar-color: #d4a574 #f0f0f0; /* Firefox scrollbar colors */
 }
 
 /* Custom scrollbar for webkit browsers */
@@ -2525,12 +2530,12 @@ tr:last-child td {
 }
 
 .calendar-week-grid::-webkit-scrollbar-thumb {
-  background: #D4A574;
+  background: #d4a574;
   border-radius: 5px;
 }
 
 .calendar-week-grid::-webkit-scrollbar-thumb:hover {
-  background: #C4956A;
+  background: #c4956a;
 }
 
 .week-table {
@@ -2687,7 +2692,7 @@ tr:last-child td {
 }
 
 /* Remove bottom border from last row - last 7 day cells */
-.month-days .month-day:nth-last-child(-n+7) {
+.month-days .month-day:nth-last-child(-n + 7) {
   border-bottom: none;
 }
 
@@ -3018,7 +3023,7 @@ tr:last-child td {
   .staff-roster-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .roster-legend {
     margin-top: 16px;
   }
@@ -3035,15 +3040,15 @@ tr:last-child td {
     padding: 12px 8px;
     min-width: 80px;
   }
-  
+
   .timeline-slots {
     padding: 8px 12px;
   }
-  
+
   .admin-calendar-event {
     padding: 10px 12px;
   }
-  
+
   .admin-calendar-event .event-label {
     min-width: 60px;
   }

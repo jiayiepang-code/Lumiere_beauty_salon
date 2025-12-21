@@ -888,7 +888,9 @@ function updateDateRangeIndicators(startDate, endDate, preset) {
     "leaderboard-date-indicator"
   );
   const chartIndicator = document.getElementById("chart-date-indicator");
-  const popularChartIndicator = document.getElementById("popular-chart-date-indicator");
+  const popularChartIndicator = document.getElementById(
+    "popular-chart-date-indicator"
+  );
 
   // Format dates
   const start = new Date(startDate);

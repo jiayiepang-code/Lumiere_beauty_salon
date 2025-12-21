@@ -234,13 +234,13 @@ async function initializeCalendar() {
   const [calendarDataResult] = await Promise.allSettled([
     loadCalendarData(),
     // Staff roster loads in background (non-blocking)
-    loadStaffRoster().catch(err => {
+    loadStaffRoster().catch((err) => {
       console.warn("Staff roster loading failed (non-critical):", err);
-    })
+    }),
   ]);
 
   // If calendar data failed, log it
-  if (calendarDataResult.status === 'rejected') {
+  if (calendarDataResult.status === "rejected") {
     console.error("Calendar data loading failed:", calendarDataResult.reason);
   }
 }
@@ -269,7 +269,9 @@ async function loadStaffRoster() {
 
   // Helper: fetch roster for a single date
   const fetchRosterForDate = async (dateStr) => {
-    const resp = await fetch(`../../api/admin/staff/roster.php?date=${dateStr}`);
+    const resp = await fetch(
+      `../../api/admin/staff/roster.php?date=${dateStr}`
+    );
     if (!resp.ok) {
       throw new Error(`Failed to load staff roster for ${dateStr}`);
     }
@@ -293,7 +295,7 @@ async function loadStaffRoster() {
       }
       if (helperLabel) {
         helperLabel.innerHTML =
-          'Showing <strong>today&apos;s</strong> roster. Switch the main Day / Week / Month view above to change how the roster is displayed.';
+          "Showing <strong>today&apos;s</strong> roster. Switch the main Day / Week / Month view above to change how the roster is displayed.";
       }
       return;
     }
@@ -318,8 +320,16 @@ async function loadStaffRoster() {
       }
     } else {
       // month
-      startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-      endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      startDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
+      );
+      endDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        0
+      );
       if (subtitleEl) {
         subtitleEl.textContent = "Monthly schedule overview";
       }
@@ -343,17 +353,17 @@ async function loadStaffRoster() {
     const dateKeys = [];
 
     // Fetch all dates in parallel for much faster loading (especially for month view)
-    const dateStrings = dates.map(day => formatLocalDate(day));
+    const dateStrings = dates.map((day) => formatLocalDate(day));
     dateKeys.push(...dateStrings);
-    
+
     // Make all API calls in parallel instead of sequentially
-    const rosterPromises = dateStrings.map(dateStr => 
-      fetchRosterForDate(dateStr).catch(err => {
+    const rosterPromises = dateStrings.map((dateStr) =>
+      fetchRosterForDate(dateStr).catch((err) => {
         console.warn(`Failed to fetch roster for ${dateStr}:`, err);
         return { roster: [] }; // Return empty roster on error to continue processing
       })
     );
-    
+
     const rosterResults = await Promise.all(rosterPromises);
 
     // Process all results
@@ -401,11 +411,13 @@ function classifyShift(entry, dateStr = null) {
   const isLeave = entry.is_leave || false;
 
   // Check if this is today (for with-client status)
-  const isToday = dateStr ? (() => {
-    const today = new Date();
-    const checkDate = new Date(dateStr + "T12:00:00");
-    return today.toDateString() === checkDate.toDateString();
-  })() : false;
+  const isToday = dateStr
+    ? (() => {
+        const today = new Date();
+        const checkDate = new Date(dateStr + "T12:00:00");
+        return today.toDateString() === checkDate.toDateString();
+      })()
+    : false;
 
   // Handle leave status
   if (isLeave || status === "leave") {
@@ -446,7 +458,7 @@ function classifyShift(entry, dateStr = null) {
   const end = match[2];
   const [sh, sm] = start.split(":").map(Number);
   const [eh, em] = end.split(":").map(Number);
-  const duration = (eh * 60 + em) - (sh * 60 + sm);
+  const duration = eh * 60 + em - (sh * 60 + sm);
 
   // Heuristics based on salon opening hours (9 AM - 7 PM)
   let type = "working";
@@ -487,21 +499,21 @@ function renderStaffRosterCards(roster) {
     available: "#E8F5E9",
     "off-duty": "#F5F5F5",
     "with-client": "#F5EDE6", // Light brown/taupe to match theme (#c29076 lightened)
-    "leave": "#FFEBEE", // Light red for leave
+    leave: "#FFEBEE", // Light red for leave
   };
 
   const statusDots = {
     available: "#4CAF50",
     "off-duty": "#9E9E9E",
     "with-client": "#c29076", // Theme primary brown color
-    "leave": "#ff6b6b", // Red for leave
+    leave: "#ff6b6b", // Red for leave
   };
 
   const statusLabels = {
     available: "Available",
     "with-client": "With Customer",
     "off-duty": "Off Duty",
-    "leave": "On Leave",
+    leave: "On Leave",
   };
 
   let html = "";
@@ -529,39 +541,44 @@ function renderStaffRosterCards(roster) {
         : names[0][0].toUpperCase();
 
     // Resolve staff image path - use absolute paths with base path detection
-    let avatarHtml = '';
+    let avatarHtml = "";
     if (staff.staff_image) {
       let imagePath = staff.staff_image.trim();
-      
+
       // Get the application base path (handles subdirectory installations)
-      let appBasePath = '';
+      let appBasePath = "";
       const pathname = window.location.pathname;
-      if (pathname.includes('/admin/')) {
-        appBasePath = pathname.substring(0, pathname.indexOf('/admin/'));
-      } else if (pathname.includes('/api/')) {
-        appBasePath = pathname.substring(0, pathname.indexOf('/api/'));
+      if (pathname.includes("/admin/")) {
+        appBasePath = pathname.substring(0, pathname.indexOf("/admin/"));
+      } else if (pathname.includes("/api/")) {
+        appBasePath = pathname.substring(0, pathname.indexOf("/api/"));
       }
-      
+
       // Extract filename
-      const filename = imagePath.split('/').pop().split('\\').pop();
-      
+      const filename = imagePath.split("/").pop().split("\\").pop();
+
       // Always use absolute paths with base path
-      if (imagePath.startsWith('/images/staff/')) {
-        imagePath = appBasePath + '/images/staff/' + filename;
-      } else if (imagePath.startsWith('/images/') && !imagePath.startsWith('/images/staff/')) {
-        imagePath = appBasePath + '/images/staff/' + filename;
-      } else if (imagePath.startsWith('staff/')) {
-        imagePath = appBasePath + '/images/staff/' + filename;
-      } else if (!imagePath.includes('/')) {
+      if (imagePath.startsWith("/images/staff/")) {
+        imagePath = appBasePath + "/images/staff/" + filename;
+      } else if (
+        imagePath.startsWith("/images/") &&
+        !imagePath.startsWith("/images/staff/")
+      ) {
+        imagePath = appBasePath + "/images/staff/" + filename;
+      } else if (imagePath.startsWith("staff/")) {
+        imagePath = appBasePath + "/images/staff/" + filename;
+      } else if (!imagePath.includes("/")) {
         // Just filename like "42" or "70.png"
-        imagePath = appBasePath + '/images/staff/' + imagePath;
+        imagePath = appBasePath + "/images/staff/" + imagePath;
       } else {
-        imagePath = appBasePath + '/images/staff/' + filename;
+        imagePath = appBasePath + "/images/staff/" + filename;
       }
-      
+
       // Use absolute positioning for both image and fallback to ensure alignment
       avatarHtml = `<div style="position: relative; width: 56px; height: 56px;">
-                      <img src="${escapeHtml(imagePath)}" alt="${escapeHtml(staff.staff_name)}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; display: block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                      <img src="${escapeHtml(imagePath)}" alt="${escapeHtml(
+        staff.staff_name
+      )}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; display: block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
                       <div style="width: 56px; height: 56px; border-radius: 50%; background: #f5e9e2; display: none; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 20px; position: absolute; top: 0; left: 0;">${initials}</div>
                     </div>`;
     } else {
@@ -627,57 +644,73 @@ function renderStaffRosterWeek(staffMatrix, dateObjects, dateKeys) {
 
   // Create semantic table structure
   let html = '<div class="roster-table-wrapper">';
-  html += '<table class="roster-table roster-table-week" role="table" aria-label="Weekly Staff Roster">';
-  
+  html +=
+    '<table class="roster-table roster-table-week" role="table" aria-label="Weekly Staff Roster">';
+
   // Table header
-  html += '<thead><tr>';
+  html += "<thead><tr>";
   html += '<th class="roster-staff-header" scope="col">Staff Member</th>';
-  
+
   dateObjects.forEach((date) => {
     const isToday = date.toDateString() === new Date().toDateString();
     const weekday = date.toLocaleDateString("en-US", { weekday: "short" });
     const dayNum = date.getDate();
-    html += `<th class="roster-day-header${isToday ? " today" : ""}" scope="col">`;
+    html += `<th class="roster-day-header${
+      isToday ? " today" : ""
+    }" scope="col">`;
     html += `<span class="roster-weekday">${weekday}</span>`;
     html += `<span class="roster-daynum">${dayNum}</span>`;
-    html += '</th>';
+    html += "</th>";
   });
-  
-  html += '</tr></thead>';
-  
+
+  html += "</tr></thead>";
+
   // Table body
-  html += '<tbody>';
-  
+  html += "<tbody>";
+
   staffEntries.forEach((staff) => {
-    html += '<tr>';
-    html += `<td class="roster-staff-cell" scope="row">${escapeHtml(staff.staff_name)}</td>`;
-    
+    html += "<tr>";
+    html += `<td class="roster-staff-cell" scope="row">${escapeHtml(
+      staff.staff_name
+    )}</td>`;
+
     dateKeys.forEach((key, idx) => {
       const date = dateObjects[idx];
-      const info = staff.days[key] || { type: "off", label: "Off", timeLabel: "" };
+      const info = staff.days[key] || {
+        type: "off",
+        label: "Off",
+        timeLabel: "",
+      };
       const isToday = date.toDateString() === new Date().toDateString();
-      
-      const shiftClass = 
-        info.type === "full" ? "shift-full" :
-        info.type === "morning" ? "shift-morning" :
-        info.type === "afternoon" ? "shift-afternoon" :
-        info.type === "with-client" ? "shift-with-client" :
-        info.type === "leave" ? "shift-leave" :
-        "shift-off";
-      
+
+      const shiftClass =
+        info.type === "full"
+          ? "shift-full"
+          : info.type === "morning"
+          ? "shift-morning"
+          : info.type === "afternoon"
+          ? "shift-afternoon"
+          : info.type === "with-client"
+          ? "shift-with-client"
+          : info.type === "leave"
+          ? "shift-leave"
+          : "shift-off";
+
       html += `<td class="roster-day-cell${isToday ? " today" : ""}">`;
-      html += `<div class="roster-shift ${shiftClass}" title="${escapeHtml(info.label)}${info.timeLabel ? ' - ' + escapeHtml(info.timeLabel) : ''}">`;
+      html += `<div class="roster-shift ${shiftClass}" title="${escapeHtml(
+        info.label
+      )}${info.timeLabel ? " - " + escapeHtml(info.timeLabel) : ""}">`;
       html += `<span class="shift-label">${info.label}</span>`;
       if (info.timeLabel) {
         html += `<span class="shift-time">${escapeHtml(info.timeLabel)}</span>`;
       }
-      html += '</div></td>';
+      html += "</div></td>";
     });
-    
-    html += '</tr>';
+
+    html += "</tr>";
   });
-  
-  html += '</tbody></table></div>';
+
+  html += "</tbody></table></div>";
   gridEl.innerHTML = html;
 }
 
@@ -695,53 +728,67 @@ function renderStaffRosterMonth(staffMatrix, dateObjects, dateKeys) {
 
   // Create semantic table structure
   let html = '<div class="roster-table-wrapper">';
-  html += '<table class="roster-table roster-table-month" role="table" aria-label="Monthly Staff Roster">';
-  
+  html +=
+    '<table class="roster-table roster-table-month" role="table" aria-label="Monthly Staff Roster">';
+
   // Table header
-  html += '<thead><tr>';
+  html += "<thead><tr>";
   html += '<th class="roster-staff-header" scope="col">Staff Member</th>';
-  
+
   dateObjects.forEach((date) => {
     const isToday = date.toDateString() === new Date().toDateString();
-    const weekday = date.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 1);
+    const weekday = date
+      .toLocaleDateString("en-US", { weekday: "short" })
+      .slice(0, 1);
     const dayNum = date.getDate();
-    html += `<th class="roster-day-header${isToday ? " today" : ""}" scope="col">`;
+    html += `<th class="roster-day-header${
+      isToday ? " today" : ""
+    }" scope="col">`;
     html += `<span class="roster-weekday">${weekday}</span>`;
     html += `<span class="roster-daynum">${dayNum}</span>`;
-    html += '</th>';
+    html += "</th>";
   });
-  
-  html += '</tr></thead>';
-  
+
+  html += "</tr></thead>";
+
   // Table body
-  html += '<tbody>';
-  
+  html += "<tbody>";
+
   staffEntries.forEach((staff) => {
-    html += '<tr>';
-    html += `<td class="roster-staff-cell" scope="row">${escapeHtml(staff.staff_name)}</td>`;
-    
+    html += "<tr>";
+    html += `<td class="roster-staff-cell" scope="row">${escapeHtml(
+      staff.staff_name
+    )}</td>`;
+
     dateKeys.forEach((key, idx) => {
       const date = dateObjects[idx];
       const info = staff.days[key] || { type: "off", label: "Off" };
       const isToday = date.toDateString() === new Date().toDateString();
-      
-      const shiftClass = 
-        info.type === "full" ? "shift-full" :
-        info.type === "morning" ? "shift-morning" :
-        info.type === "afternoon" ? "shift-afternoon" :
-        info.type === "with-client" ? "shift-with-client" :
-        info.type === "leave" ? "shift-leave" :
-        "shift-off";
-      
+
+      const shiftClass =
+        info.type === "full"
+          ? "shift-full"
+          : info.type === "morning"
+          ? "shift-morning"
+          : info.type === "afternoon"
+          ? "shift-afternoon"
+          : info.type === "with-client"
+          ? "shift-with-client"
+          : info.type === "leave"
+          ? "shift-leave"
+          : "shift-off";
+
       html += `<td class="roster-day-cell${isToday ? " today" : ""}">`;
-      html += `<div class="roster-shift ${shiftClass}" title="${escapeHtml(info.label)}"></div>`;
-      html += '</td>';
+      html += `<div class="roster-shift ${shiftClass}" title="${escapeHtml(
+        info.label
+      )}"></div>`;
+      html += "</td>";
     });
-    
-    html += '</tr>';
+
+    html += "</tr>";
   });
-  
-  html += '</tbody></table></div>';
+
+  html += "</tbody></table></div>";
   gridEl.innerHTML = html;
 }
 
@@ -749,27 +796,78 @@ function renderStaffRosterMonth(staffMatrix, dateObjects, dateKeys) {
 async function loadStaffList() {
   try {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:250',message:'loadStaffList entry',data:{url:'../../api/admin/staff/list.php'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "master.js:250",
+        message: "loadStaffList entry",
+        data: { url: "../../api/admin/staff/list.php" },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "B",
+      }),
+    }).catch(() => {});
     // #endregion
-    
+
     const response = await fetch("../../api/admin/staff/list.php");
-    
+
     // #region agent log
     const status = response.status;
-    const contentType = response.headers.get('content-type');
+    const contentType = response.headers.get("content-type");
     const responseText = await response.clone().text();
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:257',message:'loadStaffList response received',data:{status,contentType,responsePreview:responseText.substring(0,500),isJson:contentType?.includes('application/json'),startsWithHtml:responseText.trim().startsWith('<')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "master.js:257",
+        message: "loadStaffList response received",
+        data: {
+          status,
+          contentType,
+          responsePreview: responseText.substring(0, 500),
+          isJson: contentType?.includes("application/json"),
+          startsWithHtml: responseText.trim().startsWith("<"),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A,E",
+      }),
+    }).catch(() => {});
     // #endregion
-    
+
     // Check if response is JSON
-    if (!contentType || !contentType.includes('application/json')) {
+    if (!contentType || !contentType.includes("application/json")) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:262',message:'loadStaffList non-JSON response detected',data:{contentType,responsePreview:responseText.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+      fetch(
+        "http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "master.js:262",
+            message: "loadStaffList non-JSON response detected",
+            data: {
+              contentType,
+              responsePreview: responseText.substring(0, 500),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "A,E",
+          }),
+        }
+      ).catch(() => {});
       // #endregion
-      console.error("Error loading staff list: Server returned non-JSON response", responseText.substring(0, 200));
+      console.error(
+        "Error loading staff list: Server returned non-JSON response",
+        responseText.substring(0, 200)
+      );
       return;
     }
-    
+
     const data = await response.json();
 
     if (data.success) {
@@ -789,7 +887,22 @@ async function loadStaffList() {
     }
   } catch (error) {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:278',message:'loadStaffList error caught',data:{errorMessage:error.message,errorStack:error.stack?.substring(0,300)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C,D,E'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "master.js:278",
+        message: "loadStaffList error caught",
+        data: {
+          errorMessage: error.message,
+          errorStack: error.stack?.substring(0, 300),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A,B,C,D,E",
+      }),
+    }).catch(() => {});
     // #endregion
     console.error("Error loading staff list:", error);
   }
@@ -1348,22 +1461,70 @@ async function viewBookingDetails(bookingId) {
   try {
     // #region agent log
     const url = `../../api/admin/bookings/details.php?booking_id=${bookingId}`;
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:873',message:'viewBookingDetails entry',data:{bookingId,url},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "master.js:873",
+        message: "viewBookingDetails entry",
+        data: { bookingId, url },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "B",
+      }),
+    }).catch(() => {});
     // #endregion
-    
+
     const response = await fetch(url);
 
     // #region agent log
     const status = response.status;
     const contentType = response.headers.get("content-type");
     const responseText = await response.clone().text();
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:878',message:'viewBookingDetails response received',data:{status,contentType,responsePreview:responseText.substring(0,500),isJson:contentType?.includes('application/json'),startsWithHtml:responseText.trim().startsWith('<')},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "master.js:878",
+        message: "viewBookingDetails response received",
+        data: {
+          status,
+          contentType,
+          responsePreview: responseText.substring(0, 500),
+          isJson: contentType?.includes("application/json"),
+          startsWithHtml: responseText.trim().startsWith("<"),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A,E",
+      }),
+    }).catch(() => {});
     // #endregion
 
     // Check if response is JSON
     if (!contentType || !contentType.includes("application/json")) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:882',message:'viewBookingDetails non-JSON response detected',data:{contentType,responsePreview:responseText.substring(0,500)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,E'})}).catch(()=>{});
+      fetch(
+        "http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            location: "master.js:882",
+            message: "viewBookingDetails non-JSON response detected",
+            data: {
+              contentType,
+              responsePreview: responseText.substring(0, 500),
+            },
+            timestamp: Date.now(),
+            sessionId: "debug-session",
+            runId: "run1",
+            hypothesisId: "A,E",
+          }),
+        }
+      ).catch(() => {});
       // #endregion
       console.error("Non-JSON response received:", responseText);
       throw new Error(
@@ -1382,7 +1543,22 @@ async function viewBookingDetails(bookingId) {
     }
   } catch (error) {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'master.js:897',message:'viewBookingDetails error caught',data:{errorMessage:error.message,errorStack:error.stack?.substring(0,300)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A,B,C,D,E'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "master.js:897",
+        message: "viewBookingDetails error caught",
+        data: {
+          errorMessage: error.message,
+          errorStack: error.stack?.substring(0, 300),
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A,B,C,D,E",
+      }),
+    }).catch(() => {});
     // #endregion
     console.error("Error loading booking details:", error);
     if (content) {
@@ -1432,9 +1608,9 @@ function renderBookingDetails(booking) {
                     <div style="margin-bottom: 8px;"><strong>Time:</strong> ${formatTime(
                       booking.start_time
                     )} - ${formatTime(booking.expected_finish_time)}</div>
-                    <div style="margin-bottom: 8px;"><strong>Status:</strong> <span class="status-badge ${
-                      getStatusClass(booking.status)
-                    }">${getStatusLabelText(booking.status)}</span></div>
+                    <div style="margin-bottom: 8px;"><strong>Status:</strong> <span class="status-badge ${getStatusClass(
+                      booking.status
+                    )}">${getStatusLabelText(booking.status)}</span></div>
                     <div style="margin-bottom: 8px;"><strong>Total Duration:</strong> ${
                       booking.total_duration_minutes
                     } minutes</div>
@@ -1527,9 +1703,9 @@ function renderBookingDetails(booking) {
                         - ${
                           history.service_count
                         } service(s) - RM ${history.total_price.toFixed(2)}
-                        <span class="status-badge ${
-                          getStatusClass(history.status)
-                        }" style="margin-left: 8px;">${getStatusLabelText(
+                        <span class="status-badge ${getStatusClass(
+                          history.status
+                        )}" style="margin-left: 8px;">${getStatusLabelText(
         history.status
       )}</span>
                     </div>
