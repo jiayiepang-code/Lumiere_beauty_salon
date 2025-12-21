@@ -4,8 +4,16 @@
  * Generates professional PDF report for business analytics
  */
 
-// Start output buffering
+// Start output buffering FIRST
 ob_start();
+
+// Load PSR Log stub EARLY (before any includes that might trigger autoloading)
+// Always load it to ensure all interfaces are defined, even if classes exist
+$psr_stub_file = __DIR__ . '/psr_log_stub.php';
+if (file_exists($psr_stub_file)) {
+    // Load stub file - use include (not require) so it doesn't fatal if already loaded
+    include $psr_stub_file;
+}
 
 // Disable error display
 error_reporting(E_ALL);
@@ -347,7 +355,7 @@ try {
         }
         .cover-page {
             text-align: center;
-            padding: 60px 20px;
+            padding: 30px 20px;
             page-break-after: always;
         }
         .cover-title {
@@ -381,17 +389,19 @@ try {
             color: #2d2d2d;
         }
         .kpi-grid {
-            display: table;
             width: 100%;
             margin: 15px 0;
+            text-align: center;
         }
         .kpi-item {
-            display: table-cell;
-            width: 33.33%;
+            display: inline-block;
+            width: 30%;
             padding: 12px;
             text-align: center;
             border: 1px solid #e0e0e0;
             background-color: #fafafa;
+            vertical-align: top;
+            margin: 0 1%;
         }
         .kpi-value {
             font-size: 18pt;
@@ -484,50 +494,30 @@ try {
         }
     </style>';
     
-    // Cover Page (no header on first page) - Add logo
+    // Cover Page - Build company header (no logo)
     $company = getCompanyInfo();
-    $logo_html = '';
-    $logo_path = $company['logo_path'] ?? '';
     
-    if (!empty($logo_path) && file_exists($logo_path) && is_readable($logo_path)) {
-        try {
-            // Convert logo to base64 for embedding in PDF
-            $logo_data = file_get_contents($logo_path);
-            if ($logo_data !== false && strlen($logo_data) > 0) {
-                $logo_base64 = base64_encode($logo_data);
-                $logo_mime = 'image/png'; // Default to PNG
-                
-                // Try to detect MIME type
-                $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                if ($finfo) {
-                    $detected_mime = finfo_file($finfo, $logo_path);
-                    if ($detected_mime && strpos($detected_mime, 'image/') === 0) {
-                        $logo_mime = $detected_mime;
-                    }
-                    finfo_close($finfo);
-                }
-                
-                $logo_html = '<div style="margin-bottom: 30px; text-align: center;"><img src="data:' . $logo_mime . ';base64,' . $logo_base64 . '" style="max-width: 200px; max-height: 100px; height: auto; display: inline-block;" /></div>';
-            }
-        } catch (Exception $e) {
-            // If logo loading fails, continue without it
-            error_log("Cover page logo loading error: " . $e->getMessage());
-        }
-    }
+    $cover_header = '<div style="margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #D4A574; text-align: center;">';
+    $cover_header .= '<h1 style="margin: 0; padding: 0; font-size: 20px; font-weight: bold; color: #2d2d2d; font-family: dejavusans, sans-serif; line-height: 1.2;">' . htmlspecialchars($company['name']) . '</h1>';
+    $cover_header .= '<p style="margin: 8px 0 0 0; padding: 0; font-size: 11px; color: #666; font-family: dejavusans, sans-serif; line-height: 1.4;">' . htmlspecialchars($company['address_line1']) . '</p>';
+    $cover_header .= '<p style="margin: 3px 0 0 0; padding: 0; font-size: 11px; color: #666; font-family: dejavusans, sans-serif; line-height: 1.4;">' . htmlspecialchars($company['address_line2']) . '</p>';
+    $cover_header .= '<p style="margin: 8px 0 0 0; padding: 0; font-size: 11px; color: #666; font-family: dejavusans, sans-serif; line-height: 1.4;">Email: ' . htmlspecialchars($company['email']) . ' | Tel: ' . htmlspecialchars($company['phone']) . ' / ' . htmlspecialchars($company['office_phone']) . '</p>';
+    $cover_header .= '</div>';
     
     $cover_html = '<div class="cover-page">
-        ' . $logo_html . '
+        ' . $cover_header . '
         <div class="cover-title">BUSINESS ANALYTICS REPORT</div>
-        <div style="font-size: 16pt; margin: 30px 0; color: #666;">' . htmlspecialchars($period_display) . '</div>
+        <div style="font-size: 12pt; margin: 15px 0; color: #666;">' . htmlspecialchars($period_display) . '</div>
         <div class="cover-subtitle">Generated: ' . htmlspecialchars($generated_date) . '</div>
-        <div class="cover-subtitle" style="margin-top: 40px; font-style: italic;">Confidential Business Report</div>
+        <div class="cover-subtitle" style="margin-top: 15px;">Company Registration: ' . htmlspecialchars($company['registration_number'] ?? 'N/A') . '</div>
+        <div class="cover-subtitle" style="margin-top: 40px; font-style: italic;">Official Business Report</div>
     </div>';
     
     // Write cover page first (without header)
     $mpdf->WriteHTML($cover_html);
     
-    // Now set header for subsequent pages
-    $mpdf->SetHTMLHeader(generatePDFHeader($mpdf));
+    // DON'T set PDF header - we'll add company header as body content instead
+    // $mpdf->SetHTMLHeader(generatePDFHeader($mpdf)); // Removed - using body content header
     
     // Continue with rest of content
     
@@ -556,6 +546,21 @@ try {
     $html .= '<div class="metric-row"><span class="metric-label">Total Bookings:</span> <span class="metric-value">' . number_format($metrics['total_bookings']) . '</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">Completion Rate:</span> <span class="metric-value">' . number_format($completion_rate, 1) . '%</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">Average Booking Value:</span> <span class="metric-value">RM ' . number_format($average_booking_value, 2) . '</span></div>';
+    $html .= '</div>';
+    
+    // Remove header from subsequent pages (only show on first content page)
+    $html .= '<pagebreak />';
+    $mpdf->SetHTMLHeader(''); // Clear header for subsequent pages
+    
+    // Company Profile Section
+    $html .= '<div class="section-title">Company Profile</div>';
+    $html .= '<div class="card">';
+    $html .= '<div class="card-header">Business Information</div>';
+    $html .= '<div class="metric-row"><span class="metric-label">Business Name:</span> <span class="metric-value">' . htmlspecialchars($company['name']) . '</span></div>';
+    $html .= '<div class="metric-row"><span class="metric-label">Registration Number:</span> <span class="metric-value">' . htmlspecialchars($company['registration_number'] ?? 'N/A') . '</span></div>';
+    $html .= '<div class="metric-row"><span class="metric-label">Address:</span> <span class="metric-value">' . htmlspecialchars($company['address_line1']) . ', ' . htmlspecialchars($company['address_line2']) . '</span></div>';
+    $html .= '<div class="metric-row"><span class="metric-label">Email:</span> <span class="metric-value">' . htmlspecialchars($company['email']) . '</span></div>';
+    $html .= '<div class="metric-row"><span class="metric-label">Phone:</span> <span class="metric-value">' . htmlspecialchars($company['phone']) . ' / ' . htmlspecialchars($company['office_phone']) . '</span></div>';
     $html .= '</div>';
     
     // Financial Metrics

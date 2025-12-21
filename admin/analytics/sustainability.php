@@ -295,28 +295,37 @@ include '../includes/header.php';
             <p class="analytics-subtitle">Monitor operational efficiency and staff utilization for ESG reporting (Monthly only)</p>
         </div>
         <div class="analytics-header-actions">
-            <form method="GET" action="" class="date-filter-form">
-                <select name="month" id="month-select" class="form-control">
-                    <?php for ($m = 1; $m <= 12; $m++): 
-                        $month_val = str_pad($m, 2, '0', STR_PAD_LEFT);
-                        $selected = ($month_val == $selected_month) ? 'selected' : '';
-                    ?>
-                        <option value="<?php echo $month_val; ?>" <?php echo $selected; ?>>
-                            <?php echo $month_names[$month_val]; ?>
-                        </option>
-                    <?php endfor; ?>
-                </select>
-                <select name="year" id="year-select" class="form-control">
-                    <?php foreach ($available_years as $y): 
-                        $selected = ($y == $selected_year) ? 'selected' : '';
-                    ?>
-                        <option value="<?php echo $y; ?>" <?php echo $selected; ?>>
-                            <?php echo $y; ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <button type="submit" class="btn btn-primary">Apply</button>
-            </form>
+            <div class="date-filter-form">
+                <div class="filter-group">
+                    <label for="month-select" style="font-size: 12px; color: #666; margin-bottom: 4px; display: block;">
+                        <i class="fas fa-calendar-alt" style="margin-right: 4px;"></i> Month
+                    </label>
+                    <select name="month" id="month-select" class="form-control">
+                        <?php for ($m = 1; $m <= 12; $m++): 
+                            $month_val = str_pad($m, 2, '0', STR_PAD_LEFT);
+                            $selected = ($month_val == $selected_month) ? 'selected' : '';
+                        ?>
+                            <option value="<?php echo $month_val; ?>" <?php echo $selected; ?>>
+                                <?php echo $month_names[$month_val]; ?>
+                            </option>
+                        <?php endfor; ?>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="year-select" style="font-size: 12px; color: #666; margin-bottom: 4px; display: block;">
+                        <i class="fas fa-calendar-alt" style="margin-right: 4px;"></i> Year
+                    </label>
+                    <select name="year" id="year-select" class="form-control">
+                        <?php foreach ($available_years as $y): 
+                            $selected = ($y == $selected_year) ? 'selected' : '';
+                        ?>
+                            <option value="<?php echo $y; ?>" <?php echo $selected; ?>>
+                                <?php echo $y; ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+            </div>
             <!-- PDF export button (jsPDF + html2canvas) -->
             <button type="button" id="export-esg-pdf" class="btn btn-export-pdf">
                 <i class="fas fa-file-pdf"></i> Export to PDF
@@ -640,9 +649,9 @@ include '../includes/header.php';
 
 .analytics-header-actions {
     display: flex;
-    flex-direction: column;
     align-items: flex-end;
-    gap: 10px;
+    gap: 16px;
+    flex-wrap: wrap;
 }
 
 .analytics-title {
@@ -660,9 +669,14 @@ include '../includes/header.php';
 
 .date-filter-form {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-end;
+    gap: 16px;
     flex-wrap: wrap;
+}
+
+.date-filter-form .filter-group {
+    display: flex;
+    flex-direction: column;
 }
 
 .date-filter-form .form-control {
@@ -673,24 +687,18 @@ include '../includes/header.php';
     color: #333;
     font-size: 14px;
     cursor: pointer;
-    min-width: 120px;
+    min-width: 140px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
 }
 
-.date-filter-form .btn-primary {
-    padding: 10px 20px;
-    background: #D4A574;
-    border: none;
-    border-radius: 8px;
-    color: white;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background 0.2s ease;
+.date-filter-form .form-control:hover {
+    border-color: #D4A574;
 }
 
-.date-filter-form .btn-primary:hover {
-    background: #C4956A;
-}
 
 .btn-secondary {
     padding: 10px 20px;
@@ -1310,6 +1318,7 @@ include '../includes/header.php';
     .analytics-header-actions {
         align-items: flex-start;
         width: 100%;
+        flex-direction: column;
     }
     
     .date-filter-form {

@@ -50,6 +50,7 @@ try {
             lr.staff_email,
             s.first_name,
             s.last_name,
+            s.staff_image,
             lr.leave_type,
             lr.start_date,
             lr.end_date,
@@ -75,6 +76,7 @@ try {
                 lr.staff_email,
                 s.first_name,
                 s.last_name,
+                s.staff_image,
                 lr.leave_type,
                 lr.start_date,
                 lr.end_date,
@@ -98,6 +100,7 @@ try {
                 lr.staff_email,
                 s.first_name,
                 s.last_name,
+                s.staff_image,
                 lr.leave_type,
                 lr.start_date,
                 lr.end_date,
@@ -124,6 +127,7 @@ try {
                 lr.staff_email,
                 s.first_name,
                 s.last_name,
+                s.staff_image,
                 lr.leave_type,
                 lr.start_date,
                 lr.end_date,
@@ -175,10 +179,34 @@ try {
         $submittedAt = $row['created_at'];
         $updatedAt = isset($row['updated_at']) ? $row['updated_at'] : null;
 
+        // Normalize staff_image path
+        $staffImage = null;
+        if (!empty($row['staff_image'])) {
+            $imagePath = $row['staff_image'];
+            // If path is /images/71.png (old format), convert to /images/staff/71.png
+            if (strpos($imagePath, '/images/') === 0 && strpos($imagePath, '/images/staff/') === false) {
+                $filename = basename($imagePath);
+                $staffImage = '/images/staff/' . $filename;
+            }
+            // If path is just "71.png" (no folder), add full path
+            elseif (strpos($imagePath, '/') === false) {
+                $staffImage = '/images/staff/' . $imagePath;
+            }
+            // If path starts with staff/, convert to /images/staff/
+            elseif (strpos($imagePath, 'staff/') === 0) {
+                $filename = basename($imagePath);
+                $staffImage = '/images/staff/' . $filename;
+            }
+            else {
+                $staffImage = $imagePath;
+            }
+        }
+
         $requests[] = [
             'id' => (int)$row['id'],
             'staff_email' => $row['staff_email'],
             'staff_name' => trim($row['first_name'] . ' ' . $row['last_name']),
+            'staff_image' => $staffImage,
             'leave_type' => $row['leave_type'],
             'start_date' => $start,
             'end_date' => $end,

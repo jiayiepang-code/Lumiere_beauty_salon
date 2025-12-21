@@ -20,11 +20,11 @@ include '../includes/header.php';
     <div class="settings-header">
         <div>
             <h1 class="settings-title">Settings</h1>
-            <p class="settings-subtitle">Manage branding, timezone, and access control</p>
+            <p class="settings-subtitle">Manage branding and localization settings</p>
         </div>
     </div>
 
-        <div class="grid-2-col">
+    <div class="grid-2-col">
             <div class="card">
                 <div class="card-header">
                     <h2>Branding</h2>
@@ -69,44 +69,6 @@ include '../includes/header.php';
                     </form>
                 </div>
             </div>
-        </div>
-
-        <div class="card" style="margin-top:20px;">
-            <div class="card-header">
-                <h2>Role-Based Access Control (RBAC)</h2>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Role</th>
-                                <th>Description</th>
-                                <th>Permissions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Administrator</td>
-                                <td>Full access to admin portal.</td>
-                                <td>Manage services, staff, bookings, analytics, settings</td>
-                            </tr>
-                            <tr>
-                                <td>Manager</td>
-                                <td>Operational oversight with limited settings.</td>
-                                <td>Manage services, staff, bookings, view analytics</td>
-                            </tr>
-                            <tr>
-                                <td>Analyst</td>
-                                <td>Read-only analytics access.</td>
-                                <td>View analytics and export reports</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <button type="button" class="btn btn-outline" id="configure-rbac">Configure</button>
-            </div>
-        </div>
     </div>
 </div>
 
@@ -118,10 +80,6 @@ document.getElementById('save-branding')?.addEventListener('click', () => {
 
 document.getElementById('save-localization')?.addEventListener('click', () => {
     alert('Localization saved (stub)');
-});
-
-document.getElementById('configure-rbac')?.addEventListener('click', () => {
-    alert('RBAC configuration (stub)');
 });
 </script>
 

@@ -521,20 +521,61 @@ function renderStaffRosterCards(roster) {
     const dotColor = statusDots[status] || statusDots["off-duty"];
     const statusLabel = statusLabels[status] || "Off Duty";
 
-    // Get initials for avatar
+    // Get initials for avatar fallback
     const names = staff.staff_name.split(" ");
     const initials =
       names.length >= 2
         ? (names[0][0] + names[names.length - 1][0]).toUpperCase()
         : names[0][0].toUpperCase();
 
+    // Resolve staff image path - use absolute paths with base path detection
+    let avatarHtml = '';
+    if (staff.staff_image) {
+      let imagePath = staff.staff_image.trim();
+      
+      // Get the application base path (handles subdirectory installations)
+      let appBasePath = '';
+      const pathname = window.location.pathname;
+      if (pathname.includes('/admin/')) {
+        appBasePath = pathname.substring(0, pathname.indexOf('/admin/'));
+      } else if (pathname.includes('/api/')) {
+        appBasePath = pathname.substring(0, pathname.indexOf('/api/'));
+      }
+      
+      // Extract filename
+      const filename = imagePath.split('/').pop().split('\\').pop();
+      
+      // Always use absolute paths with base path
+      if (imagePath.startsWith('/images/staff/')) {
+        imagePath = appBasePath + '/images/staff/' + filename;
+      } else if (imagePath.startsWith('/images/') && !imagePath.startsWith('/images/staff/')) {
+        imagePath = appBasePath + '/images/staff/' + filename;
+      } else if (imagePath.startsWith('staff/')) {
+        imagePath = appBasePath + '/images/staff/' + filename;
+      } else if (!imagePath.includes('/')) {
+        // Just filename like "42" or "70.png"
+        imagePath = appBasePath + '/images/staff/' + imagePath;
+      } else {
+        imagePath = appBasePath + '/images/staff/' + filename;
+      }
+      
+      // Use absolute positioning for both image and fallback to ensure alignment
+      avatarHtml = `<div style="position: relative; width: 56px; height: 56px;">
+                      <img src="${escapeHtml(imagePath)}" alt="${escapeHtml(staff.staff_name)}" style="width: 56px; height: 56px; border-radius: 50%; object-fit: cover; display: block;" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                      <div style="width: 56px; height: 56px; border-radius: 50%; background: #f5e9e2; display: none; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 20px; position: absolute; top: 0; left: 0;">${initials}</div>
+                    </div>`;
+    } else {
+      // No image - use same structure for consistent alignment
+      avatarHtml = `<div style="position: relative; width: 56px; height: 56px;">
+                      <div style="width: 56px; height: 56px; border-radius: 50%; background: #f5e9e2; display: flex; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 20px;">${initials}</div>
+                    </div>`;
+    }
+
     html += `
       <div class="staff-roster-card" style="background: ${bgColor}; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);">
         <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
-          <div style="position: relative;">
-            <div style="width: 56px; height: 56px; border-radius: 50%; background: #D4A574; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 20px;">
-              ${initials}
-            </div>
+          <div style="position: relative; flex-shrink: 0;">
+            ${avatarHtml}
             <div style="position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; border-radius: 50%; background: ${dotColor}; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
           </div>
           <div style="flex: 1;">
@@ -920,7 +961,8 @@ function renderDayView() {
 
     if (slotBookings.length > 0) {
       slotBookings.forEach((booking) => {
-        const statusClass = getStatusClass(booking.status);
+        const normalizedStatus = normalizeStatus(booking.status);
+        const statusClass = getStatusClass(normalizedStatus);
         const customer = escapeHtml(
           booking.customer_name ||
             booking.customer_first_name + " " + booking.customer_last_name
@@ -936,9 +978,7 @@ function renderDayView() {
         );
         const durationDisplay =
           durationMinutes !== "" ? `${durationMinutes} min` : "-";
-        const statusLabel = escapeHtml(
-          (booking.status || "available").replace(/-/g, " ").toUpperCase()
-        );
+        const statusLabel = escapeHtml(getStatusLabelText(normalizedStatus));
 
         html += `
           <div class="admin-calendar-event ${statusClass}" role="button" tabindex="0" onclick="viewBookingDetails('${
@@ -1264,13 +1304,15 @@ function renderMonthView() {
 
 // Render booking card
 function renderBookingCard(booking) {
-  const statusClass = booking.status.replace("-", "_");
+  const normalizedStatus = normalizeStatus(booking.status);
+  const statusClass = getStatusClass(normalizedStatus);
+  const statusLabel = getStatusLabelText(normalizedStatus);
   const services = booking.services || [];
   const serviceNames = services.map((s) => s.service_name).join(", ");
   const staffNames = [...new Set(services.map((s) => s.staff_name))].join(", ");
 
   return `
-        <div class="booking-card status-${statusClass}" onclick="viewBookingDetails('${
+        <div class="booking-card ${statusClass}" onclick="viewBookingDetails('${
     booking.booking_id
   }')">
             <div class="booking-header">
@@ -1282,9 +1324,7 @@ function renderBookingCard(booking) {
                       booking.start_time
                     )} - ${formatTime(booking.expected_finish_time)}</div>
                 </div>
-                <span class="status-badge ${booking.status}">${
-    booking.status
-  }</span>
+                <span class="status-badge ${statusClass}">${statusLabel}</span>
             </div>
             <div class="booking-services">${escapeHtml(serviceNames)}</div>
             <div class="booking-staff">Staff: ${escapeHtml(staffNames)}</div>
@@ -1393,8 +1433,8 @@ function renderBookingDetails(booking) {
                       booking.start_time
                     )} - ${formatTime(booking.expected_finish_time)}</div>
                     <div style="margin-bottom: 8px;"><strong>Status:</strong> <span class="status-badge ${
-                      booking.status
-                    }">${booking.status}</span></div>
+                      getStatusClass(booking.status)
+                    }">${getStatusLabelText(booking.status)}</span></div>
                     <div style="margin-bottom: 8px;"><strong>Total Duration:</strong> ${
                       booking.total_duration_minutes
                     } minutes</div>
@@ -1488,8 +1528,10 @@ function renderBookingDetails(booking) {
                           history.service_count
                         } service(s) - RM ${history.total_price.toFixed(2)}
                         <span class="status-badge ${
-                          history.status
-                        }" style="margin-left: 8px;">${history.status}</span>
+                          getStatusClass(history.status)
+                        }" style="margin-left: 8px;">${getStatusLabelText(
+        history.status
+      )}</span>
                     </div>
                 </div>
             `;
@@ -1670,12 +1712,27 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+function normalizeStatus(status) {
+  const normalized = String(status || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "-");
+  return normalized || "available";
+}
+
+function getStatusLabelText(status) {
+  const normalized = normalizeStatus(status);
+  if (normalized === "no-show") return "NO-SHOW";
+  return normalized.replace(/-/g, " ").toUpperCase();
+}
+
 function getStatusClass(status) {
-  if (!status) return "status-available";
-  return `status-${String(status).toLowerCase().replace(/\s+/g, "-")}`;
+  const normalized = normalizeStatus(status);
+  return `status-${normalized}`;
 }
 
 function getStatusColor(status) {
+  const normalized = normalizeStatus(status);
   const colors = {
     confirmed: "#69B578",
     completed: "#4A90E2",
@@ -1683,7 +1740,7 @@ function getStatusColor(status) {
     "no-show": "#9E9E9E", // Grey for no-show
     available: "#A0A0A0",
   };
-  return colors[status] || colors.available;
+  return colors[normalized] || colors.available;
 }
 
 function showNotification(message, type = "info") {

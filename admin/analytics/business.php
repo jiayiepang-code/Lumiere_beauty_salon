@@ -13,87 +13,144 @@ $base_path = '../..';
 require_once '../../config/db_connect.php';
 
 // ========== CURRENT MONTH SUMMARY METRICS ==========
-$conn = getDBConnection();
+// Extract date filtering logic for reusability
+$current_month_num = (int)date('m');
+$current_year_num = (int)date('Y');
 
-// Query 1: Total Revenue (Current Month, Completed Bookings)
-$revenueQuery = "
-    SELECT COALESCE(SUM(total_price), 0) AS total_revenue
-    FROM Booking
-    WHERE status = 'completed'
-      AND MONTH(booking_date) = MONTH(CURRENT_DATE())
-      AND YEAR(booking_date) = YEAR(CURRENT_DATE())
-";
-$revenueResult = $conn->query($revenueQuery);
-if (!$revenueResult) {
-    die("Revenue query failed: " . $conn->error);
-}
-$total_revenue = $revenueResult->fetch_assoc()['total_revenue'];
+// Initialize variables with defaults
+$total_revenue = 0;
+$total_commission = 0;
+$commission_ratio = 0;
+$total_volume = 0;
+$staff_leaderboard = [];
+$error_message = '';
 
-// Query 2: Total Commission Paid + Commission Ratio (Current Month, Completed Services)
-// Commission = 10% of quoted_price from booking_service for completed services
-$commissionQuery = "
-    SELECT 
-        COALESCE(SUM(bs.quoted_price), 0) * 0.10 AS total_commission,
-        (SUM(bs.quoted_price) * 0.10) / NULLIF(SUM(b.total_price), 0) * 100 AS commission_ratio
-    FROM Booking_Service bs
-    JOIN Booking b ON bs.booking_id = b.booking_id
-    WHERE bs.service_status = 'completed'
-      AND MONTH(b.booking_date) = MONTH(CURRENT_DATE())
-      AND YEAR(b.booking_date) = YEAR(CURRENT_DATE())
-";
-$commissionResult = $conn->query($commissionQuery);
-if (!$commissionResult) {
-    die("Commission query failed: " . $conn->error);
-}
-$commissionData = $commissionResult->fetch_assoc();
-$total_commission = $commissionData['total_commission'];
-$commission_ratio = $commissionData['commission_ratio'] ?? 0;
+try {
+    $conn = getDBConnection();
 
-// Query 3: Total Booking Volume (Current Month, All Statuses)
-$volumeQuery = "
-    SELECT COUNT(*) AS total_volume
-    FROM Booking
-    WHERE MONTH(booking_date) = MONTH(CURRENT_DATE())
-      AND YEAR(booking_date) = YEAR(CURRENT_DATE())
-";
-$volumeResult = $conn->query($volumeQuery);
-if (!$volumeResult) {
-    die("Volume query failed: " . $conn->error);
-}
-$total_volume = $volumeResult->fetch_assoc()['total_volume'];
+    // Query 1: Total Revenue (Current Month, Completed Bookings)
+    $revenueQuery = "
+        SELECT COALESCE(SUM(total_price), 0) AS total_revenue
+        FROM Booking
+        WHERE status = 'completed'
+          AND MONTH(booking_date) = ?
+          AND YEAR(booking_date) = ?
+    ";
+    $stmt = $conn->prepare($revenueQuery);
+    if ($stmt) {
+        $stmt->bind_param("ii", $current_month_num, $current_year_num);
+        $stmt->execute();
+        $revenueResult = $stmt->get_result();
+        if ($revenueResult) {
+            $row = $revenueResult->fetch_assoc();
+            $total_revenue = (float)($row['total_revenue'] ?? 0);
+        } else {
+            error_log("Business Analytics: Revenue query result failed");
+        }
+        $stmt->close();
+    } else {
+        error_log("Business Analytics: Revenue query prepare failed: " . $conn->error);
+    }
+
+    // Query 2: Total Commission Paid + Commission Ratio (Current Month, Completed Services)
+    // Commission = 10% of quoted_price from booking_service for completed services
+    $commissionQuery = "
+        SELECT 
+            COALESCE(SUM(bs.quoted_price), 0) * 0.10 AS total_commission,
+            (SUM(bs.quoted_price) * 0.10) / NULLIF(SUM(b.total_price), 0) * 100 AS commission_ratio
+        FROM Booking_Service bs
+        JOIN Booking b ON bs.booking_id = b.booking_id
+        WHERE bs.service_status = 'completed'
+          AND MONTH(b.booking_date) = ?
+          AND YEAR(b.booking_date) = ?
+    ";
+    $stmt = $conn->prepare($commissionQuery);
+    if ($stmt) {
+        $stmt->bind_param("ii", $current_month_num, $current_year_num);
+        $stmt->execute();
+        $commissionResult = $stmt->get_result();
+        if ($commissionResult) {
+            $commissionData = $commissionResult->fetch_assoc();
+            $total_commission = (float)($commissionData['total_commission'] ?? 0);
+            $commission_ratio = (float)($commissionData['commission_ratio'] ?? 0);
+        } else {
+            error_log("Business Analytics: Commission query result failed");
+        }
+        $stmt->close();
+    } else {
+        error_log("Business Analytics: Commission query prepare failed: " . $conn->error);
+    }
+
+    // Query 3: Total Booking Volume (Current Month, All Statuses)
+    $volumeQuery = "
+        SELECT COUNT(*) AS total_volume
+        FROM Booking
+        WHERE MONTH(booking_date) = ?
+          AND YEAR(booking_date) = ?
+    ";
+    $stmt = $conn->prepare($volumeQuery);
+    if ($stmt) {
+        $stmt->bind_param("ii", $current_month_num, $current_year_num);
+        $stmt->execute();
+        $volumeResult = $stmt->get_result();
+        if ($volumeResult) {
+            $row = $volumeResult->fetch_assoc();
+            $total_volume = (int)($row['total_volume'] ?? 0);
+        } else {
+            error_log("Business Analytics: Volume query result failed");
+        }
+        $stmt->close();
+    } else {
+        error_log("Business Analytics: Volume query prepare failed: " . $conn->error);
+    }
 
 // Get current month name for display
 $current_month = date('F Y');
 
-// ========== STAFF LEADERBOARD (Performance Ranking) ==========
-// Query: Staff Performance Ranking matching Staff Module's ranking system
-$leaderboardQuery = "
-    SELECT 
-        s.staff_email,
-        CONCAT(s.first_name, ' ', s.last_name) AS full_name,
-        COUNT(bs.booking_service_id) AS completed_count,
-        COALESCE(SUM(bs.quoted_price), 0) AS revenue_generated,
-        COALESCE(SUM(bs.quoted_price), 0) * 0.10 AS commission_earned
-    FROM Staff s
-    LEFT JOIN Booking_Service bs ON s.staff_email = bs.staff_email 
-        AND bs.service_status = 'completed'
-    LEFT JOIN Booking b ON bs.booking_id = b.booking_id
-        AND MONTH(b.booking_date) = MONTH(CURRENT_DATE())
-        AND YEAR(b.booking_date) = YEAR(CURRENT_DATE())
-    WHERE s.is_active = 1 AND s.role != 'admin'
-    GROUP BY s.staff_email, s.first_name, s.last_name
-    ORDER BY revenue_generated DESC
-";
-$leaderboardResult = $conn->query($leaderboardQuery);
-if (!$leaderboardResult) {
-    die("Leaderboard query failed: " . $conn->error);
-}
-$staff_leaderboard = [];
-while ($row = $leaderboardResult->fetch_assoc()) {
-    $staff_leaderboard[] = $row;
-}
+    // ========== STAFF LEADERBOARD (Performance Ranking) ==========
+    // Query: Staff Performance Ranking matching Staff Module's ranking system
+    $leaderboardQuery = "
+        SELECT 
+            s.staff_email,
+            CONCAT(s.first_name, ' ', s.last_name) AS full_name,
+            COUNT(bs.booking_service_id) AS completed_count,
+            COALESCE(SUM(bs.quoted_price), 0) AS revenue_generated,
+            COALESCE(SUM(bs.quoted_price), 0) * 0.10 AS commission_earned
+        FROM Staff s
+        LEFT JOIN Booking_Service bs ON s.staff_email = bs.staff_email 
+            AND bs.service_status = 'completed'
+        LEFT JOIN Booking b ON bs.booking_id = b.booking_id
+            AND MONTH(b.booking_date) = ?
+            AND YEAR(b.booking_date) = ?
+        WHERE s.is_active = 1 AND s.role != 'admin'
+        GROUP BY s.staff_email, s.first_name, s.last_name
+        ORDER BY revenue_generated DESC
+    ";
+    $stmt = $conn->prepare($leaderboardQuery);
+    if ($stmt) {
+        $stmt->bind_param("ii", $current_month_num, $current_year_num);
+        $stmt->execute();
+        $leaderboardResult = $stmt->get_result();
+        if ($leaderboardResult) {
+            while ($row = $leaderboardResult->fetch_assoc()) {
+                $staff_leaderboard[] = $row;
+            }
+        } else {
+            error_log("Business Analytics: Leaderboard query result failed");
+        }
+        $stmt->close();
+    } else {
+        error_log("Business Analytics: Leaderboard query prepare failed: " . $conn->error);
+    }
 
-$conn->close();
+    $conn->close();
+} catch (Exception $e) {
+    error_log("Business Analytics Error: " . $e->getMessage());
+    $error_message = "An error occurred while loading data. Please try again.";
+    if (isset($conn)) {
+        $conn->close();
+    }
+}
 
 // Include header
 include '../includes/header.php';
@@ -109,21 +166,38 @@ include '../includes/header.php';
             <p class="analytics-subtitle">Track your salon's performance metrics</p>
         </div>
         <div class="header-actions">
-            <div class="filter-dropdowns">
-                <select class="filter-select" id="period-select">
-                    <option value="daily">Daily</option>
-                    <option value="weekly" selected>Weekly</option>
-                    <option value="monthly">Monthly</option>
-                </select>
-                <select class="filter-select" id="range-select">
-                    <option value="7">Last 7 days</option>
-                    <option value="14">Last 14 days</option>
-                    <option value="30">Last 30 days</option>
-                    <option value="90">Last 90 days</option>
-                </select>
+            <div class="filter-section">
+                <div class="filter-group">
+                    <label for="date-range-select" style="font-size: 12px; color: #666; margin-bottom: 4px; display: block;">
+                        <i class="fas fa-calendar-alt" style="margin-right: 4px;"></i> Date Range
+                    </label>
+                    <select class="filter-select" id="date-range-select" title="Select date range for analytics">
+                        <option value="thismonth" selected>This Month</option>
+                        <option value="today">Today</option>
+                        <option value="yesterday">Yesterday</option>
+                        <option value="last7days">Last 7 Days</option>
+                        <option value="last30days">Last 30 Days</option>
+                        <option value="thisweek">This Week</option>
+                        <option value="lastmonth">Last Month</option>
+                        <option value="thisyear">This Year</option>
+                        <option value="custom">Custom Range...</option>
+                    </select>
+                </div>
+                <div class="filter-group" id="custom-date-range" style="display: none;">
+                    <label style="font-size: 12px; color: #666; margin-bottom: 4px; display: block;">Custom Dates</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="date" id="custom-start-date" class="filter-select" style="min-width: 140px;">
+                        <input type="date" id="custom-end-date" class="filter-select" style="min-width: 140px;">
+                    </div>
+                </div>
             </div>
-            <button class="btn-export" id="export-report">
-                <i class="fas fa-download"></i> Export Report
+            <!-- PDF export button -->
+            <button type="button" id="export-business-pdf" class="btn btn-export-pdf">
+                <i class="fas fa-file-pdf"></i> Export to PDF
+            </button>
+            <!-- Excel/CSV export button -->
+            <button type="button" id="export-business-csv" class="btn btn-secondary">
+                <i class="fas fa-file-excel"></i> Export to Excel
             </button>
         </div>
     </div>
@@ -135,52 +209,65 @@ include '../includes/header.php';
 
     <div id="error-container"></div>
 
-    <!-- ========== CURRENT MONTH SUMMARY CARDS ========== -->
-    <div class="month-summary-section">
-        <h2 class="section-title">Current Month Summary <span class="month-badge"><?php echo $current_month; ?></span></h2>
-        <div class="summary-cards-grid">
-            <!-- Total Revenue Card -->
-            <div class="summary-card">
-                <div class="summary-icon" style="background-color: rgba(194, 144, 118, 0.1); color: #c29076;">
-                    <i class="fas fa-dollar-sign" aria-hidden="true"></i>
-                </div>
-                <div class="summary-info">
-                    <h3>Total Revenue</h3>
-                    <p class="summary-value">RM <?php echo number_format($total_revenue, 2); ?></p>
-                    <p class="summary-label">Completed bookings</p>
-                </div>
-            </div>
+    <?php if ($error_message): ?>
+        <div class="alert alert-danger" style="background: #fef2f2; color: #dc2626; padding: 16px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #fecaca;">
+            <p><?php echo htmlspecialchars($error_message, ENT_QUOTES, 'UTF-8'); ?></p>
+        </div>
+    <?php endif; ?>
 
-            <!-- Commission Paid Card -->
-            <div class="summary-card">
-                <div class="summary-icon" style="background-color: rgba(76, 175, 80, 0.1); color: #4CAF50;">
-                    <i class="fas fa-money-bill-wave" aria-hidden="true"></i>
+    <!-- ========== FILTERED SUMMARY CARDS ========== -->
+    <div class="filtered-summary-section" id="filtered-summary-section" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 class="section-title">Analytics Summary</h2>
+            <div id="date-range-indicator" style="font-size: 13px; color: #666; background: #f5f5f5; padding: 6px 12px; border-radius: 20px;">
+                <i class="fas fa-calendar-alt" style="margin-right: 4px;"></i> Loading...
                 </div>
-                <div class="summary-info">
-                    <h3>Commission Paid</h3>
-                    <p class="summary-value">RM <?php echo number_format($total_commission, 2); ?></p>
-                    <p class="summary-label">10% rate (<?php echo number_format($commission_ratio, 1); ?>% of revenue)</p>
                 </div>
-            </div>
-
-            <!-- Booking Volume Card -->
-            <div class="summary-card">
-                <div class="summary-icon" style="background-color: rgba(33, 150, 243, 0.1); color: #2196F3;">
-                    <i class="fas fa-calendar-check" aria-hidden="true"></i>
-                </div>
-                <div class="summary-info">
-                    <h3>Booking Volume</h3>
-                    <p class="summary-value"><?php echo number_format($total_volume); ?></p>
-                    <p class="summary-label">All bookings this month</p>
-                </div>
-            </div>
+        <div class="summary-cards-grid" id="summary-cards-container">
+            <!-- Will be populated by JavaScript -->
         </div>
     </div>
 
     <div id="analytics-content" style="display: none;">
-        <!-- ========== STAFF LEADERBOARD (Current Month) ========== -->
+        <!-- Charts Row - Moved before Staff Leaderboard -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Booking Trends</h2>
+                    <div id="chart-date-indicator" style="font-size: 12px; color: #666; background: #f5f5f5; padding: 4px 10px; border-radius: 12px;">
+                        <i class="fas fa-chart-line" style="margin-right: 4px;"></i> Based on selected filter
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-container">
+                        <canvas id="booking-trends-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>Popular Services</h2>
+                    <div id="popular-chart-date-indicator" style="font-size: 12px; color: #666; background: #f5f5f5; padding: 4px 10px; border-radius: 12px;">
+                        <i class="fas fa-chart-line" style="margin-right: 4px;"></i> Based on selected filter
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <div class="chart-container">
+                        <canvas id="popular-services-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== STAFF LEADERBOARD (Filtered) - Moved after Charts ========== -->
         <div class="staff-leaderboard-section">
-            <h2 class="section-title">Staff Performance Leaderboard <span class="month-badge"><?php echo $current_month; ?></span></h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h2 class="section-title">Staff Performance Leaderboard</h2>
+                <div id="leaderboard-date-indicator" style="font-size: 13px; color: #666; background: #f5f5f5; padding: 6px 12px; border-radius: 20px;">
+                    <i class="fas fa-calendar-alt" style="margin-right: 4px;"></i> Loading...
+            </div>
+            </div>
             <p class="section-subtitle">Ranked by revenue generated - matching Staff Module rankings</p>
             
             <div class="leaderboard-card">
@@ -194,149 +281,17 @@ include '../includes/header.php';
                             <th style="text-align: right;">Commission Earned</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php if (empty($staff_leaderboard)): ?>
-                            <tr>
-                                <td colspan="5" style="text-align: center; color: #888; padding: 40px;">
-                                    No staff performance data available for this month
-                                </td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($staff_leaderboard as $index => $staff): ?>
-                                <tr class="leaderboard-row">
-                                    <td>
-                                        <div class="rank-badge rank-<?php echo $index + 1; ?>">
-                                            #<?php echo $index + 1; ?>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div class="staff-name"><?php echo htmlspecialchars($staff['full_name']); ?></div>
-                                    </td>
-                                    <td style="text-align: center;">
-                                        <span class="metric-value"><?php echo number_format($staff['completed_count']); ?></span>
-                                    </td>
-                                    <td style="text-align: right;">
-                                        <span class="metric-value">RM <?php echo number_format($staff['revenue_generated'], 2); ?></span>
-                                    </td>
-                                    <td style="text-align: right;">
-                                        <span class="metric-value commission">RM <?php echo number_format($staff['commission_earned'], 2); ?></span>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- KPI Cards - New Design -->
-        <div class="kpi-cards-grid">
-            <div class="kpi-card">
-                <div class="kpi-header">
-                    <div class="kpi-icon" style="background-color: rgba(212, 165, 116, 0.15); color: #D4A574;">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <span class="kpi-trend positive" id="bookings-trend">
-                        <i class="fas fa-arrow-up"></i> <span>0%</span>
-                    </span>
-                </div>
-                <div class="kpi-body">
-                    <p class="kpi-value" id="total-bookings">0</p>
-                    <p class="kpi-label">Total Bookings</p>
-                </div>
-            </div>
-            
-            <div class="kpi-card">
-                <div class="kpi-header">
-                    <div class="kpi-icon" style="background-color: rgba(212, 165, 116, 0.15); color: #D4A574;">
-                        <i class="fas fa-percentage"></i>
-                    </div>
-                    <span class="kpi-trend positive" id="completion-trend">
-                        <i class="fas fa-arrow-up"></i> <span>0%</span>
-                    </span>
-                </div>
-                <div class="kpi-body">
-                    <p class="kpi-value" id="completion-rate">0%</p>
-                    <p class="kpi-label">Completion Rate</p>
-                </div>
-            </div>
-            
-            <div class="kpi-card">
-                <div class="kpi-header">
-                    <div class="kpi-icon" style="background-color: rgba(212, 165, 116, 0.15); color: #D4A574;">
-                        <i class="fas fa-dollar-sign"></i>
-                    </div>
-                    <span class="kpi-trend positive" id="revenue-trend">
-                        <i class="fas fa-arrow-up"></i> <span>0%</span>
-                    </span>
-                </div>
-                <div class="kpi-body">
-                    <p class="kpi-value" id="total-revenue">RM 0.00</p>
-                    <p class="kpi-label">Total Revenue</p>
-                </div>
-            </div>
-            
-            <div class="kpi-card">
-                <div class="kpi-header">
-                    <div class="kpi-icon" style="background-color: rgba(212, 165, 116, 0.15); color: #D4A574;">
-                        <i class="fas fa-users"></i>
-                    </div>
-                </div>
-                <div class="kpi-body">
-                    <p class="kpi-value" id="avg-booking">RM 0</p>
-                    <p class="kpi-label">Avg Booking Value</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Charts Row -->
-        <div class="charts-grid">
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h2>Booking Trends</h2>
-                </div>
-                <div class="chart-body">
-                    <div class="chart-container">
-                        <canvas id="booking-trends-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="chart-card">
-                <div class="chart-header">
-                    <h2>Popular Services</h2>
-                </div>
-                <div class="chart-body">
-                    <div class="chart-container">
-                        <canvas id="popular-services-chart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Staff Performance Table -->
-        <div class="staff-performance-card">
-            <div class="card-header">
-                <h2>Staff Performance</h2>
-            </div>
-            <div class="card-body">
-                <table class="performance-table">
-                    <thead>
+                    <tbody id="staff-leaderboard-body">
                         <tr>
-                            <th>Staff Member</th>
-                            <th>Completed Sessions</th>
-                            <th>Total Revenue</th>
-                            <th>Avg per Session</th>
-                        </tr>
-                    </thead>
-                    <tbody id="staff-performance-body">
-                        <tr>
-                            <td colspan="4" style="text-align: center; color: #666;">Loading...</td>
+                            <td colspan="5" style="text-align: center; color: #888; padding: 40px;">
+                                Loading staff performance data...
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </div>
+
     </div>
 </div>
 
@@ -345,8 +300,6 @@ include '../includes/header.php';
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<!-- html2pdf.js for PDF generation -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <!-- Page Specific JS -->
 <script src="business.js"></script>
 
@@ -380,13 +333,27 @@ include '../includes/header.php';
 
 .header-actions {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 16px;
+    flex-wrap: wrap;
+}
+
+.filter-section {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
 }
 
 .filter-dropdowns {
     display: flex;
-    gap: 12px;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
 }
 
 .filter-select {
@@ -405,28 +372,83 @@ include '../includes/header.php';
     padding-right: 36px;
 }
 
+.filter-select[type="date"] {
+    background-image: none;
+    padding-right: 16px;
+}
+
 .filter-select:hover {
     border-color: #D4A574;
 }
 
-.btn-export {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.filter-select[type="date"] {
+    background-image: none;
+    padding-right: 16px;
+    cursor: text;
+}
+
+.btn-secondary {
     padding: 10px 20px;
-    background: white;
-    border: 1px solid #e5e5e5;
+    background: #6c757d;
+    border: none;
     border-radius: 8px;
-    color: #333;
+    color: white;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
 }
 
-.btn-export:hover {
-    border-color: #D4A574;
-    color: #D4A574;
+.btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.btn-secondary:disabled {
+    background: #6c757d;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-secondary i {
+    font-size: 14px;
+}
+
+/* Dedicated styling for PDF export button (blue, prominent) */
+.btn-export-pdf {
+    padding: 10px 20px;
+    background: #1976d2;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+
+.btn-export-pdf:hover {
+    background: #1565c0;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(21, 101, 192, 0.4);
+}
+
+.btn-export-pdf:disabled {
+    background: #90caf9;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.btn-export-pdf i {
+    font-size: 14px;
 }
 
 /* ========== MONTH SUMMARY SECTION ========== */
@@ -455,7 +477,7 @@ include '../includes/header.php';
 
 .summary-cards-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 20px;
 }
 
@@ -833,7 +855,7 @@ include '../includes/header.php';
 
 @media (max-width: 1024px) {
     .summary-cards-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
     
     .sustainability-grid {

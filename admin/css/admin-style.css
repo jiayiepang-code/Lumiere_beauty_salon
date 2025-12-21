@@ -169,8 +169,8 @@ ul {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background-color: #d4a5a5; /* Nude pink */
-  color: var(--white);
+  background-color: #f5e9e2; /* Consistent light brown background */
+  color: #8b5e3c; /* Consistent brown text */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -404,8 +404,8 @@ ul {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #c29076, #a87b65);
-  color: white;
+  background-color: #f5e9e2; /* Consistent light brown background */
+  color: #8b5e3c; /* Consistent brown text */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -662,19 +662,32 @@ ul {
   letter-spacing: 0.5px;
 }
 
-.status-badge.confirmed {
+.status-badge.confirmed,
+.status-badge.status-confirmed {
   background-color: rgba(16, 185, 129, 0.1);
-  color: var(--success);
+  color: #2e7d32;
+  border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-.status-badge.completed {
+.status-badge.completed,
+.status-badge.status-completed {
   background-color: rgba(59, 130, 246, 0.1);
-  color: var(--info);
+  color: #1565c0;
+  border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
-.status-badge.cancelled {
+.status-badge.cancelled,
+.status-badge.status-cancelled {
   background-color: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
+  color: #c62828;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-badge.status-no-show,
+.status-badge.no-show {
+  background-color: rgba(158, 158, 158, 0.12);
+  color: #424242;
+  border: 1px solid #bdbdbd;
 }
 
 /* Activity List */
@@ -1568,12 +1581,8 @@ tr:last-child td {
   height: 44px;
   min-width: 44px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--primary-color),
-    #d4a5a5
-  ); /* Nude pink */
-  color: white;
+  background-color: #f5e9e2; /* Consistent light brown background */
+  color: #8b5e3c; /* Consistent brown text */
   display: flex;
   align-items: center;
   justify-content: center;

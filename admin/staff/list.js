@@ -263,6 +263,28 @@ async function openEditModal(staffEmail) {
       if (member.staff_image) {
         const imagePreview = document.getElementById("imagePreview");
         if (imagePreview) {
+          // Show existing image; if missing on disk, fall back to upload state
+          imagePreview.onload = () => {
+            if (imagePreviewContainer) {
+              imagePreviewContainer.style.display = "block";
+            }
+            if (imageUploadArea) {
+              imageUploadArea.style.display = "none";
+            }
+          };
+          imagePreview.onerror = () => {
+            console.warn("Staff image missing or unreadable:", member.staff_image);
+            if (imagePreviewContainer) {
+              imagePreviewContainer.style.display = "none";
+            }
+            if (imageUploadArea) {
+              imageUploadArea.style.display = "flex";
+            }
+            if (previewFileName) {
+              const fileName = member.staff_image.split("/").pop() || "Image not found";
+              previewFileName.textContent = `${fileName} (not found)`;
+            }
+          };
           imagePreview.src = member.staff_image;
         }
         if (previewFileName) {
@@ -270,12 +292,6 @@ async function openEditModal(staffEmail) {
           const fileName =
             member.staff_image.split("/").pop() || "Image selected";
           previewFileName.textContent = fileName;
-        }
-        if (imagePreviewContainer) {
-          imagePreviewContainer.style.display = "block";
-        }
-        if (imageUploadArea) {
-          imageUploadArea.style.display = "none";
         }
       } else {
         if (imagePreviewContainer) {

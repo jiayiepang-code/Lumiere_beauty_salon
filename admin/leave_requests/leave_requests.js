@@ -321,9 +321,7 @@ function filterAndRenderRequests() {
     tr.innerHTML = `
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px;height:32px;border-radius:50%;background:#f5e9e2;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:#8b5e3c;">
-                            ${getInitials(req.staff_name)}
-                        </div>
+                        ${renderStaffAvatar(req.staff_image, req.staff_name)}
                         <div>
                             <div style="font-weight:500;">${escapeHtml(
                               req.staff_name || ""
@@ -585,6 +583,97 @@ function getInitials(name) {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
+function resolveStaffImagePathJS(imagePath) {
+  if (!imagePath) return null;
+  
+  // Remove any leading/trailing whitespace
+  imagePath = imagePath.trim();
+  
+  // If it's already a full URL, return as-is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // Get the application base path (handles subdirectory installations)
+  // Use a more reliable method that works across browsers
+  let appBasePath = '';
+  try {
+    const pathname = window.location.pathname;
+    
+    // More robust base path detection
+    if (pathname.includes('/admin/')) {
+      appBasePath = pathname.substring(0, pathname.indexOf('/admin/'));
+    } else if (pathname.includes('/api/')) {
+      appBasePath = pathname.substring(0, pathname.indexOf('/api/'));
+    } else if (pathname.includes('/staff/')) {
+      appBasePath = pathname.substring(0, pathname.indexOf('/staff/'));
+    } else {
+      // Fallback: try to detect from document root
+      // Extract first path segment that's not empty
+      const pathParts = pathname.split('/').filter(p => p);
+      if (pathParts.length > 0) {
+        appBasePath = '/' + pathParts[0];
+      }
+    }
+  } catch (e) {
+    // If pathname detection fails, default to empty (root installation)
+    console.warn('Could not detect base path, using root:', e);
+    appBasePath = '';
+  }
+  
+  // Extract filename from any path format
+  const filename = imagePath.split('/').pop().split('\\').pop();
+  
+  // Handle absolute paths from site root (PHP API returns paths like /images/staff/filename.jpg)
+  if (imagePath.startsWith('/images/staff/')) {
+    // Prepend application base path (will be empty string if at root)
+    return appBasePath + imagePath;
+  }
+  
+  // Handle old format: /images/filename.jpg (without /staff/)
+  if (imagePath.startsWith('/images/') && !imagePath.startsWith('/images/staff/')) {
+    return appBasePath + '/images/staff/' + filename;
+  }
+  
+  // Handle other absolute paths starting with /
+  if (imagePath.startsWith('/')) {
+    return appBasePath + imagePath;
+  }
+  
+  // Handle staff upload format: staff/uploads/staff/filename.jpg
+  if (imagePath.startsWith('staff/uploads/staff/')) {
+    return appBasePath + '/images/staff/' + filename;
+  }
+  
+  // Handle just filename (legacy): filename.jpg or 42 or 70.png
+  if (!imagePath.includes('/') && !imagePath.includes('\\')) {
+    return appBasePath + '/images/staff/' + imagePath;
+  }
+  
+  // For any other relative path, extract filename and use absolute path
+  return appBasePath + '/images/staff/' + filename;
+}
+
+function renderStaffAvatar(staffImage, staffName) {
+  const initials = getInitials(staffName);
+  
+  if (staffImage) {
+    // Resolve image path using the same logic as PHP
+    const imagePath = resolveStaffImagePathJS(staffImage);
+    
+    if (imagePath) {
+      // Use a wrapper div with both image and fallback initials
+      // Error handler will show fallback if image fails to load
+      return `<div style="position:relative;width:32px;height:32px;">
+                  <img src="${escapeHtml(imagePath)}" alt="${escapeHtml(staffName)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;display:block;" onerror="this.style.display='none';var fallback=this.nextElementSibling;if(fallback)fallback.style.display='flex';" />
+                  <div class="avatar-fallback" style="width:32px;height:32px;border-radius:50%;background:#f5e9e2;display:none;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:#8b5e3c;position:absolute;top:0;left:0;">${initials}</div>
+              </div>`;
+    }
+  }
+  
+  return `<div style="width:32px;height:32px;border-radius:50%;background:#f5e9e2;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:#8b5e3c;">${initials}</div>`;
+}
+
 function escapeHtml(value) {
   if (value === null || value === undefined) return "";
   return String(value)
@@ -693,9 +782,7 @@ async function openRequestsModal(status) {
       tr.innerHTML = `
                 <td>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <div style="width:32px;height:32px;border-radius:50%;background:#f5e9e2;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:#8b5e3c;">
-                            ${getInitials(req.staff_name)}
-                        </div>
+                        ${renderStaffAvatar(req.staff_image, req.staff_name)}
                         <div>
                             <div style="font-weight:500;">${escapeHtml(
                               req.staff_name || ""

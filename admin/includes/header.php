@@ -42,41 +42,15 @@ $csrf_token = getCSRFToken();
             <div class="user-avatar-mobile">
                 <?php
                 $base_path = isset($base_path) ? $base_path : '..';
-                $imagePath = '';
                 $initials = isset($admin['first_name']) ? strtoupper(substr($admin['first_name'], 0, 1)) . strtoupper(substr($admin['last_name'], 0, 1)) : 'US';
-
-                if (!empty($admin['staff_image'])) {
-                    $originalPath = $admin['staff_image'];
-                    $filename = basename($originalPath);
-                    $extensions = ['', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
-                    $baseDir = __DIR__ . '/../../images/';
-                    $foundFile = false;
-                    foreach ($extensions as $ext) {
-                        $testFilename = $filename . $ext;
-                        $testPathRoot = $baseDir . $testFilename;
-                        if (file_exists($testPathRoot)) {
-                            $imagePath = $base_path . '/images/' . $testFilename;
-                            $foundFile = true;
-                            break;
-                        }
-                    }
-                    if (!$foundFile) {
-                        foreach ($extensions as $ext) {
-                            $testFilename = $filename . $ext;
-                            $testPathStaff = $baseDir . 'staff/' . $testFilename;
-                            if (file_exists($testPathStaff)) {
-                                $imagePath = $base_path . '/images/staff/' . $testFilename;
-                                $foundFile = true;
-                                break;
-                            }
-                        }
-                    }
-                }
+                $imagePath = resolveStaffImagePath($admin['staff_image'] ?? null, $base_path);
                 ?>
                 <?php if (!empty($imagePath)): ?>
-                    <img src="<?php echo htmlspecialchars($imagePath); ?>" alt="<?php echo htmlspecialchars($admin['first_name']); ?>" onerror="this.style.display='none'; this.parentElement.innerHTML='<?php echo htmlspecialchars($initials); ?>';" />
+                    <img src="<?php echo htmlspecialchars($imagePath); ?>" alt="<?php echo htmlspecialchars($admin['first_name']); ?>" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width: 100%; height: 100%; border-radius: 50%; background: #f5e9e2; display: flex; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 14px;\'><?php echo htmlspecialchars($initials); ?></div>';" />
                 <?php else: ?>
-                    <?php echo $initials; ?>
+                    <div style="width: 100%; height: 100%; border-radius: 50%; background: #f5e9e2; display: flex; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 14px;">
+                        <?php echo htmlspecialchars($initials); ?>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -99,51 +73,18 @@ $csrf_token = getCSRFToken();
                         <div class="user-avatar-header">
                             <?php
                             $base_path = isset($base_path) ? $base_path : '..';
-                            $imagePath = '';
                             $initials = isset($admin['first_name']) ? strtoupper(substr($admin['first_name'], 0, 1)) . strtoupper(substr($admin['last_name'], 0, 1)) : 'MS';
-                            
-                            // Try to resolve staff image path
-                            if (!empty($admin['staff_image'])) {
-                                $originalPath = $admin['staff_image'];
-                                $filename = basename($originalPath);
-                                $extensions = ['', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
-                                $baseDir = __DIR__ . '/../../images/';
-                                $foundFile = false;
-                                
-                                // Try root images directory first
-                                foreach ($extensions as $ext) {
-                                    $testFilename = $filename . $ext;
-                                    $testPathRoot = $baseDir . $testFilename;
-                                    
-                                    if (file_exists($testPathRoot)) {
-                                        $imagePath = $base_path . '/images/' . $testFilename;
-                                        $foundFile = true;
-                                        break;
-                                    }
-                                }
-                                
-                                // If not found in root, try staff directory
-                                if (!$foundFile) {
-                                    foreach ($extensions as $ext) {
-                                        $testFilename = $filename . $ext;
-                                        $testPathStaff = $baseDir . 'staff/' . $testFilename;
-                                        
-                                        if (file_exists($testPathStaff)) {
-                                            $imagePath = $base_path . '/images/staff/' . $testFilename;
-                                            $foundFile = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            if (!empty($imagePath)): ?>
+                            $imagePath = resolveStaffImagePath($admin['staff_image'] ?? null, $base_path);
+                            ?>
+                            <?php if (!empty($imagePath)): ?>
                                 <img src="<?php echo htmlspecialchars($imagePath); ?>" 
                                      alt="<?php echo htmlspecialchars($admin['first_name']); ?>" 
-                                     onerror="this.style.display='none'; this.parentElement.innerHTML='<?php echo htmlspecialchars($initials); ?>';"
+                                     onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width: 100%; height: 100%; border-radius: 50%; background: #f5e9e2; display: flex; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 14px;\'><?php echo htmlspecialchars($initials); ?></div>';"
                                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                             <?php else: ?>
-                                <?php echo $initials; ?>
+                                <div style="width: 100%; height: 100%; border-radius: 50%; background: #f5e9e2; display: flex; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 14px;">
+                                    <?php echo htmlspecialchars($initials); ?>
+                                </div>
                             <?php endif; ?>
                         </div>
                     </div>

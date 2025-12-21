@@ -2,8 +2,9 @@
 
 let bookingTrendsChart = null;
 let popularServicesChart = null;
-let currentPeriod = "weekly";
-let currentDays = 7;
+let currentDateRange = "thismonth"; // Default to this month
+let customStartDate = null;
+let customEndDate = null;
 let chartsAnimated = false;
 
 // Chart color palette - Yellow/Gold theme
@@ -40,100 +41,361 @@ document.addEventListener("DOMContentLoaded", function () {
   // #endregion
 
   initializeFilters();
-  initializeExportButton();
+  initializeExportButtons();
   loadAnalyticsData();
   setupIntersectionObserver();
 });
 
 // Initialize filter dropdowns
 function initializeFilters() {
-  const periodSelect = document.getElementById("period-select");
-  const rangeSelect = document.getElementById("range-select");
+  const dateRangeSelect = document.getElementById("date-range-select");
+  const customDateRange = document.getElementById("custom-date-range");
+  const customStartDateInput = document.getElementById("custom-start-date");
+  const customEndDateInput = document.getElementById("custom-end-date");
 
-  if (periodSelect) {
-    periodSelect.addEventListener("change", function () {
-      currentPeriod = this.value;
+  if (dateRangeSelect) {
+    dateRangeSelect.addEventListener("change", function () {
+      currentDateRange = this.value;
+
+      // Show/hide custom date inputs
+      if (this.value === "custom") {
+        customDateRange.style.display = "block";
+        // Set default dates (last 30 days)
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 29);
+        customStartDateInput.value = startDate.toISOString().split("T")[0];
+        customEndDateInput.value = endDate.toISOString().split("T")[0];
+        customStartDate = customStartDateInput.value;
+        customEndDate = customEndDateInput.value;
+      } else {
+        customDateRange.style.display = "none";
+        customStartDate = null;
+        customEndDate = null;
+      }
+
       loadAnalyticsData();
     });
   }
 
-  if (rangeSelect) {
-    rangeSelect.addEventListener("change", function () {
-      currentDays = parseInt(this.value);
-      loadAnalyticsData();
+  // Custom date inputs
+  if (customStartDateInput) {
+    customStartDateInput.addEventListener("change", function () {
+      customStartDate = this.value;
+      if (customStartDate && customEndDate) {
+        loadAnalyticsData();
+      }
+    });
+  }
+
+  if (customEndDateInput) {
+    customEndDateInput.addEventListener("change", function () {
+      customEndDate = this.value;
+      if (customStartDate && customEndDate) {
+        loadAnalyticsData();
+      }
     });
   }
 }
 
-// Initialize export button
-function initializeExportButton() {
-  const exportBtn = document.getElementById("export-report");
+// Initialize export buttons
+function initializeExportButtons() {
+  // PDF export button
+  const pdfBtn = document.getElementById("export-business-pdf");
+  if (pdfBtn) {
+    pdfBtn.addEventListener("click", exportBusinessReportPdf);
+  }
+
+  // CSV/Excel export button
+  const csvBtn = document.getElementById("export-business-csv");
+  if (csvBtn) {
+    csvBtn.addEventListener("click", exportBusinessReportCsv);
+  }
+}
+
+/**
+ * Export Business Analytics Report as CSV (Excel-compatible)
+ */
+async function exportBusinessReportCsv() {
+  const exportBtn = document.getElementById("export-business-csv");
+  const originalText = exportBtn ? exportBtn.innerHTML : "";
+
   if (exportBtn) {
-    exportBtn.addEventListener("click", function () {
-      exportReport();
-    });
+    // Lock button width to prevent layout shift while loading
+    const btnRect = exportBtn.getBoundingClientRect();
+    exportBtn.style.minWidth = `${btnRect.width}px`;
+    exportBtn.disabled = true;
+    exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+  }
+
+  try {
+    // Build API URL with current filters
+    let apiUrl = `../../api/admin/analytics/booking_trends.php`;
+
+    if (currentDateRange === "custom" && customStartDate && customEndDate) {
+      apiUrl += `?start_date=${customStartDate}&end_date=${customEndDate}`;
+    } else {
+      apiUrl += `?preset=${currentDateRange}`;
+    }
+
+    const response = await fetch(apiUrl);
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch analytics data");
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error?.message || "Failed to load data");
+    }
+
+    // Build CSV content
+    const csvRows = [];
+
+    // Header aligned with PDF
+    csvRows.push(["Lumiere Beauty Salon"]);
+    csvRows.push(["Business Analytics Report"]);
+    csvRows.push(["Report Period:", `${data.start_date} to ${data.end_date}`]);
+    csvRows.push(["Generated on:", new Date().toLocaleString()]);
+    csvRows.push(["Company Registration:", "SSM: SA0123456-A"]);
+    csvRows.push([]);
+    csvRows.push(["Company Information:"]);
+    csvRows.push([
+      "Address:",
+      "No. 10, Ground Floor Block B, Phase 2, Jln Lintas, Kolam Centre",
+    ]);
+    csvRows.push(["City:", "88300 Kota Kinabalu, Sabah"]);
+    csvRows.push(["Email:", "Lumiere@gmail.com"]);
+    csvRows.push(["Tel:", "012 345 6789 / 088 978 8977"]);
+    csvRows.push([]);
+
+    // Summary Metrics
+    csvRows.push(["SUMMARY METRICS"]);
+    csvRows.push(["Metric", "Value"]);
+    csvRows.push(["Total Bookings", data.metrics.total_bookings]);
+    csvRows.push(["Completed Bookings", data.metrics.completed_bookings]);
+    csvRows.push(["Cancelled Bookings", data.metrics.cancelled_bookings]);
+    csvRows.push(["No-Show Bookings", data.metrics.no_show_bookings]);
+    csvRows.push([
+      "Total Revenue",
+      `RM ${data.metrics.total_revenue.toFixed(2)}`,
+    ]);
+    csvRows.push([
+      "Average Booking Value",
+      `RM ${data.metrics.average_booking_value.toFixed(2)}`,
+    ]);
+    csvRows.push([]);
+
+    // Daily Breakdown
+    if (data.daily_breakdown && data.daily_breakdown.length > 0) {
+      csvRows.push(["DAILY BREAKDOWN"]);
+      csvRows.push(["Date", "Bookings", "Completed", "Cancelled", "Revenue"]);
+      data.daily_breakdown.forEach((day) => {
+        csvRows.push([
+          day.date,
+          day.bookings,
+          day.completed,
+          day.cancelled,
+          `RM ${day.revenue.toFixed(2)}`,
+        ]);
+      });
+      csvRows.push([]);
+    }
+
+    // Popular Services
+    if (data.popular_services && data.popular_services.length > 0) {
+      csvRows.push(["POPULAR SERVICES"]);
+      csvRows.push(["Service Name", "Booking Count", "Revenue"]);
+      data.popular_services.forEach((service) => {
+        csvRows.push([
+          service.service_name,
+          service.booking_count,
+          `RM ${service.revenue.toFixed(2)}`,
+        ]);
+      });
+      csvRows.push([]);
+    }
+
+    // Staff Performance
+    if (data.staff_performance && data.staff_performance.length > 0) {
+      csvRows.push(["STAFF PERFORMANCE"]);
+      csvRows.push([
+        "Staff Name",
+        "Completed Sessions",
+        "Total Revenue",
+        "Commission Earned",
+      ]);
+      data.staff_performance.forEach((staff) => {
+        csvRows.push([
+          staff.staff_name,
+          staff.completed_sessions,
+          `RM ${staff.total_revenue.toFixed(2)}`,
+          `RM ${staff.commission_earned.toFixed(2)}`,
+        ]);
+      });
+    }
+
+    // Convert to CSV
+    const csv = csvRows
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+      )
+      .join("\n");
+
+    // Download
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = downloadUrl;
+    const dateStr = `${data.start_date}_to_${data.end_date}`;
+    a.download = `business-analytics-${dateStr}-${
+      new Date().toISOString().split("T")[0]
+    }.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(downloadUrl);
+
+    // Wait for user to save, then show success message
+    setTimeout(() => {
+      if (typeof Swal !== "undefined") {
+        Swal.fire({
+          icon: "success",
+          title: "Excel Downloaded",
+          text: "Business Analytics Report has been saved successfully.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      }
+
+      // Re-enable button
+      if (exportBtn) {
+        exportBtn.disabled = false;
+        exportBtn.innerHTML = originalText;
+        exportBtn.style.minWidth = "";
+      }
+    }, 2500); // Wait 2.5 seconds for user to save
+  } catch (error) {
+    console.error("Export error:", error);
+    alert("Failed to export report: " + error.message);
+    // Re-enable button on error
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.innerHTML = originalText;
+      exportBtn.style.minWidth = "";
+    }
   }
 }
 
-// Export report functionality - PDF Export
-async function exportReport() {
-  const exportBtn = document.getElementById("export-report");
+/**
+ * Export Business Analytics Report as PDF - Server-side approach
+ * Uses mPDF via API endpoint for structured, professional PDF with logo
+ */
+async function exportBusinessReportPdf() {
+  const exportBtn = document.getElementById("export-business-pdf");
   if (!exportBtn) return;
-  
+
   // Disable button and show loading
   const originalText = exportBtn.innerHTML;
   exportBtn.disabled = true;
-  exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
-  
+  exportBtn.innerHTML =
+    '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+
   try {
-    // Get current filter values
-    const period = document.getElementById("period-select")?.value || "monthly";
-    const days = parseInt(document.getElementById("range-select")?.value || "30");
-    
-    // Calculate date range
+    // Get current filter values - use new filter system
     let startDate, endDate;
-    const today = new Date();
-    
-    switch (period) {
-      case 'daily':
-        startDate = today.toISOString().split('T')[0];
-        endDate = startDate;
-        break;
-      case 'weekly':
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - today.getDay() + 1);
-        startDate = monday.toISOString().split('T')[0];
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        endDate = sunday.toISOString().split('T')[0];
-        break;
-      case 'monthly':
-        startDate = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
-        endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString().split('T')[0];
-        break;
-      default:
-        // Use days range
-        endDate = today.toISOString().split('T')[0];
-        const start = new Date(today);
-        start.setDate(today.getDate() - days + 1);
-        startDate = start.toISOString().split('T')[0];
+
+    if (currentDateRange === "custom" && customStartDate && customEndDate) {
+      startDate = customStartDate;
+      endDate = customEndDate;
+    } else {
+      // Calculate from preset
+      const today = new Date();
+      switch (currentDateRange) {
+        case "today":
+          startDate = today.toISOString().split("T")[0];
+          endDate = startDate;
+          break;
+        case "yesterday":
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
+          startDate = yesterday.toISOString().split("T")[0];
+          endDate = startDate;
+          break;
+        case "last7days":
+          startDate = new Date(today);
+          startDate.setDate(startDate.getDate() - 6);
+          startDate = startDate.toISOString().split("T")[0];
+          endDate = today.toISOString().split("T")[0];
+          break;
+        case "last30days":
+          startDate = new Date(today);
+          startDate.setDate(startDate.getDate() - 29);
+          startDate = startDate.toISOString().split("T")[0];
+          endDate = today.toISOString().split("T")[0];
+          break;
+        case "thisweek":
+          const monday = new Date(today);
+          monday.setDate(monday.getDate() - monday.getDay() + 1);
+          startDate = monday.toISOString().split("T")[0];
+          const sunday = new Date(today);
+          sunday.setDate(sunday.getDate() - sunday.getDay() + 7);
+          endDate = sunday.toISOString().split("T")[0];
+          break;
+        case "thismonth":
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1)
+            .toISOString()
+            .split("T")[0];
+          endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+            .toISOString()
+            .split("T")[0];
+          break;
+        case "lastmonth":
+          const lastMonth = new Date(
+            today.getFullYear(),
+            today.getMonth() - 1,
+            1
+          );
+          startDate = lastMonth.toISOString().split("T")[0];
+          endDate = new Date(today.getFullYear(), today.getMonth(), 0)
+            .toISOString()
+            .split("T")[0];
+          break;
+        case "thisyear":
+          startDate = new Date(today.getFullYear(), 0, 1)
+            .toISOString()
+            .split("T")[0];
+          endDate = new Date(today.getFullYear(), 11, 31)
+            .toISOString()
+            .split("T")[0];
+          break;
+        default:
+          // Default to this month
+          startDate = new Date(today.getFullYear(), today.getMonth(), 1)
+            .toISOString()
+            .split("T")[0];
+          endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+            .toISOString()
+            .split("T")[0];
+      }
     }
-    
-    // Build PDF export URL
-    const pdfUrl = `../../api/admin/analytics/export_business_pdf.php?period=${period}&start_date=${startDate}&end_date=${endDate}`;
-    
-    // Fetch PDF directly
+
+    // Build PDF export URL (server-side API)
+    const pdfUrl = `../../api/admin/analytics/export_business_pdf.php?start_date=${startDate}&end_date=${endDate}`;
+
+    // Fetch PDF directly from server
     const response = await fetch(pdfUrl);
-    
+
     // Check content type first
-    const contentType = response.headers.get('content-type');
-    
+    const contentType = response.headers.get("content-type");
+
     if (!response.ok) {
-      let errorText = '';
+      let errorText = "";
       try {
-        if (contentType && contentType.includes('application/json')) {
+        if (contentType && contentType.includes("application/json")) {
           const errorData = await response.json();
-          errorText = errorData.error || errorData.message || 'Unknown error';
+          errorText = errorData.error || errorData.message || "Unknown error";
         } else {
           errorText = await response.text();
         }
@@ -142,62 +404,69 @@ async function exportReport() {
       }
       throw new Error(errorText);
     }
-    
+
     // Get PDF blob
     const blob = await response.blob();
-    
+
     // Check if response is actually a PDF
-    if (!blob.type.includes('pdf') && blob.size > 0) {
+    if (!blob.type.includes("pdf") && blob.size > 0) {
       // Might be an error message
       try {
         const text = await blob.text();
-        if (text.includes('Error') || text.includes('error') || text.includes('Exception')) {
+        if (
+          text.includes("Error") ||
+          text.includes("error") ||
+          text.includes("Exception")
+        ) {
           throw new Error(text.substring(0, 500));
         }
       } catch (e) {
-        if (e.message && !e.message.includes('Error')) {
+        if (e.message && !e.message.includes("Error")) {
           throw e;
         }
-        throw new Error('Server returned non-PDF response. Please check server logs.');
+        throw new Error(
+          "Server returned non-PDF response. Please check server logs."
+        );
       }
     }
-    
+
     // Verify blob is not empty
     if (blob.size === 0) {
-      throw new Error('PDF file is empty. Please try again.');
+      throw new Error("PDF file is empty. Please try again.");
     }
-    
+
     // Create download link
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
     a.download = `Business_Analytics_Report_${startDate}_to_${endDate}.pdf`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-    
-    // Show success message
-    if (typeof Swal !== "undefined") {
-      Swal.fire({
-        icon: "success",
-        title: "PDF Generated",
-        text: "Business Analytics Report PDF has been downloaded.",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-    }
-    
-    // Re-enable button
-    exportBtn.disabled = false;
-    exportBtn.innerHTML = originalText;
-    
+
+    // Wait for user to save, then show success message
+    setTimeout(() => {
+      if (typeof Swal !== "undefined") {
+        Swal.fire({
+          icon: "success",
+          title: "PDF Downloaded",
+          text: "Business Analytics Report PDF has been saved successfully.",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      }
+
+      // Re-enable button
+      exportBtn.disabled = false;
+      exportBtn.innerHTML = originalText;
+    }, 2500); // Wait 2.5 seconds for user to save
   } catch (error) {
     console.error("Error exporting PDF:", error);
-    
+
     // Show detailed error message
-    const errorMessage = error.message || 'Unknown error occurred';
-    
+    const errorMessage = error.message || "Unknown error occurred";
+
     if (typeof Swal !== "undefined") {
       Swal.fire({
         icon: "error",
@@ -208,7 +477,7 @@ async function exportReport() {
     } else {
       alert("Error generating PDF report: " + errorMessage);
     }
-    
+
     exportBtn.disabled = false;
     exportBtn.innerHTML = originalText;
   }
@@ -274,8 +543,14 @@ async function loadAnalyticsData() {
     .forEach((el) => el.classList.remove("animate-in"));
 
   try {
-    // Build API URL
-    let url = `../../api/admin/analytics/booking_trends.php?period=${currentPeriod}&days=${currentDays}`;
+    // Build API URL with new filter system
+    let url = `../../api/admin/analytics/booking_trends.php`;
+
+    if (currentDateRange === "custom" && customStartDate && customEndDate) {
+      url += `?start_date=${customStartDate}&end_date=${customEndDate}`;
+    } else {
+      url += `?preset=${currentDateRange}`;
+    }
 
     // #region agent log
     fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
@@ -284,7 +559,12 @@ async function loadAnalyticsData() {
       body: JSON.stringify({
         location: "business.js:152",
         message: "About to fetch analytics data",
-        data: { url: url, period: currentPeriod, days: currentDays },
+        data: {
+          url: url,
+          dateRange: currentDateRange,
+          customStart: customStartDate,
+          customEnd: customEndDate,
+        },
         timestamp: Date.now(),
         sessionId: "debug-session",
         runId: "run1",
@@ -377,11 +657,40 @@ async function loadAnalyticsData() {
     loading.style.display = "none";
     analyticsContent.style.display = "block";
 
-    // Update UI with data
-    updateKPICards(data.metrics);
-    updateBookingTrendsChart(data.daily_breakdown);
-    updatePopularServicesChart(data.popular_services);
-    updateStaffPerformanceTable(data.staff_performance);
+    // Show filtered summary section
+    const filteredSummarySection = document.getElementById(
+      "filtered-summary-section"
+    );
+    if (filteredSummarySection) {
+      filteredSummarySection.style.display = "block";
+    }
+
+    // Update date range indicators
+    updateDateRangeIndicators(data.start_date, data.end_date, data.preset);
+
+    // Fetch previous period for comparison
+    const previousMetrics = await fetchPreviousPeriodData(
+      data.start_date,
+      data.end_date
+    );
+
+    // Update UI with data - with error handling
+    try {
+      if (data.metrics) {
+        updateSummaryCards(data.metrics, previousMetrics);
+      }
+      if (data.daily_breakdown && data.daily_breakdown.length > 0) {
+        updateBookingTrendsChart(data.daily_breakdown);
+      }
+      if (data.popular_services && data.popular_services.length > 0) {
+        updatePopularServicesChart(data.popular_services);
+      }
+      if (data.staff_performance) {
+        updateStaffLeaderboard(data.staff_performance);
+      }
+    } catch (updateError) {
+      console.error("Error updating UI components:", updateError);
+    }
 
     // Trigger animations
     setTimeout(() => {
@@ -491,6 +800,74 @@ function animateNumber(
   requestAnimationFrame(update);
 }
 
+// Update staff leaderboard with filtered data
+function updateStaffLeaderboard(staffPerformance) {
+  const tbody = document.getElementById("staff-leaderboard-body");
+  if (!tbody) return;
+
+  if (!staffPerformance || staffPerformance.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; color: #888; padding: 40px;">
+          No staff performance data available for selected period
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = staffPerformance
+    .map((staff, index) => {
+      const rank = index + 1;
+      const rankClass = rank <= 3 ? `rank-${rank}` : "";
+      return `
+      <tr class="leaderboard-row">
+        <td>
+          <div class="rank-badge ${rankClass}">
+            #${rank}
+          </div>
+        </td>
+        <td>
+          <div class="staff-name">${escapeHtml(
+            staff.staff_name || staff.full_name || "Unknown"
+          )}</div>
+        </td>
+        <td style="text-align: center;">
+          <span class="metric-value">${
+            staff.completed_sessions || staff.completed_count || 0
+          }</span>
+        </td>
+        <td style="text-align: right;">
+          <span class="metric-value">RM ${(
+            staff.total_revenue ||
+            staff.revenue_generated ||
+            0
+          ).toLocaleString("en-MY", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}</span>
+        </td>
+        <td style="text-align: right;">
+          <span class="metric-value commission">RM ${(
+            staff.commission_earned || 0
+          ).toLocaleString("en-MY", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}</span>
+        </td>
+      </tr>
+    `;
+    })
+    .join("");
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
 // Update trend indicator
 function updateTrendIndicator(elementId, value) {
   const element = document.getElementById(elementId);
@@ -504,6 +881,214 @@ function updateTrendIndicator(elementId, value) {
   `;
 }
 
+// Update date range indicators
+function updateDateRangeIndicators(startDate, endDate, preset) {
+  const dateRangeIndicator = document.getElementById("date-range-indicator");
+  const leaderboardIndicator = document.getElementById(
+    "leaderboard-date-indicator"
+  );
+  const chartIndicator = document.getElementById("chart-date-indicator");
+  const popularChartIndicator = document.getElementById("popular-chart-date-indicator");
+
+  // Format dates
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const startFormatted = start.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const endFormatted = end.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  // Get preset label
+  const presetLabels = {
+    today: "Today",
+    yesterday: "Yesterday",
+    last7days: "Last 7 Days",
+    last30days: "Last 30 Days",
+    thisweek: "This Week",
+    thismonth: "This Month",
+    lastmonth: "Last Month",
+    thisyear: "This Year",
+  };
+
+  let label = presetLabels[preset] || `${startFormatted} - ${endFormatted}`;
+  if (preset && presetLabels[preset]) {
+    label = `${presetLabels[preset]} (${startFormatted} - ${endFormatted})`;
+  }
+
+  if (dateRangeIndicator) {
+    dateRangeIndicator.innerHTML = `<i class="fas fa-calendar-alt" style="margin-right: 4px;"></i> ${label}`;
+  }
+
+  if (leaderboardIndicator) {
+    leaderboardIndicator.innerHTML = `<i class="fas fa-calendar-alt" style="margin-right: 4px;"></i> ${label}`;
+  }
+
+  if (chartIndicator) {
+    chartIndicator.innerHTML = `<i class="fas fa-chart-line" style="margin-right: 4px;"></i> ${label}`;
+  }
+
+  if (popularChartIndicator) {
+    popularChartIndicator.innerHTML = `<i class="fas fa-chart-line" style="margin-right: 4px;"></i> ${label}`;
+  }
+}
+
+// Fetch previous period data for comparison
+async function fetchPreviousPeriodData(startDate, endDate) {
+  try {
+    // Calculate previous period dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+
+    const prevEnd = new Date(start);
+    prevEnd.setDate(prevEnd.getDate() - 1);
+    const prevStart = new Date(prevEnd);
+    prevStart.setDate(prevStart.getDate() - daysDiff + 1);
+
+    const prevStartStr = prevStart.toISOString().split("T")[0];
+    const prevEndStr = prevEnd.toISOString().split("T")[0];
+
+    const url = `../../api/admin/analytics/booking_trends.php?start_date=${prevStartStr}&end_date=${prevEndStr}&group_by=daily`;
+    const response = await fetch(url);
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.metrics) {
+        // Calculate completion rate for previous period
+        const prevCompletionRate =
+          data.metrics.total_bookings > 0
+            ? (data.metrics.completed_bookings / data.metrics.total_bookings) *
+              100
+            : 0;
+
+        return {
+          ...data.metrics,
+          completion_rate: prevCompletionRate,
+        };
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching previous period data:", error);
+  }
+  return null;
+}
+
+// Update summary cards (replaces old Current Month Summary)
+function updateSummaryCards(metrics, previousMetrics = null) {
+  const container = document.getElementById("summary-cards-container");
+  if (!container) return;
+
+  const completionRate =
+    metrics.total_bookings > 0
+      ? ((metrics.completed_bookings / metrics.total_bookings) * 100).toFixed(1)
+      : 0;
+
+  // Calculate trends if previous metrics available
+  const calculateTrend = (current, previous) => {
+    if (!previous || previous === 0) return null;
+    const change = ((current - previous) / previous) * 100;
+    return {
+      value: Math.abs(change).toFixed(1),
+      isPositive: change >= 0,
+    };
+  };
+
+  const bookingsTrend = previousMetrics
+    ? calculateTrend(metrics.total_bookings, previousMetrics.total_bookings)
+    : null;
+  const revenueTrend = previousMetrics
+    ? calculateTrend(metrics.total_revenue, previousMetrics.total_revenue)
+    : null;
+  const completionTrend = previousMetrics
+    ? calculateTrend(
+        parseFloat(completionRate),
+        previousMetrics.completion_rate || 0
+      )
+    : null;
+  const avgValueTrend = previousMetrics
+    ? calculateTrend(
+        metrics.average_booking_value,
+        previousMetrics.average_booking_value || 0
+      )
+    : null;
+
+  const renderTrend = (trend) => {
+    if (!trend) return "";
+    const color = trend.isPositive ? "#22c55e" : "#ef4444";
+    const icon = trend.isPositive ? "fa-arrow-up" : "fa-arrow-down";
+    return `
+      <div style="display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 12px; color: ${color};">
+        <i class="fas ${icon}"></i>
+        <span>${trend.value}%</span>
+      </div>
+    `;
+  };
+
+  container.innerHTML = `
+    <div class="summary-card">
+      <div class="summary-icon" style="background-color: rgba(212, 165, 116, 0.1); color: #D4A574;">
+        <i class="fas fa-calendar-check" aria-hidden="true"></i>
+      </div>
+      <div class="summary-info">
+        <h3>Total Bookings</h3>
+        <p class="summary-value">${metrics.total_bookings.toLocaleString()}</p>
+        ${renderTrend(bookingsTrend)}
+        <p class="summary-label">All bookings in selected period</p>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="summary-icon" style="background-color: rgba(194, 144, 118, 0.1); color: #c29076;">
+        <i class="fas fa-dollar-sign" aria-hidden="true"></i>
+      </div>
+      <div class="summary-info">
+        <h3>Total Revenue</h3>
+        <p class="summary-value">RM ${metrics.total_revenue.toLocaleString(
+          "en-MY",
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+        )}</p>
+        ${renderTrend(revenueTrend)}
+        <p class="summary-label">Completed bookings only</p>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="summary-icon" style="background-color: rgba(76, 175, 80, 0.1); color: #4CAF50;">
+        <i class="fas fa-percentage" aria-hidden="true"></i>
+      </div>
+      <div class="summary-info">
+        <h3>Completion Rate</h3>
+        <p class="summary-value">${completionRate}%</p>
+        ${renderTrend(completionTrend)}
+        <p class="summary-label">${metrics.completed_bookings} of ${
+    metrics.total_bookings
+  } completed</p>
+      </div>
+    </div>
+    
+    <div class="summary-card">
+      <div class="summary-icon" style="background-color: rgba(33, 150, 243, 0.1); color: #2196F3;">
+        <i class="fas fa-chart-line" aria-hidden="true"></i>
+      </div>
+      <div class="summary-info">
+        <h3>Avg Booking Value</h3>
+        <p class="summary-value">RM ${metrics.average_booking_value.toLocaleString(
+          "en-MY",
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+        )}</p>
+        ${renderTrend(avgValueTrend)}
+        <p class="summary-label">Average per completed booking</p>
+      </div>
+    </div>
+  `;
+}
+
 // Update booking trends chart - Yellow/Gold line chart
 function updateBookingTrendsChart(dailyBreakdown) {
   const ctx = document.getElementById("booking-trends-chart");
@@ -514,13 +1099,13 @@ function updateBookingTrendsChart(dailyBreakdown) {
     bookingTrendsChart.destroy();
   }
 
-  // Prepare data - use day names for weekly view
+  // Prepare data - always use daily format
   const labels = dailyBreakdown.map((day) => {
     const date = new Date(day.date);
-    if (currentPeriod === "weekly" || currentDays <= 7) {
-      return date.toLocaleDateString("en-US", { weekday: "short" });
-    }
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
   });
 
   const bookingsData = dailyBreakdown.map((day) => day.bookings);

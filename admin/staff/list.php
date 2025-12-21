@@ -138,8 +138,13 @@ include '../includes/header.php';
         gap: 1rem;
     }
 
-    .filters-section .col-md-6 {
+    .filters-section .col-search {
         flex: 1;
+        margin: 0;
+    }
+
+    .filters-section .col-role {
+        flex: 0 0 180px;
         margin: 0;
     }
 
@@ -931,7 +936,7 @@ include '../includes/header.php';
     <!-- Filters Section -->
     <div class="filters-section">
         <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-search">
                 <div class="position-relative">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-gray); pointer-events: none; z-index: 1;">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -940,7 +945,7 @@ include '../includes/header.php';
                     <input type="text" class="form-control search-input" id="searchInput" placeholder="Search staff...">
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-role">
                 <select class="form-select filter-select" id="roleFilter">
                     <option value="">All Roles</option>
                     <option value="staff">Staff</option>
@@ -986,144 +991,8 @@ include '../includes/header.php';
                         $initials = strtoupper(substr($member['first_name'], 0, 1) . substr($member['last_name'], 0, 1));
                         $joinDate = date('Y-m-d', strtotime($member['created_at']));
                         $roleClass = $member['role'] === 'admin' ? 'role-admin' : 'role-staff';
-                        $imagePath = !empty($member['staff_image']) ? htmlspecialchars($member['staff_image']) : '';
-                        
-                        // #region agent log
-                        $log_data = [
-                            'sessionId' => 'debug-session',
-                            'runId' => 'run2',
-                            'hypothesisId' => 'A',
-                            'location' => 'list.php:905',
-                            'message' => 'Raw database image path',
-                            'data' => [
-                                'staff_email' => $member['staff_email'],
-                                'raw_staff_image' => $member['staff_image'],
-                                'imagePath_after_htmlspecialchars' => $imagePath
-                            ],
-                            'timestamp' => time() * 1000
-                        ];
-                        file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-                        // #endregion
-                        
-                        // Smart image path resolution - handles old paths, missing extensions, and malformed paths
-                        if (!empty($imagePath)) {
-                            $originalPath = $imagePath;
-                            
-                            // Extract filename from various path formats
-                            // Handle: /images/70.png, /images/42, staff/uploads/staff/file.png, etc.
-                            $filename = basename($imagePath);
-                            
-                            // If filename has no extension, try common image extensions
-                            $extensions = ['', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
-                            $foundFile = false;
-                            $baseDir = __DIR__ . '/../../images/';
-                            
-                            // #region agent log
-                            $log_data = [
-                                'sessionId' => 'debug-session',
-                                'runId' => 'run2',
-                                'hypothesisId' => 'B',
-                                'location' => 'list.php:930',
-                                'message' => 'File resolution attempt',
-                                'data' => [
-                                    'staff_email' => $member['staff_email'],
-                                    'original_path' => $originalPath,
-                                    'extracted_filename' => $filename,
-                                    'base_dir' => $baseDir
-                                ],
-                                'timestamp' => time() * 1000
-                            ];
-                            file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-                            // #endregion
-                            
-                            // Try to find file in root images directory first (where old files are)
-                            foreach ($extensions as $ext) {
-                                $testFilename = $filename . $ext;
-                                $testPathRoot = $baseDir . $testFilename;
-                                
-                                if (file_exists($testPathRoot)) {
-                                    // Use relative path with base_path to match other admin pages
-                                    $imagePath = $base_path . '/images/' . $testFilename;
-                                    $foundFile = true;
-                                    
-                                    // #region agent log
-                                    $log_data = [
-                                        'sessionId' => 'debug-session',
-                                        'runId' => 'run2',
-                                        'hypothesisId' => 'C',
-                                        'location' => 'list.php:950',
-                                        'message' => 'File found in root directory',
-                                        'data' => [
-                                            'staff_email' => $member['staff_email'],
-                                            'found_filename' => $testFilename,
-                                            'final_path' => $imagePath,
-                                            'physical_path' => $testPathRoot
-                                        ],
-                                        'timestamp' => time() * 1000
-                                    ];
-                                    file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-                                    // #endregion
-                                    
-                                    break;
-                                }
-                            }
-                            
-                            // If not found in root, try staff directory
-                            if (!$foundFile) {
-                                foreach ($extensions as $ext) {
-                                    $testFilename = $filename . $ext;
-                                    $testPathStaff = $baseDir . 'staff/' . $testFilename;
-                                    
-                                    if (file_exists($testPathStaff)) {
-                                        // Use relative path with base_path to match other admin pages
-                                        $imagePath = $base_path . '/images/staff/' . $testFilename;
-                                        $foundFile = true;
-                                        
-                                        // #region agent log
-                                        $log_data = [
-                                            'sessionId' => 'debug-session',
-                                            'runId' => 'run2',
-                                            'hypothesisId' => 'C',
-                                            'location' => 'list.php:970',
-                                            'message' => 'File found in staff directory',
-                                            'data' => [
-                                                'staff_email' => $member['staff_email'],
-                                                'found_filename' => $testFilename,
-                                                'final_path' => $imagePath,
-                                                'physical_path' => $testPathStaff
-                                            ],
-                                            'timestamp' => time() * 1000
-                                        ];
-                                        file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-                                        // #endregion
-                                        
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            // If still not found, set to empty so it shows initials instead of broken image
-                            if (!$foundFile) {
-                                $imagePath = '';
-                                
-                                // #region agent log
-                                $log_data = [
-                                    'sessionId' => 'debug-session',
-                                    'runId' => 'run2',
-                                    'hypothesisId' => 'D',
-                                    'location' => 'list.php:985',
-                                    'message' => 'File not found, setting to empty to show initials',
-                                    'data' => [
-                                        'staff_email' => $member['staff_email'],
-                                        'original_path' => $originalPath,
-                                        'final_path' => $imagePath
-                                    ],
-                                    'timestamp' => time() * 1000
-                                ];
-                                file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-                                // #endregion
-                            }
-                        }
+                        // Use centralized path resolver for consistent image paths
+                        $imagePath = resolveStaffImagePath($member['staff_image'] ?? null, $base_path);
                     ?>
                     <tr data-email="<?php echo htmlspecialchars($member['staff_email']); ?>"
                         data-role="<?php echo htmlspecialchars($member['role']); ?>"
@@ -1133,28 +1002,11 @@ include '../includes/header.php';
                             <div class="staff-cell">
                                 <div class="staff-avatar">
                                     <?php if (!empty($imagePath)): ?>
-                                        <?php 
-                                        // #region agent log
-                                        $log_data = [
-                                            'sessionId' => 'debug-session',
-                                            'runId' => 'run3',
-                                            'hypothesisId' => 'E',
-                                            'location' => 'list.php:1005',
-                                            'message' => 'HTML output - image src attribute',
-                                            'data' => [
-                                                'staff_email' => $member['staff_email'],
-                                                'imagePath_used_in_html' => $imagePath,
-                                                'base_path' => $base_path ?? 'N/A',
-                                                'full_url_would_be' => ($base_path ?? '') . $imagePath
-                                            ],
-                                            'timestamp' => time() * 1000
-                                        ];
-                                        file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-                                        // #endregion
-                                        ?>
-                                        <img src="<?php echo $imagePath; ?>" alt="<?php echo htmlspecialchars($member['first_name']); ?>" onerror="this.style.display='none'; this.parentElement.innerHTML='<?php echo htmlspecialchars($initials); ?>';">
+                                        <img src="<?php echo htmlspecialchars($imagePath); ?>" alt="<?php echo htmlspecialchars($member['first_name']); ?>" onerror="this.style.display='none'; this.parentElement.innerHTML='<div style=\'width: 100%; height: 100%; border-radius: 50%; background: #f5e9e2; display: flex; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 0.9rem;\'><?php echo htmlspecialchars($initials); ?></div>';" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
                                     <?php else: ?>
+                                        <div style="width: 100%; height: 100%; border-radius: 50%; background: #f5e9e2; display: flex; align-items: center; justify-content: center; color: #8b5e3c; font-weight: 600; font-size: 0.9rem;">
                                         <?php echo htmlspecialchars($initials); ?>
+                                        </div>
                                     <?php endif; ?>
                                 </div>
                                 <div class="staff-info">

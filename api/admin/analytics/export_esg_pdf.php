@@ -4,8 +4,15 @@
  * Generates professional PDF report for ESG sustainability analytics
  */
 
-// Start output buffering
+// Start output buffering FIRST
 ob_start();
+
+// Load PSR Log stub EARLY (before any includes that might trigger autoloading)
+// This ensures PSR Log interfaces are available before mPDF initialization
+$psr_stub_file = __DIR__ . '/psr_log_stub.php';
+if (file_exists($psr_stub_file)) {
+    include $psr_stub_file;
+}
 
 // Disable error display
 error_reporting(E_ALL);
@@ -287,6 +294,9 @@ try {
     
     // Set footer (applies to all pages)
     $mpdf->SetHTMLFooter(generatePDFFooter('ESG Sustainability Report'));
+    
+    // Set header for first page only (after cover)
+    // We'll set it after cover page and then remove it for subsequent pages
 
     // Generate HTML content
     $html = '<style>
@@ -321,7 +331,7 @@ try {
         }
         .cover-page {
             text-align: center;
-            padding: 100px 0;
+            padding: 30px 0;
         }
         .cover-title {
             font-size: 28pt;
@@ -335,17 +345,19 @@ try {
             margin-top: 20px;
         }
         .kpi-grid {
-            display: table;
             width: 100%;
             margin: 20px 0;
+            text-align: center;
         }
         .kpi-item {
-            display: table-cell;
-            width: 33.33%;
+            display: inline-block;
+            width: 30%;
             padding: 15px;
             text-align: center;
             border: 1px solid #e0e0e0;
             background-color: #fafafa;
+            vertical-align: top;
+            margin: 0 1%;
         }
         .kpi-value {
             font-size: 20pt;
@@ -426,19 +438,31 @@ try {
         }
     </style>';
     
-    // Cover Page (no header on first page)
+    // Cover Page - Build company header (no logo)
+    $company = getCompanyInfo();
+    
+    $cover_header = '<div style="margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #D4A574; text-align: center;">';
+    $cover_header .= '<h1 style="margin: 0; padding: 0; font-size: 20px; font-weight: bold; color: #2d2d2d; font-family: dejavusans, sans-serif; line-height: 1.2;">' . htmlspecialchars($company['name']) . '</h1>';
+    $cover_header .= '<p style="margin: 8px 0 0 0; padding: 0; font-size: 11px; color: #666; font-family: dejavusans, sans-serif; line-height: 1.4;">' . htmlspecialchars($company['address_line1']) . '</p>';
+    $cover_header .= '<p style="margin: 3px 0 0 0; padding: 0; font-size: 11px; color: #666; font-family: dejavusans, sans-serif; line-height: 1.4;">' . htmlspecialchars($company['address_line2']) . '</p>';
+    $cover_header .= '<p style="margin: 8px 0 0 0; padding: 0; font-size: 11px; color: #666; font-family: dejavusans, sans-serif; line-height: 1.4;">Email: ' . htmlspecialchars($company['email']) . ' | Tel: ' . htmlspecialchars($company['phone']) . ' / ' . htmlspecialchars($company['office_phone']) . '</p>';
+    $cover_header .= '</div>';
+    
     $cover_html = '<div class="cover-page">
+        ' . $cover_header . '
         <div class="cover-title">ESG SUSTAINABILITY REPORT</div>
-        <div style="font-size: 16pt; margin: 30px 0; color: #666;">' . htmlspecialchars($current_month_display) . '</div>
+        <div style="font-size: 12pt; margin: 15px 0; color: #666;">' . htmlspecialchars($current_month_display) . '</div>
         <div class="cover-subtitle">Operational Efficiency & Staff Utilization Analysis</div>
         <div class="cover-subtitle" style="margin-top: 20px;">Generated: ' . htmlspecialchars($generated_date) . '</div>
+        <div class="cover-subtitle" style="margin-top: 15px;">Company Registration: ' . htmlspecialchars($company['registration_number'] ?? 'N/A') . '</div>
+        <div class="cover-subtitle" style="margin-top: 40px; font-style: italic;">Official Sustainability Report</div>
     </div>';
     
     // Write cover page first (without header)
     $mpdf->WriteHTML($cover_html);
     
-    // Now set header for subsequent pages
-    $mpdf->SetHTMLHeader(generatePDFHeader($mpdf));
+    // DON'T set PDF header - we'll add company header as body content instead
+    // $mpdf->SetHTMLHeader(generatePDFHeader($mpdf)); // Removed - using body content header
     
     // Continue with rest of content
     
@@ -465,42 +489,9 @@ try {
     $html .= '<div class="metric-row"><span class="metric-label">Idle Hours:</span> <span class="metric-value">' . number_format($idle_hours, 2) . 'h</span></div>';
     $html .= '<div class="metric-row"><span class="metric-label">Global Utilization Rate:</span> <span class="metric-value">' . number_format($global_utilization_rate, 2) . '%</span></div>';
     
-    // Operational Efficiency Metrics
-    $html .= '<pagebreak />';
-    $html .= '<h2>Operational Efficiency Metrics</h2>';
-    
-    $html .= '<table>
-        <tr>
-            <th style="width: 60%;">Metric</th>
-            <th style="width: 40%;" class="text-right">Value</th>
-        </tr>
-        <tr>
-            <td>Active Staff</td>
-            <td class="text-right">' . number_format($total_active_staff) . '</td>
-        </tr>
-        <tr>
-            <td>Services Delivered</td>
-            <td class="text-right">' . number_format($services_delivered) . '</td>
-        </tr>
-        <tr>
-            <td>Scheduled Hours</td>
-            <td class="text-right">' . number_format($total_scheduled_hours, 2) . 'h</td>
-        </tr>
-        <tr>
-            <td>Booked Hours</td>
-            <td class="text-right">' . number_format($total_booked_hours, 2) . 'h</td>
-        </tr>
-        <tr>
-            <td>Idle Hours</td>
-            <td class="text-right">' . number_format($idle_hours, 2) . 'h</td>
-        </tr>
-        <tr>
-            <td>Utilization Rate</td>
-            <td class="text-right">' . number_format($global_utilization_rate, 2) . '%</td>
-        </tr>
-    </table>';
-    
-    $html .= '<h3>Efficiency Analysis</h3>';
+    // Add Efficiency Analysis right after Operational Overview (no pagebreak)
+    $html .= '<div style="margin-top: 30px; padding-top: 15px;"></div>';
+    $html .= '<h3 style="margin-top: 25px; margin-bottom: 15px;">Efficiency Analysis</h3>';
     if ($global_utilization_rate >= 75) {
         $html .= '<div class="insight-box">
             <div class="insight-title">✓ Optimal Efficiency</div>
@@ -517,8 +508,36 @@ try {
             <p>Utilization below 50% suggests potential for optimization. Consider adjusting staff schedules or implementing demand generation strategies.</p>
         </div>';
     }
+    
+    // Remove header from subsequent pages (only show on first content page)
+    $html .= '<pagebreak />';
+    $mpdf->SetHTMLHeader(''); // Clear header for subsequent pages
+    
+    // Introduction / Management Statement
+    $html .= '<h2>Introduction</h2>';
+    $html .= '<div class="insight-box" style="border-left-color: #4CAF50; background-color: #f9f9f9; padding: 20px; margin: 15px 0;">';
+    $html .= '<p style="margin: 0 0 15px 0; line-height: 1.8; font-size: 11pt;">This ESG Sustainability Report presents <strong>' . htmlspecialchars($company['name']) . '</strong>\'s commitment to sustainable business practices, operational efficiency, and responsible resource management for the reporting period of <strong>' . htmlspecialchars($current_month_display) . '</strong>.</p>';
+    $html .= '<p style="margin: 0 0 15px 0; line-height: 1.8; font-size: 11pt;">As a responsible business operating in Kota Kinabalu, Sabah, we recognize the importance of optimizing our operational resources while maintaining high service quality standards. This report demonstrates our ongoing efforts to balance operational efficiency with sustainable business practices.</p>';
+    $html .= '<p style="margin: 0; line-height: 1.8; font-size: 11pt;"><strong>Reporting Framework:</strong> This report follows operational efficiency metrics aligned with sustainability best practices and focuses on staff utilization, resource optimization, and operational excellence.</p>';
+    $html .= '</div>';
+    
+    // Governance Structure - Use spacing instead of pagebreak
+    $html .= '<div style="margin-top: 25px;"></div>';
+    $html .= '<h2>Governance Structure</h2>';
+    $html .= '<div class="insight-box" style="border-left-color: #2196F3; background-color: #f9f9f9; padding: 20px; margin: 15px 0;">';
+    $html .= '<h3 style="margin-top: 0; color: #2196F3; font-size: 13pt;">ESG Oversight</h3>';
+    $html .= '<p style="margin: 0 0 15px 0; line-height: 1.8; font-size: 11pt;">Management is responsible for monitoring and improving operational efficiency and staff utilization. Our governance framework ensures that sustainability considerations are integrated into daily operational decisions.</p>';
+    $html .= '<h3 style="margin-top: 15px; color: #2196F3; font-size: 13pt;">Policies and Procedures</h3>';
+    $html .= '<p style="margin: 0 0 10px 0; line-height: 1.8; font-size: 11pt;">Our staff scheduling and resource allocation policies are designed to:</p>';
+    $html .= '<ul style="margin: 0 0 0 20px; padding: 0; line-height: 1.8; font-size: 11pt;">';
+    $html .= '<li>Optimize efficiency while maintaining service quality</li>';
+    $html .= '<li>Ensure fair distribution of workload among staff</li>';
+    $html .= '<li>Minimize idle time and resource waste</li>';
+    $html .= '<li>Support staff well-being through balanced scheduling</li>';
+    $html .= '</ul>';
+    $html .= '</div>';
         
-    // Staff Utilization Breakdown
+    // Staff Utilization Breakdown - Only pagebreak if needed
     if (!empty($staff_breakdown)) {
         $html .= '<pagebreak />';
         $html .= '<h2>Staff Utilization Breakdown</h2>';
@@ -577,6 +596,36 @@ try {
             </div>';
         }
     }
+    
+    // Future Commitments
+    $html .= '<pagebreak />';
+    $html .= '<h2>Future Commitments</h2>';
+    $html .= '<div class="insight-box" style="border-left-color: #4CAF50; background-color: #f9f9f9; padding: 20px; margin: 15px 0;">';
+    $html .= '<p style="margin: 0 0 15px 0; line-height: 1.8; font-size: 11pt;">As part of our commitment to sustainable operations and continuous improvement, <strong>' . htmlspecialchars($company['name']) . '</strong> commits to the following targets and initiatives:</p>';
+    $html .= '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #4CAF50; font-size: 13pt;">Operational Efficiency Targets</h3>';
+    $html .= '<ul style="margin: 0 0 15px 20px; padding: 0; line-height: 1.8; font-size: 11pt;">';
+    
+    // Set target based on current utilization
+    $target_utilization = 65;
+    if ($global_utilization_rate < 50) {
+        $target_utilization = 60;
+    } elseif ($global_utilization_rate > 80) {
+        $target_utilization = 75;
+    }
+    
+    $html .= '<li>Achieve and maintain staff utilization rate between <strong>60-75%</strong> (current: ' . number_format($global_utilization_rate, 1) . '%)</li>';
+    $html .= '<li>Reduce idle hours through improved demand forecasting and scheduling optimization</li>';
+    $html .= '<li>Implement data-driven scheduling decisions to balance workload distribution</li>';
+    $html .= '</ul>';
+    $html .= '<h3 style="margin-top: 15px; margin-bottom: 10px; color: #4CAF50; font-size: 13pt;">Strategic Initiatives</h3>';
+    $html .= '<ul style="margin: 0 0 0 20px; padding: 0; line-height: 1.8; font-size: 11pt;">';
+    $html .= '<li>Continue monitoring and optimizing staff schedules on a monthly basis</li>';
+    $html .= '<li>Develop demand generation strategies to reduce idle hours during low-demand periods</li>';
+    $html .= '<li>Enhance staff training and cross-skilling to improve flexibility and utilization</li>';
+    $html .= '<li>Regular review of operational metrics to identify improvement opportunities</li>';
+    $html .= '</ul>';
+    $html .= '<p style="margin: 15px 0 0 0; line-height: 1.8; font-size: 11pt; font-style: italic; color: #666;">Progress on these commitments will be reported in subsequent ESG Sustainability Reports.</p>';
+    $html .= '</div>';
     
     // Staff Work Schedule Summary
     if (!empty($schedule_summary)) {

@@ -44,9 +44,13 @@ include '../includes/header.php';
         gap: 1rem;
     }
 
-    .filters-section .col-md-6,
-    .filters-section .col-md-3 {
+    .filters-section .col-search {
         flex: 1;
+        margin: 0;
+    }
+
+    .filters-section .col-filter {
+        flex: 0 0 180px;
         margin: 0;
     }
 
@@ -94,8 +98,8 @@ include '../includes/header.php';
             flex-direction: column;
         }
 
-        .filters-section .col-md-6,
-        .filters-section .col-md-3 {
+        .filters-section .col-search,
+        .filters-section .col-filter {
             width: 100%;
         }
     }
@@ -378,7 +382,7 @@ include '../includes/header.php';
     <!-- Filters Section -->
     <div class="filters-section">
         <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-search">
                 <div class="position-relative">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-gray); pointer-events: none; z-index: 1;">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -387,12 +391,12 @@ include '../includes/header.php';
                     <input type="text" class="form-control search-input" id="searchInput" placeholder="Search services..." aria-label="Search services">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-filter">
                 <select class="form-select filter-select" id="categoryFilter" aria-label="Filter by category">
                     <option value="">All Categories</option>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-filter">
                 <select class="form-select filter-select" id="statusFilter" aria-label="Filter by status">
                     <option value="">All Status</option>
                     <option value="active">Active</option>

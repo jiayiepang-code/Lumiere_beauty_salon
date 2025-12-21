@@ -9,6 +9,65 @@
  * @return object|false mPDF instance or false if not available
  */
 function initMPDF() {
+    // OPTION 0: Try main vendor/autoload.php (Composer autoloader - includes PSR Log)
+    $vendor_autoload = __DIR__ . '/../../../vendor/autoload.php';
+    if (file_exists($vendor_autoload)) {
+        try {
+            require_once $vendor_autoload;
+            
+            // Check if mPDF class is available after autoloader
+            if (class_exists('\Mpdf\Mpdf')) {
+                // Get mPDF path for temp directory
+                $mpdf_path = __DIR__ . '/../../../vendor/mpdf/mpdf';
+                $temp_dir = $mpdf_path . '/tmp';
+                if (!is_dir($temp_dir)) {
+                    @mkdir($temp_dir, 0755, true);
+                }
+                
+                try {
+                    // Configure default font (DejaVuSans is available in mPDF)
+                    $fontdata = [
+                        'dejavusans' => [
+                            'R' => 'DejaVuSans.ttf',
+                            'B' => 'DejaVuSans-Bold.ttf',
+                            'I' => 'DejaVuSans-Oblique.ttf',
+                            'BI' => 'DejaVuSans-BoldOblique.ttf',
+                        ],
+                        'dejavuserif' => [
+                            'R' => 'DejaVuSerif.ttf',
+                            'B' => 'DejaVuSerif-Bold.ttf',
+                            'I' => 'DejaVuSerif-Italic.ttf',
+                            'BI' => 'DejaVuSerif-BoldItalic.ttf',
+                        ],
+                    ];
+                    
+                    $mpdf_instance = new \Mpdf\Mpdf([
+                        'mode' => 'utf-8',
+                        'format' => 'A4',
+                        'orientation' => 'P',
+                        'margin_left' => 15,
+                        'margin_right' => 15,
+                        'margin_top' => 15,
+                        'margin_bottom' => 20,
+                        'margin_header' => 25,
+                        'margin_footer' => 10,
+                        'tempDir' => $temp_dir,
+                        'fontDir' => [$mpdf_path . '/ttfonts'],
+                        'fontdata' => $fontdata,
+                        'default_font' => 'dejavusans'
+                    ]);
+                    return $mpdf_instance;
+                } catch (\Exception $e) {
+                    error_log("mPDF Composer initialization error: " . $e->getMessage());
+                    // Fall through to manual loading
+                }
+            }
+        } catch (\Exception $e) {
+            error_log("Error loading Composer autoloader: " . $e->getMessage());
+            // Fall through to manual loading
+        }
+    }
+    
     // OPTION 1: Try vendor_custom/pdf_generator/vendor (Composer autoloader with all dependencies)
     $vendor_custom_autoload = __DIR__ . '/../../../vendor_custom/pdf_generator/vendor/autoload.php';
     if (file_exists($vendor_custom_autoload)) {
@@ -49,7 +108,7 @@ function initMPDF() {
                         'margin_right' => 15,
                         'margin_top' => 15,
                         'margin_bottom' => 20,
-                        'margin_header' => 10,
+                        'margin_header' => 25,
                         'margin_footer' => 10,
                         'tempDir' => $temp_dir,
                         'fontDir' => [$mpdf_path . '/ttfonts'],
@@ -93,6 +152,12 @@ function initMPDF() {
     
     // Set up autoloader for mPDF and dependencies
     spl_autoload_register(function ($class) use ($mpdf_path, $vendor_base) {
+        // First, check if the class/interface already exists
+        // This prevents autoloader from interfering with already-defined classes
+        if (class_exists($class, false) || interface_exists($class, false)) {
+            return true; // Already exists, no need to load
+        }
+        
         // Handle Mpdf namespace
         if (strpos($class, 'Mpdf\\') === 0) {
             $file = str_replace('\\', DIRECTORY_SEPARATOR, $class);
@@ -121,7 +186,15 @@ function initMPDF() {
             }
         }
         // Handle other namespaces that mPDF might use
-        if (strpos($class, 'Psr\\') === 0 || strpos($class, 'DeepCopy\\') === 0) {
+        // For PSR Log, the stub file should have already been loaded
+        // Just check if it exists - don't try to autoload interfaces (they can't be autoloaded)
+        if (strpos($class, 'Psr\\Log\\') === 0) {
+            // Interfaces/classes should already be defined by the stub file loaded earlier
+            // Return false to let PHP handle the error naturally if they don't exist
+            // This way we get a clear error message instead of silent failure
+            return false;
+        }
+        if (strpos($class, 'DeepCopy\\') === 0) {
             // These are dependencies - try to load if available, but don't fail
             return false;
         }
@@ -141,12 +214,16 @@ function initMPDF() {
     }
     
     // Load PSR Log stub if missing (mPDF requires psr/log but it may not be installed)
+    // NOTE: Moved to export files - loaded earlier to prevent output issues
+    // Commenting out to avoid duplicate loading
+    /*
     if (!class_exists('Psr\Log\NullLogger')) {
         $psr_stub_file = __DIR__ . '/psr_log_stub.php';
         if (file_exists($psr_stub_file)) {
             require_once $psr_stub_file;
         }
     }
+    */
     
     // Use output buffering to catch any output/errors
     ob_start();
@@ -210,13 +287,14 @@ function initMPDF() {
                 'margin_right' => 15,
                 'margin_top' => 15,
                 'margin_bottom' => 20,
-                'margin_header' => 10,
+                'margin_header' => 25,
                 'margin_footer' => 10,
                 'tempDir' => $temp_dir,
                 'fontDir' => [$mpdf_path . '/ttfonts'],
                 'fontdata' => $fontdata,
                 'default_font' => 'dejavusans'
             ]);
+            
             return $mpdf_instance;
         } catch (\Exception $e) {
             error_log("mPDF 8.x initialization error: " . $e->getMessage());
@@ -265,6 +343,7 @@ function getCompanyInfo() {
         'email' => 'Lumiere@gmail.com',
         'phone' => '012 345 6789',
         'office_phone' => '088 978 8977',
+        'registration_number' => 'SSM: SA0123456-A',
         'logo_path' => __DIR__ . '/../../../images/16.png'
     ];
 }
@@ -282,15 +361,38 @@ function generatePDFHeader($mpdf = null) {
     $logo_exists = false;
     $logo_html = '';
     
-    if (!empty($logo_path) && file_exists($logo_path) && is_readable($logo_path)) {
+    if (!empty($logo_path) && file_exists($logo_path) && is_readable($logo_path) && $mpdf) {
         try {
-            // Convert logo to base64 for embedding in PDF
+            // Read logo data
             $logo_data = file_get_contents($logo_path);
             if ($logo_data !== false && strlen($logo_data) > 0) {
-                $logo_base64 = base64_encode($logo_data);
-                $logo_mime = 'image/png'; // Default to PNG
+                // Get mPDF temp directory - use the one configured in mPDF
+                $temp_dir = null;
+                if (property_exists($mpdf, 'tempDir') && !empty($mpdf->tempDir)) {
+                    $temp_dir = $mpdf->tempDir;
+                }
                 
-                // Try to detect MIME type
+                // Fallback to vendor/mpdf/tmp if available
+                if (empty($temp_dir) || !is_dir($temp_dir)) {
+                    $vendor_mpdf_tmp = __DIR__ . '/../../../vendor/mpdf/mpdf/tmp';
+                    if (is_dir($vendor_mpdf_tmp)) {
+                        $temp_dir = $vendor_mpdf_tmp;
+                    } else {
+                        $temp_dir = sys_get_temp_dir();
+                    }
+                }
+                
+                // Ensure temp directory exists
+                if (!is_dir($temp_dir)) {
+                    @mkdir($temp_dir, 0755, true);
+                }
+                
+                // Try using absolute file path first (most reliable for mPDF)
+                // Convert Windows backslashes to forward slashes for mPDF
+                $absolute_logo_path = str_replace('\\', '/', realpath($logo_path));
+                
+                // Detect MIME type
+                $logo_mime = 'image/png';
                 $finfo = finfo_open(FILEINFO_MIME_TYPE);
                 if ($finfo) {
                     $detected_mime = finfo_file($finfo, $logo_path);
@@ -300,46 +402,37 @@ function generatePDFHeader($mpdf = null) {
                     finfo_close($finfo);
                 }
                 
-                // Use mPDF's WriteImage method for better compatibility
-                if ($mpdf) {
-                    // Store image in temp file and use WriteImage
-                    $temp_file = sys_get_temp_dir() . '/logo_' . uniqid() . '.png';
-                    file_put_contents($temp_file, $logo_data);
-                    
-                    // Use data URI for mPDF (more reliable)
-                    $logo_html = '<img src="data:' . $logo_mime . ';base64,' . $logo_base64 . '" style="height: 50px; max-width: 80px; width: auto;" />';
-                    $logo_exists = true;
-                    
-                    // Clean up temp file
-                    @unlink($temp_file);
-                }
+                // Always use base64 encoding for reliability (works on all systems)
+                $logo_base64 = base64_encode($logo_data);
+                $logo_html = '<img src="data:' . $logo_mime . ';base64,' . $logo_base64 . '" style="height: 28px; max-width: 55px; width: auto;" />';
+                $logo_exists = true;
             }
         } catch (Exception $e) {
-            // If logo loading fails, continue without it
-            error_log("Logo loading error: " . $e->getMessage());
+            // If logo loading fails, log error but continue without logo
+            error_log("Logo loading error in header: " . $e->getMessage());
         }
     }
     
-    $html = '<div style="margin-bottom: 20px; border-bottom: 2px solid #D4A574; padding-bottom: 15px;">';
+    // Compact header to fit within margin_header space
+    $html = '<div style="margin: 0; padding: 0; border-bottom: 2px solid #D4A574; padding-bottom: 5px;">';
     
-    if ($logo_exists && $mpdf) {
-        // Add logo as image in table layout
-        $html .= '<table style="width: 100%; margin-bottom: 10px; border-collapse: collapse;"><tr>';
-        $html .= '<td style="width: 80px; vertical-align: top; padding: 0;">';
-        $html .= $logo_html;
+    if ($logo_exists && !empty($logo_html)) {
+        // Compact table layout with logo - smaller logo
+        $html .= '<table style="width: 100%; border-collapse: collapse; margin: 0; padding: 0;"><tr>';
+        $html .= '<td style="width: 55px; vertical-align: middle; padding: 0; margin: 0;">';
+        // Make logo smaller in header
+        $logo_html_small = str_replace('height: 35px; max-width: 70px;', 'height: 28px; max-width: 55px;', $logo_html);
+        $html .= $logo_html_small;
         $html .= '</td>';
-        $html .= '<td style="vertical-align: top; padding-left: 15px;">';
+        $html .= '<td style="vertical-align: middle; padding-left: 6px; margin: 0;">';
     } else {
-        $html .= '<div style="padding-left: 0;">';
+        $html .= '<div style="padding: 0; margin: 0;">';
     }
     
-    $html .= '<h1 style="margin: 0; padding: 0; font-size: 20px; font-weight: bold; color: #2d2d2d; font-family: dejavusans, sans-serif;">' . htmlspecialchars($company['name']) . '</h1>';
-    $html .= '<p style="margin: 5px 0 0 0; font-size: 10px; color: #666; font-family: dejavusans, sans-serif;">' . htmlspecialchars($company['address_line1'] ?? '') . '</p>';
-    $html .= '<p style="margin: 2px 0 0 0; font-size: 10px; color: #666; font-family: dejavusans, sans-serif;">' . htmlspecialchars($company['address_line2'] ?? '') . '</p>';
-    $html .= '<p style="margin: 5px 0 0 0; font-size: 10px; color: #666; font-family: dejavusans, sans-serif;">';
-    $html .= 'Email: ' . htmlspecialchars($company['email'] ?? '') . ' | ';
-    $html .= 'Tel: ' . htmlspecialchars($company['phone'] ?? '') . ' / ' . htmlspecialchars($company['office_phone'] ?? '');
-    $html .= '</p>';
+    // Even more compact company info to prevent overlap - smaller fonts
+    $html .= '<h1 style="margin: 0; padding: 0; font-size: 11px; font-weight: bold; color: #2d2d2d; font-family: dejavusans, sans-serif; line-height: 1.0;">' . htmlspecialchars($company['name']) . '</h1>';
+    $html .= '<p style="margin: 0.5px 0 0 0; padding: 0; font-size: 7px; color: #666; font-family: dejavusans, sans-serif; line-height: 1.0;">' . htmlspecialchars($company['address_line1'] ?? '') . ', ' . htmlspecialchars($company['address_line2'] ?? '') . '</p>';
+    $html .= '<p style="margin: 0.5px 0 0 0; padding: 0; font-size: 7px; color: #666; font-family: dejavusans, sans-serif; line-height: 1.0;">Email: ' . htmlspecialchars($company['email'] ?? '') . ' | Tel: ' . htmlspecialchars($company['phone'] ?? '') . ' / ' . htmlspecialchars($company['office_phone'] ?? '') . '</p>';
     
     if ($logo_exists) {
         $html .= '</td></tr></table>';

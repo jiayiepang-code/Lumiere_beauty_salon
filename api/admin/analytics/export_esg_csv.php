@@ -217,12 +217,12 @@ try {
     // Open output stream
     $output = fopen('php://output', 'w');
     
-    // Company Information Section
-    fputcsv($output, ['LUMIÈRE BEAUTY SALON']);
+    // Company Information Section (aligned with PDF)
+    fputcsv($output, ['Lumiere Beauty Salon']);
     fputcsv($output, ['ESG Sustainability Report']);
-    fputcsv($output, []); // Empty row
     fputcsv($output, ['Report Period:', $current_month_display]);
     fputcsv($output, ['Generated on:', $generated_date]);
+    fputcsv($output, ['Company Registration:', 'SSM: SA0123456-A']);
     fputcsv($output, []); // Empty row
     fputcsv($output, ['Company Information:']);
     fputcsv($output, ['Address:', 'No. 10, Ground Floor Block B, Phase 2, Jln Lintas, Kolam Centre']);

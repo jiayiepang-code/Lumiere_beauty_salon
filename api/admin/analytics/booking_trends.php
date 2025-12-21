@@ -1,4 +1,10 @@
 <?php
+// Disable error display FIRST - before any output or includes
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// Set JSON header immediately
 header('Content-Type: application/json');
 
 // Include database connection and auth check
@@ -49,42 +55,84 @@ try {
     // Get database connection
     $conn = getDBConnection();
     
-    // Get parameters
-    $period = isset($_GET['period']) ? trim($_GET['period']) : 'weekly';
+    // Get parameters - new flexible system
     $start_date = isset($_GET['start_date']) ? trim($_GET['start_date']) : null;
     $end_date = isset($_GET['end_date']) ? trim($_GET['end_date']) : null;
+    $group_by = isset($_GET['group_by']) ? trim($_GET['group_by']) : 'daily';
+    $preset = isset($_GET['preset']) ? trim($_GET['preset']) : null;
     
-    // Validate period
-    $valid_periods = ['daily', 'weekly', 'monthly'];
-    if (!in_array($period, $valid_periods)) {
-        $period = 'weekly';
+    // Validate group_by
+    $valid_groups = ['daily', 'weekly', 'monthly'];
+    if (!in_array($group_by, $valid_groups)) {
+        $group_by = 'daily';
     }
     
-    // Calculate date range based on period if not provided
-    if ($start_date === null || $start_date === '') {
-        switch ($period) {
-            case 'daily':
-                $start_date = date('Y-m-d');
-                $end_date = date('Y-m-d');
+    // Handle preset date ranges if provided
+    if ($preset && ($start_date === null || $end_date === null)) {
+        $today = date('Y-m-d');
+        switch ($preset) {
+            case 'today':
+                $start_date = $today;
+                $end_date = $today;
                 break;
-            case 'weekly':
+            case 'yesterday':
+                $start_date = date('Y-m-d', strtotime('-1 day'));
+                $end_date = date('Y-m-d', strtotime('-1 day'));
+                break;
+            case 'last7days':
+                $start_date = date('Y-m-d', strtotime('-6 days'));
+                $end_date = $today;
+                break;
+            case 'last30days':
+                $start_date = date('Y-m-d', strtotime('-29 days'));
+                $end_date = $today;
+                break;
+            case 'thisweek':
                 $start_date = date('Y-m-d', strtotime('monday this week'));
                 $end_date = date('Y-m-d', strtotime('sunday this week'));
                 break;
-            case 'monthly':
+            case 'thismonth':
+                $start_date = date('Y-m-01');
+                $end_date = date('Y-m-t');
+                break;
+            case 'lastmonth':
+                $start_date = date('Y-m-01', strtotime('first day of last month'));
+                $end_date = date('Y-m-t', strtotime('last day of last month'));
+                break;
+            case 'thisyear':
+                $start_date = date('Y-01-01');
+                $end_date = date('Y-12-31');
+                break;
+            default:
+                // Default to this month if preset is invalid
                 $start_date = date('Y-m-01');
                 $end_date = date('Y-m-t');
                 break;
         }
     }
     
-    // If end_date not provided, set it to start_date
+    // If dates still not provided, default to this month
+    if ($start_date === null || $start_date === '') {
+        $start_date = date('Y-m-01');
+    }
     if ($end_date === null || $end_date === '') {
-        $end_date = $start_date;
+        $end_date = date('Y-m-t');
+    }
+    
+    // Validate dates
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $start_date) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $end_date)) {
+        throw new Exception('Invalid date format. Use YYYY-MM-DD');
+    }
+    
+    // Ensure start_date <= end_date
+    if (strtotime($start_date) > strtotime($end_date)) {
+        $temp = $start_date;
+        $start_date = $end_date;
+        $end_date = $temp;
     }
     
     // Check cache (5-minute cache)
-    $cache_key = "analytics_booking_trends_{$period}_{$start_date}_{$end_date}";
+    $cache_key = "analytics_booking_trends_{$start_date}_{$end_date}_{$group_by}";
     $cache_file = "../../../cache/{$cache_key}.json";
     $cache_duration = 300; // 5 minutes
     
@@ -106,25 +154,47 @@ try {
                     WHERE booking_date BETWEEN ? AND ?";
     
     $stmt = $conn->prepare($metrics_sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare metrics query: ' . $conn->error);
+    }
+    
     $stmt->bind_param("ss", $start_date, $end_date);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        throw new Exception('Failed to execute metrics query: ' . $stmt->error);
+    }
+    
     $metrics_result = $stmt->get_result();
+    if (!$metrics_result) {
+        throw new Exception('Failed to get metrics result: ' . $conn->error);
+    }
+    
     $metrics = $metrics_result->fetch_assoc();
     $stmt->close();
     
+    // Initialize with defaults if no data
+    if (!$metrics) {
+        $metrics = [
+            'total_bookings' => 0,
+            'completed_bookings' => 0,
+            'cancelled_bookings' => 0,
+            'no_show_bookings' => 0,
+            'total_revenue' => 0
+        ];
+    }
+    
     // Calculate average booking value
     $average_booking_value = 0;
-    if ($metrics['completed_bookings'] > 0) {
+    if (isset($metrics['completed_bookings']) && $metrics['completed_bookings'] > 0) {
         $average_booking_value = $metrics['total_revenue'] / $metrics['completed_bookings'];
     }
     
-    // Format metrics
+    // Format metrics with null safety
     $metrics_formatted = [
-        'total_bookings' => (int)$metrics['total_bookings'],
-        'completed_bookings' => (int)$metrics['completed_bookings'],
-        'cancelled_bookings' => (int)$metrics['cancelled_bookings'],
-        'no_show_bookings' => (int)$metrics['no_show_bookings'],
-        'total_revenue' => (float)$metrics['total_revenue'],
+        'total_bookings' => (int)($metrics['total_bookings'] ?? 0),
+        'completed_bookings' => (int)($metrics['completed_bookings'] ?? 0),
+        'cancelled_bookings' => (int)($metrics['cancelled_bookings'] ?? 0),
+        'no_show_bookings' => (int)($metrics['no_show_bookings'] ?? 0),
+        'total_revenue' => (float)($metrics['total_revenue'] ?? 0),
         'average_booking_value' => round($average_booking_value, 2)
     ];
     
@@ -224,9 +294,10 @@ try {
     // Prepare response
     $response = [
         'success' => true,
-        'period' => $period,
         'start_date' => $start_date,
         'end_date' => $end_date,
+        'group_by' => $group_by,
+        'preset' => $preset,
         'metrics' => $metrics_formatted,
         'daily_breakdown' => $daily_breakdown,
         'popular_services' => $popular_services,
@@ -244,23 +315,6 @@ try {
     echo json_encode($response);
     
 } catch (Exception $e) {
-    // #region agent log
-    $log_data = [
-        'sessionId' => 'debug-session',
-        'runId' => 'run1',
-        'hypothesisId' => 'A',
-        'location' => 'api/admin/analytics/booking_trends.php:' . __LINE__,
-        'message' => 'Exception caught in analytics API',
-        'data' => [
-            'error_message' => $e->getMessage(),
-            'error_file' => $e->getFile(),
-            'error_line' => $e->getLine()
-        ],
-        'timestamp' => time() * 1000
-    ];
-    file_put_contents(__DIR__ . '/../../.cursor/debug.log', json_encode($log_data) . "\n", FILE_APPEND);
-    // #endregion
-    
     // Log error
     error_log(json_encode([
         'timestamp' => date('Y-m-d H:i:s'),
@@ -270,7 +324,7 @@ try {
         'line' => $e->getLine()
     ]), 3, '../../../logs/admin_errors.log');
     
-    // Ensure JSON response (not HTML)
+    // Ensure JSON response (not HTML) - set header again in case it was overwritten
     http_response_code(500);
     header('Content-Type: application/json');
     echo json_encode([
@@ -278,6 +332,20 @@ try {
         'error' => [
             'code' => 'DATABASE_ERROR',
             'message' => 'An error occurred while fetching analytics data: ' . $e->getMessage()
+        ]
+    ]);
+    exit;
+} catch (Error $e) {
+    // Handle fatal errors (PHP 7+)
+    error_log("Fatal error in booking_trends.php: " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
+    
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => false,
+        'error' => [
+            'code' => 'FATAL_ERROR',
+            'message' => 'A fatal error occurred. Please check server logs.'
         ]
     ]);
     exit;

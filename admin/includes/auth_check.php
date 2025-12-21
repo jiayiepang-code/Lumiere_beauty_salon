@@ -64,12 +64,42 @@ function requireAdminAuth() {
 
 /**
  * Get current admin data
+ * Always fetches fresh staff_image from database to ensure profile photos are up-to-date
  * 
  * @return array|null - Admin data or null if not logged in
  */
 function getCurrentAdmin() {
     if (!isAdminLoggedIn()) {
         return null;
+    }
+    
+    // Always fetch fresh staff_image from database to ensure it's up-to-date
+    // This ensures profile photo changes are reflected immediately
+    try {
+        require_once __DIR__ . '/../../config/db_connect.php';
+        $conn = getDBConnection();
+        
+        $email = $_SESSION['admin']['email'];
+        $stmt = $conn->prepare("SELECT staff_image, first_name, last_name, role FROM Staff WHERE staff_email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $fresh_data = $result->fetch_assoc();
+            // Update session with fresh data (especially staff_image)
+            $_SESSION['admin']['staff_image'] = $fresh_data['staff_image'] ?? null;
+            $_SESSION['admin']['first_name'] = $fresh_data['first_name'] ?? $_SESSION['admin']['first_name'] ?? '';
+            $_SESSION['admin']['last_name'] = $fresh_data['last_name'] ?? $_SESSION['admin']['last_name'] ?? '';
+            $_SESSION['admin']['role'] = $fresh_data['role'] ?? $_SESSION['admin']['role'] ?? 'admin';
+            $_SESSION['admin']['name'] = trim(($_SESSION['admin']['first_name'] ?? '') . ' ' . ($_SESSION['admin']['last_name'] ?? ''));
+        }
+        
+        $stmt->close();
+        $conn->close();
+    } catch (Exception $e) {
+        // If database fetch fails, just use session data (fallback)
+        error_log("Error refreshing admin data: " . $e->getMessage());
     }
     
     return $_SESSION['admin'];
@@ -117,6 +147,95 @@ function getCSRFToken() {
         return '';
     }
     return $_SESSION['admin']['csrf_token'] ?? '';
+}
+
+/**
+ * Get the base path of the application (handles subdirectory installations)
+ * 
+ * @return string - Base path like '/Lumiere_beauty_salon-main' or '' if at root
+ */
+function getBasePath() {
+    static $basePath = null;
+    
+    if ($basePath === null) {
+        // Get the script directory relative to document root
+        $scriptDir = dirname($_SERVER['SCRIPT_NAME']);
+        // Remove trailing slashes and normalize
+        $scriptDir = rtrim($scriptDir, '/');
+        
+        // If we're in a subdirectory (not at root), extract it
+        // For admin pages: /Lumiere_beauty_salon-main/admin/... -> /Lumiere_beauty_salon-main
+        // For API: /Lumiere_beauty_salon-main/api/... -> /Lumiere_beauty_salon-main
+        if (strpos($scriptDir, '/admin') !== false) {
+            $basePath = substr($scriptDir, 0, strpos($scriptDir, '/admin'));
+        } elseif (strpos($scriptDir, '/api') !== false) {
+            $basePath = substr($scriptDir, 0, strpos($scriptDir, '/api'));
+        } elseif (strpos($scriptDir, '/staff') !== false) {
+            $basePath = substr($scriptDir, 0, strpos($scriptDir, '/staff'));
+        } else {
+            // Try to detect from common patterns
+            $parts = explode('/', trim($scriptDir, '/'));
+            if (count($parts) > 0 && !empty($parts[0])) {
+                $basePath = '/' . $parts[0];
+            } else {
+                $basePath = '';
+            }
+        }
+    }
+    
+    return $basePath;
+}
+
+/**
+ * Resolve staff image path to a web-accessible URL
+ * Handles various path formats stored in database
+ * 
+ * @param string|null $imagePath - Path from database (can be null, empty, or various formats)
+ * @param string $basePath - Base path for relative URLs (default: '..')
+ * @return string|null - Resolved web-accessible path or null if no image
+ */
+function resolveStaffImagePath($imagePath, $basePath = '..') {
+    if (empty($imagePath)) {
+        return null;
+    }
+    
+    // Remove any leading/trailing whitespace
+    $imagePath = trim($imagePath);
+    
+    // If it's already a full URL, return as-is
+    if (preg_match('/^https?:\/\//', $imagePath)) {
+        return $imagePath;
+    }
+    
+    // Get the application base path (handles subdirectory installations)
+    $appBasePath = getBasePath();
+    
+    // Extract filename from any path format
+    $filename = basename($imagePath);
+    
+    // Handle absolute paths from site root (new format: /images/staff/filename.jpg)
+    if (strpos($imagePath, '/images/staff/') === 0) {
+        // Prepend application base path if in subdirectory
+        return $appBasePath . '/images/staff/' . $filename;
+    }
+    
+    // Handle old format: /images/filename.jpg (without /staff/)
+    if (strpos($imagePath, '/images/') === 0 && strpos($imagePath, '/images/staff/') === false) {
+        return $appBasePath . '/images/staff/' . $filename;
+    }
+    
+    // Handle staff upload format: staff/uploads/staff/filename.jpg
+    if (strpos($imagePath, 'staff/uploads/staff/') === 0) {
+        return $appBasePath . '/images/staff/' . $filename;
+    }
+    
+    // Handle just filename (legacy): filename.jpg or 42 or 70.png
+    if (strpos($imagePath, '/') === false && strpos($imagePath, '\\') === false) {
+        return $appBasePath . '/images/staff/' . $imagePath;
+    }
+    
+    // For any other relative path, extract filename and use absolute path
+    return $appBasePath . '/images/staff/' . $filename;
 }
 
 // Make admin data available globally for pages that include this file
