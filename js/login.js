@@ -485,7 +485,7 @@ function validateCustomerLogin() {
     const urlParams = new URLSearchParams(window.location.search);
     const redirectParam = urlParams.get('redirect');
     
-    let targetUrl = "index.php"; // Default to user homepage (index.php)
+    let targetUrl = "user/index.php"; // Default to user homepage (index.php)
     
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/6202d6bb-cc4f-49c4-b278-16d6d5c17837',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'js/login.js:483','message':'Determining redirect URL','data':{'redirect_input_exists':!!redirectInput,'redirect_input_value':redirectInput?.value||null,'redirect_param':redirectParam,'default_target':'index.php'},timestamp:Date.now(),sessionId:'debug-session',runId:'pre-fix',hypothesisId:'A'})}).catch(()=>{});

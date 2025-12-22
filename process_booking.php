@@ -46,31 +46,26 @@ function getRandomAvailableStaff($db, $bookingDate, $startTime, $endTime, $servi
         list($endH, $endM) = explode(':', $endTime);
         $endMinutes = ($endH * 60) + $endM;
         
-        // Get all active staff who can provide this service
-        // First try to get staff from staff_service table, otherwise get all active staff
-        // EXCLUDE admin accounts (role = 'admin') - only assign actual staff members
+        // SOLUTION 2: ONLY get staff who are linked to this service via staff_service table
+        // This ensures "No Preference" only assigns staff from the same service category
+        // EXCLUDE admin accounts (role = 'admin') - only assign staff with role = 'staff' or NULL
         $staffQuery = "SELECT DISTINCT st.staff_email 
                       FROM staff st
-                      LEFT JOIN staff_service ss ON st.staff_email = ss.staff_email AND ss.service_id = ? AND ss.is_active = 1
-                      WHERE st.is_active = 1 
-                      AND (st.role IS NULL OR LOWER(st.role) != 'admin')
-                      AND (ss.service_id IS NOT NULL OR NOT EXISTS (SELECT 1 FROM staff_service WHERE staff_email = st.staff_email))
+                      INNER JOIN staff_service ss ON st.staff_email = ss.staff_email 
+                      WHERE ss.service_id = ? 
+                      AND ss.is_active = 1
+                      AND st.is_active = 1 
+                      AND (st.role IS NULL OR LOWER(st.role) = 'staff')
                       ORDER BY RAND()";
         
         $staffStmt = $db->prepare($staffQuery);
         $staffStmt->execute([$serviceId]);
         $allStaff = $staffStmt->fetchAll(PDO::FETCH_COLUMN);
         
-        // If no staff found from staff_service, get all active staff (excluding admin)
+        // NO FALLBACK: Only use staff who are actually linked to this service in staff_service table
+        // This ensures staff are from the correct service category
         if (empty($allStaff)) {
-            $fallbackQuery = "SELECT staff_email FROM staff WHERE is_active = 1 AND (role IS NULL OR LOWER(role) != 'admin') ORDER BY RAND()";
-            $fallbackStmt = $db->prepare($fallbackQuery);
-            $fallbackStmt->execute();
-            $allStaff = $fallbackStmt->fetchAll(PDO::FETCH_COLUMN);
-        }
-        
-        if (empty($allStaff)) {
-            error_log('No active staff found for service assignment');
+            error_log('No active staff found for service assignment. Service ID: ' . $serviceId . ' - No staff linked to this service in staff_service table.');
             return null;
         }
         
@@ -156,19 +151,14 @@ function getRandomAvailableStaff($db, $bookingDate, $startTime, $endTime, $servi
             // #endregion
             return $selectedStaff;
         } else {
-            // If no staff is available, still assign one (fallback to first staff)
-            error_log("No available staff found for service $serviceId, using fallback assignment");
-            return $allStaff[0] ?? null;
+            // If no staff is available at this time, return null (don't assign anyone)
+            error_log("No available staff found for service $serviceId at this time slot. Cannot assign staff.");
+            return null;
         }
         
     } catch (Exception $e) {
         error_log('Error in getRandomAvailableStaff: ' . $e->getMessage());
-        // Fallback to first active staff (excluding admin)
-        $fallbackQuery = "SELECT staff_email FROM staff WHERE is_active = 1 AND (role IS NULL OR LOWER(role) != 'admin') LIMIT 1";
-        $fallbackStmt = $db->prepare($fallbackQuery);
-        $fallbackStmt->execute();
-        $fallbackRow = $fallbackStmt->fetch(PDO::FETCH_ASSOC);
-        return $fallbackRow['staff_email'] ?? null;
+        return null;
     }
 }
 
@@ -258,7 +248,7 @@ try {
         exit();
     }
     
-    // Calculate Totals from services
+    // Calculate Totals from services FIRST (needed for overlap check)
     $totalDuration = 0;
     $totalPrice = 0;
     
@@ -294,10 +284,43 @@ try {
     
     error_log('Services validated. Total duration: ' . $totalDuration . ' mins, Total price: RM ' . $totalPrice);
     
-    // Calculate end time
+    // Calculate end time NOW (before overlap check)
     $startDateTime = new DateTime($input['date'] . ' ' . $input['time']);
     $endDateTime = clone $startDateTime;
     $endDateTime->add(new DateInterval('PT' . $totalDuration . 'M'));
+    
+    // SOLUTION 1: Check if customer already has an OVERLAPPING booking (any service)
+    // Example: existing 9:00–10:30, new 9:30–11:00 -> not allowed
+    $overlapCheckQuery = "SELECT booking_id 
+                          FROM booking 
+                          WHERE customer_email = ? 
+                          AND booking_date = ? 
+                          AND status != 'cancelled' 
+                          AND status != 'completed'
+                          AND (
+                                (start_time <= ? AND expected_finish_time > ?)  -- new start inside existing
+                             OR (start_time < ?  AND expected_finish_time >= ?) -- new end inside existing
+                             OR (start_time >= ? AND expected_finish_time <= ?)  -- existing fully inside new
+                          )";
+    $overlapStmt = $db->prepare($overlapCheckQuery);
+    $overlapStmt->execute([
+        $customerEmail,
+        $input['date'],
+        $input['time'], $input['time'],
+        $endDateTime->format('H:i:s'), $endDateTime->format('H:i:s'),
+        $input['time'], $endDateTime->format('H:i:s')
+    ]);
+    $existingOverlap = $overlapStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existingOverlap) {
+        $db->rollBack();
+        ob_end_clean();
+        echo json_encode([
+            'success' => false,
+            'message' => 'You already have an appointment that overlaps this time. Please choose a different slot or cancel the existing booking first.'
+        ]);
+        exit();
+    }
     
     // Generate unique booking ID
     $maxIdQuery = "SELECT booking_id FROM booking WHERE booking_id LIKE 'BK%' ORDER BY CAST(SUBSTRING(booking_id, 3) AS UNSIGNED) DESC LIMIT 1";
@@ -394,15 +417,75 @@ try {
                 $staffEmail = null;
             }
         }
-        
-        // Get service duration for this specific service
+
+        // Get service duration for this specific service (needed for availability check)
         $serviceDuration = $serviceData[$serviceId]['current_duration_minutes'] ?? 0;
         $serviceEndDateTime = clone $currentServiceStartTime;
         $serviceEndDateTime->add(new DateInterval('PT' . $serviceDuration . 'M'));
+
+        // If staff was manually selected, ensure they are available at this time
+        if ($staffEmail !== null) {
+            $staffAvailabilityQuery = "SELECT b.booking_id
+                                      FROM booking b
+                                      JOIN booking_service bs ON b.booking_id = bs.booking_id
+                                      WHERE b.booking_date = ?
+                                      AND bs.staff_email = ?
+                                      AND b.status != 'cancelled'
+                                      AND b.status != 'completed'
+                                      AND b.booking_id != ?
+                                      AND (
+                                            (b.start_time <= ? AND b.expected_finish_time > ?)  -- new start inside existing
+                                         OR (b.start_time < ?  AND b.expected_finish_time >= ?) -- new end inside existing
+                                         OR (b.start_time >= ? AND b.expected_finish_time <= ?)  -- existing fully inside new
+                                      )
+                                      LIMIT 1";
+            $staffAvailStmt = $db->prepare($staffAvailabilityQuery);
+            $staffAvailStmt->execute([
+                $bookingDate,
+                $staffEmail,
+                $bookingId,
+                $currentServiceStartTime->format('H:i:s'), $currentServiceStartTime->format('H:i:s'),
+                $serviceEndDateTime->format('H:i:s'), $serviceEndDateTime->format('H:i:s'),
+                $currentServiceStartTime->format('H:i:s'), $serviceEndDateTime->format('H:i:s')
+            ]);
+            $staffBusy = $staffAvailStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($staffBusy) {
+                // Get staff name for a friendly error message
+                $staffNameQuery = "SELECT first_name, last_name FROM staff WHERE staff_email = ? LIMIT 1";
+                $staffNameStmt = $db->prepare($staffNameQuery);
+                $staffNameStmt->execute([$staffEmail]);
+                $staffNameRow = $staffNameStmt->fetch(PDO::FETCH_ASSOC);
+                $staffName = $staffNameRow ? trim(($staffNameRow['first_name'] ?? '') . ' ' . ($staffNameRow['last_name'] ?? '')) : 'This staff member';
+
+                $db->rollBack();
+                ob_end_clean();
+                echo json_encode([
+                    'success' => false,
+                    'message' => "$staffName is not available at this time. Please choose a different time slot or select another staff member."
+                ]);
+                exit();
+            }
+        }
         
         // If no staff selected, get a random available staff
         if ($staffEmail === null) {
             $staffEmail = getRandomAvailableStaff($db, $bookingDate, $currentServiceStartTime->format('H:i:s'), $serviceEndDateTime->format('H:i:s'), $serviceId, $bookingId, $assignedStaffInBooking);
+            
+            // Check if staff assignment failed (no staff linked to this service or all busy)
+            if ($staffEmail === null) {
+                $db->rollBack();
+                ob_end_clean();
+                
+                // Get service name for error message
+                $serviceName = $serviceData[$serviceId]['service_name'] ?? 'this service';
+                
+                echo json_encode([
+                    'success' => false, 
+                    'message' => "No staff members are currently available for $serviceName. Please select a specific staff member or contact us for assistance."
+                ]);
+                exit();
+            }
         }
         
         // Track this assignment for subsequent services
@@ -417,7 +500,7 @@ try {
         // Update start time for next service
         $currentServiceStartTime = clone $serviceEndDateTime;
         
-        // Insert booking service
+        // Insert booking service (staffEmail is guaranteed to be not null at this point)
         $serviceValues = [
             $bookingId,
             $serviceId,

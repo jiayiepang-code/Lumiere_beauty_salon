@@ -516,13 +516,13 @@ ul {
 }
 
 .stat-card:nth-child(2) .stat-icon {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--danger);
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--success);
 }
 
 .stat-card:nth-child(3) .stat-icon {
-  background-color: rgba(16, 185, 129, 0.1);
-  color: var(--success);
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
 }
 
 .stat-card:nth-child(4) .stat-icon {
