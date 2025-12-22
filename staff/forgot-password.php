@@ -60,12 +60,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Send email
                 $reset_link = "http://" . $_SERVER['HTTP_HOST'] . dirname(dirname($_SERVER['PHP_SELF'])) . "/staff/reset-password.php?token=$token";
                 $subject = 'Staff Password Reset Request - Lumière';
-                $body = '<div style="font-family:Roboto,Arial,sans-serif;background:#f4f8fb;padding:32px 0;">
-                    <div style="max-width:480px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(25,118,210,0.08);padding:32px 24px;text-align:center;">
-                        <h2 style="color:#968073;margin-bottom:16px;">Lumière Beauty Salon - Staff Password Reset</h2>
-                        <p style="color:#333;font-size:1.1rem;margin-bottom:24px;">We received a request to reset your staff account password. Click the button below to set a new password. This link will expire in 1 hour.</p>
-                        <a href="' . $reset_link . '" style="display:inline-block;padding:12px 32px;background:#968073;color:#fff;border-radius:8px;font-weight:700;text-decoration:none;font-size:1.1rem;margin-bottom:24px;">Reset Password</a>
-                        <p style="color:#888;font-size:0.95rem;margin-top:32px;">If you did not request a password reset, you can safely ignore this email.<br><br>— Lumière Beauty Salon Team</p>
+                $body = '<div style="font-family:\'Playfair Display\',\'Georgia\',serif,Arial,sans-serif;background:#f5e9e4;padding:40px 20px;">
+                    <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;box-shadow:0 4px 20px rgba(150,128,115,0.15);overflow:hidden;">
+                        <!-- Header -->
+                        <div style="background:linear-gradient(135deg, #968073 0%, #7a6a5f 100%);padding:30px 24px;text-align:center;border-bottom:3px solid #6b5d52;">
+                            <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:700;font-family:\'Playfair Display\',serif;letter-spacing:0.5px;">Lumière Beauty Salon</h1>
+                        </div>
+                        
+                        <!-- Content -->
+                        <div style="padding:40px 32px;text-align:center;">
+                            <h2 style="color:#968073;margin:0 0 20px 0;font-size:22px;font-weight:600;font-family:\'Playfair Display\',serif;">Staff Password Reset Request</h2>
+                            <p style="color:#5c4e4b;font-size:16px;line-height:1.6;margin-bottom:32px;text-align:left;">We received a request to reset your staff account password. Click the button below to set a new password. This link will expire in 1 hour.</p>
+                            
+                            <a href="' . htmlspecialchars($reset_link) . '" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg, #968073 0%, #7a6a5f 100%);color:#ffffff;border-radius:30px;font-weight:600;text-decoration:none;font-size:16px;margin:0 auto 32px;box-shadow:0 4px 12px rgba(150,128,115,0.3);transition:all 0.3s ease;">Reset Password</a>
+                            
+                            <div style="border-top:1px solid #e6d9d2;padding-top:24px;margin-top:32px;">
+                                <p style="color:#8a766e;font-size:14px;line-height:1.5;margin:0;text-align:left;">If you did not request a password reset, you can safely ignore this email.</p>
+                                <p style="color:#8a766e;font-size:14px;margin-top:16px;margin-bottom:0;font-style:italic;">— Lumière Beauty Salon Team</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Footer -->
+                        <div style="background:#faf5f2;padding:20px 32px;text-align:center;border-top:1px solid #e6d9d2;">
+                            <p style="color:#8a766e;font-size:12px;margin:0;">© ' . date('Y') . ' Lumière Beauty Salon. All rights reserved.</p>
+                        </div>
                     </div>
                 </div>';
                 

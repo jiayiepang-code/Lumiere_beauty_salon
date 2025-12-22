@@ -4,10 +4,18 @@
  * 
  * Run this every hour via crontab:
  * 0 * * * * /usr/bin/php /path/to/cron/send_reminder_emails.php
+ * 
+ * For Windows Task Scheduler:
+ * Create a scheduled task that runs: php.exe "C:\xampp\htdocs\Lumiere_beauty_salon\cron\send_reminder_emails.php"
  */
 
 require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/email_config.php';
 require_once __DIR__ . '/../includes/EmailService.php';
+
+// Initialize database connection
+$database = new Database();
+$db = $database->getConnection();
 
 echo "[" . date('Y-m-d H:i:s') . "] Starting reminder email job...\n";
 

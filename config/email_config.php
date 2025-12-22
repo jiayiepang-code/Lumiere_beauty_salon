@@ -1,7 +1,7 @@
 <?php
 // Email configuration
 define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_PORT', 587);
+define('SMTP_PORT', 465); // Use SSL port instead of STARTTLS (587) - more reliable on Windows/XAMPP
 define('SMTP_USERNAME', 'lumierebeautysalon2022@gmail.com');
 define('SMTP_PASSWORD', 'sdog turz dhwy ymqf'); // Use App Password, not regular password
 define('SMTP_FROM_EMAIL', 'noreply@lumiere-salon.com');

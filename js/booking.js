@@ -365,19 +365,51 @@ function renderCalendar() {
         const dateStr = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
         const checkDate = new Date(dateStr); checkDate.setHours(0,0,0,0);
         let classes = 'calendar-date';
-        if(checkDate < today) classes += ' disabled';
-        if(checkDate > maxDate) classes += ' disabled'; // Disable dates beyond 30 days
+        let isPastDate = checkDate < today;
+        let isFutureDate = checkDate > maxDate;
+        
+        if(isPastDate) classes += ' disabled';
+        if(isFutureDate) classes += ' disabled'; // Disable dates beyond 30 days
         if(dateStr === selectedDate) classes += ' selected';
         const dayEl = $(`<div class="${classes}">${i}</div>`);
+        
         if(!classes.includes('disabled')) {
             dayEl.click(function() {
                 $('.calendar-date').removeClass('selected'); $(this).addClass('selected');
                 selectedDate = dateStr; $('#booking-date').val(selectedDate);
                 loadTimeSlots(); updateSummary();
             });
+        } else if(isFutureDate) {
+            // Add click handler for dates beyond 30 days to show notification
+            dayEl.css('cursor', 'pointer');
+            dayEl.click(function() {
+                showDateLimitMessage();
+            });
         }
         grid.append(dayEl);
     }
+}
+
+// Function to show notification when clicking disabled future dates
+function showDateLimitMessage() {
+    // Remove any existing date limit message
+    $('#date-limit-message').remove();
+    
+    // Create notification message
+    const message = $('<div id="date-limit-message" class="alert alert-info mt-3 mb-0" style="display:block; animation: fadeIn 0.3s;">' +
+        '<i class="fas fa-info-circle me-2"></i>' +
+        'Bookings can only be made up to 30 days in advance. Please select a date within the next 30 days.' +
+        '</div>');
+    
+    // Insert after the calendar wrapper (better positioning)
+    $('.calendar-wrapper').after(message);
+    
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+        $('#date-limit-message').fadeOut(300, function() {
+            $(this).remove();
+        });
+    }, 5000);
 }
 function changeMonth(dir) {
     const today = new Date(); today.setHours(0,0,0,0);

@@ -19,7 +19,12 @@ class EmailService {
         $this->mailer->SMTPAuth = true;
         $this->mailer->Username = SMTP_USERNAME;
         $this->mailer->Password = SMTP_PASSWORD;
-        $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        // Use SSL for port 465, STARTTLS for port 587
+        if (SMTP_PORT == 465) {
+            $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // SSL
+        } else {
+            $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // STARTTLS
+        }
         $this->mailer->Port = SMTP_PORT;
         $this->mailer->setFrom(SMTP_FROM_EMAIL, SMTP_FROM_NAME);
     }
@@ -100,60 +105,90 @@ class EmailService {
 <html>
 <head>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-        .booking-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-        .detail-row { margin: 10px 0; }
-        .label { font-weight: bold; color: #667eea; }
-        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        body { font-family: 'Playfair Display', 'Georgia', serif, Arial, sans-serif; line-height: 1.6; color: #5c4e4b; background: #f5e9e4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+        .email-card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(194,144,118,0.15); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #D4A574 0%, #c29076 100%); color: white; padding: 40px 30px; text-align: center; border-bottom: 3px solid #B59267; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 700; font-family: 'Playfair Display', serif; letter-spacing: 0.5px; }
+        .header p { margin: 12px 0 0 0; font-size: 16px; opacity: 0.95; }
+        .content { padding: 40px 32px; }
+        .greeting { font-size: 16px; color: #5c4e4b; margin-bottom: 20px; }
+        .intro-text { font-size: 16px; color: #5c4e4b; line-height: 1.6; margin-bottom: 32px; }
+        .booking-details { background: #faf5f2; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #D4A574; }
+        .booking-details h3 { margin: 0 0 20px 0; color: #c29076; font-size: 20px; font-weight: 600; font-family: 'Playfair Display', serif; }
+        .detail-row { margin: 12px 0; font-size: 15px; color: #5c4e4b; }
+        .label { font-weight: 600; color: #8a766e; display: inline-block; min-width: 140px; }
+        .value { color: #2d2d2d; font-weight: 500; }
+        .info-section { background: #faf5f2; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e6d9d2; }
+        .info-section strong { color: #c29076; display: block; margin-bottom: 8px; }
+        .notes-box { background: #fff9e6; border-left: 4px solid #D4A574; padding: 20px; border-radius: 8px; margin: 24px 0; }
+        .notes-box strong { color: #c29076; display: block; margin-bottom: 12px; font-size: 16px; }
+        .notes-box ul { margin: 0; padding-left: 20px; color: #5c4e4b; }
+        .notes-box li { margin: 8px 0; }
+        .button { display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #D4A574 0%, #c29076 100%); color: #ffffff; border-radius: 30px; font-weight: 600; text-decoration: none; font-size: 16px; margin: 24px 0; box-shadow: 0 4px 12px rgba(194,144,118,0.3); }
+        .button:hover { box-shadow: 0 6px 16px rgba(194,144,118,0.4); }
+        .footer { text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e6d9d2; color: #8a766e; font-size: 13px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>✨ Booking Confirmed!</h1>
-            <p>Thank you for choosing Lumière Beauty Salon</p>
-        </div>
-        <div class="content">
-            <p>Dear {$data['customer_name']},</p>
-            <p>Your booking has been successfully confirmed. We look forward to pampering you!</p>
-            
-            <div class="booking-details">
-                <h3 style="margin-top: 0; color: #667eea;">📋 Booking Details</h3>
-                <div class="detail-row">
-                    <span class="label">Booking ID:</span> {$data['booking_id']}
-                </div>
-                <div class="detail-row">
-                    <span class="label">Date & Time:</span> {$bookingDateTime}
-                </div>
-                <div class="detail-row">
-                    <span class="label">Location:</span> {$data['location']}
-                </div>
-                <div class="detail-row">
-                    <span class="label">Total Amount:</span> RM {$data['total_price']}
-                </div>
+        <div class="email-card">
+            <div class="header">
+                <h1>✨ Booking Confirmed!</h1>
+                <p>Thank you for choosing Lumière Beauty Salon</p>
             </div>
-            
-            <p><strong>📍 Address:</strong><br>{$data['address']}</p>
-            <p><strong>📞 Contact:</strong> {$data['phone']}</p>
-            
-            <p style="margin-top: 30px;">
-                <strong>💡 Important Notes:</strong><br>
-                • Please arrive 5 minutes early<br>
-                • You'll receive a reminder 24 hours before your appointment<br>
-                • Need to reschedule? Contact us or manage your booking online
-            </p>
-            
-            <center>
-                <a href="https://lumiere-salon.com/my-bookings" class="button">View My Bookings</a>
-            </center>
-            
-            <div class="footer">
-                <p>This is an automated confirmation. Please do not reply to this email.</p>
-                <p>&copy; 2024 Lumière Beauty Salon. All rights reserved.</p>
+            <div class="content">
+                <p class="greeting">Dear {$data['customer_name']},</p>
+                <p class="intro-text">Your booking has been successfully confirmed. We look forward to pampering you!</p>
+                
+                <div class="booking-details">
+                    <h3>📋 Booking Details</h3>
+                    <div class="detail-row">
+                        <span class="label">Booking ID:</span>
+                        <span class="value">{$data['booking_id']}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Date & Time:</span>
+                        <span class="value">{$bookingDateTime}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Location:</span>
+                        <span class="value">{$data['location']}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Total Amount:</span>
+                        <span class="value" style="color: #c29076; font-size: 18px; font-weight: 700;">RM {$data['total_price']}</span>
+                    </div>
+                </div>
+                
+                <div class="info-section">
+                    <strong>📍 Address:</strong>
+                    <span style="color: #5c4e4b;">{$data['address']}</span>
+                </div>
+                
+                <div class="info-section">
+                    <strong>📞 Contact:</strong>
+                    <span style="color: #5c4e4b;">{$data['phone']}</span>
+                </div>
+                
+                <div class="notes-box">
+                    <strong>💡 Important Notes:</strong>
+                    <ul>
+                        <li>Please arrive 10 minutes early</li>
+                        <li>You'll receive a reminder 24 hours before your appointment</li>
+                        <li>Need to reschedule? Contact us or manage your booking online</li>
+                        <li>Payment will be collected at the salon</li>
+                    </ul>
+                </div>
+                
+                <div style="text-align: center;">
+                    <a href="https://lumiere-salon.com/my-bookings" class="button">View My Bookings</a>
+                </div>
+                
+                <div class="footer">
+                    <p style="margin: 0 0 8px 0;">This is an automated confirmation. Please do not reply to this email.</p>
+                    <p style="margin: 0;">&copy; {date('Y')} Lumière Beauty Salon. All rights reserved.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -170,66 +205,93 @@ HTML;
 <html>
 <head>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
-        .reminder-box { background: #fff3cd; border-left: 4px solid #f5576c; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .booking-details { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; }
-        .detail-row { margin: 10px 0; }
-        .label { font-weight: bold; color: #f5576c; }
-        .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-        .button { display: inline-block; padding: 12px 30px; background: #f5576c; color: white; text-decoration: none; border-radius: 5px; margin: 10px 5px; }
+        body { font-family: 'Playfair Display', 'Georgia', serif, Arial, sans-serif; line-height: 1.6; color: #5c4e4b; background: #f5e9e4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
+        .email-card { background: #ffffff; border-radius: 16px; box-shadow: 0 4px 20px rgba(194,144,118,0.15); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #D4A574 0%, #c29076 100%); color: white; padding: 40px 30px; text-align: center; border-bottom: 3px solid #B59267; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 700; font-family: 'Playfair Display', serif; letter-spacing: 0.5px; }
+        .header p { margin: 12px 0 0 0; font-size: 16px; opacity: 0.95; }
+        .content { padding: 40px 32px; }
+        .greeting { font-size: 16px; color: #5c4e4b; margin-bottom: 20px; }
+        .reminder-box { background: #fff9e6; border-left: 4px solid #D4A574; padding: 24px; border-radius: 8px; margin: 24px 0; }
+        .reminder-box h3 { margin: 0 0 12px 0; color: #c29076; font-size: 20px; font-weight: 600; font-family: 'Playfair Display', serif; }
+        .reminder-box p { font-size: 18px; margin: 10px 0; color: #5c4e4b; }
+        .booking-details { background: #faf5f2; padding: 24px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #D4A574; }
+        .booking-details h3 { margin: 0 0 20px 0; color: #c29076; font-size: 20px; font-weight: 600; font-family: 'Playfair Display', serif; }
+        .detail-row { margin: 12px 0; font-size: 15px; color: #5c4e4b; }
+        .label { font-weight: 600; color: #8a766e; display: inline-block; min-width: 140px; }
+        .value { color: #2d2d2d; font-weight: 500; }
+        .info-section { background: #faf5f2; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #e6d9d2; }
+        .info-section strong { color: #c29076; display: block; margin-bottom: 8px; }
+        .tips-box { background: #fff9e6; border-left: 4px solid #D4A574; padding: 20px; border-radius: 8px; margin: 24px 0; }
+        .tips-box strong { color: #c29076; display: block; margin-bottom: 12px; font-size: 16px; }
+        .tips-box ul { margin: 0; padding-left: 20px; color: #5c4e4b; }
+        .tips-box li { margin: 8px 0; }
+        .button { display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #D4A574 0%, #c29076 100%); color: #ffffff; border-radius: 30px; font-weight: 600; text-decoration: none; font-size: 16px; margin: 10px 5px; box-shadow: 0 4px 12px rgba(194,144,118,0.3); }
+        .button-secondary { background: linear-gradient(135deg, #8a766e 0%, #7a6a5f 100%); }
+        .footer { text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e6d9d2; color: #8a766e; font-size: 13px; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>⏰ Appointment Reminder</h1>
-            <p>Your beauty session is tomorrow!</p>
-        </div>
-        <div class="content">
-            <p>Dear {$data['customer_name']},</p>
-            
-            <div class="reminder-box">
-                <h3 style="margin-top: 0;">🎯 Don't Forget!</h3>
-                <p style="font-size: 18px; margin: 10px 0;">
-                    Your appointment at <strong>Lumière Beauty Salon</strong> is in 24 hours.
-                </p>
+        <div class="email-card">
+            <div class="header">
+                <h1>⏰ Appointment Reminder</h1>
+                <p>Your beauty session is tomorrow!</p>
             </div>
-            
-            <div class="booking-details">
-                <h3 style="margin-top: 0; color: #f5576c;">📋 Appointment Details</h3>
-                <div class="detail-row">
-                    <span class="label">Booking ID:</span> {$data['booking_id']}
+            <div class="content">
+                <p class="greeting">Dear {$data['customer_name']},</p>
+                
+                <div class="reminder-box">
+                    <h3>🎯 Don't Forget!</h3>
+                    <p>Your appointment at <strong>Lumière Beauty Salon</strong> is in 24 hours.</p>
                 </div>
-                <div class="detail-row">
-                    <span class="label">Date & Time:</span> {$bookingDateTime}
+                
+                <div class="booking-details">
+                    <h3>📋 Appointment Details</h3>
+                    <div class="detail-row">
+                        <span class="label">Booking ID:</span>
+                        <span class="value">{$data['booking_id']}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Date & Time:</span>
+                        <span class="value">{$bookingDateTime}</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Location:</span>
+                        <span class="value">{$data['location']}</span>
+                    </div>
                 </div>
-                <div class="detail-row">
-                    <span class="label">Location:</span> {$data['location']}
+                
+                <div class="info-section">
+                    <strong>📍 Address:</strong>
+                    <span style="color: #5c4e4b;">{$data['address']}</span>
                 </div>
-            </div>
-            
-            <p><strong>📍 Address:</strong><br>{$data['address']}</p>
-            <p><strong>📞 Need to reschedule?</strong> Call us at {$data['phone']}</p>
-            
-            <p style="margin-top: 30px;">
-                <strong>✨ Preparation Tips:</strong><br>
-                • Arrive 5 minutes early<br>
-                • Bring any relevant medical information<br>
-                • Wear comfortable clothing<br>
-                • Remove contact lenses if getting facial treatment
-            </p>
-            
-            <center>
-                <a href="https://lumiere-salon.com/my-bookings" class="button">View Details</a>
-                <a href="https://lumiere-salon.com/contact" class="button" style="background: #6c757d;">Contact Us</a>
-            </center>
-            
-            <div class="footer">
-                <p>See you soon! 💅</p>
-                <p>&copy; 2024 Lumière Beauty Salon. All rights reserved.</p>
+                
+                <div class="info-section">
+                    <strong>📞 Need to reschedule?</strong>
+                    <span style="color: #5c4e4b;">Call us at {$data['phone']}</span>
+                </div>
+                
+                <div class="tips-box">
+                    <strong>✨ Preparation Tips:</strong>
+                    <ul>
+                        <li>Arrive 10 minutes early</li>
+                        <li>Bring any relevant medical information</li>
+                        <li>Wear comfortable clothing</li>
+                        <li>Remove contact lenses if getting facial treatment</li>
+                    </ul>
+                </div>
+                
+                <div style="text-align: center;">
+                    <a href="https://lumiere-salon.com/my-bookings" class="button">View Details</a>
+                    <a href="https://lumiere-salon.com/contact" class="button button-secondary">Contact Us</a>
+                </div>
+                
+                <div class="footer">
+                    <p style="margin: 0 0 8px 0;">See you soon! 💅</p>
+                    <p style="margin: 0;">&copy; {date('Y')} Lumière Beauty Salon. All rights reserved.</p>
+                </div>
             </div>
         </div>
     </div>

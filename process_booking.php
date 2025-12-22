@@ -48,10 +48,12 @@ function getRandomAvailableStaff($db, $bookingDate, $startTime, $endTime, $servi
         
         // Get all active staff who can provide this service
         // First try to get staff from staff_service table, otherwise get all active staff
+        // EXCLUDE admin accounts (role = 'admin') - only assign actual staff members
         $staffQuery = "SELECT DISTINCT st.staff_email 
                       FROM staff st
                       LEFT JOIN staff_service ss ON st.staff_email = ss.staff_email AND ss.service_id = ? AND ss.is_active = 1
                       WHERE st.is_active = 1 
+                      AND (st.role IS NULL OR LOWER(st.role) != 'admin')
                       AND (ss.service_id IS NOT NULL OR NOT EXISTS (SELECT 1 FROM staff_service WHERE staff_email = st.staff_email))
                       ORDER BY RAND()";
         
@@ -59,9 +61,9 @@ function getRandomAvailableStaff($db, $bookingDate, $startTime, $endTime, $servi
         $staffStmt->execute([$serviceId]);
         $allStaff = $staffStmt->fetchAll(PDO::FETCH_COLUMN);
         
-        // If no staff found from staff_service, get all active staff
+        // If no staff found from staff_service, get all active staff (excluding admin)
         if (empty($allStaff)) {
-            $fallbackQuery = "SELECT staff_email FROM staff WHERE is_active = 1 ORDER BY RAND()";
+            $fallbackQuery = "SELECT staff_email FROM staff WHERE is_active = 1 AND (role IS NULL OR LOWER(role) != 'admin') ORDER BY RAND()";
             $fallbackStmt = $db->prepare($fallbackQuery);
             $fallbackStmt->execute();
             $allStaff = $fallbackStmt->fetchAll(PDO::FETCH_COLUMN);
@@ -149,6 +151,9 @@ function getRandomAvailableStaff($db, $bookingDate, $startTime, $endTime, $servi
             $randomIndex = array_rand($availableStaff);
             $selectedStaff = $availableStaff[$randomIndex];
             error_log("Randomly assigned staff: $selectedStaff for service $serviceId (Date: $bookingDate, Time: $startTime-$endTime)");
+            // #region agent log
+            @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['location' => 'process_booking.php:staff-assigned', 'message' => 'Staff assigned to service', 'data' => ['staffEmail' => $selectedStaff, 'serviceId' => $serviceId, 'bookingDate' => $bookingDate, 'startTime' => $startTime, 'availableStaffCount' => count($availableStaff)], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'post-fix', 'hypothesisId' => 'B']) . "\n", FILE_APPEND | LOCK_EX);
+            // #endregion
             return $selectedStaff;
         } else {
             // If no staff is available, still assign one (fallback to first staff)
@@ -158,8 +163,8 @@ function getRandomAvailableStaff($db, $bookingDate, $startTime, $endTime, $servi
         
     } catch (Exception $e) {
         error_log('Error in getRandomAvailableStaff: ' . $e->getMessage());
-        // Fallback to first active staff
-        $fallbackQuery = "SELECT staff_email FROM staff WHERE is_active = 1 LIMIT 1";
+        // Fallback to first active staff (excluding admin)
+        $fallbackQuery = "SELECT staff_email FROM staff WHERE is_active = 1 AND (role IS NULL OR LOWER(role) != 'admin') LIMIT 1";
         $fallbackStmt = $db->prepare($fallbackQuery);
         $fallbackStmt->execute();
         $fallbackRow = $fallbackStmt->fetch(PDO::FETCH_ASSOC);
@@ -373,6 +378,23 @@ try {
         $staffValue = isset($input['staff'][$serviceId]) ? $input['staff'][$serviceId] : null;
         $staffEmail = ($staffValue && $staffValue != 0 && $staffValue != '0') ? $staffValue : null;
         
+        // Validate that manually selected staff is not an admin account
+        if ($staffEmail !== null) {
+            $validateStaffQuery = "SELECT role FROM staff WHERE staff_email = ? AND is_active = 1 LIMIT 1";
+            $validateStmt = $db->prepare($validateStaffQuery);
+            $validateStmt->execute([$staffEmail]);
+            $staffRow = $validateStmt->fetch(PDO::FETCH_ASSOC);
+            
+            // If staff not found or is admin, reset to null to trigger auto-assignment
+            if (!$staffRow || (isset($staffRow['role']) && strtolower($staffRow['role']) === 'admin')) {
+                error_log("Invalid staff assignment attempt: $staffEmail (admin account or not found). Auto-assigning instead.");
+                // #region agent log
+                @file_put_contents(__DIR__ . '/.cursor/debug.log', json_encode(['location' => 'process_booking.php:admin-validation', 'message' => 'Admin account blocked from assignment', 'data' => ['staffEmail' => $staffEmail, 'role' => $staffRow['role'] ?? 'not_found', 'serviceId' => $serviceId], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'post-fix', 'hypothesisId' => 'A']) . "\n", FILE_APPEND | LOCK_EX);
+                // #endregion
+                $staffEmail = null;
+            }
+        }
+        
         // Get service duration for this specific service
         $serviceDuration = $serviceData[$serviceId]['current_duration_minutes'] ?? 0;
         $serviceEndDateTime = clone $currentServiceStartTime;
@@ -436,9 +458,40 @@ try {
     
     error_log('Booking completed successfully: ' . $bookingId);
     
-    // Send confirmation email
+    // Prepare response data first (before email sending)
+    $responseData = [
+        'success' => true,
+        'booking_id' => $bookingId,
+        'date' => date('d M Y', strtotime($input['date'])),
+        'time' => date('h:i A', strtotime($input['time'])),
+        'subtotal' => number_format($totalPrice, 2),
+        'services' => $serviceAssignments,
+        'customer_email' => $customerEmail
+    ];
+    
+    // Send response immediately to user (don't wait for email)
+    ob_end_clean(); // Clear any output buffering
+    header('Content-Type: application/json');
+    echo json_encode($responseData);
+    
+    // Flush output to send response to client immediately
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request(); // For FastCGI - closes connection, continues execution
+    } else {
+        // For non-FastCGI, try to flush and close connection
+        if (ob_get_level() > 0) {
+            ob_end_flush();
+        }
+        flush();
+        // Close session to allow other requests
+        if (session_id()) {
+            session_write_close();
+        }
+    }
+    
+    // Now send email in background (user already got response)
     // #region agent log
-    file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'process_booking.php:' . __LINE__, 'message' => 'Starting email sending process', 'data' => ['bookingId' => $bookingId, 'customerEmail' => $customerEmail], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND);
+    file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'process_booking.php:' . __LINE__, 'message' => 'Starting email sending process (background)', 'data' => ['bookingId' => $bookingId, 'customerEmail' => $customerEmail], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND);
     // #endregion agent log
     
     try {
@@ -461,25 +514,67 @@ try {
         
         // Email subject and body
         $subject = 'Booking Confirmation - ' . $bookingId;
-        $emailBody = '<div style="font-family: Roboto, Arial, sans-serif; background: #f4f8fb; padding: 32px 0;">
-            <div style="max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); padding: 32px 24px;">
-                <h2 style="color: #1976d2; margin-bottom: 16px; text-align: center;">Lumière Beauty Salon</h2>
-                <h3 style="color: #333; margin-bottom: 24px;">Booking Confirmed!</h3>
-                <p style="color: #333; font-size: 1rem; margin-bottom: 16px;">Dear ' . htmlspecialchars($customerName) . ',</p>
-                <p style="color: #333; font-size: 1rem; margin-bottom: 24px;">Your booking has been confirmed. Here are the details:</p>
-                
-                <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
-                    <p style="margin: 0 0 12px 0;"><strong>Booking ID:</strong> ' . htmlspecialchars($bookingId) . '</p>
-                    <p style="margin: 0 0 12px 0;"><strong>Date:</strong> ' . date('l, d M Y', strtotime($input['date'])) . '</p>
-                    <p style="margin: 0 0 12px 0;"><strong>Time:</strong> ' . date('h:i A', strtotime($input['time'])) . ' - ' . date('h:i A', strtotime($endDateTime->format('Y-m-d H:i:s'))) . '</p>
-                    <p style="margin: 0 0 12px 0;"><strong>Services:</strong></p>
-                    <ul style="margin: 0 0 12px 0; padding-left: 20px;">' . $servicesList . '</ul>
-                    <p style="margin: 0;"><strong>Total:</strong> RM ' . number_format($totalPrice, 2) . '</p>
+        $formattedDate = date('l, d F Y', strtotime($input['date']));
+        $startTime = date('g:i A', strtotime($input['time']));
+        $endTime = date('g:i A', strtotime($endDateTime->format('Y-m-d H:i:s')));
+        
+        $emailBody = '<div style="font-family:\'Playfair Display\',\'Georgia\',serif,Arial,sans-serif;background:#f5e9e4;padding:40px 20px;">
+            <div style="max-width:600px;margin:0 auto;background:#ffffff;border-radius:16px;box-shadow:0 4px 20px rgba(194,144,118,0.15);overflow:hidden;">
+                <!-- Header -->
+                <div style="background:linear-gradient(135deg, #D4A574 0%, #c29076 100%);padding:40px 30px;text-align:center;border-bottom:3px solid #B59267;">
+                    <h1 style="color:#ffffff;margin:0;font-size:28px;font-weight:700;font-family:\'Playfair Display\',serif;letter-spacing:0.5px;">✨ Booking Confirmed!</h1>
+                    <p style="color:#ffffff;margin:12px 0 0 0;font-size:16px;opacity:0.95;">Thank you for choosing Lumière Beauty Salon</p>
                 </div>
                 
-                <p style="color: #888; font-size: 0.95rem; margin-top: 24px;">You will receive a reminder email 24 hours before your appointment.</p>
-                <p style="color: #888; font-size: 0.95rem; margin-top: 16px;">If you need to cancel or reschedule, please contact us at least 24 hours in advance.</p>
-                <p style="color: #888; font-size: 0.95rem; margin-top: 32px;">Thank you for choosing Lumière Beauty Salon!<br><br>— Lumière Beauty Salon Team</p>
+                <!-- Content -->
+                <div style="padding:40px 32px;">
+                    <p style="font-size:16px;color:#5c4e4b;margin-bottom:20px;">Dear ' . htmlspecialchars($customerName) . ',</p>
+                    <p style="font-size:16px;color:#5c4e4b;line-height:1.6;margin-bottom:32px;">Your booking has been successfully confirmed. We look forward to pampering you!</p>
+                    
+                    <!-- Booking Details -->
+                    <div style="background:#faf5f2;padding:24px;border-radius:12px;margin:24px 0;border-left:4px solid #D4A574;">
+                        <h3 style="margin:0 0 20px 0;color:#c29076;font-size:20px;font-weight:600;font-family:\'Playfair Display\',serif;">📋 Booking Details</h3>
+                        <div style="margin:12px 0;font-size:15px;color:#5c4e4b;">
+                            <span style="font-weight:600;color:#8a766e;display:inline-block;min-width:140px;">Booking ID:</span>
+                            <span style="color:#2d2d2d;font-weight:500;">' . htmlspecialchars($bookingId) . '</span>
+                        </div>
+                        <div style="margin:12px 0;font-size:15px;color:#5c4e4b;">
+                            <span style="font-weight:600;color:#8a766e;display:inline-block;min-width:140px;">Date:</span>
+                            <span style="color:#2d2d2d;font-weight:500;">' . $formattedDate . '</span>
+                        </div>
+                        <div style="margin:12px 0;font-size:15px;color:#5c4e4b;">
+                            <span style="font-weight:600;color:#8a766e;display:inline-block;min-width:140px;">Time:</span>
+                            <span style="color:#2d2d2d;font-weight:500;">' . $startTime . ' - ' . $endTime . '</span>
+                        </div>
+                        <div style="margin:12px 0;font-size:15px;color:#5c4e4b;">
+                            <span style="font-weight:600;color:#8a766e;display:inline-block;min-width:140px;">Services:</span>
+                        </div>
+                        <ul style="margin:8px 0 12px 20px;padding-left:20px;color:#5c4e4b;">' . $servicesList . '</ul>
+                        <div style="margin:12px 0;font-size:15px;color:#5c4e4b;">
+                            <span style="font-weight:600;color:#8a766e;display:inline-block;min-width:140px;">Total:</span>
+                            <span style="color:#c29076;font-size:18px;font-weight:700;">RM ' . number_format($totalPrice, 2) . '</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Important Notes -->
+                    <div style="background:#fff9e6;border-left:4px solid #D4A574;padding:20px;border-radius:8px;margin:24px 0;">
+                        <strong style="color:#c29076;display:block;margin-bottom:12px;font-size:16px;">💡 Important Notes:</strong>
+                        <ul style="margin:0;padding-left:20px;color:#5c4e4b;">
+                            <li style="margin:8px 0;">Please arrive 10 minutes early</li>
+                            <li style="margin:8px 0;">You will receive a reminder email 24 hours before your appointment</li>
+                            <li style="margin:8px 0;">If you need to cancel or reschedule, please contact us at least 24 hours in advance</li>
+                            <li style="margin:8px 0;">Payment will be collected at the salon</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Footer -->
+                    <div style="text-align:center;margin-top:32px;padding-top:24px;border-top:1px solid #e6d9d2;color:#8a766e;font-size:13px;">
+                        <p style="margin:0 0 8px 0;">This is an automated confirmation. Please do not reply to this email.</p>
+                        <p style="margin:0;">Thank you for choosing Lumière Beauty Salon!</p>
+                        <p style="margin:8px 0 0 0;font-style:italic;">— Lumière Beauty Salon Team</p>
+                        <p style="margin:16px 0 0 0;">&copy; ' . date('Y') . ' Lumière Beauty Salon. All rights reserved.</p>
+                    </div>
+                </div>
             </div>
         </div>';
         
@@ -505,6 +600,38 @@ try {
             safeLogDebug(['location' => 'process_booking.php:' . __LINE__, 'message' => 'Email sent successfully', 'data' => ['bookingId' => $bookingId, 'customerEmail' => $customerEmail], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'F']);
             // #endregion agent log
         }
+        
+        // Schedule reminder email (24 hours before booking)
+        try {
+            $reminderTime = calculateReminderTime($input['date'], $input['time']);
+            
+            // Check if email_queue table exists before inserting
+            $checkTableQuery = "SHOW TABLES LIKE 'email_queue'";
+            $checkStmt = $db->prepare($checkTableQuery);
+            $checkStmt->execute();
+            
+            if ($checkStmt->rowCount() > 0) {
+                // Table exists, insert reminder
+                $reminderStmt = $db->prepare("
+                    INSERT INTO email_queue (
+                        booking_id, email_type, recipient_email, scheduled_at
+                    ) VALUES (?, 'reminder', ?, ?)
+                ");
+                
+                $reminderStmt->execute([
+                    $bookingId,
+                    $customerEmail,
+                    $reminderTime
+                ]);
+                
+                error_log('Reminder email scheduled for booking ' . $bookingId . ' at ' . $reminderTime);
+            } else {
+                error_log('email_queue table does not exist. Reminder not scheduled for booking ' . $bookingId);
+            }
+        } catch (Exception $reminderEx) {
+            // Don't fail booking if reminder scheduling fails
+            error_log('Failed to schedule reminder email for booking ' . $bookingId . ': ' . $reminderEx->getMessage());
+        }
     } catch (Exception $emailEx) {
         error_log('Exception sending confirmation email for booking ' . $bookingId . ': ' . $emailEx->getMessage());
         // #region agent log
@@ -513,16 +640,8 @@ try {
         // Don't fail the booking if email fails
     }
     
-    // Return success response
-    echo json_encode([
-        'success' => true,
-        'booking_id' => $bookingId,
-        'date' => date('d M Y', strtotime($input['date'])),
-        'time' => date('h:i A', strtotime($input['time'])),
-        'subtotal' => number_format($totalPrice, 2),
-        'services' => $serviceAssignments,
-        'customer_email' => $customerEmail
-    ]);
+    // Response already sent above, exit here
+    exit;
     
 } catch(Exception $e) {
     if(isset($db)) {
@@ -537,6 +656,20 @@ try {
         'message' => 'Booking failed: ' . $e->getMessage(),
         'error' => $e->getMessage()
     ]);
+}
+
+/**
+ * Calculate reminder time (24 hours before booking)
+ * @param string $bookingDate Booking date (Y-m-d)
+ * @param string $startTime Booking start time (H:i:s)
+ * @return string Reminder datetime (Y-m-d H:i:s)
+ */
+function calculateReminderTime($bookingDate, $startTime) {
+    // Booking datetime - 24 hours
+    $bookingDateTime = new DateTime("$bookingDate $startTime");
+    $reminderDateTime = clone $bookingDateTime;
+    $reminderDateTime->modify('-24 hours');
+    return $reminderDateTime->format('Y-m-d H:i:s');
 }
 
 ?>

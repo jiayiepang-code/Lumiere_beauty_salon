@@ -954,8 +954,8 @@ fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{metho
             </div>
         </div>
         <div class="custom-modal-footer confirmation-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeBookingConfirmation()">View Bookings</button>
-            <button type="button" class="btn btn-primary" onclick="closeBookingConfirmation()">Done</button>
+            <button type="button" class="btn btn-secondary" onclick="viewBookings()">View Bookings</button>
+            <button type="button" class="btn btn-primary" onclick="goToHomepage()">Done</button>
         </div>
     </div>
 </div>
@@ -1214,8 +1214,18 @@ fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{metho
     function closeBookingConfirmation() {
         const modal = document.getElementById('bookingConfirmationModal');
         modal.classList.remove('show');
-        // Redirect to dashboard with cache-busting to ensure fresh data
+    }
+
+    function viewBookings() {
+        closeBookingConfirmation();
+        // Redirect to user dashboard bookings section
         window.location.href = 'user/dashboard.php?section=bookings&t=' + Date.now();
+    }
+
+    function goToHomepage() {
+        closeBookingConfirmation();
+        // Redirect to homepage
+        window.location.href = 'user/index.php';
     }
 
     // Close modals when clicking outside

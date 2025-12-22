@@ -656,38 +656,76 @@ foreach($pastBookingsAll as $booking) {
             <!-- Recent Bookings -->
             <div class="recent-appointments-section">
                 <h2 style="font-family: 'Playfair Display', serif; color: var(--dark-brown); margin-bottom: 20px;">Recent Bookings</h2>
-                <?php if (!empty($recentAppointments)): ?>
-                    <?php foreach ($recentAppointments as $recent): 
-                        $recentDate = new DateTime($recent['booking_date']);
-                        $recentServices = explode(', ', $recent['services'] ?? 'Service');
-                        
-                        // Get staff name from booking services if available
-                        $recentStaffName = 'Staff Member';
-                        if (isset($bookingServices[$recent['booking_id']]) && !empty($bookingServices[$recent['booking_id']])) {
-                            $firstService = $bookingServices[$recent['booking_id']][0];
-                            if (!empty($firstService['staff_first_name']) || !empty($firstService['staff_last_name'])) {
-                                $staffFirstName = $firstService['staff_first_name'] ?? '';
-                                $staffLastName = $firstService['staff_last_name'] ?? '';
-                                $recentStaffName = trim($staffFirstName . ' ' . $staffLastName);
+                <?php 
+                // Build array of individual services from recent appointments
+                $recentServicesList = [];
+                foreach ($recentAppointments as $recent) {
+                    $recentDate = new DateTime($recent['booking_date']);
+                    
+                    if (isset($bookingServices[$recent['booking_id']]) && !empty($bookingServices[$recent['booking_id']])) {
+                        // Create a card for each service in this booking
+                        foreach ($bookingServices[$recent['booking_id']] as $service) {
+                            if (!empty($service['service_name'])) {
+                                // Get staff name for this specific service
+                                $serviceStaffName = 'Staff Member';
+                                if (!empty($service['staff_first_name']) || !empty($service['staff_last_name'])) {
+                                    $staffFirstName = $service['staff_first_name'] ?? '';
+                                    $staffLastName = $service['staff_last_name'] ?? '';
+                                    $serviceStaffName = trim($staffFirstName . ' ' . $staffLastName);
+                                }
+                                
+                                // Fallback to booking staff_names if service staff not found
+                                if ($serviceStaffName === 'Staff Member' && !empty($recent['staff_names'])) {
+                                    $recentStaffArray = explode(', ', $recent['staff_names']);
+                                    $serviceStaffName = $recentStaffArray[0] ?? 'Staff Member';
+                                }
+                                
+                                $recentServicesList[] = [
+                                    'service_name' => $service['service_name'],
+                                    'staff_name' => $serviceStaffName,
+                                    'booking_date' => $recentDate,
+                                    'booking_id' => $recent['booking_id']
+                                ];
                             }
                         }
-                        
-                        // Fallback to staff_names from booking if not found in services
-                        if ($recentStaffName === 'Staff Member' && !empty($recent['staff_names'])) {
+                    } else {
+                        // Fallback: if no service details, create one card with generic info
+                        $recentStaffName = 'Staff Member';
+                        if (!empty($recent['staff_names'])) {
                             $recentStaffArray = explode(', ', $recent['staff_names']);
-                            $recentStaffName = $recentStaffArray[0];
+                            $recentStaffName = $recentStaffArray[0] ?? 'Staff Member';
                         }
-                    ?>
+                        
+                        $serviceName = 'Service';
+                        if (!empty($recent['services'])) {
+                            $serviceNames = explode(', ', $recent['services']);
+                            $serviceName = $serviceNames[0];
+                        }
+                        
+                        $recentServicesList[] = [
+                            'service_name' => $serviceName,
+                            'staff_name' => $recentStaffName,
+                            'booking_date' => $recentDate,
+                            'booking_id' => $recent['booking_id']
+                        ];
+                    }
+                }
+                
+                // Limit to most recent 6 services (instead of 3 bookings)
+                $recentServicesList = array_slice($recentServicesList, 0, 6);
+                ?>
+                <?php if (!empty($recentServicesList)): ?>
+                    <?php foreach ($recentServicesList as $serviceItem): ?>
                     <div class="recent-appointment-item">
                         <div class="recent-icon">
                             <i class="fas fa-user"></i>
                         </div>
                         <div class="recent-details">
-                            <h4><?= htmlspecialchars($recentServices[0]) ?></h4>
-                            <p>with <?= htmlspecialchars($recentStaffName) ?></p>
+                            <h4><?= htmlspecialchars($serviceItem['service_name']) ?></h4>
+                            <p>with <?= htmlspecialchars($serviceItem['staff_name']) ?></p>
                         </div>
                         <div class="recent-date">
-                            <span><?= $recentDate->format('M d, Y') ?></span>
+                            <span><?= $serviceItem['booking_date']->format('M d, Y') ?></span>
                             <a href="../booking.php" class="book-again">Book Again</a>
                         </div>
                     </div>
