@@ -207,14 +207,7 @@ try {
     $favStmt = $db->prepare($favQuery);
     $favStmt->execute([$customerEmail]);
     $favorites = $favStmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // #region agent log
-    @file_put_contents(__DIR__ . '/../.cursor/debug.log', json_encode(['location' => 'dashboard.php:206', 'message' => 'Favorites query executed', 'data' => ['customer_email' => $customerEmail, 'favorites_count' => count($favorites), 'favorites' => array_map(function($f) { return ['staff_email' => $f['staff_email'], 'name' => ($f['first_name'] ?? '') . ' ' . ($f['last_name'] ?? '')]; }, $favorites)], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND | LOCK_EX);
-    // #endregion
 } catch (Exception $e) {
-    // #region agent log
-    @file_put_contents(__DIR__ . '/../.cursor/debug.log', json_encode(['location' => 'dashboard.php:211', 'message' => 'Favorites query failed', 'data' => ['customer_email' => $customerEmail, 'error' => $e->getMessage()], 'timestamp' => time() * 1000, 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND | LOCK_EX);
-    // #endregion
     error_log('Dashboard favorites error: ' . $e->getMessage());
     $favorites = [];
 }

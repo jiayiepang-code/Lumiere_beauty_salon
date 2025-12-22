@@ -137,14 +137,24 @@ function filterCustomers() {
     switch (sortValue) {
       case "name_asc":
         // Sort by first name ascending (A-Z)
-        const nameA = ((a.first_name || "") + " " + (a.last_name || "")).trim().toLowerCase();
-        const nameB = ((b.first_name || "") + " " + (b.last_name || "")).trim().toLowerCase();
-        return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
+        const nameA = ((a.first_name || "") + " " + (a.last_name || ""))
+          .trim()
+          .toLowerCase();
+        const nameB = ((b.first_name || "") + " " + (b.last_name || ""))
+          .trim()
+          .toLowerCase();
+        return nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
       case "name_desc":
         // Sort by first name descending (Z-A)
-        const nameA_desc = ((a.first_name || "") + " " + (a.last_name || "")).trim().toLowerCase();
-        const nameB_desc = ((b.first_name || "") + " " + (b.last_name || "")).trim().toLowerCase();
-        return nameB_desc.localeCompare(nameA_desc, undefined, { sensitivity: 'base' });
+        const nameA_desc = ((a.first_name || "") + " " + (a.last_name || ""))
+          .trim()
+          .toLowerCase();
+        const nameB_desc = ((b.first_name || "") + " " + (b.last_name || ""))
+          .trim()
+          .toLowerCase();
+        return nameB_desc.localeCompare(nameA_desc, undefined, {
+          sensitivity: "base",
+        });
       case "bookings_desc":
         return (b.total_bookings || 0) - (a.total_bookings || 0);
       case "recent_desc":
@@ -367,14 +377,14 @@ function viewCustomer(email) {
                 
                 <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
                     <h4 style="margin-top: 0; margin-bottom: 12px; font-size: 14px; text-transform: uppercase; color: #666;">Contact Info</h4>
-                    <div style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #999;">
+                    <div style="margin-bottom: 8px; display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #999; flex-shrink: 0; margin-top: 2px;">
                             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                             <polyline points="22,6 12,13 2,6"></polyline>
                         </svg>
                         <a href="mailto:${escapeHtml(
                           customer.email || customer.customer_email
-                        )}" style="color: var(--primary-color);">${escapeHtml(
+                        )}" style="color: var(--primary-color); word-break: break-all; flex: 1; min-width: 0; overflow-wrap: break-word;">${escapeHtml(
     customer.email || customer.customer_email
   )}</a>
                     </div>
@@ -460,12 +470,18 @@ function viewCustomer(email) {
                     <div style="font-size: 13px; color: #666;">${booking.start_time.substring(
                       0,
                       5
-                    )} - ${booking.expected_finish_time || booking.end_time || "N/A"}</div>
+                    )} - ${
+                    booking.expected_finish_time || booking.end_time || "N/A"
+                  }</div>
                   </td>
                   <td style="padding: 12px; color: #666; font-size: 14px;">
-                    ${booking.services && booking.services.length > 0
-                      ? booking.services.map((s) => escapeHtml(s.name || s.service_name)).join(", ")
-                      : "N/A"}
+                    ${
+                      booking.services && booking.services.length > 0
+                        ? booking.services
+                            .map((s) => escapeHtml(s.name || s.service_name))
+                            .join(", ")
+                        : "N/A"
+                    }
                   </td>
                   <td style="padding: 12px; text-align: right; font-weight: 600; color: #333;">
                     RM ${parseFloat(booking.total_price || 0).toFixed(2)}
@@ -504,17 +520,46 @@ function closeCustomerModal() {
 
 function openEditModal(email) {
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:503',message:'openEditModal called',data:{email:email,allCustomersLength:allCustomers.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "list.js:503",
+      message: "openEditModal called",
+      data: { email: email, allCustomersLength: allCustomers.length },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
   // #endregion
-  
+
   const customer = allCustomers.find(
     (c) => (c.email || c.customer_email) === email
   );
-  
+
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:510',message:'Customer lookup result',data:{customerFound:!!customer,customerEmail:customer?(customer.email||customer.customer_email):null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "list.js:510",
+      message: "Customer lookup result",
+      data: {
+        customerFound: !!customer,
+        customerEmail: customer
+          ? customer.email || customer.customer_email
+          : null,
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
   // #endregion
-  
+
   if (!customer) {
     showToast("Customer not found", "error");
     return;
@@ -528,13 +573,57 @@ function openEditModal(email) {
   const editModal = document.getElementById("editModal");
 
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:525',message:'Element lookup results',data:{editEmailInput:!!editEmailInput,editFirstNameInput:!!editFirstNameInput,editLastNameInput:!!editLastNameInput,editPhoneInput:!!editPhoneInput,editModal:!!editModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+  fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "list.js:525",
+      message: "Element lookup results",
+      data: {
+        editEmailInput: !!editEmailInput,
+        editFirstNameInput: !!editFirstNameInput,
+        editLastNameInput: !!editLastNameInput,
+        editPhoneInput: !!editPhoneInput,
+        editModal: !!editModal,
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "D",
+    }),
+  }).catch(() => {});
   // #endregion
 
   // Check if elements exist
-  if (!editEmailInput || !editFirstNameInput || !editLastNameInput || !editPhoneInput || !editModal) {
+  if (
+    !editEmailInput ||
+    !editFirstNameInput ||
+    !editLastNameInput ||
+    !editPhoneInput ||
+    !editModal
+  ) {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:530',message:'Elements missing error',data:{missingElements:{email:!editEmailInput,firstName:!editFirstNameInput,lastName:!editLastNameInput,phone:!editPhoneInput,modal:!editModal}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "list.js:530",
+        message: "Elements missing error",
+        data: {
+          missingElements: {
+            email: !editEmailInput,
+            firstName: !editFirstNameInput,
+            lastName: !editLastNameInput,
+            phone: !editPhoneInput,
+            modal: !editModal,
+          },
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "D",
+      }),
+    }).catch(() => {});
     // #endregion
     console.error("Edit modal elements not found");
     showToast("Error: Edit form elements not found", "error");
@@ -542,78 +631,204 @@ function openEditModal(email) {
   }
 
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:536',message:'Before setting values',data:{customerData:{email:customer.email||customer.customer_email,firstName:customer.first_name,lastName:customer.last_name,phone:customer.phone}},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "list.js:536",
+      message: "Before setting values",
+      data: {
+        customerData: {
+          email: customer.email || customer.customer_email,
+          firstName: customer.first_name,
+          lastName: customer.last_name,
+          phone: customer.phone,
+        },
+      },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
   // #endregion
 
   // Populate form
   try {
     editEmailInput.value = customer.email || customer.customer_email;
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:542',message:'After setting email',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "list.js:542",
+        message: "After setting email",
+        data: { success: true },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
     // #endregion
-  } catch(e) {
+  } catch (e) {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:545',message:'Error setting email',data:{error:e.message,stack:e.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "list.js:545",
+        message: "Error setting email",
+        data: { error: e.message, stack: e.stack },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
     // #endregion
     throw e;
   }
-  
+
   try {
     editFirstNameInput.value = customer.first_name || "";
     editLastNameInput.value = customer.last_name || "";
     editPhoneInput.value = customer.phone || "";
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:554',message:'After setting all input values',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "list.js:554",
+        message: "After setting all input values",
+        data: { success: true },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
     // #endregion
-  } catch(e) {
+  } catch (e) {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:557',message:'Error setting input values',data:{error:e.message,stack:e.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "list.js:557",
+        message: "Error setting input values",
+        data: { error: e.message, stack: e.stack },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
     // #endregion
     throw e;
   }
 
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:562',message:'Before showing modal',data:{editModalExists:!!editModal},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "list.js:562",
+      message: "Before showing modal",
+      data: { editModalExists: !!editModal },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
   // #endregion
 
   // Show modal with flex for proper centering
   try {
     editModal.style.display = "flex";
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:567',message:'After setting display flex',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "list.js:567",
+        message: "After setting display flex",
+        data: { success: true },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
     // #endregion
-    
+
     // Also add active class for CSS compatibility
     editModal.classList.add("active");
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:571',message:'After adding active class',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "list.js:571",
+        message: "After adding active class",
+        data: { success: true },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
     // #endregion
-  } catch(e) {
+  } catch (e) {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:574',message:'Error showing modal',data:{error:e.message,stack:e.stack},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "list.js:574",
+        message: "Error showing modal",
+        data: { error: e.message, stack: e.stack },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        runId: "run1",
+        hypothesisId: "A",
+      }),
+    }).catch(() => {});
     // #endregion
     throw e;
   }
-  
+
   // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'list.js:579',message:'openEditModal completed successfully',data:{success:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  fetch("http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      location: "list.js:579",
+      message: "openEditModal completed successfully",
+      data: { success: true },
+      timestamp: Date.now(),
+      sessionId: "debug-session",
+      runId: "run1",
+      hypothesisId: "A",
+    }),
+  }).catch(() => {});
   // #endregion
 }
 
 function closeEditModal() {
   const editModal = document.getElementById("editModal");
   const editForm = document.getElementById("editForm");
-  
+
   if (editModal) {
     editModal.style.display = "none";
     editModal.classList.remove("active");
   }
-  
+
   if (editForm) {
     editForm.reset();
   }
 }
-
 
 function saveCustomer(event) {
   event.preventDefault();
@@ -654,8 +869,10 @@ function saveCustomer(event) {
   })
     .then((response) => {
       if (!response.ok) {
-        return response.json().then(err => {
-          throw new Error(err.error?.message || `HTTP error! status: ${response.status}`);
+        return response.json().then((err) => {
+          throw new Error(
+            err.error?.message || `HTTP error! status: ${response.status}`
+          );
         });
       }
       return response.json();
@@ -826,22 +1043,22 @@ function escapeHtml(text) {
 
 function formatPhoneNumber(phone) {
   if (!phone) return "";
-  
+
   // Remove all spaces and keep only digits and +
   let cleaned = phone.replace(/\s+/g, "");
-  
+
   // Format Malaysian phone numbers (+60)
   if (cleaned.startsWith("+60")) {
     // Remove +60 to get the number part
     let numberPart = cleaned.substring(3);
-    
+
     // Format as: +60 XX XXX XXXX
     if (numberPart.length >= 9) {
       // Take first 2 digits, next 3 digits, and remaining digits
       let part1 = numberPart.substring(0, 2);
       let part2 = numberPart.substring(2, 5);
       let part3 = numberPart.substring(5);
-      
+
       return `+60 ${part1} ${part2} ${part3}`;
     } else if (numberPart.length >= 6) {
       // For shorter numbers: +60 XX XXX
@@ -853,7 +1070,7 @@ function formatPhoneNumber(phone) {
       return `+60 ${numberPart}`;
     }
   }
-  
+
   // If it doesn't start with +60, return as is (or format if it's a local number)
   // Handle local numbers that might start with 0
   if (cleaned.startsWith("0")) {
@@ -865,7 +1082,7 @@ function formatPhoneNumber(phone) {
       return `+60 ${part1} ${part2} ${part3}`;
     }
   }
-  
+
   // Return original if we can't format it
   return phone;
 }

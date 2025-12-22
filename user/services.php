@@ -8,9 +8,9 @@ session_start();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Services – Lumière Beauty Salon</title>
 
-    <link rel="stylesheet" href="/Lumiere_beauty_salon/css/style.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon/css/home.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon/css/header.css">
+    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/style.css">
+    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/home.css">
+    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/header.css">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="services.css">

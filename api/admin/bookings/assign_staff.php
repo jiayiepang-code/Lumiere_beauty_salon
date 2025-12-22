@@ -171,6 +171,64 @@ try {
         }
     }
     
+    // Check if staff is available at this booking's time (if assigning, not unassigning)
+    if (!$allowUnassign) {
+        // Get booking date and time for this service
+        $bookingTimeQuery = "SELECT b.booking_id, b.booking_date, b.start_time, b.expected_finish_time
+                            FROM Booking b
+                            JOIN Booking_Service bs ON b.booking_id = bs.booking_id
+                            WHERE bs.booking_service_id = ?";
+        $timeStmt = $conn->prepare($bookingTimeQuery);
+        $timeStmt->bind_param("i", $booking_service_id);
+        $timeStmt->execute();
+        $timeResult = $timeStmt->get_result();
+        
+        if ($timeRow = $timeResult->fetch_assoc()) {
+            // Check if this staff is already booked at this time (excluding the current booking)
+            $conflictQuery = "SELECT bs.booking_service_id
+                             FROM Booking b
+                             JOIN Booking_Service bs ON b.booking_id = bs.booking_id
+                             WHERE b.booking_date = ?
+                             AND bs.staff_email = ?
+                             AND b.status NOT IN ('cancelled', 'completed')
+                             AND b.booking_id != ?
+                             AND (
+                                   (b.start_time <= ? AND b.expected_finish_time > ?)  -- new start inside existing
+                                OR (b.start_time < ?  AND b.expected_finish_time >= ?) -- new end inside existing
+                                OR (b.start_time >= ? AND b.expected_finish_time <= ?)  -- existing fully inside new
+                             )
+                             LIMIT 1";
+            $conflictStmt = $conn->prepare($conflictQuery);
+            $conflictStmt->bind_param("ssisssssss", 
+                $timeRow['booking_date'],
+                $staff_email,
+                $timeRow['booking_id'],
+                $timeRow['start_time'], $timeRow['start_time'],
+                $timeRow['expected_finish_time'], $timeRow['expected_finish_time'],
+                $timeRow['start_time'], $timeRow['expected_finish_time']
+            );
+            $conflictStmt->execute();
+            $conflictResult = $conflictStmt->get_result();
+            
+            if ($conflictResult->num_rows > 0) {
+                $conflictStmt->close();
+                $timeStmt->close();
+                $conn->close();
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error' => [
+                        'code' => 'STAFF_UNAVAILABLE',
+                        'message' => 'This staff member is already booked at this time. Please select another staff member or choose a different time slot.'
+                    ]
+                ]);
+                exit;
+            }
+            $conflictStmt->close();
+        }
+        $timeStmt->close();
+    }
+    
     // Update booking service staff assignment
     if ($allowUnassign) {
         $updateQuery = "UPDATE Booking_Service SET staff_email = NULL WHERE booking_service_id = ?";

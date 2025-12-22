@@ -119,10 +119,6 @@ if (!$customer_info) {
     header('Location: login.php?redirect=' . urlencode($_SERVER['REQUEST_URI']));
     exit();
 }
-
-// #region agent log
-file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'booking.php:' . __LINE__, 'message' => 'Booking page PHP execution started', 'data' => ['hasSession' => isset($_SESSION['customer_phone']), 'servicesCount' => count($servicesFlat ?? []), 'staffCount' => count($staff ?? [])], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'A']) . "\n", FILE_APPEND);
-// #endregion agent log
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -686,18 +682,9 @@ file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json
 
 <?php
 // Include header (after body tag)
-// #region agent log
-file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'booking.php:' . __LINE__, 'message' => 'About to include header.php', 'data' => ['headerPath' => 'includes/header.php', 'fileExists' => file_exists('includes/header.php')], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'D']) . "\n", FILE_APPEND);
-// #endregion agent log
 require_once 'includes/header.php';
-// #region agent log
-file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'booking.php:' . __LINE__, 'message' => 'Header.php included successfully', 'data' => [], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'D']) . "\n", FILE_APPEND);
-// #endregion agent log
 ?>
 <script>
-// #region agent log
-fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'booking.php:after-header',message:'Page body loaded after header',data:{bodyClass:document.body.className,hasHeader:!!document.querySelector('.main-header'),hasPageWrapper:!!document.querySelector('.page-wrapper'),headerLinks:Array.from(document.querySelectorAll('.main-nav a')).map(a=>a.href)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-// #endregion agent log
 </script>
 
 <div class="container mt-4">
@@ -960,22 +947,24 @@ fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{metho
     </div>
 </div>
 
-<!-- Error Modal -->
+<!-- Lumière Brand Error Modal -->
 <div id="errorModal" class="custom-modal">
-    <div class="custom-modal-content">
-        <div class="custom-modal-header">
-            <h5 class="custom-modal-title">localhost says</h5>
+    <div class="custom-modal-content lumiere-error-modal">
+        <div class="custom-modal-header lumiere-error-header">
+            <h5 class="custom-modal-title">We need a little adjustment</h5>
+            <button type="button" class="lumiere-error-close" onclick="closeErrorModal()" aria-label="Close">&times;</button>
         </div>
-        <div class="custom-modal-body">
-            <p id="errorMessage">Booking failed. Please try again.</p>
+        <div class="custom-modal-body lumiere-error-body">
+            <p id="errorMessage">Something went wrong with your booking. Please try a different time slot.</p>
         </div>
-        <div class="custom-modal-footer">
-            <button type="button" class="btn-custom-ok" onclick="closeErrorModal()">OK</button>
+        <div class="custom-modal-footer lumiere-error-footer">
+            <button type="button" class="btn-custom-ok" onclick="closeErrorModal()">Got it</button>
         </div>
     </div>
 </div>
 
 <style>
+/* Base modal backdrop */
 .custom-modal {
     display: none;
     position: fixed;
@@ -995,63 +984,89 @@ fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{metho
 }
 
 .custom-modal-content {
-    background-color: #424242;
-    color: white;
+    background-color: #fffaf5;
+    color: #5b4734;
     padding: 0;
     border: none;
-    border-radius: 4px;
+    border-radius: 18px;
     width: 90%;
     max-width: 400px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
     animation: slideIn 0.2s ease-out;
 }
 
 .custom-modal-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid #555;
+    padding: 16px 20px 10px;
+    border-bottom: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .custom-modal-title {
     margin: 0;
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    color: #6b3d23;
 }
 
 .custom-modal-body {
-    padding: 20px;
-    font-size: 14px;
-    color: white;
+    padding: 8px 20px 18px;
+    font-size: 15px;
+    color: #5b4734;
 }
 
 .custom-modal-body p {
     margin: 0;
-    color: white;
+    color: inherit;
 }
 
 .custom-modal-footer {
-    padding: 12px 20px;
+    padding: 10px 20px 18px;
     text-align: right;
-    border-top: 1px solid #555;
+    border-top: none;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
 }
 
 .btn-custom-ok {
-    padding: 8px 20px;
+    padding: 8px 22px;
     border: none;
-    border-radius: 4px;
+    border-radius: 999px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     transition: background-color 0.2s;
-    background-color: #0078d4;
-    color: white;
+    background: linear-gradient(to right, #d7bb91, #b59267);
+    color: #ffffff;
 }
 
 .btn-custom-ok:hover {
-    background-color: #005a9e;
+    background: linear-gradient(to right, #b59267, #d7bb91);
+}
+
+/* Brand-specific error modal tweaks */
+.lumiere-error-modal {
+    border: 1px solid #d3b58c;
+}
+
+.lumiere-error-header {
+    background: transparent;
+}
+
+.lumiere-error-close {
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    color: #b08a5a;
+    cursor: pointer;
+    padding: 0;
+}
+
+.lumiere-error-footer {
+    justify-content: flex-end;
 }
 
 @keyframes fadeIn {
@@ -1260,6 +1275,10 @@ fetch('http://127.0.0.1:7242/ingest/03464b7d-2340-40f5-be08-e3068c396ba3',{metho
     ?>
     
     window.allServicesData = <?php echo json_encode($jsServices); ?>;
+    
+    // Pass server's current time to JavaScript (in milliseconds timestamp)
+    // This ensures time slots are disabled based on server time, not client time
+    window.serverTime = <?php echo time() * 1000; ?>;
 </script>
 
 <script src="js/booking.js"></script>

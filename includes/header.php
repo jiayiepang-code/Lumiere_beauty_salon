@@ -40,7 +40,12 @@ $rootPrefix = $inUserFolder ? '../' : '';
 // Image paths
 $imagePath = $inUserFolder ? '../images/' : 'images/';
 // #region agent log
-file_put_contents('c:\xampp\htdocs\Lumiere_beauty_salon\.cursor\debug.log', json_encode(['location' => 'includes/header.php:' . __LINE__, 'message' => 'Header path resolution', 'data' => ['currentScript' => $currentScript, 'basePath' => $basePath, 'imagePath' => $imagePath, 'isLoggedIn' => $isLoggedIn], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'B']) . "\n", FILE_APPEND);
+$debugLogPath = __DIR__ . '/../.cursor/debug.log';
+$debugLogDir = dirname($debugLogPath);
+if (!is_dir($debugLogDir)) {
+    @mkdir($debugLogDir, 0777, true);
+}
+@file_put_contents($debugLogPath, json_encode(['location' => 'includes/header.php:' . __LINE__, 'message' => 'Header path resolution', 'data' => ['currentScript' => $currentScript, 'basePath' => $basePath, 'imagePath' => $imagePath, 'isLoggedIn' => $isLoggedIn], 'timestamp' => round(microtime(true) * 1000), 'sessionId' => 'debug-session', 'runId' => 'run1', 'hypothesisId' => 'B']) . "\n", FILE_APPEND);
 // #endregion agent log
 ?>
 

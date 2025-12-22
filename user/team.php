@@ -138,9 +138,9 @@ if (isset($_SESSION['customer_phone'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meet The Team – Lumière Beauty Salon</title>
 
-    <link rel="stylesheet" href="/Lumiere_beauty_salon/css/style.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon/css/home.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon/css/header.css">
+    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/style.css">
+    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/home.css">
+    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/header.css">
 
     <link rel="stylesheet" href="team.css">
 
