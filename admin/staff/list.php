@@ -1213,6 +1213,22 @@ include '../includes/header.php';
                         </div>
                     </div>
 
+                    <!-- Skills & Proficiency (visible in Edit mode) -->
+                    <div class="card skills-card mt-3" id="skillsSection" style="display: none;">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <h4 class="mb-0" style="font-size: 1rem;">Skills &amp; Proficiency</h4>
+                            <small class="text-muted">Assign services this staff can perform</small>
+                        </div>
+                        <div class="card-body">
+                            <div id="skillsCreateHint" class="alert alert-info" role="alert" style="display: none;">
+                                Save the staff profile first, then return to set skills.
+                            </div>
+                            <div id="skillsLoading" style="text-align: center; color: #888; padding: 12px;">Loading services...</div>
+                            <div id="skillsList" style="display: none;"></div>
+                            <small class="text-muted d-block mt-2">Check the services the staff can deliver and set their proficiency.</small>
+                        </div>
+                    </div>
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" onclick="closeStaffModal()">Cancel</button>
                         <button type="submit" class="btn btn-primary" id="submitButton">
