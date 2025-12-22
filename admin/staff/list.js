@@ -82,7 +82,11 @@ document.addEventListener("DOMContentLoaded", function () {
   if (roleSelect) {
     roleSelect.addEventListener("change", () => {
       const isEditMode = document.getElementById("isEdit")?.value === "1";
-      updateSkillsVisibility(roleSelect.value, isEditMode, currentSkillsStaffEmail);
+      updateSkillsVisibility(
+        roleSelect.value,
+        isEditMode,
+        currentSkillsStaffEmail
+      );
     });
   }
 
@@ -847,7 +851,11 @@ function renderSkillsList(services) {
     chk.checked = !!sv.assigned;
 
     const label = document.createElement("div");
-    label.innerHTML = `<strong>${sv.service_name}</strong><br><span style="color:#888;font-size:12px;">${sv.service_category || ""}${sv.sub_category ? " • " + sv.sub_category : ""}</span>`;
+    label.innerHTML = `<strong>${
+      sv.service_name
+    }</strong><br><span style="color:#888;font-size:12px;">${
+      sv.service_category || ""
+    }${sv.sub_category ? " • " + sv.sub_category : ""}</span>`;
 
     const sel = document.createElement("select");
     sel.className = "form-select";
