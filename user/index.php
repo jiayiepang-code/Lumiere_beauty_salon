@@ -19,10 +19,10 @@ $currentUrlEncoded = urlencode($currentUrl);
     <title>Lumière Beauty Salon – Home</title>
 
     <!-- global + home css -->
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/style.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/home.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/footer.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/header.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/footer.css">
+    <link rel="stylesheet" href="../css/header.css">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 </head>
 </head>

@@ -43,7 +43,7 @@ require_once '../includes/header.php';
         </p>
 
         <p class="contact-label">Email:</p>
-        <p class="contact-text">Lumiere@gmail.com</p>
+        <p class="contact-text">lumierebeautysalon2022@gmail.com</p>
 
         <p class="contact-label">Contact:</p>
         <p class="contact-text">

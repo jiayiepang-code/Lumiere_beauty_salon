@@ -289,6 +289,47 @@ try {
     $endDateTime = clone $startDateTime;
     $endDateTime->add(new DateInterval('PT' . $totalDuration . 'M'));
     
+    // FIX 1: Check if booking time is in the past
+    $now = new DateTime();
+    $bookingDateTime = new DateTime($input['date'] . ' ' . $input['time']);
+    if ($bookingDateTime < $now) {
+        $db->rollBack();
+        ob_end_clean();
+        echo json_encode([
+            'success' => false,
+            'message' => 'Cannot book time slots in the past. Please select a future time.'
+        ]);
+        exit();
+    }
+    
+    // FIX 2: Check if customer already has the same service at the exact same time
+    $sameServiceCheckQuery = "SELECT bs.booking_id 
+                              FROM booking b
+                              JOIN booking_service bs ON b.booking_id = bs.booking_id
+                              WHERE b.customer_email = ? 
+                              AND b.booking_date = ? 
+                              AND b.start_time = ?
+                              AND bs.service_id IN (" . implode(',', array_fill(0, count($input['services']), '?')) . ")
+                              AND b.status != 'cancelled' 
+                              AND b.status != 'completed'";
+    $sameServiceParams = array_merge(
+        [$customerEmail, $input['date'], $input['time']],
+        $input['services']
+    );
+    $sameServiceStmt = $db->prepare($sameServiceCheckQuery);
+    $sameServiceStmt->execute($sameServiceParams);
+    $existingSameService = $sameServiceStmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existingSameService) {
+        $db->rollBack();
+        ob_end_clean();
+        echo json_encode([
+            'success' => false,
+            'message' => 'You already have a booking for the same service at this time. Please choose a different time slot or service.'
+        ]);
+        exit();
+    }
+    
     // SOLUTION 1: Check if customer already has an OVERLAPPING booking (any service)
     // Example: existing 9:00–10:30, new 9:30–11:00 -> not allowed
     $overlapCheckQuery = "SELECT booking_id 

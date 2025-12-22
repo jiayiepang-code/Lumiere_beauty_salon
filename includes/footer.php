@@ -31,7 +31,7 @@ if (strpos($currentScript, '/booking.php') !== false) {
         <p><b>Tel:</b> 012-345 6789<br>
            <b>Office:</b> 088-978 8977
         <br><br>   
-        <p><b>Email:</b> Lumiere@gmail.com</p>
+        <p><b>Email:</b> lumierebeautysalon2022@gmail.com</p>
     </div>
 
     <!-- Right: Operating Hours + Social -->

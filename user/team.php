@@ -138,10 +138,12 @@ if (isset($_SESSION['customer_phone'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meet The Team – Lumière Beauty Salon</title>
 
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/style.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/home.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/header.css">
+    <!-- global + shared header styles -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/header.css">
 
+    <!-- page-specific styles -->
     <link rel="stylesheet" href="team.css">
 
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -212,11 +214,22 @@ require_once '../includes/header.php';
 
 <?php
 if (file_exists('../includes/footer.php')) {
-require_once '../includes/footer.php';
+    require_once '../includes/footer.php';
 }
 ?>
 
 <script>
+// Ensure correct nav highlight on Team page
+document.addEventListener('DOMContentLoaded', function () {
+    const navLinks = document.querySelectorAll('.main-header .main-nav .nav-link');
+    navLinks.forEach(link => link.classList.remove('active'));
+
+    const teamLink = document.querySelector('.main-header .main-nav .nav-link.dropdown-toggle');
+    if (teamLink) {
+        teamLink.classList.add('active');
+    }
+});
+
 // 1. READ URL PARAMETER FROM HEADER NAVIGATION
 const urlParams = new URLSearchParams(window.location.search);
 const category = urlParams.get('cat');

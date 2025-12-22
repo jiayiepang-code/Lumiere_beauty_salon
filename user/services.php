@@ -8,11 +8,13 @@ session_start();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Services – Lumière Beauty Salon</title>
 
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/style.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/home.css">
-    <link rel="stylesheet" href="/Lumiere_beauty_salon-main/css/header.css">
+    <!-- global + shared header styles -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/home.css">
+    <link rel="stylesheet" href="../css/header.css">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 
+    <!-- page-specific styles -->
     <link rel="stylesheet" href="services.css">
 </head>
 
