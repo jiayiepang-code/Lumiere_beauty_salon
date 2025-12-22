@@ -166,7 +166,7 @@ async function exportBusinessReportCsv() {
       "No. 10, Ground Floor Block B, Phase 2, Jln Lintas, Kolam Centre",
     ]);
     csvRows.push(["City:", "88300 Kota Kinabalu, Sabah"]);
-    csvRows.push(["Email:", "Lumiere@gmail.com"]);
+    csvRows.push(["Email:", "lumierebeautysalon2022@gmail.com"]);
     csvRows.push(["Tel:", "012 345 6789 / 088 978 8977"]);
     csvRows.push([]);
 

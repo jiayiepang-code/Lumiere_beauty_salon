@@ -227,7 +227,7 @@ try {
     fputcsv($output, ['Company Information:']);
     fputcsv($output, ['Address:', 'No. 10, Ground Floor Block B, Phase 2, Jln Lintas, Kolam Centre']);
     fputcsv($output, ['City:', '88300 Kota Kinabalu, Sabah']);
-    fputcsv($output, ['Email:', 'Lumiere@gmail.com']);
+    fputcsv($output, ['Email:', 'lumierebeautysalon2022@gmail.com']);
     fputcsv($output, ['Tel:', '012 345 6789 / 088 978 8977']);
     fputcsv($output, []); // Empty row
     

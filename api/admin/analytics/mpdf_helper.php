@@ -340,7 +340,7 @@ function getCompanyInfo() {
         'name' => 'Lumière Beauty Salon',
         'address_line1' => 'No. 10, Ground Floor Block B, Phase 2, Jln Lintas, Kolam Centre',
         'address_line2' => '88300 Kota Kinabalu, Sabah',
-        'email' => 'Lumiere@gmail.com',
+        'email' => 'lumierebeautysalon2022@gmail.com',
         'phone' => '012 345 6789',
         'office_phone' => '088 978 8977',
         'registration_number' => 'SSM: SA0123456-A',
