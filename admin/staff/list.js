@@ -4,6 +4,7 @@ let staffData = [];
 let currentStaffEmail = null;
 let staffModal = null;
 let deleteModal = null;
+let currentSkillsStaffEmail = null;
 
 /**
  * Format phone number for display
@@ -74,6 +75,15 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   if (roleFilter) {
     roleFilter.addEventListener("change", filterStaff);
+  }
+
+  // Role select toggles skills visibility
+  const roleSelect = document.getElementById("role");
+  if (roleSelect) {
+    roleSelect.addEventListener("change", () => {
+      const isEditMode = document.getElementById("isEdit")?.value === "1";
+      updateSkillsVisibility(roleSelect.value, isEditMode, currentSkillsStaffEmail);
+    });
   }
 
   // Form submission handler
@@ -161,6 +171,11 @@ function openCreateModalFunction() {
   if (activeToggle) {
     activeToggle.checked = true;
   }
+
+  // Skills section defaults for new staff (show hint if role = staff)
+  const roleSelect = document.getElementById("role");
+  const roleValue = roleSelect ? roleSelect.value : "";
+  updateSkillsVisibility(roleValue, false, null);
 
   // Update submit button text
   const submitButton = document.getElementById("submitButton");
@@ -316,6 +331,10 @@ async function openEditModal(staffEmail) {
           member.is_active === true || member.is_active === 1;
       }
 
+      // Track current staff email for skills changes and toggle visibility based on role
+      currentSkillsStaffEmail = member.staff_email;
+      updateSkillsVisibility(member.role, true, member.staff_email);
+
       // Update submit button text
       const submitBtnText = document.getElementById("submitBtnText");
       if (submitBtnText) {
@@ -448,6 +467,8 @@ function closeStaffModal() {
   if (previewFileName) {
     previewFileName.textContent = "";
   }
+
+  resetSkillsSection();
 
   clearErrors();
 }
@@ -632,10 +653,17 @@ async function handleFormSubmit(e) {
     }
 
     if (data.success) {
-      // Close modal immediately
+      // When editing, also save skills/proficiency for staff role only
+      const isStaffRole = role === "staff";
+      if (isEdit && isStaffRole) {
+        const skillsSaved = await saveSkillsAssignments(staffEmail);
+        if (!skillsSaved) {
+          return; // Skill save failed; message already shown
+        }
+      }
+
       closeStaffModal();
 
-      // Show success message
       Swal.fire({
         title: "Success!",
         text:
@@ -648,7 +676,7 @@ async function handleFormSubmit(e) {
         timer: 2000,
         showConfirmButton: true,
       }).then(() => {
-        location.reload(); // Reload to show updated data
+        location.reload();
       });
     } else {
       if (data.error?.details) {
@@ -700,6 +728,254 @@ async function handleFormSubmit(e) {
       icon: "error",
       confirmButtonColor: "#c29076",
     });
+  }
+}
+
+/**
+ * Skills & proficiency helpers
+ */
+function prepareSkillsForCreate() {
+  const section = document.getElementById("skillsSection");
+  const hint = document.getElementById("skillsCreateHint");
+  const loading = document.getElementById("skillsLoading");
+  const list = document.getElementById("skillsList");
+  if (section) section.style.display = "block";
+  if (hint) hint.style.display = "block";
+  if (loading) loading.style.display = "none";
+  if (list) {
+    list.innerHTML = "";
+    list.style.display = "none";
+  }
+  currentSkillsStaffEmail = null;
+}
+
+function resetSkillsSection() {
+  const section = document.getElementById("skillsSection");
+  const hint = document.getElementById("skillsCreateHint");
+  const loading = document.getElementById("skillsLoading");
+  const list = document.getElementById("skillsList");
+  if (section) section.style.display = "none";
+  if (hint) hint.style.display = "none";
+  if (loading) {
+    loading.textContent = "Loading services...";
+    loading.style.display = "none";
+  }
+  if (list) {
+    list.innerHTML = "";
+    list.style.display = "none";
+  }
+  currentSkillsStaffEmail = null;
+}
+
+function hideSkillsSection() {
+  const section = document.getElementById("skillsSection");
+  if (section) {
+    section.style.display = "none";
+  }
+  const list = document.getElementById("skillsList");
+  if (list) {
+    list.innerHTML = "";
+    list.style.display = "none";
+  }
+  const hint = document.getElementById("skillsCreateHint");
+  if (hint) hint.style.display = "none";
+  const loading = document.getElementById("skillsLoading");
+  if (loading) {
+    loading.textContent = "Loading services...";
+    loading.style.display = "none";
+  }
+  currentSkillsStaffEmail = null;
+}
+
+function prepareSkillsForEdit(staffEmail) {
+  const section = document.getElementById("skillsSection");
+  const hint = document.getElementById("skillsCreateHint");
+  const loading = document.getElementById("skillsLoading");
+  const list = document.getElementById("skillsList");
+  currentSkillsStaffEmail = staffEmail;
+  if (section) section.style.display = "block";
+  if (hint) hint.style.display = "none";
+  if (list) {
+    list.innerHTML = "";
+    list.style.display = "none";
+  }
+  if (loading) {
+    loading.style.display = "block";
+    loading.textContent = "Loading services...";
+  }
+  loadSkills(staffEmail);
+}
+
+function updateSkillsVisibility(roleValue, isEditMode, staffEmail) {
+  const isStaffRole = (roleValue || "").toLowerCase() === "staff";
+  if (!isStaffRole) {
+    hideSkillsSection();
+    return;
+  }
+
+  if (isEditMode) {
+    prepareSkillsForEdit(staffEmail || currentSkillsStaffEmail);
+  } else {
+    prepareSkillsForCreate();
+  }
+}
+
+function renderSkillsList(services) {
+  const list = document.getElementById("skillsList");
+  const loading = document.getElementById("skillsLoading");
+  if (!list) return;
+
+  list.innerHTML = "";
+  const levels = [
+    { value: "junior", label: "Junior" },
+    { value: "senior", label: "Senior" },
+    { value: "expert", label: "Expert" },
+  ];
+
+  services.forEach((sv) => {
+    const row = document.createElement("div");
+    row.style.display = "grid";
+    row.style.gridTemplateColumns = "30px 1fr 160px";
+    row.style.alignItems = "center";
+    row.style.gap = "10px";
+    row.style.padding = "8px 0";
+    row.style.borderBottom = "1px solid #eee";
+
+    const chk = document.createElement("input");
+    chk.type = "checkbox";
+    chk.dataset.serviceId = sv.service_id;
+    chk.checked = !!sv.assigned;
+
+    const label = document.createElement("div");
+    label.innerHTML = `<strong>${sv.service_name}</strong><br><span style="color:#888;font-size:12px;">${sv.service_category || ""}${sv.sub_category ? " • " + sv.sub_category : ""}</span>`;
+
+    const sel = document.createElement("select");
+    sel.className = "form-select";
+    sel.style.maxWidth = "150px";
+    sel.dataset.serviceId = sv.service_id;
+    levels.forEach((l) => {
+      const opt = document.createElement("option");
+      opt.value = l.value;
+      opt.textContent = l.label;
+      if ((sv.proficiency_level || "").toLowerCase() === l.value) {
+        opt.selected = true;
+      }
+      sel.appendChild(opt);
+    });
+    sel.disabled = !chk.checked;
+
+    chk.addEventListener("change", (e) => {
+      sel.disabled = !e.target.checked;
+    });
+
+    row.appendChild(chk);
+    row.appendChild(label);
+    row.appendChild(sel);
+    list.appendChild(row);
+  });
+
+  if (loading) loading.style.display = "none";
+  list.style.display = "block";
+}
+
+async function loadSkills(staffEmail) {
+  const loading = document.getElementById("skillsLoading");
+  const list = document.getElementById("skillsList");
+  if (loading) {
+    loading.style.display = "block";
+    loading.textContent = "Loading services...";
+  }
+  if (list) {
+    list.innerHTML = "";
+    list.style.display = "none";
+  }
+
+  try {
+    const res = await fetch(
+      `../../api/admin/staff/services/list.php?staff_email=${encodeURIComponent(
+        staffEmail
+      )}`,
+      {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.error?.message || "Failed to load services");
+    }
+    renderSkillsList(data.services || []);
+  } catch (error) {
+    console.error("Error loading skills:", error);
+    if (loading) {
+      loading.style.display = "block";
+      loading.textContent = error.message || "Failed to load services";
+    }
+    Swal.fire({
+      title: "Error",
+      text: error.message || "Failed to load services",
+      icon: "error",
+      confirmButtonColor: "#c29076",
+    });
+  }
+}
+
+function collectSkillsPayload() {
+  const list = document.getElementById("skillsList");
+  if (!list || list.style.display === "none") return [];
+
+  const rows = list.querySelectorAll(":scope > div");
+  const assignments = [];
+  rows.forEach((row) => {
+    const chk = row.querySelector("input[type='checkbox']");
+    const sel = row.querySelector("select");
+    if (!chk || !sel) return;
+    const sid = (chk.dataset.serviceId || "").trim();
+    if (!sid) return; // skip invalid rows
+    assignments.push({
+      service_id: sid,
+      assigned: !!chk.checked,
+      proficiency_level: chk.checked ? sel.value : null,
+    });
+  });
+  return assignments;
+}
+
+async function saveSkillsAssignments(staffEmail) {
+  const assignments = collectSkillsPayload();
+  // If no assignments block rendered, treat as success
+  if (!assignments.length) {
+    return true;
+  }
+
+  try {
+    const res = await fetch("../../api/admin/staff/services/save.php", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        csrf_token: CSRF_TOKEN,
+        staff_email: staffEmail,
+        assignments,
+      }),
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      throw new Error(data.error?.message || "Failed to save skills");
+    }
+    return true;
+  } catch (error) {
+    console.error("Error saving skills:", error);
+    Swal.fire({
+      title: "Error",
+      text: error.message || "Failed to save skills",
+      icon: "error",
+      confirmButtonColor: "#c29076",
+    });
+    return false;
   }
 }
 
