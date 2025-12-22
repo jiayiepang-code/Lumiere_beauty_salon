@@ -1634,9 +1634,6 @@ function renderBookingDetails(booking) {
     `;
 
   booking.services.forEach((service, index) => {
-    const serviceCategory = (service.service_category || '').toLowerCase();
-    const allowedRoles = getRolesForServiceCategory(serviceCategory);
-    
     html += `
             <div style="background: #f8f9fa; padding: 16px; border-radius: 8px;">
                 <div style="font-weight: 600; margin-bottom: 8px;">${
@@ -1646,18 +1643,7 @@ function renderBookingDetails(booking) {
                   service.service_category
                 )}</div>
                 <div style="font-size: 13px; color: #666; margin-bottom: 8px;">
-                    <label style="display: block; margin-bottom: 4px; font-weight: 500;">Assign Staff:</label>
-                    <select 
-                        id="staff-select-${service.booking_service_id}" 
-                        class="form-select form-select-sm" 
-                        style="max-width: 300px;"
-                        onchange="assignStaffToService(${service.booking_service_id}, this.value)"
-                    >
-                        <option value="">Unassign</option>
-                    </select>
-                    <div id="staff-status-${service.booking_service_id}" style="font-size: 12px; margin-top: 4px; color: #666;">
-                        Current: ${escapeHtml(service.staff_name || 'Unassigned')}
-                    </div>
+                    <strong>Assigned Staff:</strong> ${escapeHtml(service.staff_name || 'Unassigned')}
                 </div>
                 <div style="font-size: 13px; color: #666; margin-bottom: 4px;">Duration: ${
                   service.quoted_duration_minutes
@@ -1675,13 +1661,6 @@ function renderBookingDetails(booking) {
             </div>
         `;
   });
-  
-  // Populate staff dropdowns after HTML is inserted
-  setTimeout(() => {
-    booking.services.forEach((service) => {
-      populateStaffDropdown(service.booking_service_id, service.service_category, service.staff_email);
-    });
-  }, 100);
 
   html += `
                 </div>
@@ -1763,154 +1742,7 @@ function getRolesForServiceCategory(serviceCategory) {
   return categoryRoleMap[category] || [];
 }
 
-// Populate staff dropdown filtered by service category
-function populateStaffDropdown(bookingServiceId, serviceCategory, currentStaffEmail) {
-  const select = document.getElementById(`staff-select-${bookingServiceId}`);
-  if (!select) return;
-  
-  // Ensure staffList is loaded, if not, load it
-  if (!staffList || staffList.length === 0) {
-    loadStaffList().then(() => {
-      // Retry after loading staff list
-      populateStaffDropdown(bookingServiceId, serviceCategory, currentStaffEmail);
-    }).catch(err => {
-      console.error('Failed to load staff list:', err);
-      // Even if loading fails, show a message
-      const option = document.createElement('option');
-      option.value = '';
-      option.textContent = 'Loading staff...';
-      option.disabled = true;
-      select.appendChild(option);
-    });
-    return;
-  }
-  
-  const allowedRoles = getRolesForServiceCategory(serviceCategory);
-  const category = (serviceCategory || '').toLowerCase();
-  
-  // Clear existing options except "Unassign"
-  while (select.options.length > 1) {
-    select.remove(1);
-  }
-  
-  // If no service category or no role mapping found, show ALL active staff
-  // This ensures admin can assign staff even when user selected "No Preference"
-  const showAllStaff = !serviceCategory || !category || allowedRoles.length === 0;
-  
-  // Filter staff by role
-  staffList.forEach((staff) => {
-    if (!staff.is_active) return;
-    
-    const staffRole = (staff.role || '').toLowerCase();
-    let shouldInclude = false;
-    
-    if (showAllStaff) {
-      // If no category mapping, include all active staff
-      shouldInclude = true;
-    } else {
-      // Check if staff role matches allowed roles for this service category
-      if (allowedRoles.length > 0) {
-        shouldInclude = allowedRoles.some(role => 
-          staffRole.includes(role) || role.includes(staffRole)
-        );
-      }
-      
-      // Additional category-based matching
-      if (!shouldInclude) {
-        if (category === 'facial' && (staffRole.includes('beaut') || staffRole.includes('facial'))) {
-          shouldInclude = true;
-        } else if ((category === 'haircut' || category === 'hair') && (staffRole.includes('hair') || staffRole.includes('stylist'))) {
-          shouldInclude = true;
-        } else if ((category === 'manicure' || category === 'nail') && (staffRole.includes('nail') || staffRole.includes('manicure'))) {
-          shouldInclude = true;
-        } else if (category === 'massage' && staffRole.includes('massage')) {
-          shouldInclude = true;
-        }
-      }
-      
-      // If still no match but we have a category, allow all staff as fallback
-      // This ensures admin can always assign staff even if role matching fails
-      if (!shouldInclude && category) {
-        shouldInclude = true; // Fallback: allow all staff for admin override
-      }
-    }
-    
-    if (shouldInclude) {
-      const option = document.createElement('option');
-      option.value = staff.staff_email;
-      option.textContent = `${staff.first_name} ${staff.last_name}`;
-      if (staff.staff_email === currentStaffEmail) {
-        option.selected = true;
-      }
-      select.appendChild(option);
-    }
-  });
-  
-  // If no staff options were added (shouldn't happen, but safety check)
-  if (select.options.length === 1) {
-    const option = document.createElement('option');
-    option.value = '';
-    option.textContent = 'No staff available';
-    option.disabled = true;
-    select.appendChild(option);
-  }
-}
-
-// Assign staff to booking service
-async function assignStaffToService(bookingServiceId, staffEmail) {
-  const statusDiv = document.getElementById(`staff-status-${bookingServiceId}`);
-  const select = document.getElementById(`staff-select-${bookingServiceId}`);
-  
-  if (!statusDiv || !select) return;
-  
-  // Show loading state
-  statusDiv.innerHTML = '<span style="color: #667eea;">Updating...</span>';
-  select.disabled = true;
-  
-  try {
-    const response = await fetch('../../api/admin/bookings/assign_staff.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        booking_service_id: bookingServiceId,
-        staff_email: staffEmail || null
-      })
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      statusDiv.innerHTML = `<span style="color: #4caf50;">Current: ${data.data.staff_name || 'Unassigned'}</span>`;
-      toast('Staff assigned successfully', 'success');
-      
-      // Reload calendar to reflect changes
-      loadCalendarData();
-    } else {
-      statusDiv.innerHTML = `<span style="color: #f44336;">Error: ${data.error?.message || 'Failed to assign staff'}</span>`;
-      toast(data.error?.message || 'Failed to assign staff', 'error');
-      
-      // Reload booking details to reset dropdown
-      const bookingId = document.getElementById('bookingDetailsContent')?.dataset?.bookingId;
-      if (bookingId) {
-        viewBookingDetails(bookingId);
-      }
-    }
-  } catch (error) {
-    console.error('Error assigning staff:', error);
-    statusDiv.innerHTML = `<span style="color: #f44336;">Error: ${error.message}</span>`;
-    toast('Error assigning staff', 'error');
-    
-    // Reload booking details to reset dropdown
-    const bookingId = document.getElementById('bookingDetailsContent')?.dataset?.bookingId;
-    if (bookingId) {
-      viewBookingDetails(bookingId);
-    }
-  } finally {
-    select.disabled = false;
-  }
-}
+// Note: Staff assignment via Master Calendar has been disabled.
 
 // Close booking modal
 function closeBookingModal() {
